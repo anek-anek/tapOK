@@ -1,0 +1,38 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "ui": "tui",
+  "globalDependencies": ["**/.env.*local"],
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NODE_ENV",
+        "WEB_ORIGIN",
+        "DB_HOST",
+        "DB_PORT",
+        "DB_USERNAME",
+        "DB_PASSWORD",
+        "DB_DATABASE",
+        "FIREBASE_PROJECT_ID",
+        "FIREBASE_CLIENT_EMAIL",
+        "FIREBASE_PRIVATE_KEY"
+      ]
+    },
+    "lint": {},
+    "typecheck": {},
+    "generate": {},
+    "api#generate": {
+      "outputs": ["../../packages/api/openapi.json"]
+    },
+    "@repo/api#generate": {
+      "dependsOn": ["api#generate"],
+      "inputs": ["../../packages/api/openapi.json"],
+      "outputs": ["src/schema.d.ts"]
+    }
+  }
+}

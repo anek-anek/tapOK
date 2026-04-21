@@ -1,0 +1,37 @@
+{
+  "name": "formesean-stack",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev:all": "turbo run dev",
+    "dev:api": "turbo run dev --filter=api",
+    "dev:web": "turbo run dev --filter=web",
+    "build:all": "turbo run build",
+    "build:api": "turbo run build --filter=api",
+    "build:web": "turbo run build --filter=web",
+    "typecheck:all": "turbo run typecheck",
+    "typecheck:api": "turbo run typecheck --filter=api",
+    "typecheck:web": "turbo run typecheck --filter=web",
+    "lint:all": "turbo run lint",
+    "format:all": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "migration:generate": "npm run migration:generate --workspace=api --",
+    "migration:run": "npm run migration:run --workspace=api",
+    "migration:revert": "npm run migration:revert --workspace=api",
+    "generate:api": "turbo run generate --filter=api --log-order stream && turbo run generate --filter=@repo/api --log-order stream",
+    "ui:add": "npx shadcn@latest add -c packages/ui"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "prettier": "^3.2.5",
+    "turbo": "^2.9.6"
+  },
+  "engines": {
+    "node": ">=22.22.1"
+  },
+  "packageManager": "npm@11.12.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
