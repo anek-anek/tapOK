@@ -38,7 +38,7 @@ function readProfileCookie(): DbUser | null {
   const raw = document.cookie.split('; ').find((c) => c.startsWith('user_profile='));
   if (!raw) return null;
   try {
-    return JSON.parse(decodeURIComponent(raw.split('=')[1])) as DbUser;
+    return JSON.parse(decodeURIComponent(raw.split('=')[1] ?? '')) as DbUser;
   } catch {
     return null;
   }
