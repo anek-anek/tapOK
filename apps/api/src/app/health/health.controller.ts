@@ -9,6 +9,7 @@ import { Public } from '../../common';
 
 @ApiTags('health')
 @Controller('health')
+@Public()
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
@@ -16,7 +17,6 @@ export class HealthController {
   ) {}
 
   @Get()
-  @Public()
   @HealthCheck()
   @ApiOperation({ summary: 'Health check' })
   check() {
