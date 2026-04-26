@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { setAuthToken, api } from '@/services/api';
+import { setAuthToken } from '@/services/api';
+import { finalizeSession } from '@/lib/auth/finalize-session';
 
 export type UserRole = 'admin' | 'photographer' | 'participant';
 
@@ -40,29 +41,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        try {
-          const token = await firebaseUser.getIdToken();
-          setAuthToken(token);
+        // The register page manages its own sync (createUserWithEmailAndPassword
+        // + finalizeSession with sync:true). If AuthProvider races and calls
+        // GET /users/me before the sync completes, it gets a 404 and deletes
+        // the brand-new Firebase account. Skip here; the form sets state itself.
+        if (window.location.pathname === '/register') {
+          setLoading(false);
+          return;
+        }
 
-          const { data } = await api.post<DbUser>('/users/sync');
-          setDbUser(data);
-
-          const freshToken = await firebaseUser.getIdToken(true);
-          setAuthToken(freshToken);
-
-          document.cookie = `session_role=${data.role}; path=/; SameSite=Strict; Secure; max-age=3600`;
-        } catch {
-          setAuthToken(null);
+        const result = await finalizeSession(firebaseUser, { sync: false });
+        if (result.ok) {
+          setDbUser(result.dbUser);
+          setUser(firebaseUser);
+        } else {
           setDbUser(null);
-          document.cookie = 'session_role=; path=/; max-age=0';
+          setUser(null);
+          await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => undefined);
         }
       } else {
         setAuthToken(null);
         setDbUser(null);
-        document.cookie = 'session_role=; path=/; max-age=0';
+        setUser(null);
+        await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => undefined);
       }
 
-      setUser(firebaseUser);
       setLoading(false);
     });
 

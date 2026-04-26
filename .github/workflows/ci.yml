@@ -25,7 +25,7 @@ jobs:
         run: npm ci
 
       - name: Build packages
-        run: npx turbo run build --filter=@repo/api --filter=@repo/jest-config
+        run: npx turbo run build --filter=@repo/api
 
       - name: Generate API types
         run: npm run generate:api

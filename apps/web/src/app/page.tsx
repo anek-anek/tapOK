@@ -90,7 +90,7 @@ export default function Home() {
 
       <main className="relative z-10">
 
-        {/* ── HERO ── */}1
+        {/* ── HERO ── */}
         <section className="flex min-h-[80vh] flex-col items-center justify-center px-6 text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#2a2118]/12 bg-[#F7E9B2] px-4 py-1.5">
             <span className={`h-1.5 w-1.5 rounded-full transition-colors ${health === 'up' ? 'bg-emerald-500' : health === 'down' ? 'bg-red-500' : 'bg-[#2a2118]/50'}`} />

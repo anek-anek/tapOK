@@ -4,6 +4,7 @@ import type { DecodedIdToken } from 'firebase-admin/auth';
 import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dto/create-user.dto';
+import { SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -24,6 +25,12 @@ export class UsersService {
 
   findByFirebaseUid(firebaseUid: string): Promise<User | null> {
     return this.usersRepository.findByFirebaseUid(firebaseUid);
+  }
+
+  async findMe(firebaseUid: string): Promise<User> {
+    const user = await this.usersRepository.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('No account found for this user.');
+    return user;
   }
 
   create(dto: CreateUserDto): Promise<User> {
@@ -48,14 +55,14 @@ export class UsersService {
     await this.usersRepository.remove(id);
   }
 
-  async syncFromFirebase(token: DecodedIdToken): Promise<User> {
-    const [firstName = '', ...rest] = (token.name ?? '').split(' ');
-    const lastName = rest.join(' ');
+  async syncFromFirebase(token: DecodedIdToken, dto: SyncUserDto = {}): Promise<User> {
+    const [tokenFirst = '', ...rest] = (token.name ?? '').split(' ');
+    const tokenLast = rest.join(' ');
 
     const user = await this.usersRepository.upsertByFirebaseUid(token.uid, {
       email: token.email ?? '',
-      firstName,
-      lastName,
+      firstName: dto.firstName ?? tokenFirst,
+      lastName: dto.lastName ?? tokenLast,
       avatar: token.picture,
       googleId: token.firebase.sign_in_provider === 'google.com' ? token.uid : undefined,
       isEmailVerified: token.email_verified ?? false,
