@@ -80,6 +80,8 @@ jobs:
         run: vercel build ${{ github.ref_name == 'main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy prebuilt
+        env:
+          VERCEL_GIT_COMMIT_REF: ${{ github.ref_name }}
         run: vercel deploy --prebuilt ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}
 
   deploy-web:
@@ -117,4 +119,6 @@ jobs:
         run: vercel pull --yes --environment=${{ github.ref_name == 'main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy
+        env:
+          VERCEL_GIT_COMMIT_REF: ${{ github.ref_name }}
         run: vercel deploy ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}
