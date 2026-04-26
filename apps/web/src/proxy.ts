@@ -1,19 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { jwtVerify, createRemoteJWKSet } from 'jose';
 import { PAGE_PERMISSIONS } from '@/lib/auth/route-permissions';
 import { isLoginRoute, isProtectedRoute } from '@/lib/constants/routes';
 import type { UserRole } from '@/components/providers/auth-provider';
 
-function getSessionRole(request: NextRequest): UserRole | null {
-  const role = request.cookies.get('session_role')?.value;
-  if (role === 'admin' || role === 'photographer' || role === 'participant') {
-    return role;
+const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
+const JWKS = createRemoteJWKSet(
+  new URL(
+    'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',
+  ),
+);
+
+async function getSessionRole(request: NextRequest): Promise<UserRole | null> {
+  const token = request.cookies.get('__session')?.value;
+  if (!token) return null;
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS, {
+      issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
+      audience: FIREBASE_PROJECT_ID,
+    });
+
+    const role = (payload as Record<string, unknown>)['role'];
+    if (role === 'admin' || role === 'photographer' || role === 'participant') {
+      return role as UserRole;
+    }
+    return null;
+  } catch {
+    return null;
   }
-  return null;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const role = getSessionRole(request);
+  const role = await getSessionRole(request);
   const isAuthenticated = role !== null;
 
   if (isProtectedRoute(pathname) && !isAuthenticated) {

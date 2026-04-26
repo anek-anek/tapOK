@@ -33,6 +33,9 @@
       "dependsOn": ["api#generate"],
       "inputs": ["../../packages/api/openapi.json"],
       "outputs": ["src/schema.d.ts"]
+    },
+    "e2e": {
+      "cache": false
     }
   }
 }
