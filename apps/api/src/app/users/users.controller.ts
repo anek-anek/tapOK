@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -21,9 +22,11 @@ import {
 import type { Request } from 'express';
 
 import { Throttle } from '@nestjs/throttler';
-import { FirebaseAuthGuard, RolesGuard, Roles, UserRole, THROTTLE_STRICT } from '../../common';
+import type { DecodedIdToken } from 'firebase-admin/auth';
+import { FirebaseAuthGuard, RolesGuard, Roles, UserRole, AuthUser, THROTTLE_STRICT } from '../../common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
@@ -46,13 +49,30 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get('me')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Get the authenticated user — 404 if not in DB' })
+  @ApiResponse({ status: 200, type: User })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  me(@Req() request: RequestWithUser): Promise<User> {
+    return this.usersService.findMe(request.user.uid);
+  }
+
   @Get(':id')
   @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Get a user by id' })
   @ApiResponse({ status: 200, type: User })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<User> {
-    return this.usersService.findOne(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @AuthUser() authUser: DecodedIdToken,
+  ): Promise<User> {
+    const user = await this.usersService.findOne(id);
+    if (authUser.role !== UserRole.ADMIN && user.firebaseUid !== authUser.uid) {
+      throw new ForbiddenException('Access denied');
+    }
+    return user;
   }
 
   @Post('sync')
@@ -60,8 +80,8 @@ export class UsersController {
   @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Upsert the authenticated Firebase user into the DB' })
   @ApiResponse({ status: 201, type: User })
-  sync(@Req() request: RequestWithUser): Promise<User> {
-    return this.usersService.syncFromFirebase(request.user);
+  sync(@Req() request: RequestWithUser, @Body() dto: SyncUserDto): Promise<User> {
+    return this.usersService.syncFromFirebase(request.user, dto);
   }
 
   @Post()
