@@ -9,6 +9,7 @@ import { AppController } from './app.controller';
 import { HealthModule } from './app/health/health.module';
 import { UsersModule } from './app/users/users.module';
 import { OrganizationsModule } from './app/organizations/organizations.module';
+import { DropsModule } from './app/drops/drops.module';
 
 @Module({
   controllers: [AppController],
@@ -38,6 +39,7 @@ import { OrganizationsModule } from './app/organizations/organizations.module';
     HealthModule,
     UsersModule,
     OrganizationsModule,
+    DropsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

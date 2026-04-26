@@ -10,6 +10,11 @@ import { OrganizationsRepository } from './app/organizations/organizations.repos
 import { User } from './app/users/entities/user.entity';
 import { Organization } from './app/organizations/entities/organization.entity';
 import { OrganizationMember } from './app/organizations/entities/organization-member.entity';
+import { DropsController } from './app/drops/drops.controller';
+import { DropsService } from './app/drops/drops.service';
+import { DropsRepository } from './app/drops/drops.repository';
+import { Drop } from './app/drops/entities/drop.entity';
+import { DropActivityLog } from './app/drops/entities/drop-activity-log.entity';
 import { THROTTLE_DEFAULT, THROTTLE_STRICT } from './common';
 
 function stub<T>(token: T): { provide: T; useValue: object } {
@@ -29,7 +34,7 @@ function stub<T>(token: T): { provide: T; useValue: object } {
       { name: 'strict', ...THROTTLE_STRICT },
     ]),
   ],
-  controllers: [UsersController, OrganizationsController],
+  controllers: [UsersController, OrganizationsController, DropsController],
   providers: [
     stub(UsersService),
     stub(UsersRepository),
@@ -38,6 +43,10 @@ function stub<T>(token: T): { provide: T; useValue: object } {
     stub(getRepositoryToken(User)),
     stub(getRepositoryToken(Organization)),
     stub(getRepositoryToken(OrganizationMember)),
+    stub(DropsService),
+    stub(DropsRepository),
+    stub(getRepositoryToken(Drop)),
+    stub(getRepositoryToken(DropActivityLog)),
   ],
 })
 export class GenerateAppModule {}
