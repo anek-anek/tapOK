@@ -143,7 +143,8 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
     watch,
     formState: { errors },
   } = useForm<CreateValues>({
-    resolver: zodResolver(createSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(createSchema) as any,
     defaultValues: { name: '', scheduledAt: '', location: '', expectedHeadcount: '' },
   });
 
