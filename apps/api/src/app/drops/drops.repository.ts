@@ -74,4 +74,15 @@ export class DropsRepository {
     const record = this.crewRepo.create({ dropId, userId, status });
     return this.crewRepo.save(record);
   }
+
+  findActivityFeedForUser(userId: string): Promise<DropActivityLog[]> {
+    return this.logRepo
+      .createQueryBuilder('log')
+      .innerJoinAndSelect('log.drop', 'drop')
+      .innerJoinAndSelect('log.user', 'user')
+      .where('log.userId = :userId', { userId })
+      .orWhere('drop.organiserId = :userId', { userId })
+      .orderBy('log.createdAt', 'DESC')
+      .getMany();
+  }
 }

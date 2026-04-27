@@ -7,6 +7,7 @@ export const dropKeys = {
   detail: (id: string) => ['drops', id] as const,
   byJoinCode: (joinCode: string) => ['drops', 'join', joinCode] as const,
   crewMe: (id: string) => ['drops', id, 'crew', 'me'] as const,
+  myActivity: () => ['drops', 'activity', 'mine'] as const,
 };
 
 export function useMyDrops(options?: { enabled?: boolean }) {
@@ -32,6 +33,15 @@ export function useDropByJoinCode(joinCode: string) {
     queryKey: dropKeys.byJoinCode(joinCode),
     queryFn: () => dropsService.getByJoinCode(joinCode),
     enabled: Boolean(joinCode),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useMyActivity(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: dropKeys.myActivity(),
+    queryFn: () => dropsService.getMyActivity(),
+    enabled: options?.enabled ?? true,
     refetchInterval: 30_000,
   });
 }

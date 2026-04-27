@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Drop, CreateDropDto, UpdateDropDto, DropCrew } from '@/types/drop';
+import type { Drop, CreateDropDto, UpdateDropDto, DropActivityLog, DropCrew } from '@/types/drop';
 
 export const dropsService = {
   getMyDrops(): Promise<Drop[]> {
@@ -28,5 +28,9 @@ export const dropsService = {
 
   getMyCrewStatus(id: string): Promise<DropCrew> {
     return api.get<DropCrew>(`/drops/${id}/crew/me`).then((r) => r.data);
+  },
+
+  getMyActivity(): Promise<DropActivityLog[]> {
+    return api.get<DropActivityLog[]>('/drops/activity/mine').then((r) => r.data);
   },
 };
