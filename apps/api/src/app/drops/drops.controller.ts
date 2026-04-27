@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -125,5 +126,19 @@ export class DropsController {
     @Req() request: RequestWithUser,
   ): Promise<JoinDropResponseDto> {
     return this.dropsService.joinDrop(id, request.user.uid);
+  }
+
+  @Delete(':id/crew/me')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Leave a drop' })
+  @ApiResponse({ status: 204, description: 'Successfully left the drop.' })
+  @ApiResponse({ status: 403, description: 'Organiser cannot leave their own drop.' })
+  @ApiResponse({ status: 404, description: 'Drop or crew membership not found.' })
+  leaveDrop(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.leaveDrop(id, request.user.uid);
   }
 }

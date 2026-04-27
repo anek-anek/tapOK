@@ -30,6 +30,10 @@ export const dropsService = {
     return api.get<DropCrew>(`/drops/${id}/crew/me`).then((r) => r.data);
   },
 
+  leaveDrop(id: string): Promise<void> {
+    return api.delete(`/drops/${id}/crew/me`).then(() => undefined);
+  },
+
   getMyActivity(): Promise<DropActivityLog[]> {
     return api.get<DropActivityLog[]>('/drops/activity/mine').then((r) => r.data);
   },

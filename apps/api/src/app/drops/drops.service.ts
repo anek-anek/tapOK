@@ -134,6 +134,29 @@ export class DropsService {
     return crewMember;
   }
 
+  async leaveDrop(dropId: string, firebaseUid: string): Promise<void> {
+    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('Authenticated user not found in database');
+
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId === user.id) {
+      throw new ForbiddenException('Organiser cannot leave their own drop');
+    }
+
+    const crewMember = await this.dropsRepository.findCrewMember(dropId, user.id);
+    if (!crewMember) throw new NotFoundException('You are not a crew member of this drop');
+
+    await this.dropsRepository.removeCrewMember(dropId, user.id);
+
+    await this.dropsRepository.writeLog({
+      dropId,
+      userId: user.id,
+      action: 'left',
+    });
+  }
+
   async getMyCrewStatus(dropId: string, firebaseUid: string): Promise<DropCrew> {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');

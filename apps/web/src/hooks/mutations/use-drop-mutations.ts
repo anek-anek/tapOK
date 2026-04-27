@@ -32,3 +32,15 @@ export function useJoinDrop(dropId: string): UseMutationResult<DropCrew, Error, 
     },
   });
 }
+
+export function useLeaveDrop(dropId: string): UseMutationResult<void, Error, void> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => dropsService.leaveDrop(dropId),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: dropKeys.crewMe(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
