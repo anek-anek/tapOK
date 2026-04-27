@@ -27,7 +27,12 @@ const editSchema = z.object({
   location: z.string().min(1, 'Location is required').optional(),
 });
 
-type CreateValues = z.infer<typeof createSchema>;
+type CreateValues = {
+  name: string;
+  scheduledAt: string;
+  location: string;
+  expectedHeadcount: number | '' | undefined;
+};
 type EditValues = z.infer<typeof editSchema>;
 
 function formatPreviewDate(iso: string) {
