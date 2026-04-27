@@ -83,6 +83,10 @@ export class User {
   @Column({ nullable: true, unique: true })
   userHandle?: string;
 
+  @ApiProperty({ required: false })
+  @Column({ nullable: true })
+  phone?: string;
+
   @ApiProperty({ description: 'Whether the user has accepted the Terms & Conditions' })
   @Column({ default: false })
   termsAccepted: boolean;
