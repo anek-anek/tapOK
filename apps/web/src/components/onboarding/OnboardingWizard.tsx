@@ -344,6 +344,11 @@ function DropLive({ drop }: { drop: Drop }) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 
+  const shareUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/drops/join/${drop.joinCode}`
+      : drop.shareUrl;
+
   function formatDateTime(iso: string) {
     return new Intl.DateTimeFormat(undefined, {
       weekday: 'short',
@@ -355,7 +360,7 @@ function DropLive({ drop }: { drop: Drop }) {
   }
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(drop.shareUrl);
+    await navigator.clipboard.writeText(shareUrl);
     track('drop_share_link_copied', { dropId: drop.id });
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
@@ -367,7 +372,7 @@ function DropLive({ drop }: { drop: Drop }) {
       await navigator.share({
         title: drop.name,
         text: `Tap In if you're coming. No maybes:`,
-        url: drop.shareUrl,
+        url: shareUrl,
       });
     } else {
       await handleCopy();
@@ -461,7 +466,7 @@ function DropLive({ drop }: { drop: Drop }) {
         </p>
         <div className="flex items-center overflow-hidden rounded-xl border border-[#2a2118]/10 bg-white">
           <p className="flex-1 truncate px-4 py-2.5 font-mono text-[11px] text-[#2a2118]/55">
-            {drop.shareUrl}
+            {shareUrl}
           </p>
           <button
             onClick={handleCopy}
