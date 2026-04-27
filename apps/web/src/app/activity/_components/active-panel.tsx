@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { CalendarDays, MapPin } from 'lucide-react';
 import { useMyDrops } from '@/hooks/queries/use-drops';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
-import type { Drop } from '@/types/drop';
+import type { Drop, DropActivityLog } from '@/types/drop';
 
 interface DropPreview {
   id: string;
@@ -14,35 +14,58 @@ interface DropPreview {
   location: string;
 }
 
-const dummyDropPreviews: DropPreview[] = [
-  {
-    id: 'ramen-run',
-    name: 'Ramen Run',
-    status: 'active',
-    scheduledAt: new Date(Date.now() + 7_200_000).toISOString(),
-    location: 'Ramen Nagi, BGC',
-  },
-  {
-    id: 'roof-drinks',
-    name: 'Roof Drinks',
-    status: 'ongoing',
-    scheduledAt: new Date(Date.now() + 18_000_000).toISOString(),
-    location: 'The Ruins Rooftop',
-  },
-];
-
-const frequentlySeen: {
+interface FrequentPerson {
+  userId: string;
+  firstName: string;
+  lastName: string;
   initials: string;
-  color: string;
-  name: string;
-  sub: string;
   count: number;
-}[] = [
-  { initials: 'MC', color: 'bg-[#006666] text-[#F7E9B2]',       name: 'Marco',  sub: 'Always shows up',    count: 6 },
-  { initials: 'DA', color: 'bg-[#006666]/12 text-[#006666]',     name: 'Dani',   sub: 'Reliable crew',      count: 5 },
-  { initials: 'BI', color: 'bg-[#2a2118]/10 text-[#2a2118]/56',  name: 'Bianca', sub: 'Often In',           count: 4 },
-  { initials: 'RE', color: 'bg-[#006666]/12 text-[#006666]',     name: 'Rey',    sub: 'Usually makes it',   count: 3 },
-];
+  lastSeen: string;
+}
+
+const AVATAR_COLORS = [
+  'bg-[#006666] text-[#F7E9B2]',
+  'bg-[#006666]/12 text-[#006666]',
+  'bg-[#2a2118]/10 text-[#2a2118]/56',
+  'bg-[#2a2118] text-[#F7E9B2]',
+] as const;
+
+function avatarColor(index: number) {
+  return AVATAR_COLORS[index % AVATAR_COLORS.length]!;
+}
+
+function getFrequentlySeen(logs: DropActivityLog[], currentUserId: string): FrequentPerson[] {
+  const counts = new Map<string, FrequentPerson>();
+
+  for (const log of logs) {
+    if (log.userId === currentUserId) continue;
+    const existing = counts.get(log.userId);
+    if (existing) {
+      existing.count += 1;
+      if (log.createdAt > existing.lastSeen) existing.lastSeen = log.createdAt;
+    } else {
+      counts.set(log.userId, {
+        userId: log.userId,
+        firstName: log.user.firstName,
+        lastName: log.user.lastName,
+        initials: `${log.user.firstName[0] ?? ''}${log.user.lastName[0] ?? ''}`.toUpperCase(),
+        count: 1,
+        lastSeen: log.createdAt,
+      });
+    }
+  }
+
+  return [...counts.values()]
+    .sort((a, b) => b.count - a.count || b.lastSeen.localeCompare(a.lastSeen))
+    .slice(0, 5);
+}
+
+function lastSeenSub(person: FrequentPerson): string {
+  const diffDays = Math.round((Date.now() - new Date(person.lastSeen).getTime()) / 86_400_000);
+  if (diffDays < 1) return 'Seen today';
+  if (diffDays === 1) return 'Seen yesterday';
+  return `Seen ${diffDays} days ago`;
+}
 
 const STATUS_DOT: Record<'active' | 'ongoing', string> = {
   active:  'bg-emerald-500',
@@ -105,20 +128,43 @@ function DropSkeleton() {
   );
 }
 
-export function ActivePanel() {
-  const { data: apiDrops, isLoading } = useMyDrops();
-  const activeApiDrops: DropPreview[] =
-    (apiDrops?.filter((d) => d.status === 'active' || d.status === 'ongoing') ?? []).map(
-      (d: Drop) => ({
-        id: d.id,
-        name: d.name,
-        status: d.status as 'active' | 'ongoing',
-        scheduledAt: d.scheduledAt,
-        location: d.location,
-      })
-    );
+function PersonSkeleton() {
+  return (
+    <div className="flex items-center gap-3 px-5 py-3 border-t border-[#2a2118]/[0.06]">
+      <Skeleton className="h-8 w-8 rounded-full flex-shrink-0 bg-[#2a2118]/10" />
+      <div className="flex-1 space-y-1.5">
+        <Skeleton className="h-3 w-24 rounded bg-[#2a2118]/10" />
+        <Skeleton className="h-2.5 w-16 rounded-full bg-[#2a2118]/[0.07]" />
+      </div>
+      <Skeleton className="h-5 w-5 rounded bg-[#2a2118]/8" />
+    </div>
+  );
+}
 
-  const displayDrops = activeApiDrops.length > 0 ? activeApiDrops : dummyDropPreviews;
+export function ActivePanel({
+  activityLogs,
+  activityLoading,
+  currentUserId,
+}: {
+  activityLogs: DropActivityLog[];
+  activityLoading: boolean;
+  currentUserId?: string;
+}) {
+  const { data: apiDrops, isLoading: dropsLoading } = useMyDrops();
+
+  const activeDrops: DropPreview[] = (
+    apiDrops?.filter((d) => d.status === 'active' || d.status === 'ongoing') ?? []
+  ).map((d: Drop) => ({
+    id: d.id,
+    name: d.name,
+    status: d.status as 'active' | 'ongoing',
+    scheduledAt: d.scheduledAt,
+    location: d.location,
+  }));
+
+  const frequentlySeen = currentUserId
+    ? getFrequentlySeen(activityLogs, currentUserId)
+    : [];
 
   return (
     <div className="space-y-4">
@@ -136,13 +182,17 @@ export function ActivePanel() {
           </Link>
         </div>
 
-        {isLoading ? (
+        {dropsLoading ? (
           <>
             <DropSkeleton />
             <DropSkeleton />
           </>
+        ) : activeDrops.length > 0 ? (
+          activeDrops.map((drop) => <DropRow key={drop.id} drop={drop} />)
         ) : (
-          displayDrops.map((drop) => <DropRow key={drop.id} drop={drop} />)
+          <p className="px-5 pb-4 text-[12px] text-[#2a2118]/40">
+            No active drops right now.
+          </p>
         )}
       </div>
 
@@ -154,25 +204,39 @@ export function ActivePanel() {
           </p>
         </div>
 
-        {frequentlySeen.map((person) => (
-          <div
-            key={person.name}
-            className="flex items-center gap-3 px-5 py-3 border-t border-[#2a2118]/[0.06] hover:bg-[#2a2118]/[0.02] transition-colors cursor-pointer"
-          >
+        {activityLoading ? (
+          <>
+            <PersonSkeleton />
+            <PersonSkeleton />
+            <PersonSkeleton />
+          </>
+        ) : frequentlySeen.length > 0 ? (
+          frequentlySeen.map((person, i) => (
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-syne text-[10px] font-extrabold flex-shrink-0 ${person.color}`}
+              key={person.userId}
+              className="flex items-center gap-3 px-5 py-3 border-t border-[#2a2118]/[0.06]"
             >
-              {person.initials}
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-syne text-[10px] font-extrabold flex-shrink-0 ${avatarColor(i)}`}
+              >
+                {person.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-[#2a2118]">
+                  {person.firstName} {person.lastName}
+                </p>
+                <p className="text-[11px] text-[#2a2118]/46 mt-0.5">{lastSeenSub(person)}</p>
+              </div>
+              <span className="font-syne text-[20px] font-bold text-[#006666] leading-none">
+                {person.count}
+              </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-[#2a2118]">{person.name}</p>
-              <p className="text-[11px] text-[#2a2118]/46 mt-0.5">{person.sub}</p>
-            </div>
-            <span className="font-syne text-[20px] font-bold text-[#006666] leading-none">
-              {person.count}
-            </span>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="px-5 pb-4 text-[12px] text-[#2a2118]/40">
+            No one else has joined your drops yet.
+          </p>
+        )}
       </div>
     </div>
   );

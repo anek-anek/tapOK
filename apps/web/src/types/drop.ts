@@ -19,6 +19,10 @@ export interface DropActivityLog {
     lastName: string;
     avatar?: string;
   };
+  drop?: {
+    id: string;
+    name: string;
+  };
   action: string;
   changedFields?: Record<string, unknown>;
   createdAt: string;

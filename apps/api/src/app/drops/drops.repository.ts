@@ -78,4 +78,15 @@ export class DropsRepository {
   async removeCrewMember(dropId: string, userId: string): Promise<void> {
     await this.crewRepo.delete({ dropId, userId });
   }
+
+  findActivityFeedForUser(userId: string): Promise<DropActivityLog[]> {
+    return this.logRepo
+      .createQueryBuilder('log')
+      .innerJoinAndSelect('log.drop', 'drop')
+      .innerJoinAndSelect('log.user', 'user')
+      .where('log.userId = :userId', { userId })
+      .orWhere('drop.organiserId = :userId', { userId })
+      .orderBy('log.createdAt', 'DESC')
+      .getMany();
+  }
 }
