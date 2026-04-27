@@ -16,6 +16,7 @@ import {
 import { useDropByJoinCode, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
+import { track } from '@/lib/analytics';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { useMounted } from '@/hooks/use-mounted';
@@ -67,13 +68,24 @@ function JoinCta({
   if (!isAuthenticated) {
     return (
       <div className="text-center">
-        <p className="mb-4 font-mono text-[12px] text-[#2a2118]/55">Sign in to join this drop</p>
+        <p className="mb-1 font-mono text-[11px] text-[#2a2118]/55">
+          Tap In to commit — verify your identity first.
+        </p>
+        <p className="mb-4 font-mono text-[10px] text-[#2a2118]/35">
+          No maybes. In means you&apos;re showing up.
+        </p>
         <Link
           href={`/login?redirectTo=/drops/join/${joinCode}`}
           className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
         >
           <IconLogIn size={13} />
-          Sign in to join
+          Sign in to tap in
+        </Link>
+        <Link
+          href={`/register?redirectTo=/drops/join/${joinCode}`}
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/12 bg-transparent px-6 py-2.5 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/55 transition-colors hover:bg-[#2a2118]/5"
+        >
+          New here? Create account
         </Link>
       </div>
     );
@@ -103,6 +115,9 @@ function JoinCta({
           <IconCheckCircle size={13} className="text-[#006666]" />
           <span className="font-mono text-[11px] font-medium text-[#006666]">You&apos;re In</span>
         </div>
+        <p className="mt-2 font-mono text-[10px] text-[#2a2118]/40">
+          You&apos;re locked in. Everyone knows where you stand.
+        </p>
         <button
           onClick={onViewDrop}
           className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
@@ -145,7 +160,7 @@ function JoinCta({
       <div>
         <button
           disabled={isJoining}
-          onClick={() => joinMutation.mutate()}
+          onClick={() => { track('crew_tap_in_clicked'); joinMutation.mutate(); }}
           className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isJoining ? (
@@ -195,6 +210,17 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   const isOrganiser = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
   const isNotCrew =
     isCrewError && axios.isAxiosError(crewError) && crewError.response?.status === 404;
+
+  // Track when the invite page is first rendered with a valid drop
+  React.useEffect(() => {
+    if (drop?.id) track('crew_invite_viewed', { dropId: drop.id });
+  }, [drop?.id]);
+
+  // Track when the crew member successfully taps In
+  React.useEffect(() => {
+    if (crewStatus?.status === 'in') track('crew_tapped_in', { dropId: drop?.id });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [crewStatus?.status]);
 
   if (!mounted || isDropLoading) {
     return (
@@ -260,7 +286,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
               </div>
               <div className="min-w-0">
                 <p className="font-mono text-[9px] uppercase tracking-[2px] text-[#2a2118]/44">
-                  You&apos;re invited to
+                  {organiserName} made a drop — are you in?
                 </p>
                 <h1 className="truncate font-syne text-[20px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
                   {drop.name}

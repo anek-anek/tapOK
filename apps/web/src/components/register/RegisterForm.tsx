@@ -51,7 +51,7 @@ interface RegisterFormProps {
 
 export default function RegisterForm({ redirectTo }: RegisterFormProps) {
   const router = useRouter();
-  const { loading } = useAuth();
+  const { loading, setSession } = useAuth();
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -94,7 +94,14 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
         return;
       }
 
-      router.replace(redirectTo);
+      setSession(result.user, finalized.dbUser);
+
+      const isCrewJoin = redirectTo.startsWith('/drops/join/');
+      if (isCrewJoin) {
+        router.replace(redirectTo);
+      } else {
+        router.replace(`/onboarding?name=${encodeURIComponent(finalized.dbUser.firstName)}`);
+      }
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
       if (code !== 'auth/popup-closed-by-user') {
@@ -119,7 +126,14 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
         return;
       }
 
-      router.replace(redirectTo);
+      setSession(user, finalized.dbUser);
+
+      const isCrewJoin = redirectTo.startsWith('/drops/join/');
+      if (isCrewJoin) {
+        router.replace(redirectTo);
+      } else {
+        router.replace(`/onboarding?name=${encodeURIComponent(values.firstName.trim())}`);
+      }
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
       setServerError(getFirebaseError(code));

@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import './globals.css';
 import { Geist, Bebas_Neue, Syne, DM_Sans } from 'next/font/google';
 import { cn } from '@repo/ui/utils';
+import { Analytics } from '@vercel/analytics/react';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
 
@@ -51,6 +52,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>{children}</AuthProvider>
         </QueryProvider>
+        <Analytics />
       </body>
     </html>
   );

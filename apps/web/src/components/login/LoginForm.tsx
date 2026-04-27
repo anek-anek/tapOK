@@ -51,7 +51,7 @@ interface LoginFormProps {
 
 export default function LoginForm({ redirectTo }: LoginFormProps) {
   const router = useRouter();
-  const { loading } = useAuth();
+  const { loading, setSession } = useAuth();
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -87,6 +87,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         return;
       }
 
+      setSession(result.user, finalized.dbUser);
       router.replace(redirectTo);
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
@@ -112,6 +113,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         return;
       }
 
+      setSession(user, finalized.dbUser);
       router.replace(redirectTo);
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
