@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { setAuthToken } from '@/services/api';
@@ -25,12 +25,15 @@ interface AuthContextValue {
   user: User | null;
   dbUser: DbUser | null;
   loading: boolean;
+  /** Hydrate the context after a successful registration without waiting for onAuthStateChanged. */
+  setSession: (firebaseUser: User, dbUser: DbUser) => void;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   dbUser: null,
   loading: true,
+  setSession: () => undefined,
 });
 
 function readProfileCookie(): DbUser | null {
@@ -83,8 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
+  const setSession = useCallback((firebaseUser: User, dbUser: DbUser) => {
+    setUser(firebaseUser);
+    setDbUser(dbUser);
+    setLoading(false);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, dbUser, loading }}>
+    <AuthContext.Provider value={{ user, dbUser, loading, setSession }}>
       {children}
     </AuthContext.Provider>
   );
