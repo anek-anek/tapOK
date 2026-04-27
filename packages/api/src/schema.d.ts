@@ -165,6 +165,109 @@ export interface paths {
         patch: operations["OrganizationsController_updateMemberRole"];
         trace?: never;
     };
+    "/drops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a new drop */
+        post: operations["DropsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the authenticated user's drops */
+        get: operations["DropsController_getMyDrops"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/join/{joinCode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Look up a drop by join code (public) */
+        get: operations["DropsController_findByJoinCode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a drop by id */
+        get: operations["DropsController_findOne"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a drop (organiser only, active/ongoing status) */
+        patch: operations["DropsController_update"];
+        trace?: never;
+    };
+    "/drops/{id}/crew/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the current user's crew status for a drop */
+        get: operations["DropsController_getMyCrewStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Join a drop */
+        post: operations["DropsController_joinDrop"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -338,6 +441,55 @@ export interface components {
              * @enum {string}
              */
             role: "owner" | "admin" | "member";
+        };
+        CreateDropDto: {
+            /** @example Beach Sunset Shoot */
+            name: string;
+            /** @example 2026-05-10T18:00:00.000Z */
+            scheduledAt: string;
+            /** @example Sunset Beach, Manila */
+            location: string;
+            /** @example 20 */
+            expectedHeadcount?: number;
+        };
+        Drop: {
+            id: string;
+            name: string;
+            /** Format: date-time */
+            scheduledAt: string;
+            location: string;
+            expectedHeadcount?: number;
+            /** @enum {string} */
+            status: "active" | "ongoing" | "completed";
+            joinCode: string;
+            shareUrl: string;
+            /** @default false */
+            isLocked: boolean;
+            organiserId: string;
+            organiser: components["schemas"]["User"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        JoinDropResponseDto: {
+            id: string;
+            dropId: string;
+            userId: string;
+            /** @enum {string} */
+            status: "in" | "pending";
+            /** Format: date-time */
+            joinedAt: string;
+        };
+        UpdateDropDto: {
+            /** @example Golden Hour Shoot */
+            name?: string;
+            /** @example 2026-05-15T18:00:00.000Z */
+            scheduledAt?: string;
+            /** @example Rizal Park, Manila */
+            location?: string;
+            /** @description Lock the drop so new joiners require approval */
+            isLocked?: boolean;
         };
     };
     responses: never;
@@ -786,6 +938,227 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDropDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Drop"];
+                };
+            };
+        };
+    };
+    DropsController_getMyDrops: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Drop"][];
+                };
+            };
+        };
+    };
+    DropsController_findByJoinCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                joinCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Drop"];
+                };
+            };
+            /** @description Drop not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Drop"];
+                };
+            };
+            /** @description Drop not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDropDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Drop"];
+                };
+            };
+            /** @description Drop is completed and cannot be edited. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the organiser can edit this drop. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_getMyCrewStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JoinDropResponseDto"];
+                };
+            };
+            /** @description Not a crew member. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_joinDrop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JoinDropResponseDto"];
+                };
+            };
+            /** @description Drop is completed. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Organiser cannot join their own drop. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop or user not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Already joined this drop. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

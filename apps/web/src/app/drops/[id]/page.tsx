@@ -17,7 +17,11 @@ import {
   ClipboardCopy as IconClipboard,
   Ticket as IconTicket,
 } from 'lucide-react';
-import { useDrop } from '@/hooks/queries/use-drops';
+import {
+  CheckCircle2 as IconCheckCircle,
+  Clock as IconClock,
+} from 'lucide-react';
+import { useDrop, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { EditDropModal } from '@/components/drop-modal';
@@ -225,6 +229,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const { id } = React.use(params);
   const { dbUser } = useAuth();
   const { data: drop, isLoading, isError } = useDrop(id);
+  const { data: crewStatus } = useMyCrewStatus(id, { enabled: Boolean(dbUser) });
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
@@ -359,6 +364,22 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     )}
                   </span>
                 </div>
+                {!isOrganiser && crewStatus?.status === 'in' && (
+                  <div className="flex items-center gap-2">
+                    <IconCheckCircle size={14} className="shrink-0 text-[#006666]" />
+                    <span className="inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-[#006666]">
+                      You&apos;re In
+                    </span>
+                  </div>
+                )}
+                {!isOrganiser && crewStatus?.status === 'pending' && (
+                  <div className="flex items-center gap-2">
+                    <IconClock size={14} className="shrink-0 text-amber-700" />
+                    <span className="inline-flex items-center rounded-full border border-amber-400/30 bg-amber-100/80 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-amber-700">
+                      Awaiting Approval
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -629,6 +629,291 @@
           "organizations"
         ]
       }
+    },
+    "/drops": {
+      "post": {
+        "operationId": "DropsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDropDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Drop"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new drop",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/mine": {
+      "get": {
+        "operationId": "DropsController_getMyDrops",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Drop"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the authenticated user's drops",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/join/{joinCode}": {
+      "get": {
+        "operationId": "DropsController_findByJoinCode",
+        "parameters": [
+          {
+            "name": "joinCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Drop"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Drop not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Look up a drop by join code (public)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}": {
+      "get": {
+        "operationId": "DropsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Drop"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Drop not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a drop by id",
+        "tags": [
+          "drops"
+        ]
+      },
+      "patch": {
+        "operationId": "DropsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDropDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Drop"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Drop is completed and cannot be edited."
+          },
+          "403": {
+            "description": "Only the organiser can edit this drop."
+          },
+          "404": {
+            "description": "Drop not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit a drop (organiser only, active/ongoing status)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/crew/me": {
+      "get": {
+        "operationId": "DropsController_getMyCrewStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinDropResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not a crew member."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the current user's crew status for a drop",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/join": {
+      "post": {
+        "operationId": "DropsController_joinDrop",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinDropResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Drop is completed."
+          },
+          "403": {
+            "description": "Organiser cannot join their own drop."
+          },
+          "404": {
+            "description": "Drop or user not found."
+          },
+          "409": {
+            "description": "Already joined this drop."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Join a drop",
+        "tags": [
+          "drops"
+        ]
+      }
     }
   },
   "info": {
@@ -1075,6 +1360,152 @@
         "required": [
           "userId"
         ]
+      },
+      "CreateDropDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Beach Sunset Shoot"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "example": "2026-05-10T18:00:00.000Z"
+          },
+          "location": {
+            "type": "string",
+            "example": "Sunset Beach, Manila"
+          },
+          "expectedHeadcount": {
+            "type": "number",
+            "example": 20
+          }
+        },
+        "required": [
+          "name",
+          "scheduledAt",
+          "location"
+        ]
+      },
+      "Drop": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scheduledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "expectedHeadcount": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ongoing",
+              "completed"
+            ]
+          },
+          "joinCode": {
+            "type": "string"
+          },
+          "shareUrl": {
+            "type": "string"
+          },
+          "isLocked": {
+            "type": "boolean",
+            "default": false
+          },
+          "organiserId": {
+            "type": "string"
+          },
+          "organiser": {
+            "$ref": "#/components/schemas/User"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "scheduledAt",
+          "location",
+          "status",
+          "joinCode",
+          "shareUrl",
+          "isLocked",
+          "organiserId",
+          "organiser",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "JoinDropResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in",
+              "pending"
+            ]
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "dropId",
+          "userId",
+          "status",
+          "joinedAt"
+        ]
+      },
+      "UpdateDropDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Golden Hour Shoot"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "example": "2026-05-15T18:00:00.000Z"
+          },
+          "location": {
+            "type": "string",
+            "example": "Rizal Park, Manila"
+          },
+          "isLocked": {
+            "type": "boolean",
+            "description": "Lock the drop so new joiners require approval"
+          }
+        }
       }
     }
   }

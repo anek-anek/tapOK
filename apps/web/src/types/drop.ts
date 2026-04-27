@@ -33,11 +33,22 @@ export interface Drop {
   status: DropStatus;
   joinCode: string;
   shareUrl: string;
+  isLocked: boolean;
   organiserId: string;
   organiser: DropOrganiser;
   activityLogs?: DropActivityLog[];
   createdAt: string;
   updatedAt: string;
+}
+
+export type DropCrewStatus = 'in' | 'pending';
+
+export interface DropCrew {
+  id: string;
+  dropId: string;
+  userId: string;
+  status: DropCrewStatus;
+  joinedAt: string;
 }
 
 export interface CreateDropDto {
@@ -51,4 +62,5 @@ export interface UpdateDropDto {
   name?: string;
   scheduledAt?: string;
   location?: string;
+  isLocked?: boolean;
 }

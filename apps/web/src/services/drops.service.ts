@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Drop, CreateDropDto, UpdateDropDto } from '@/types/drop';
+import type { Drop, CreateDropDto, UpdateDropDto, DropCrew } from '@/types/drop';
 
 export const dropsService = {
   getMyDrops(): Promise<Drop[]> {
@@ -20,5 +20,13 @@ export const dropsService = {
 
   update(id: string, dto: UpdateDropDto): Promise<Drop> {
     return api.patch<Drop>(`/drops/${id}`, dto).then((r) => r.data);
+  },
+
+  joinDrop(id: string): Promise<DropCrew> {
+    return api.post<DropCrew>(`/drops/${id}/join`).then((r) => r.data);
+  },
+
+  getMyCrewStatus(id: string): Promise<DropCrew> {
+    return api.get<DropCrew>(`/drops/${id}/crew/me`).then((r) => r.data);
   },
 };

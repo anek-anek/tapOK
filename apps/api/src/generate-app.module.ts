@@ -15,6 +15,7 @@ import { DropsService } from './app/drops/drops.service';
 import { DropsRepository } from './app/drops/drops.repository';
 import { Drop } from './app/drops/entities/drop.entity';
 import { DropActivityLog } from './app/drops/entities/drop-activity-log.entity';
+import { DropCrew } from './app/drops/entities/drop-crew.entity';
 import { THROTTLE_DEFAULT, THROTTLE_STRICT } from './common';
 
 function stub<T>(token: T): { provide: T; useValue: object } {
@@ -47,6 +48,7 @@ function stub<T>(token: T): { provide: T; useValue: object } {
     stub(DropsRepository),
     stub(getRepositoryToken(Drop)),
     stub(getRepositoryToken(DropActivityLog)),
+    stub(getRepositoryToken(DropCrew)),
     stub(getDataSourceToken()),
   ],
 })

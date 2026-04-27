@@ -23,6 +23,7 @@ import { FirebaseAuthGuard, Public } from '../../common';
 import { DropsService } from './drops.service';
 import { CreateDropDto } from './dto/create-drop.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
+import { JoinDropResponseDto } from './dto/join-drop-response.dto';
 import { Drop } from './entities/drop.entity';
 
 interface RequestWithUser extends Request {
@@ -73,6 +74,19 @@ export class DropsController {
     return this.dropsService.findOne(id);
   }
 
+  @Get(':id/crew/me')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Get the current user's crew status for a drop" })
+  @ApiResponse({ status: 200, type: JoinDropResponseDto })
+  @ApiResponse({ status: 404, description: 'Not a crew member.' })
+  getMyCrewStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<JoinDropResponseDto> {
+    return this.dropsService.getMyCrewStatus(id, request.user.uid);
+  }
+
   @Patch(':id')
   @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Edit a drop (organiser only, active/ongoing status)' })
@@ -86,5 +100,21 @@ export class DropsController {
     @Req() request: RequestWithUser,
   ): Promise<Drop> {
     return this.dropsService.update(id, dto, request.user.uid);
+  }
+
+  @Post(':id/join')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Join a drop' })
+  @ApiResponse({ status: 201, type: JoinDropResponseDto })
+  @ApiResponse({ status: 400, description: 'Drop is completed.' })
+  @ApiResponse({ status: 403, description: 'Organiser cannot join their own drop.' })
+  @ApiResponse({ status: 404, description: 'Drop or user not found.' })
+  @ApiResponse({ status: 409, description: 'Already joined this drop.' })
+  joinDrop(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<JoinDropResponseDto> {
+    return this.dropsService.joinDrop(id, request.user.uid);
   }
 }

@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { DropCrewStatus } from '../../common';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
+import { DropCrew } from './entities/drop-crew.entity';
 
 @Injectable()
 export class DropsRepository {
@@ -11,6 +13,8 @@ export class DropsRepository {
     private readonly dropRepo: Repository<Drop>,
     @InjectRepository(DropActivityLog)
     private readonly logRepo: Repository<DropActivityLog>,
+    @InjectRepository(DropCrew)
+    private readonly crewRepo: Repository<DropCrew>,
   ) {}
 
   findById(id: string): Promise<Drop | null> {
@@ -45,12 +49,29 @@ export class DropsRepository {
     return this.dropRepo.save(drop);
   }
 
-  async update(id: string, data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status'>>): Promise<void> {
+  async update(id: string, data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked'>>): Promise<void> {
     await this.dropRepo.update(id, data);
   }
 
   async writeLog(data: Partial<DropActivityLog>): Promise<DropActivityLog> {
     const log = this.logRepo.create(data);
     return this.logRepo.save(log);
+  }
+
+  findCrewMember(dropId: string, userId: string): Promise<DropCrew | null> {
+    return this.crewRepo.findOneBy({ dropId, userId });
+  }
+
+  findCrewMembers(dropId: string): Promise<DropCrew[]> {
+    return this.crewRepo.find({
+      where: { dropId },
+      relations: { user: true },
+      order: { joinedAt: 'ASC' },
+    });
+  }
+
+  async addCrewMember(dropId: string, userId: string, status: DropCrewStatus): Promise<DropCrew> {
+    const record = this.crewRepo.create({ dropId, userId, status });
+    return this.crewRepo.save(record);
   }
 }
