@@ -117,9 +117,11 @@ function ShareModal({
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
+
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(drop.shareUrl);
+      await navigator.clipboard.writeText(shareUrl);
     } catch {
       return;
     }
@@ -160,7 +162,7 @@ function ShareModal({
         </div>
 
         <div className="flex justify-center rounded-[20px] bg-white p-5">
-          <QRCodeSVG value={drop.shareUrl} size={180} bgColor="#ffffff" fgColor="#2a2118" level="M" />
+          <QRCodeSVG value={shareUrl} size={180} bgColor="#ffffff" fgColor="#2a2118" level="M" />
         </div>
 
         <div className="mt-3 flex items-center justify-between rounded-[18px] border border-[#2a2118]/10 bg-white/72 px-4 py-3">
@@ -184,7 +186,7 @@ function ShareModal({
 
         <div className="mt-2 flex items-center gap-3 rounded-[18px] border border-[#2a2118]/10 bg-white/72 px-4 py-3">
           <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-[#2a2118]/46">
-            {drop.shareUrl}
+            {shareUrl}
           </span>
           <button
             type="button"
@@ -265,6 +267,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
   const isOrganiser = dbUser?.id === drop.organiserId;
   const canEdit = isOrganiser && drop.status !== 'completed';
+  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
 
   return (
     <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-[#006666]/15">
@@ -437,7 +440,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </p>
 
             <div className="flex justify-center rounded-[20px] bg-[#F7E9B2]/60 p-5">
-              <QRCodeSVG value={drop.shareUrl} size={160} bgColor="transparent" fgColor="#2a2118" level="M" />
+              <QRCodeSVG value={shareUrl} size={160} bgColor="transparent" fgColor="#2a2118" level="M" />
             </div>
 
             <div className="mt-3 rounded-[18px] border border-[#2a2118]/10 bg-[#F7E9B2]/50 px-4 py-3">
@@ -458,9 +461,9 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               </p>
               <div className="mt-1.5 flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-[#2a2118]/46">
-                  {drop.shareUrl}
+                  {shareUrl}
                 </span>
-                <CopyButton text={drop.shareUrl} />
+                <CopyButton text={shareUrl} />
               </div>
             </div>
 
