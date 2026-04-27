@@ -3,6 +3,7 @@
 import { Passion_One } from 'next/font/google';
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useEffect, useState } from 'react';
 
 const passionOne = Passion_One({
   weight: '400',
@@ -23,7 +24,12 @@ function getInitials(firstName?: string, lastName?: string) {
 
 export function TapokNavbar({ active = 'drops' }: { active?: 'home' | 'activity' | 'drops' }) {
   const { dbUser } = useAuth();
-  const initials = getInitials(dbUser?.firstName, dbUser?.lastName);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const initials = mounted ? getInitials(dbUser?.firstName, dbUser?.lastName) : 'U';
+  const ariaLabel = mounted && dbUser ? `Profile: ${dbUser.firstName} ${dbUser.lastName}` : 'Profile';
+  const title = mounted && dbUser ? `${dbUser.firstName} ${dbUser.lastName}` : 'Profile';
 
   const navItems: NavItem[] = [
     { href: '/', label: 'Home', active: active === 'home' },
@@ -63,8 +69,8 @@ export function TapokNavbar({ active = 'drops' }: { active?: 'home' | 'activity'
 
         <Link
           href="/profile"
-          aria-label={dbUser ? `Profile: ${dbUser.firstName} ${dbUser.lastName}` : 'Profile'}
-          title={dbUser ? `${dbUser.firstName} ${dbUser.lastName}` : 'Profile'}
+          aria-label={ariaLabel}
+          title={title}
           className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#2a2118]/12 bg-white/75 font-syne text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/22 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#F7E9B2]"
         >
           {initials}

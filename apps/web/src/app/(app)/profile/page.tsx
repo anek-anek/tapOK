@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, Phone, Calendar, Pencil, X, Check } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/queries/use-users';
 import { useUpdateUser } from '@/hooks/mutations/use-user-mutations';
@@ -15,8 +15,11 @@ export default function ProfilePage() {
   const { data: profile, isLoading } = useCurrentUser();
   const displayUser = profile ?? dbUser;
 
+  const [mounted, setMounted] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '' });
+
+  useEffect(() => setMounted(true), []);
 
   const updateUser = useUpdateUser(profile?.id ?? '');
 
@@ -45,7 +48,7 @@ export default function ProfilePage() {
     });
   }
 
-  if (isLoading && !displayUser) {
+  if (!mounted || (isLoading && !displayUser)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <span className="font-mono text-sm text-[#2a2118]/40">Loading...</span>
