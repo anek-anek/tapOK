@@ -23,6 +23,8 @@ import { TapokNavbar } from '@/components/tapok-navbar';
 import { CreateDropModal, EditDropModal } from '@/components/drop-modal';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMyDrops } from '@/hooks/queries/use-drops';
+import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { useMounted } from '@/hooks/use-mounted';
 import type { Drop, DropStatus } from '@/types/drop';
 
 type StatusMeta = {
@@ -327,19 +329,22 @@ function FocusDropCard({
   onShare: (drop: Drop) => void;
 }) {
   return (
-    <div className="rounded-[28px] border border-[#2a2118]/10 bg-[linear-gradient(180deg,rgba(255,249,229,0.98),rgba(255,244,212,0.9))] p-5 shadow-[0_18px_44px_rgba(42,33,24,0.08)]">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <article className={`group rounded-[22px] border border-l-[5px] ${STATUS_STRIPE[drop.status]} border-[#2a2118]/10 bg-white/70 p-5 shadow-[0_10px_28px_rgba(42,33,24,0.05)]`}>
+      {/* Eyebrow */}
+      <p className="mb-3 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+        Featured drop
+      </p>
+
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#006666] font-syne text-[12px] font-bold tracking-[0.12em] text-[#F7E9B2]">
             {getInitials(drop.name)}
           </div>
           <div className="min-w-0">
-            <h2 className="truncate font-syne text-[20px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+            <StatusPill status={drop.status} />
+            <h2 className="mt-1.5 truncate font-syne text-[clamp(18px,2vw,24px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
               {drop.name}
             </h2>
-            <div className="mt-1.5">
-              <StatusPill status={drop.status} />
-            </div>
           </div>
         </div>
 
@@ -354,7 +359,7 @@ function FocusDropCard({
           <button
             type="button"
             onClick={() => onShare(drop)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/75 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 transition-colors hover:border-[#2a2118]/18 hover:text-[#2a2118] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/80 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 transition-colors hover:border-[#2a2118]/18 hover:text-[#2a2118] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2"
           >
             <ClipboardCopy size={13} />
             Share
@@ -382,7 +387,7 @@ function FocusDropCard({
           </span>
         ) : null}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -441,19 +446,100 @@ function EmptyState({ onCreateDrop }: { onCreateDrop: () => void }) {
   );
 }
 
-function BoardSkeleton() {
+
+/** Mirrors the FocusDropCard layout — same container as CompactDropCardSkeleton */
+function FocusDropCardSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="h-[180px] rounded-[28px] border border-[#2a2118]/10 bg-white/55 animate-pulse" />
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="h-[150px] rounded-[22px] border border-[#2a2118]/10 bg-white/55 animate-pulse" />
-        <div className="h-[150px] rounded-[22px] border border-[#2a2118]/10 bg-white/55 animate-pulse" />
+    <div className="rounded-[22px] border border-l-[5px] border-l-[#2a2118]/12 border-[#2a2118]/10 bg-white/70 p-5 shadow-[0_10px_28px_rgba(42,33,24,0.05)]">
+      {/* Eyebrow */}
+      <Skeleton className="mb-3 h-2.5 w-20 rounded-full bg-[#006666]/15" />
+      {/* Top row */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <Skeleton className="h-12 w-12 shrink-0 rounded-full bg-[#2a2118]/10" />
+          <div className="min-w-0 space-y-2">
+            <Skeleton className="h-3 w-16 rounded-full bg-[#2a2118]/10" />
+            <Skeleton className="h-6 w-44 rounded bg-[#2a2118]/10" />
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Skeleton className="h-8 w-20 rounded-full bg-[#2a2118]/8" />
+          <Skeleton className="h-8 w-20 rounded-full bg-[#2a2118]/8" />
+        </div>
+      </div>
+      {/* Meta row */}
+      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-[#2a2118]/8 pt-4">
+        <Skeleton className="h-3 w-36 rounded-full bg-[#2a2118]/8" />
+        <Skeleton className="h-3 w-28 rounded-full bg-[#2a2118]/8" />
+        <Skeleton className="h-3 w-24 rounded-full bg-[#2a2118]/8" />
       </div>
     </div>
   );
 }
 
+/** Mirrors the CompactDropCard layout */
+function CompactDropCardSkeleton() {
+  return (
+    <div className="rounded-[22px] border border-l-[5px] border-l-[#2a2118]/12 border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_10px_28px_rgba(42,33,24,0.05)]">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        {/* Left: status pill + name block + meta */}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-5 w-16 rounded-full bg-[#2a2118]/8" />
+            <Skeleton className="h-3 w-10 rounded-full bg-[#2a2118]/6" />
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <Skeleton className="h-11 w-11 shrink-0 rounded-full bg-[#2a2118]/10" />
+            <div className="min-w-0 space-y-1.5">
+              <Skeleton className="h-4 w-40 rounded bg-[#2a2118]/10" />
+              <Skeleton className="h-3 w-20 rounded-full bg-[#2a2118]/6" />
+            </div>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <Skeleton className="h-3 w-32 rounded-full bg-[#2a2118]/8" />
+            <Skeleton className="h-3 w-28 rounded-full bg-[#2a2118]/8" />
+            <Skeleton className="h-3 w-24 rounded-full bg-[#2a2118]/8" />
+          </div>
+          <Skeleton className="mt-3 h-3 w-20 rounded-full bg-[#2a2118]/6" />
+        </div>
+        {/* Right: action buttons */}
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <Skeleton className="h-8 w-20 rounded-full bg-[#2a2118]/8" />
+          <Skeleton className="h-8 w-16 rounded-full bg-[#2a2118]/6" />
+          <Skeleton className="h-8 w-20 rounded-full bg-[#2a2118]/6" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Mirrors the tab panel + cards section */
+function BoardSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Focus card skeleton */}
+      <FocusDropCardSkeleton />
+
+      {/* Tab panel skeleton */}
+      <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/58 p-5 shadow-[0_12px_34px_rgba(42,33,24,0.05)]">
+        {/* Tab bar */}
+        <div className="flex gap-6 border-b border-[#2a2118]/8 pb-3">
+          <Skeleton className="h-3 w-12 rounded-full bg-[#2a2118]/12" />
+          <Skeleton className="h-3 w-20 rounded-full bg-[#2a2118]/8" />
+        </div>
+        {/* Card rows */}
+        <div className="mt-4 space-y-3">
+          <CompactDropCardSkeleton />
+          <CompactDropCardSkeleton />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export default function DropsPage() {
+  const mounted = useMounted();
   const router = useRouter();
   const { user, dbUser, loading } = useAuth();
   const { data: drops = [], isLoading, isError } = useMyDrops({
@@ -500,6 +586,26 @@ export default function DropsPage() {
     event.preventDefault();
     handleJoin();
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
+        <TapokNavbar />
+        <main className="relative mx-auto max-w-7xl px-6 py-8 lg:px-10 lg:py-10">
+          <section className="mb-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
+            <div className="flex flex-col justify-center gap-4">
+              <Skeleton className="h-12 w-64 rounded bg-[#2a2118]/10" />
+              <Skeleton className="h-4 w-72 rounded-full bg-[#2a2118]/8" />
+            </div>
+            <Skeleton className="h-36 rounded-[30px] bg-[#2a2118]/6" />
+          </section>
+          <section className="space-y-4">
+            <BoardSkeleton />
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (!loading && !user) {
     return (
@@ -614,7 +720,7 @@ export default function DropsPage() {
         </section>
 
         <section className="space-y-6">
-            {isLoading ? (
+            {(loading || isLoading) ? (
               <BoardSkeleton />
             ) : isError ? (
               <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/72 p-6 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">

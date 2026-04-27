@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { CalendarDays, MapPin } from 'lucide-react';
 import { useMyDrops } from '@/hooks/queries/use-drops';
+import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import type { Drop } from '@/types/drop';
 
 interface DropPreview {
@@ -95,10 +96,10 @@ function DropRow({ drop }: { drop: DropPreview }) {
 function DropSkeleton() {
   return (
     <div className="flex items-start gap-3 px-5 py-3.5 border-t border-[#2a2118]/[0.06]">
-      <div className="mt-1.5 h-2 w-2 rounded-full flex-shrink-0 bg-[#2a2118]/10 animate-pulse" />
+      <Skeleton className="mt-1.5 h-2 w-2 rounded-full flex-shrink-0 bg-[#2a2118]/10" />
       <div className="flex-1 space-y-1.5">
-        <div className="h-3 w-3/4 rounded bg-[#2a2118]/10 animate-pulse" />
-        <div className="h-2.5 w-1/2 rounded bg-[#2a2118]/[0.07] animate-pulse" />
+        <Skeleton className="h-3 w-3/4 rounded bg-[#2a2118]/10" />
+        <Skeleton className="h-2.5 w-1/2 rounded bg-[#2a2118]/[0.07]" />
       </div>
     </div>
   );

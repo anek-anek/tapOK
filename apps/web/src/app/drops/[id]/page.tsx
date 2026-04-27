@@ -25,6 +25,8 @@ import { useDrop, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { EditDropModal } from '@/components/drop-modal';
+import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { useMounted } from '@/hooks/use-mounted';
 import type { DropStatus } from '@/types/drop';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
@@ -207,20 +209,20 @@ function PageSkeleton() {
     <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
       <TapokNavbar />
       <main className="relative mx-auto max-w-5xl px-6 py-8 lg:px-10 lg:py-10">
-        <div className="mb-6 h-4 w-20 animate-pulse rounded-full bg-[#2a2118]/10" />
+        <Skeleton className="mb-6 h-4 w-20 rounded-full bg-[#2a2118]/10" />
         <div className="mb-8 flex items-center gap-4">
-          <div className="h-14 w-14 animate-pulse rounded-full bg-[#2a2118]/10" />
+          <Skeleton className="h-14 w-14 rounded-full bg-[#2a2118]/10" />
           <div className="space-y-2">
-            <div className="h-3 w-16 animate-pulse rounded-full bg-[#2a2118]/10" />
-            <div className="h-7 w-52 animate-pulse rounded bg-[#2a2118]/10" />
+            <Skeleton className="h-3 w-16 rounded-full bg-[#2a2118]/10" />
+            <Skeleton className="h-7 w-52 rounded bg-[#2a2118]/10" />
           </div>
         </div>
         <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
           <div className="space-y-4">
-            <div className="h-44 animate-pulse rounded-[28px] border border-[#2a2118]/10 bg-white/55" />
-            <div className="h-64 animate-pulse rounded-[28px] border border-[#2a2118]/10 bg-white/55" />
+            <Skeleton className="h-44 rounded-[28px] border border-[#2a2118]/10 bg-white/55" />
+            <Skeleton className="h-64 rounded-[28px] border border-[#2a2118]/10 bg-white/55" />
           </div>
-          <div className="h-80 animate-pulse rounded-[28px] border border-[#2a2118]/10 bg-white/55" />
+          <Skeleton className="h-80 rounded-[28px] border border-[#2a2118]/10 bg-white/55" />
         </div>
       </main>
     </div>
@@ -229,13 +231,14 @@ function PageSkeleton() {
 
 export default function DropDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
+  const mounted = useMounted();
   const { dbUser } = useAuth();
   const { data: drop, isLoading, isError } = useDrop(id);
   const { data: crewStatus } = useMyCrewStatus(id, { enabled: Boolean(dbUser) });
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
-  if (isLoading) return <PageSkeleton />;
+  if (!mounted || isLoading) return <PageSkeleton />;
 
   if (isError || !drop) {
     return (

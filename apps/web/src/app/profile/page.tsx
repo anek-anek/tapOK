@@ -6,12 +6,15 @@ import { TapokNavbar } from '@/components/tapok-navbar';
 import { useCurrentUser } from '@/hooks/queries/use-users';
 import { useUpdateUser } from '@/hooks/mutations/use-user-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useMounted } from '@/hooks/use-mounted';
+import { Skeleton } from '@repo/ui/components/ui/skeleton';
 
 function getInitials(firstName: string, lastName: string): string {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
 export default function ProfilePage() {
+  const mounted = useMounted();
   const { dbUser } = useAuth();
   const { data: profile, isLoading } = useCurrentUser();
   const displayUser = profile ?? dbUser;
@@ -46,13 +49,48 @@ export default function ProfilePage() {
     });
   }
 
-  if (isLoading && !displayUser) {
+  if (!mounted || (isLoading && !displayUser)) {
     return (
       <div className="min-h-screen bg-[#F7E9B2]">
         <TapokNavbar />
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <span className="font-mono text-sm text-[#2a2118]/40">Loading...</span>
-        </div>
+        <main className="relative mx-auto max-w-2xl px-6 py-16">
+          <Skeleton className="mb-2 h-3 w-16 rounded-full bg-[#2a2118]/10" />
+          <div className="mb-10 flex items-start justify-between">
+            <Skeleton className="h-9 w-48 rounded bg-[#2a2118]/10" />
+            <Skeleton className="h-8 w-16 rounded-lg bg-[#2a2118]/8" />
+          </div>
+          <div className="mb-8 flex items-center gap-6">
+            <Skeleton className="h-20 w-20 shrink-0 rounded-full bg-[#2a2118]/10" />
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-40 rounded bg-[#2a2118]/10" />
+              <Skeleton className="h-3 w-24 rounded-full bg-[#2a2118]/8" />
+            </div>
+          </div>
+          <div className="mb-6 overflow-hidden rounded-2xl border border-[#2a2118]/10 bg-[#FAF4DC]">
+            <div className="flex items-center gap-4 border-b border-[#2a2118]/8 px-6 py-4">
+              <Skeleton className="h-4 w-4 rounded bg-[#2a2118]/10" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-2.5 w-10 rounded-full bg-[#2a2118]/8" />
+                <Skeleton className="h-3.5 w-40 rounded-full bg-[#2a2118]/10" />
+              </div>
+            </div>
+            <div className="flex items-center gap-4 border-b border-[#2a2118]/8 px-6 py-4">
+              <Skeleton className="h-4 w-4 rounded bg-[#2a2118]/10" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-2.5 w-10 rounded-full bg-[#2a2118]/8" />
+                <Skeleton className="h-3.5 w-28 rounded-full bg-[#2a2118]/10" />
+              </div>
+            </div>
+            <div className="flex items-center gap-4 px-6 py-4">
+              <Skeleton className="h-4 w-4 rounded bg-[#2a2118]/10" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-2.5 w-16 rounded-full bg-[#2a2118]/8" />
+                <Skeleton className="h-3.5 w-24 rounded-full bg-[#2a2118]/10" />
+              </div>
+            </div>
+          </div>
+          <Skeleton className="h-20 w-full rounded-2xl bg-[#2a2118]/8" />
+        </main>
       </div>
     );
   }
