@@ -77,10 +77,20 @@ jobs:
         run: npx turbo run build --filter=api
 
       - name: Build Vercel output
+        env:
+          VERCEL_GIT_COMMIT_REF: ${{ github.ref_name }}
+          VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
+          VERCEL_GIT_PROVIDER: github
+          VERCEL_GIT_REPO_SLUG: ${{ github.repository }}
         run: vercel build ${{ github.ref_name == 'main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy prebuilt
-        run: vercel deploy --prebuilt ${{ github.ref_name == 'main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_GIT_COMMIT_REF: ${{ github.ref_name }}
+          VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
+          VERCEL_GIT_PROVIDER: github
+          VERCEL_GIT_REPO_SLUG: ${{ github.repository }}
+        run: vercel deploy --prebuilt ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}
 
   deploy-web:
     name: Deploy Web
@@ -117,4 +127,9 @@ jobs:
         run: vercel pull --yes --environment=${{ github.ref_name == 'main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy
-        run: vercel deploy ${{ github.ref_name == 'main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_GIT_COMMIT_REF: ${{ github.ref_name }}
+          VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
+          VERCEL_GIT_PROVIDER: github
+          VERCEL_GIT_REPO_SLUG: ${{ github.repository }}
+        run: vercel deploy ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}

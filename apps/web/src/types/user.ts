@@ -23,6 +23,11 @@ export interface User {
   privacyPolicyAcceptedDate?: string;
 }
 
+export interface UserProfile extends User {
+  phone?: string;
+  dropCount: number;
+}
+
 export interface CreateUserDto {
   email: string;
   firstName: string;
@@ -33,6 +38,7 @@ export interface CreateUserDto {
   gender?: GenderEnum;
   birthday?: string;
   userHandle?: string;
+  phone?: string;
 }
 
 export type UpdateUserDto = Partial<CreateUserDto>;

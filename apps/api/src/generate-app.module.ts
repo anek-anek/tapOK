@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { UsersController } from './app/users/users.controller';
 import { OrganizationsController } from './app/organizations/organizations.controller';
 import { UsersService } from './app/users/users.service';
@@ -18,11 +18,11 @@ import { DropActivityLog } from './app/drops/entities/drop-activity-log.entity';
 import { THROTTLE_DEFAULT, THROTTLE_STRICT } from './common';
 
 function stub<T>(token: T): { provide: T; useValue: object } {
-  const proxy = new Proxy({}, { 
-    get: (target, prop) => {
+  const proxy = new Proxy({}, {
+    get: (_target, prop) => {
       if (prop === 'then') return undefined;
       return () => Promise.resolve(null);
-    } 
+    },
   });
   return { provide: token, useValue: proxy };
 }
@@ -47,6 +47,7 @@ function stub<T>(token: T): { provide: T; useValue: object } {
     stub(DropsRepository),
     stub(getRepositoryToken(Drop)),
     stub(getRepositoryToken(DropActivityLog)),
+    stub(getDataSourceToken()),
   ],
 })
 export class GenerateAppModule {}

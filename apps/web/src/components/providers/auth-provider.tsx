@@ -33,9 +33,20 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
 });
 
+function readProfileCookie(): DbUser | null {
+  if (typeof document === 'undefined') return null;
+  const raw = document.cookie.split('; ').find((c) => c.startsWith('user_profile='));
+  if (!raw) return null;
+  try {
+    return JSON.parse(decodeURIComponent(raw.split('=')[1] ?? '')) as DbUser;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [dbUser, setDbUser] = useState<DbUser | null>(null);
+  const [dbUser, setDbUser] = useState<DbUser | null>(readProfileCookie);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

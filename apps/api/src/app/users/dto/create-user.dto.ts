@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsEnum,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   MaxDate,
 } from 'class-validator';
@@ -54,4 +55,9 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   userHandle?: string;
+
+  @ApiPropertyOptional({ example: '+639123456789' })
+  @IsOptional()
+  @IsPhoneNumber()
+  phone?: string;
 }
