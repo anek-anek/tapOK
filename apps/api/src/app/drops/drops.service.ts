@@ -10,6 +10,7 @@ import { randomBytes } from 'crypto';
 import { UsersService } from '../users/users.service';
 import { DropsRepository } from './drops.repository';
 import { Drop } from './entities/drop.entity';
+import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
 import { DropCrewStatus, DropStatus } from '../../common';
 import { CreateDropDto } from './dto/create-drop.dto';
@@ -141,6 +142,12 @@ export class DropsService {
     if (!crewMember) throw new NotFoundException('You are not a crew member of this drop');
 
     return crewMember;
+  }
+
+  async findMyActivityLogs(firebaseUid: string): Promise<DropActivityLog[]> {
+    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('Authenticated user not found in database');
+    return this.dropsRepository.findActivityFeedForUser(user.id);
   }
 
   private async generateUniqueJoinCode(): Promise<string> {

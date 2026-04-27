@@ -25,6 +25,7 @@ import { CreateDropDto } from './dto/create-drop.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
 import { JoinDropResponseDto } from './dto/join-drop-response.dto';
 import { Drop } from './entities/drop.entity';
+import { DropActivityLog } from './entities/drop-activity-log.entity';
 
 interface RequestWithUser extends Request {
   user: DecodedIdToken;
@@ -54,6 +55,14 @@ export class DropsController {
   @ApiResponse({ status: 200, type: [Drop] })
   getMyDrops(@Req() request: RequestWithUser): Promise<Drop[]> {
     return this.dropsService.findMyDrops(request.user.uid);
+  }
+
+  @Get('activity/mine')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: "Get the authenticated user's activity logs across all drops" })
+  @ApiResponse({ status: 200, type: [DropActivityLog] })
+  getMyActivity(@Req() request: RequestWithUser): Promise<DropActivityLog[]> {
+    return this.dropsService.findMyActivityLogs(request.user.uid);
   }
 
   @Get('join/:joinCode')
