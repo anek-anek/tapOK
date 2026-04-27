@@ -21,6 +21,14 @@ export class DropsRepository {
     });
   }
 
+  findByOrganiserId(organiserId: string): Promise<Drop[]> {
+    return this.dropRepo.find({
+      where: { organiserId },
+      relations: { organiser: true },
+      order: { scheduledAt: 'ASC' },
+    });
+  }
+
   findByJoinCode(joinCode: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
       where: { joinCode },

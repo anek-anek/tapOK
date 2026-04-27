@@ -16,6 +16,7 @@ export function useUpdateDrop(id: string): UseMutationResult<Drop, Error, Update
     mutationFn: (dto: UpdateDropDto) => dropsService.update(id, dto),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: dropKeys.detail(id) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.mine() });
     },
   });
 }

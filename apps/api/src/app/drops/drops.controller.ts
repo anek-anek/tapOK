@@ -46,6 +46,14 @@ export class DropsController {
     return this.dropsService.create(dto, request.user.uid);
   }
 
+  @Get('mine')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: "Get the authenticated user's drops" })
+  @ApiResponse({ status: 200, type: [Drop] })
+  getMyDrops(@Req() request: RequestWithUser): Promise<Drop[]> {
+    return this.dropsService.findMyDrops(request.user.uid);
+  }
+
   @Get('join/:joinCode')
   @Public()
   @ApiOperation({ summary: 'Look up a drop by join code (public)' })

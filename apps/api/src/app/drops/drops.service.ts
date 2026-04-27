@@ -55,6 +55,12 @@ export class DropsService {
     return drop;
   }
 
+  async findMyDrops(firebaseUid: string): Promise<Drop[]> {
+    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!organiser) throw new NotFoundException('Authenticated user not found in database');
+    return this.dropsRepository.findByOrganiserId(organiser.id);
+  }
+
   async findByJoinCode(joinCode: string): Promise<Drop> {
     const drop = await this.dropsRepository.findByJoinCode(joinCode);
     if (!drop) throw new NotFoundException(`Drop with join code ${joinCode} not found`);
