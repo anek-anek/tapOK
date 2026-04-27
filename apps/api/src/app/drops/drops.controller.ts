@@ -18,6 +18,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
+import type { DecodedIdToken } from 'firebase-admin/auth';
 import { FirebaseAuthGuard, Public } from '../../common';
 import { DropsService } from './drops.service';
 import { CreateDropDto } from './dto/create-drop.dto';
@@ -25,7 +26,7 @@ import { UpdateDropDto } from './dto/update-drop.dto';
 import { Drop } from './entities/drop.entity';
 
 interface RequestWithUser extends Request {
-  user: any;
+  user: DecodedIdToken;
 }
 
 @ApiTags('drops')

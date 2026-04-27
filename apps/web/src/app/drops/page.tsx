@@ -319,11 +319,9 @@ function CompactDropCard({
 
 function FocusDropCard({
   drop,
-  viewerId,
   onShare,
 }: {
   drop: Drop;
-  viewerId?: string | null;
   onShare: (drop: Drop) => void;
 }) {
   return (
@@ -487,7 +485,6 @@ export default function DropsPage() {
     [activeDrops, focusDrop],
   );
 
-  const chiefDrops = drops.filter((drop) => drop.organiserId === dbUser?.id);
   const plannedHeadcount = drops.reduce((sum, drop) => sum + (drop.expectedHeadcount ?? 0), 0);
   const handleShare = (drop: Drop) => setShareModalDrop(drop);
 
@@ -637,7 +634,6 @@ export default function DropsPage() {
                 {activeTab === 'live' && focusDrop && focusDrop.status !== 'completed' && (
                   <FocusDropCard
                     drop={focusDrop}
-                    viewerId={dbUser?.id}
                     onShare={handleShare}
                   />
                 )}

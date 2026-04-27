@@ -138,7 +138,7 @@ function Feed() {
             Activity
           </p>
           <h1 className="mt-2 font-syne text-[clamp(28px,3.8vw,48px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
-            What's Happening
+            What&apos;s Happening
           </h1>
           <p className="mt-2 text-[14px] leading-relaxed text-[#2a2118]/56">
             8 events across your Drops today.

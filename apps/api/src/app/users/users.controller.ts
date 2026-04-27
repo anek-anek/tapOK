@@ -31,7 +31,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
 interface RequestWithUser extends Request {
-  user: any;
+  user: DecodedIdToken;
 }
 
 @ApiTags('users')
