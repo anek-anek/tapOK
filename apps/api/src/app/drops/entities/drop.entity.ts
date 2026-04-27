@@ -12,6 +12,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { DropStatus } from '../../../common';
 import { User } from '../../users/entities/user.entity';
 import { DropActivityLog } from './drop-activity-log.entity';
+import { DropCrew } from './drop-crew.entity';
 
 @Entity('drops')
 export class Drop {
@@ -47,6 +48,10 @@ export class Drop {
   @Column()
   shareUrl: string;
 
+  @ApiProperty({ default: false })
+  @Column({ default: false })
+  isLocked: boolean;
+
   @ApiProperty()
   @Column()
   organiserId: string;
@@ -58,6 +63,9 @@ export class Drop {
 
   @OneToMany(() => DropActivityLog, (log) => log.drop)
   activityLogs: DropActivityLog[];
+
+  @OneToMany(() => DropCrew, (crew) => crew.drop)
+  crew: DropCrew[];
 
   @ApiProperty()
   @CreateDateColumn()

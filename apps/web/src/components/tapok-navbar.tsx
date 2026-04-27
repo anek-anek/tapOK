@@ -84,7 +84,7 @@ export function TapokNavbar() {
         </div>
 
         <nav className="flex items-end gap-1 sm:gap-2">
-          {navItems.map((item) => (
+          {!loading && navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -106,7 +106,9 @@ export function TapokNavbar() {
 
         {/* Profile button + dropdown */}
         <div className="relative" ref={dropdownRef}>
-          {!loading && !dbUser ? (
+          {loading ? (
+            <div className="h-11 w-11 animate-pulse rounded-full bg-[#2a2118]/10" />
+          ) : !dbUser ? (
             <Link
               href="/login"
               className="inline-flex items-center gap-2 rounded-full border border-[#2a2118]/12 bg-white/75 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/22 hover:bg-white"
@@ -114,14 +116,13 @@ export function TapokNavbar() {
               Login
             </Link>
           ) : (
-          <button
-            onClick={() => setOpen((v) => !v)}
-            disabled={loading}
-            aria-label={dbUser ? `${dbUser.firstName} ${dbUser.lastName} — account menu` : 'Account menu'}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#2a2118]/12 bg-white/75 font-syne text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/22 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#F7E9B2] disabled:opacity-40"
-          >
-            {loading ? '…' : initials}
-          </button>
+            <button
+              onClick={() => setOpen((v) => !v)}
+              aria-label={`${dbUser.firstName} ${dbUser.lastName} — account menu`}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#2a2118]/12 bg-white/75 font-syne text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/22 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#F7E9B2]"
+            >
+              {initials}
+            </button>
           )}
 
           {open && (

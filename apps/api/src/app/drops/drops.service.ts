@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -9,7 +10,8 @@ import { randomBytes } from 'crypto';
 import { UsersService } from '../users/users.service';
 import { DropsRepository } from './drops.repository';
 import { Drop } from './entities/drop.entity';
-import { DropStatus } from '../../common';
+import { DropCrew } from './entities/drop-crew.entity';
+import { DropCrewStatus, DropStatus } from '../../common';
 import { CreateDropDto } from './dto/create-drop.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
 
@@ -82,11 +84,13 @@ export class DropsService {
     if (dto.name !== undefined) changedFields['name'] = dto.name;
     if (dto.scheduledAt !== undefined) changedFields['scheduledAt'] = dto.scheduledAt;
     if (dto.location !== undefined) changedFields['location'] = dto.location;
+    if (dto.isLocked !== undefined) changedFields['isLocked'] = dto.isLocked;
 
     await this.dropsRepository.update(id, {
       ...(dto.name !== undefined && { name: dto.name }),
       ...(dto.scheduledAt !== undefined && { scheduledAt: new Date(dto.scheduledAt) }),
       ...(dto.location !== undefined && { location: dto.location }),
+      ...(dto.isLocked !== undefined && { isLocked: dto.isLocked }),
     });
 
     await this.dropsRepository.writeLog({
@@ -97,6 +101,46 @@ export class DropsService {
     });
 
     return this.findOne(id);
+  }
+
+  async joinDrop(dropId: string, firebaseUid: string): Promise<DropCrew> {
+    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('Authenticated user not found in database');
+
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.status === DropStatus.COMPLETED) {
+      throw new BadRequestException('Cannot join a completed drop');
+    }
+
+    if (drop.organiserId === user.id) {
+      throw new ForbiddenException('Organiser cannot join their own drop');
+    }
+
+    const existing = await this.dropsRepository.findCrewMember(dropId, user.id);
+    if (existing) throw new ConflictException('You have already joined this drop');
+
+    const memberStatus = drop.isLocked ? DropCrewStatus.PENDING : DropCrewStatus.IN;
+    const crewMember = await this.dropsRepository.addCrewMember(dropId, user.id, memberStatus);
+
+    await this.dropsRepository.writeLog({
+      dropId,
+      userId: user.id,
+      action: drop.isLocked ? 'join_requested' : 'joined',
+    });
+
+    return crewMember;
+  }
+
+  async getMyCrewStatus(dropId: string, firebaseUid: string): Promise<DropCrew> {
+    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('Authenticated user not found in database');
+
+    const crewMember = await this.dropsRepository.findCrewMember(dropId, user.id);
+    if (!crewMember) throw new NotFoundException('You are not a crew member of this drop');
+
+    return crewMember;
   }
 
   private async generateUniqueJoinCode(): Promise<string> {

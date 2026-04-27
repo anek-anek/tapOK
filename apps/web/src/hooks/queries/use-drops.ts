@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import { dropsService } from '@/services/drops.service';
 
 export const dropKeys = {
   mine: () => ['drops', 'mine'] as const,
   detail: (id: string) => ['drops', id] as const,
   byJoinCode: (joinCode: string) => ['drops', 'join', joinCode] as const,
+  crewMe: (id: string) => ['drops', id, 'crew', 'me'] as const,
 };
 
 export function useMyDrops(options?: { enabled?: boolean }) {
@@ -31,5 +33,17 @@ export function useDropByJoinCode(joinCode: string) {
     queryFn: () => dropsService.getByJoinCode(joinCode),
     enabled: Boolean(joinCode),
     refetchInterval: 30_000,
+  });
+}
+
+export function useMyCrewStatus(dropId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: dropKeys.crewMe(dropId),
+    queryFn: () => dropsService.getMyCrewStatus(dropId),
+    enabled: (options?.enabled ?? true) && Boolean(dropId),
+    retry: (failureCount, error) => {
+      if (axios.isAxiosError(error) && error.response?.status === 404) return false;
+      return failureCount < 2;
+    },
   });
 }

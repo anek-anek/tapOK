@@ -10,6 +10,7 @@ import {
   Calendar as IconCalendar,
   MapPin as IconMapPin,
   Users as IconUsers,
+  Lock as IconLock,
 } from 'lucide-react';
 import { useCreateDrop, useUpdateDrop } from '@/hooks/mutations/use-drop-mutations';
 import type { Drop, DropStatus } from '@/types/drop';
@@ -25,6 +26,7 @@ const editSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
   scheduledAt: z.string().optional(),
   location: z.string().min(1, 'Location is required').optional(),
+  isLocked: z.boolean().optional(),
 });
 
 type CreateValues = {
@@ -385,11 +387,12 @@ export function EditDropModal({ drop, onClose }: { drop: Drop; onClose: () => vo
       name: drop.name,
       scheduledAt: new Date(drop.scheduledAt).toISOString().slice(0, 16),
       location: drop.location,
+      isLocked: drop.isLocked,
     },
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    const dto: { name?: string; scheduledAt?: string; location?: string } = {};
+    const dto: { name?: string; scheduledAt?: string; location?: string; isLocked?: boolean } = {};
     if (values.name !== drop.name) dto.name = values.name;
     if (
       values.scheduledAt &&
@@ -398,6 +401,7 @@ export function EditDropModal({ drop, onClose }: { drop: Drop; onClose: () => vo
       dto.scheduledAt = new Date(values.scheduledAt).toISOString();
     }
     if (values.location !== drop.location) dto.location = values.location;
+    if (values.isLocked !== drop.isLocked) dto.isLocked = values.isLocked;
 
     if (Object.keys(dto).length === 0) {
       onClose();
@@ -542,6 +546,39 @@ export function EditDropModal({ drop, onClose }: { drop: Drop; onClose: () => vo
                 )}
               </div>
             </div>
+
+            <Controller
+              name="isLocked"
+              control={control}
+              render={({ field }) => (
+                <button
+                  type="button"
+                  onClick={() => field.onChange(!field.value)}
+                  className={`flex w-full items-center justify-between rounded-[10px] border px-4 py-3 transition-colors ${
+                    field.value
+                      ? 'border-amber-400/40 bg-amber-50/80'
+                      : 'border-[#2a2118]/[0.09] bg-white/75 hover:border-[#2a2118]/18'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <IconLock size={13} className={field.value ? 'text-amber-700' : 'text-[#2a2118]/30'} />
+                    <div className="text-left">
+                      <p className={`font-syne text-[10px] font-bold uppercase tracking-[2px] ${field.value ? 'text-amber-800' : 'text-[#2a2118]/60'}`}>
+                        Lock Drop
+                      </p>
+                      <p className={`text-[11px] font-light leading-tight ${field.value ? 'text-amber-700/70' : 'text-[#2a2118]/36'}`}>
+                        New joiners will require approval
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}>
+                    <span
+                      className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${field.value ? 'translate-x-4' : 'translate-x-0.5'}`}
+                    />
+                  </div>
+                </button>
+              )}
+            />
 
             {updateDrop.error && (
               <div className="bg-red-50 border border-red-200/50 rounded-[6px] px-4 py-3">

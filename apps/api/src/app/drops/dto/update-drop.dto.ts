@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdateDropDto {
   @ApiPropertyOptional({ example: 'Golden Hour Shoot' })
@@ -18,4 +18,9 @@ export class UpdateDropDto {
   @IsString()
   @IsNotEmpty()
   location?: string;
+
+  @ApiPropertyOptional({ description: 'Lock the drop so new joiners require approval' })
+  @IsOptional()
+  @IsBoolean()
+  isLocked?: boolean;
 }
