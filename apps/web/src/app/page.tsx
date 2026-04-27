@@ -1,13 +1,12 @@
 'use client';
 
-import { useAuth } from '@/components/providers/auth-provider';
+import Link from 'next/link';
 import { useHealth } from '@/hooks/queries/use-health';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useAuth } from '@/components/providers/auth-provider';
+import { TapokNavbar } from '@/components/tapok-navbar';
 import {
   Database,
   ShieldCheck,
-  FileCode2,
   LayoutGrid,
   Terminal,
   ArrowRight,
@@ -17,7 +16,6 @@ import {
   Lock,
   Box,
 } from 'lucide-react';
-import { TapokNavbar } from '@/components/tapok-navbar';
 
 const stack = [
   { icon: Box, name: 'NestJS 11', desc: 'Modular backend with guards, pipes, and decorators', color: 'text-red-400' },
@@ -42,8 +40,8 @@ const commands = [
 ];
 
 export default function Home() {
-  const { user, dbUser } = useAuth();
   const health = useHealth();
+  const { dbUser, loading } = useAuth();
 
   return (
     <div className="min-h-screen bg-[#EDECE8] text-[#2a2118] selection:bg-[#2a2118]/10">
@@ -57,7 +55,6 @@ export default function Home() {
         }}
       />
 
-      {/* top bar */}
       <TapokNavbar />
 
       <main className="relative z-10">
@@ -80,6 +77,15 @@ export default function Home() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
+            {!loading && !dbUser && (
+              <Link
+                href="/login"
+                className="group flex items-center gap-2 rounded-lg bg-[#2a2118] px-5 py-2.5 font-mono text-sm font-semibold text-[#F7E9B2] transition-all hover:bg-[#2a2118]/85"
+              >
+                Get started
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            )}
             <a
               href="https://github.com/formesean/formesean-stack"
               target="_blank"
