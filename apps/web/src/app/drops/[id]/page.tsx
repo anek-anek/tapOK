@@ -199,7 +199,7 @@ function ShareModal({
 function PageSkeleton() {
   return (
     <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
-      <TapokNavbar active="drops" />
+      <TapokNavbar />
       <main className="relative mx-auto max-w-5xl px-6 py-8 lg:px-10 lg:py-10">
         <div className="mb-6 h-4 w-20 animate-pulse rounded-full bg-[#2a2118]/10" />
         <div className="mb-8 flex items-center gap-4">
@@ -233,7 +233,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   if (isError || !drop) {
     return (
       <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
-        <TapokNavbar active="drops" />
+        <TapokNavbar />
         <main className="relative mx-auto max-w-5xl px-6 py-8 lg:px-10 lg:py-10">
           <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/72 p-8 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
             <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
@@ -273,7 +273,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
       />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(circle_at_top_left,rgba(0,102,102,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(42,33,24,0.08),transparent_28%)]" />
 
-      <TapokNavbar active="drops" />
+      <TapokNavbar />
 
       <main className="relative mx-auto max-w-5xl px-6 py-8 lg:px-10 lg:py-10">
         {/* Back */}

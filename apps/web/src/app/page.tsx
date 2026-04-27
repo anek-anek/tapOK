@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useHealth } from '@/hooks/queries/use-health';
+import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import {
   Database,
@@ -39,6 +41,7 @@ const commands = [
 
 export default function Home() {
   const health = useHealth();
+  const { dbUser, loading } = useAuth();
 
   return (
     <div className="min-h-screen bg-[#EDECE8] text-[#2a2118] selection:bg-[#2a2118]/10">
@@ -52,7 +55,7 @@ export default function Home() {
         }}
       />
 
-      <TapokNavbar active="home" />
+      <TapokNavbar />
 
       <main className="relative z-10">
 
@@ -74,6 +77,15 @@ export default function Home() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
+            {!loading && !dbUser && (
+              <Link
+                href="/login"
+                className="group flex items-center gap-2 rounded-lg bg-[#2a2118] px-5 py-2.5 font-mono text-sm font-semibold text-[#F7E9B2] transition-all hover:bg-[#2a2118]/85"
+              >
+                Get started
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            )}
             <a
               href="https://github.com/formesean/formesean-stack"
               target="_blank"
