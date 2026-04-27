@@ -69,6 +69,36 @@
         ]
       }
     },
+    "/users/me": {
+      "get": {
+        "operationId": "UsersController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the authenticated user — 404 if not in DB",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/users/{id}": {
       "get": {
         "operationId": "UsersController_findOne",
@@ -92,6 +122,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Forbidden."
           },
           "404": {
             "description": "User not found."
@@ -195,6 +228,16 @@
       "post": {
         "operationId": "UsersController_sync",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncUserDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "",
@@ -670,6 +713,9 @@
           "userHandle": {
             "type": "string"
           },
+          "phone": {
+            "type": "string"
+          },
           "termsAccepted": {
             "type": "boolean",
             "description": "Whether the user has accepted the Terms & Conditions"
@@ -702,6 +748,93 @@
           "termsAccepted",
           "privacyPolicyAccepted"
         ]
+      },
+      "UserProfileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "photographer",
+              "participant"
+            ]
+          },
+          "phone": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female",
+              "other"
+            ]
+          },
+          "userHandle": {
+            "type": "string"
+          },
+          "isEmailVerified": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "dropCount": {
+            "type": "number",
+            "description": "Number of drops created by this user"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "firstName",
+          "lastName",
+          "role",
+          "isEmailVerified",
+          "isActive",
+          "dropCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "SyncUserDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "John",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe",
+            "maxLength": 100
+          }
+        }
       },
       "CreateUserDto": {
         "type": "object",
@@ -751,6 +884,10 @@
           "userHandle": {
             "type": "string",
             "example": "jane_doe"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+639123456789"
           }
         },
         "required": [
@@ -807,6 +944,10 @@
           "userHandle": {
             "type": "string",
             "example": "jane_doe"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+639123456789"
           }
         }
       },
