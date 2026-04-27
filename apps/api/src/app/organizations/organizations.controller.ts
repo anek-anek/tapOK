@@ -20,6 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
+import type { DecodedIdToken } from 'firebase-admin/auth';
 import { FirebaseAuthGuard, OrgRole } from '../../common';
 import { UsersService } from '../users/users.service';
 import { OrganizationsService } from './organizations.service';
@@ -30,7 +31,7 @@ import { Organization } from './entities/organization.entity';
 import { OrganizationMember } from './entities/organization-member.entity';
 
 interface RequestWithUser extends Request {
-  user: any;
+  user: DecodedIdToken;
 }
 
 @ApiTags('organizations')

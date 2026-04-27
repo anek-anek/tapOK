@@ -32,7 +32,7 @@ import { User } from './entities/user.entity';
 import { UserProfileDto } from './dto/user-profile.dto';
 
 interface RequestWithUser extends Request {
-  user: any;
+  user: DecodedIdToken;
 }
 
 @ApiTags('users')
