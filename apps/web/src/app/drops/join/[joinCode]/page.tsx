@@ -241,7 +241,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
       <div className="flex min-h-screen flex-col bg-[#EDECE8]">
         <TapokNavbar />
         <div className="flex flex-1 items-center justify-center px-4">
-          <div className="w-full max-w-sm rounded-2xl border border-[#2a2118]/8 bg-[#F7E9B2]/60 p-8 text-center">
+          <div className="w-full max-w-sm rounded-2xl border border-[#2a2118]/8 bg-[#F7E9B2]/60 p-5 text-center sm:p-8">
             <p className="font-mono text-sm text-[#2a2118]/60">Drop not found or the link has expired.</p>
             <Link href="/" className="mt-4 inline-block font-mono text-xs text-[#2a2118]/40 underline">
               Go home
@@ -276,19 +276,19 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
       />
       <TapokNavbar />
 
-      <main className="relative mx-auto max-w-md px-4 py-12">
-        <div className="overflow-hidden rounded-[28px] border border-[#2a2118]/8 bg-[#F7E9B2]/70 shadow-[0_14px_40px_rgba(42,33,24,0.07)]">
+      <main className="relative mx-auto max-w-md px-4 py-6 sm:py-12">
+        <div className="overflow-hidden rounded-[24px] border border-[#2a2118]/8 bg-[#F7E9B2]/70 shadow-[0_14px_40px_rgba(42,33,24,0.07)] sm:rounded-[28px]">
           {/* Header */}
-          <div className="border-b border-[#2a2118]/8 bg-[#F7E9B2]/50 px-6 py-5">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#006666] font-syne text-[13px] font-bold tracking-[0.1em] text-[#F7E9B2]">
+          <div className="border-b border-[#2a2118]/8 bg-[#F7E9B2]/50 px-4 py-5 sm:px-6">
+            <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#006666] font-syne text-[12px] font-bold tracking-[0.1em] text-[#F7E9B2] sm:h-12 sm:w-12 sm:text-[13px]">
                 {getInitials(drop.name)}
               </div>
               <div className="min-w-0">
                 <p className="font-mono text-[9px] uppercase tracking-[2px] text-[#2a2118]/44">
                   {organiserName} made a drop — are you in?
                 </p>
-                <h1 className="truncate font-syne text-[20px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+                <h1 className="truncate font-syne text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118] sm:text-[20px]">
                   {drop.name}
                 </h1>
               </div>
@@ -296,14 +296,14 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
           </div>
 
           {/* Details */}
-          <div className="space-y-3 px-6 py-5">
+          <div className="space-y-3 px-4 py-5 sm:px-6">
             <div className="flex items-center gap-3">
               <IconCalendar size={14} className="shrink-0 text-[#2a2118]/40" />
               <span className="font-mono text-[12px] text-[#2a2118]/70">{formatDateTime(drop.scheduledAt)}</span>
             </div>
             <div className="flex items-center gap-3">
               <IconMapPin size={14} className="shrink-0 text-[#2a2118]/40" />
-              <span className="font-mono text-[12px] text-[#2a2118]/70">{drop.location}</span>
+              <span className="min-w-0 break-words font-mono text-[12px] text-[#2a2118]/70">{drop.location}</span>
             </div>
             {drop.expectedHeadcount && (
               <div className="flex items-center gap-3">
@@ -323,7 +323,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
           </div>
 
           {/* CTA */}
-          <div className="border-t border-[#2a2118]/8 px-6 py-5">
+          <div className="border-t border-[#2a2118]/8 px-4 py-5 sm:px-6">
             <JoinCta
               isAuthenticated={Boolean(dbUser)}
               isOrganiser={isOrganiser}

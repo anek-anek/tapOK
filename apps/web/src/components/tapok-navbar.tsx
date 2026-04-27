@@ -77,19 +77,19 @@ export function TapokNavbar() {
     <>
     <div className="h-[57px]" />
     <header className={`fixed inset-x-0 top-0 z-20 border-b border-[#2a2118]/12 bg-[linear-gradient(180deg,rgba(247,233,178,0.98),rgba(247,233,178,0.9))] shadow-[0_8px_26px_rgba(42,33,24,0.05)] backdrop-blur-[4px] transition-transform duration-300 ease-in-out ${visible ? 'translate-y-0' : '-translate-y-full'}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3 sm:px-10">
-        <div className="flex items-center gap-3">
-          <Link href="/" className={`${passionOne.className} inline-flex items-center text-[27px] leading-none tracking-[0.08em] text-[#2a2118]`}>
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-10">
+        <div className="flex shrink-0 items-center gap-3">
+          <Link href="/" className={`${passionOne.className} inline-flex items-center text-[24px] leading-none tracking-[0.08em] text-[#2a2118] sm:text-[27px]`}>
             <span className="translate-y-[1px]">TAPOK</span>
           </Link>
         </div>
 
-        <nav className="flex items-end gap-1 sm:gap-2">
+        <nav className="flex min-w-0 flex-1 items-end justify-center gap-0.5 overflow-x-auto sm:gap-2">
           {!loading && navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`relative shrink-0 px-3 pb-1.5 pt-1 font-syne text-[10px] font-bold uppercase tracking-[2.4px] transition-colors ${
+              className={`relative shrink-0 px-2 pb-1.5 pt-1 font-syne text-[10px] font-bold uppercase tracking-[1.6px] transition-colors sm:px-3 sm:tracking-[2.4px] ${
                 item.active
                   ? 'text-[#2a2118]'
                   : 'text-[#2a2118]/55 hover:text-[#2a2118]'
@@ -112,7 +112,7 @@ export function TapokNavbar() {
           ) : !dbUser ? (
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 rounded-full border border-[#2a2118]/12 bg-white/75 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/22 hover:bg-white"
+              className="inline-flex items-center gap-2 rounded-full border border-[#2a2118]/12 bg-white/75 px-3 py-2 font-syne text-[10px] font-bold uppercase tracking-[1.6px] text-[#2a2118] transition-colors hover:border-[#2a2118]/22 hover:bg-white sm:px-4 sm:tracking-[2px]"
             >
               Login
             </Link>

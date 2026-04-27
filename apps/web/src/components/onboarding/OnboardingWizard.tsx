@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +20,7 @@ import {
 import { useCreateDrop } from '@/hooks/mutations/use-drop-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
 import { track } from '@/lib/analytics';
+import { AuthPageShell } from '@/components/auth/AuthPageShell';
 import type { Drop } from '@/types/drop';
 
 // ─── Drop creation schema ────────────────────────────────────────────────────
@@ -48,27 +48,6 @@ const springEase = [0.32, 0.72, 0, 1] as const;
 const INPUT =
   'w-full rounded-xl border border-[#2a2118]/12 bg-white px-4 py-3 text-sm text-[#2a2118] placeholder-[#2a2118]/25 outline-none transition-all duration-200 focus:border-[#006666] focus:ring-2 focus:ring-[#006666]/10 hover:border-[#2a2118]/20';
 
-// ─── Right panel ─────────────────────────────────────────────────────────────
-
-function RightPanel() {
-  return (
-    <div
-      className="hidden bg-cover bg-center md:block md:w-1/2"
-      style={{
-        backgroundImage:
-          "url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80')",
-      }}
-    >
-      <div className="flex h-full flex-col justify-end bg-gradient-to-t from-black/75 via-black/25 to-transparent p-12">
-        <p className="mb-2 text-4xl font-black uppercase leading-tight tracking-tight text-[#FFF2BD]">
-          Make Plans.<br />Tap In.<br />Show Up.
-        </p>
-        <p className="text-sm text-[#FFF2BD]/60">One Chief. One Drop. Real plans.</p>
-      </div>
-    </div>
-  );
-}
-
 // ─── Step 0: Outcome Splash ──────────────────────────────────────────────────
 
 function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCrew: () => void; onSkip: () => void }) {
@@ -85,7 +64,7 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
       <p className="mb-2 font-mono text-[10px] uppercase tracking-[3px] text-[#2a2118]/35">
         Welcome to TapOK
       </p>
-      <h1 className="mb-2 font-bebas text-[52px] leading-none uppercase tracking-wide text-[#2a2118]">
+      <h1 className="mb-2 font-bebas text-[44px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[52px]">
         The plan starts<br />with you.
       </h1>
       <p className="mb-8 text-sm text-[#2a2118]/50">What brings you here today?</p>
@@ -96,7 +75,7 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => { track('onboarding_path_chief'); onChief(); }}
-          className="group flex items-center justify-between rounded-2xl border border-[#2a2118]/10 bg-white px-6 py-5 text-left shadow-sm transition-shadow hover:shadow-md"
+          className="group flex items-center justify-between gap-4 rounded-2xl border border-[#2a2118]/10 bg-white px-4 py-4 text-left shadow-sm transition-shadow hover:shadow-md sm:px-6 sm:py-5"
         >
           <div>
             <p className="mb-0.5 font-syne text-sm font-bold uppercase tracking-wider text-[#2a2118]">
@@ -114,7 +93,7 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => { track('onboarding_path_crew'); onCrew(); }}
-          className="group flex items-center justify-between rounded-2xl border border-[#2a2118]/10 bg-white px-6 py-5 text-left shadow-sm transition-shadow hover:shadow-md"
+          className="group flex items-center justify-between gap-4 rounded-2xl border border-[#2a2118]/10 bg-white px-4 py-4 text-left shadow-sm transition-shadow hover:shadow-md sm:px-6 sm:py-5"
         >
           <div>
             <p className="mb-0.5 font-syne text-sm font-bold uppercase tracking-wider text-[#2a2118]">
@@ -182,7 +161,6 @@ function DropBuilder({
   const [serverError, setServerError] = useState<string | null>(null);
 
   // Track when the drop builder step is first viewed
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { track('drop_builder_viewed'); }, []);
 
   const {
@@ -243,7 +221,7 @@ function DropBuilder({
 
       <ProgressChip filled={filled} />
 
-      <h2 className="mb-1 font-bebas text-[44px] leading-none uppercase tracking-wide text-[#2a2118]">
+      <h2 className="mb-1 font-bebas text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
         Drop a plan.
       </h2>
       <p className="mb-6 text-sm text-[#2a2118]/50">
@@ -406,7 +384,7 @@ function DropLive({ drop }: { drop: Drop }) {
         </span>
       </motion.div>
 
-      <h2 className="mb-1 font-bebas text-[44px] leading-none uppercase tracking-wide text-[#2a2118]">
+      <h2 className="mb-1 font-bebas text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
         Your drop is live.
       </h2>
       <p className="mb-6 text-sm text-[#2a2118]/50">Now get your first In.</p>
@@ -418,7 +396,7 @@ function DropLive({ drop }: { drop: Drop }) {
         transition={{ delay: 0.18, duration: 0.38 }}
         className="mb-5 overflow-hidden rounded-2xl border border-[#2a2118]/10 border-l-[4px] border-l-[#006666] bg-white shadow-[0_8px_24px_rgba(42,33,24,0.07)]"
       >
-        <div className="flex items-start justify-between p-5">
+        <div className="flex items-start justify-between gap-3 p-4 sm:p-5">
           <div className="min-w-0 flex-1">
             <p className="mb-2.5 font-syne text-[15px] font-bold text-[#2a2118]">{drop.name}</p>
             <div className="flex flex-col gap-1.5">
@@ -464,7 +442,7 @@ function DropLive({ drop }: { drop: Drop }) {
         <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[2px] text-[#2a2118]/35">
           Send this where the chaos usually starts
         </p>
-        <div className="flex items-center overflow-hidden rounded-xl border border-[#2a2118]/10 bg-white">
+        <div className="flex items-stretch overflow-hidden rounded-xl border border-[#2a2118]/10 bg-white">
           <p className="flex-1 truncate px-4 py-2.5 font-mono text-[11px] text-[#2a2118]/55">
             {shareUrl}
           </p>
@@ -539,7 +517,6 @@ export function OnboardingWizard() {
   const [liveDrop, setLiveDrop] = useState<Drop | null>(null);
 
   // Track when onboarding is first viewed
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { track('onboarding_started'); }, []);
 
   const handleLive = (drop: Drop) => {
@@ -548,22 +525,7 @@ export function OnboardingWizard() {
   };
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
-      {/* ── Left panel ── */}
-      <div className="flex w-full flex-col justify-between bg-[#FFF2BD] px-10 py-10 md:w-1/2 lg:px-16">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="group flex items-center gap-2 self-start transition-opacity duration-200 hover:opacity-70"
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black transition-transform duration-200 ease-out group-hover:scale-110">
-            <span className="text-xs font-black text-[#FFF2BD]">T</span>
-          </div>
-          <span className="text-sm font-bold uppercase tracking-widest text-black">TAPOK</span>
-        </Link>
-
-        {/* Step content */}
-        <div className="mx-auto w-full max-w-sm py-10">
+    <AuthPageShell footerClassName="">
           <AnimatePresence mode="wait">
             {step === 0 && (
               <OutcomeSplash
@@ -583,13 +545,6 @@ export function OnboardingWizard() {
               <DropLive drop={liveDrop} />
             )}
           </AnimatePresence>
-        </div>
-
-        {/* Footer */}
-        <p className="text-xs text-black/25">© 2026 TapOK. Plans that actually happen.</p>
-      </div>
-
-      <RightPanel />
-    </div>
+    </AuthPageShell>
   );
 }
