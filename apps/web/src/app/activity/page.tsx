@@ -211,7 +211,7 @@ export default function ActivityPage() {
       />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(circle_at_top_left,rgba(0,102,102,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(42,33,24,0.08),transparent_28%)]" />
 
-      <TapokNavbar active="activity" />
+      <TapokNavbar />
 
       <main className="relative mx-auto max-w-7xl px-6 py-8 lg:px-10 lg:py-10">
         <div className="grid gap-8 lg:grid-cols-[1fr_300px]">

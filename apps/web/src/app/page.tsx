@@ -17,6 +17,7 @@ import {
   Lock,
   Box,
 } from 'lucide-react';
+import { TapokNavbar } from '@/components/tapok-navbar';
 
 const stack = [
   { icon: Box, name: 'NestJS 11', desc: 'Modular backend with guards, pipes, and decorators', color: 'text-red-400' },
@@ -57,36 +58,7 @@ export default function Home() {
       />
 
       {/* top bar */}
-      <header className="relative z-10 flex items-center justify-between border-b border-[#2a2118]/8 px-8 py-4">
-        <div className="flex items-center gap-2.5">
-          <FileCode2 className="text-[#2a2118]/40" size={18} />
-          <span className="font-mono text-sm tracking-widest text-[#2a2118]/40 uppercase">formesean-stack</span>
-        </div>
-        <div className="flex items-center gap-6">
-          {process.env.NODE_ENV !== 'production' && (
-            <a href={`${process.env.NEXT_PUBLIC_API_URL}/docs`} className="font-mono text-xs text-[#2a2118]/40 transition-colors hover:text-[#2a2118]/70">
-              API Docs
-            </a>
-          )}
-          {user ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 rounded-full border border-[#2a2118]/12 bg-[#F7E9B2] px-3 py-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <span className="font-mono text-xs text-[#2a2118]/60">{dbUser?.firstName || user.email}</span>
-                {dbUser?.role && (
-                  <span className="rounded bg-[#2a2118]/8 px-1.5 py-0.5 font-mono text-[10px] text-[#2a2118]/40">{dbUser.role}</span>
-                )}
-              </div>
-              <button
-                onClick={() => signOut(auth)}
-                className="font-mono text-xs text-[#2a2118]/40 transition-colors hover:text-[#2a2118]/70"
-              >
-                Sign out
-              </button>
-            </div>
-          ) : null}
-        </div>
-      </header>
+      <TapokNavbar />
 
       <main className="relative z-10">
 

@@ -502,7 +502,7 @@ export default function DropsPage() {
   if (!loading && !user) {
     return (
       <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-[#006666]/15">
-        <TapokNavbar active="drops" />
+        <TapokNavbar />
         <main className="mx-auto flex min-h-[calc(100vh-88px)] max-w-5xl items-center px-6 py-10 lg:px-10">
           <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]">
             <SectionTitle
@@ -529,7 +529,7 @@ export default function DropsPage() {
       />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(circle_at_top_left,rgba(0,102,102,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(42,33,24,0.08),transparent_28%)]" />
 
-      <TapokNavbar active="drops" />
+      <TapokNavbar />
 
       <main className="relative mx-auto max-w-7xl px-6 py-8 lg:px-10 lg:py-10">
         <section className="mb-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
