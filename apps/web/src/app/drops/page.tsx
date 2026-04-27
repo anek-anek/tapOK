@@ -159,8 +159,10 @@ function ShareModal({ drop, onClose }: { drop: Drop; onClose: () => void }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
+
   const handleCopyLink = async () => {
-    try { await navigator.clipboard.writeText(drop.shareUrl); } catch { return; }
+    try { await navigator.clipboard.writeText(shareUrl); } catch { return; }
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 1800);
   };
@@ -192,7 +194,7 @@ function ShareModal({ drop, onClose }: { drop: Drop; onClose: () => void }) {
         </div>
 
         <div className="flex justify-center rounded-[20px] bg-white p-5">
-          <QRCodeSVG value={drop.shareUrl} size={180} bgColor="#ffffff" fgColor="#2a2118" level="M" />
+          <QRCodeSVG value={shareUrl} size={180} bgColor="#ffffff" fgColor="#2a2118" level="M" />
         </div>
 
         <div className="mt-3 flex items-center justify-between rounded-[18px] border border-[#2a2118]/10 bg-white/72 px-4 py-3">
@@ -211,7 +213,7 @@ function ShareModal({ drop, onClose }: { drop: Drop; onClose: () => void }) {
         </div>
 
         <div className="mt-2 flex items-center gap-3 rounded-[18px] border border-[#2a2118]/10 bg-white/72 px-4 py-3">
-          <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-[#2a2118]/46">{drop.shareUrl}</span>
+          <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-[#2a2118]/46">{shareUrl}</span>
           <button
             type="button"
             onClick={handleCopyLink}
