@@ -74,4 +74,8 @@ export class DropsRepository {
     const record = this.crewRepo.create({ dropId, userId, status });
     return this.crewRepo.save(record);
   }
+
+  async removeCrewMember(dropId: string, userId: string): Promise<void> {
+    await this.crewRepo.delete({ dropId, userId });
+  }
 }

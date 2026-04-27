@@ -16,6 +16,7 @@ import {
   X as IconX,
   ClipboardCopy as IconClipboard,
   Ticket as IconTicket,
+  LogOut as IconLogOut,
 } from 'lucide-react';
 import {
   CheckCircle2 as IconCheckCircle,
@@ -27,6 +28,7 @@ import { TapokNavbar } from '@/components/tapok-navbar';
 import { EditDropModal } from '@/components/drop-modal';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { useMounted } from '@/hooks/use-mounted';
+import { useLeaveDrop } from '@/hooks/mutations/use-drop-mutations';
 import type { DropStatus } from '@/types/drop';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
@@ -204,6 +206,73 @@ function ShareModal({
   );
 }
 
+function LeaveConfirmModal({
+  dropName,
+  onConfirm,
+  onClose,
+  isPending,
+}: {
+  dropName: string;
+  onConfirm: () => void;
+  onClose: () => void;
+  isPending: boolean;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isPending) onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose, isPending]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
+      <div className="fixed inset-0 bg-[#2a2118]/50 backdrop-blur-sm" onClick={!isPending ? onClose : undefined} />
+      <div className="relative z-10 w-full max-w-sm rounded-[28px] border border-[#2a2118]/10 bg-[#F7E9B2] p-6 shadow-[0_32px_80px_rgba(42,33,24,0.22)]">
+        <div className="mb-1 flex items-start justify-between gap-3">
+          <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-red-600">
+            Leave drop
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isPending}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/10 text-[#2a2118]/40 transition-colors hover:border-[#2a2118]/20 hover:text-[#2a2118] disabled:opacity-40"
+          >
+            <IconX size={14} />
+          </button>
+        </div>
+        <h3 className="mt-1 font-syne text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+          Are you sure?
+        </h3>
+        <p className="mt-2 text-[13px] leading-6 text-[#2a2118]/64">
+          You&apos;ll be removed from{' '}
+          <span className="font-semibold text-[#2a2118]">{dropName}</span> and lose
+          access immediately. You can rejoin later using the join code.
+        </p>
+        <div className="mt-5 flex gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isPending}
+            className="flex-1 rounded-[18px] border border-[#2a2118]/12 bg-white/70 py-3 font-syne text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:bg-white/90 disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isPending}
+            className="flex-1 rounded-[18px] bg-red-600 py-3 font-syne text-[10px] font-bold uppercase tracking-[2px] text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+          >
+            {isPending ? 'Leaving…' : 'Leave drop'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PageSkeleton() {
   return (
     <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
@@ -237,6 +306,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const { data: crewStatus } = useMyCrewStatus(id, { enabled: Boolean(dbUser) });
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  const { mutate: leaveDrop, isPending: isLeaving } = useLeaveDrop(id);
 
   if (!mounted || isLoading) return <PageSkeleton />;
 
@@ -270,6 +341,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
   const isOrganiser = dbUser?.id === drop.organiserId;
   const canEdit = isOrganiser && drop.status !== 'completed';
+  const canLeave = !isOrganiser && (crewStatus?.status === 'in' || crewStatus?.status === 'pending');
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
 
   return (
@@ -327,6 +399,16 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               >
                 <IconEdit size={13} />
                 Edit
+              </button>
+            )}
+            {canLeave && (
+              <button
+                type="button"
+                onClick={() => setLeaveModalOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-red-600 transition-colors hover:bg-red-100"
+              >
+                <IconLogOut size={13} />
+                Leave
               </button>
             )}
           </div>
@@ -418,8 +500,12 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         <strong className="font-semibold text-[#2a2118]">
                           {log.user.firstName} {log.user.lastName}
                         </strong>{' '}
-                        {log.action === 'created' ? 'created this drop' : 'updated this drop'}
-                        {log.changedFields && Object.keys(log.changedFields).length > 0 && (
+                        {log.action === 'created' && 'created this drop'}
+                        {log.action === 'updated' && 'updated this drop'}
+                        {log.action === 'joined' && 'joined this drop'}
+                        {log.action === 'join_requested' && 'requested to join this drop'}
+                        {log.action === 'left' && 'left this drop'}
+                        {log.action === 'updated' && log.changedFields && Object.keys(log.changedFields).length > 0 && (
                           <span className="text-[#2a2118]/40">
                             {' '}
                             ({Object.keys(log.changedFields).join(', ')})
@@ -487,6 +573,14 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
       )}
       {editModalOpen && (
         <EditDropModal drop={drop} onClose={() => setEditModalOpen(false)} />
+      )}
+      {leaveModalOpen && (
+        <LeaveConfirmModal
+          dropName={drop.name}
+          isPending={isLeaving}
+          onConfirm={() => leaveDrop(undefined, { onSuccess: () => setLeaveModalOpen(false) })}
+          onClose={() => setLeaveModalOpen(false)}
+        />
       )}
     </div>
   );

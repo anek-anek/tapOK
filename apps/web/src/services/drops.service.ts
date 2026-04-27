@@ -29,4 +29,8 @@ export const dropsService = {
   getMyCrewStatus(id: string): Promise<DropCrew> {
     return api.get<DropCrew>(`/drops/${id}/crew/me`).then((r) => r.data);
   },
+
+  leaveDrop(id: string): Promise<void> {
+    return api.delete(`/drops/${id}/crew/me`).then(() => undefined);
+  },
 };
