@@ -8,6 +8,7 @@ import { LogOut, User as IconUser } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/components/providers/auth-provider';
+import { Skeleton } from '@repo/ui/components/ui/skeleton';
 
 const passionOne = Passion_One({
   weight: '400',
@@ -107,7 +108,7 @@ export function TapokNavbar() {
         {/* Profile button + dropdown */}
         <div className="relative" ref={dropdownRef}>
           {loading ? (
-            <div className="h-11 w-11 animate-pulse rounded-full bg-[#2a2118]/10" />
+            <Skeleton className="h-11 w-11 rounded-full bg-[#2a2118]/10" />
           ) : !dbUser ? (
             <Link
               href="/login"

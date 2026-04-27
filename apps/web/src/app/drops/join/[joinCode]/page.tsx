@@ -17,6 +17,8 @@ import { useDropByJoinCode, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
+import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { useMounted } from '@/hooks/use-mounted';
 import type { DropCrew } from '@/types/drop';
 import type { UseMutationResult } from '@tanstack/react-query';
 
@@ -178,6 +180,7 @@ function JoinCta({
 export default function JoinDropPage({ params }: { params: Promise<{ joinCode: string }> }) {
   const { joinCode } = React.use(params);
   const router = useRouter();
+  const mounted = useMounted();
 
   const { data: drop, isError: isDropError, isLoading: isDropLoading } = useDropByJoinCode(joinCode);
   const { dbUser, loading: authLoading } = useAuth();
@@ -193,13 +196,13 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   const isNotCrew =
     isCrewError && axios.isAxiosError(crewError) && crewError.response?.status === 404;
 
-  if (isDropLoading) {
+  if (!mounted || isDropLoading) {
     return (
       <div className="flex min-h-screen flex-col bg-[#EDECE8]">
         <TapokNavbar />
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
-            <div className="mx-auto h-1.5 w-20 animate-pulse rounded-full bg-[#2a2118]/15" />
+            <Skeleton className="mx-auto h-1.5 w-20 rounded-full bg-[#2a2118]/15" />
             <p className="mt-4 font-mono text-xs text-[#2a2118]/40">Looking up drop…</p>
           </div>
         </div>
@@ -228,7 +231,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
       <div className="flex min-h-screen flex-col bg-[#EDECE8]">
         <TapokNavbar />
         <div className="flex flex-1 items-center justify-center">
-          <div className="mx-auto h-1.5 w-20 animate-pulse rounded-full bg-[#2a2118]/15" />
+          <Skeleton className="mx-auto h-1.5 w-20 rounded-full bg-[#2a2118]/15" />
         </div>
       </div>
     );
