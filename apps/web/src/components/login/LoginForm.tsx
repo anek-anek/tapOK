@@ -11,6 +11,7 @@ import { auth, googleProvider } from '@/lib/firebase';
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { finalizeSession } from '@/lib/auth/finalize-session';
+import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 
 const GENERIC_AUTH_ERROR = 'Incorrect email or password.';
 
@@ -22,28 +23,6 @@ const FIREBASE_ERRORS: Record<string, string> = {
 function getFirebaseError(code: string): string {
   return FIREBASE_ERRORS[code] ?? GENERIC_AUTH_ERROR;
 }
-
-interface FormFieldProps {
-  label: string;
-  error?: string;
-  animClass?: string;
-  children: React.ReactNode;
-}
-
-function FormField({ label, error, animClass = '', children }: FormFieldProps) {
-  return (
-    <div className={`flex flex-col gap-1.5 ${animClass}`}>
-      <label className="text-sm font-medium text-black/60 transition-colors duration-200">
-        {label}
-      </label>
-      {children}
-      {error && <p className="animate-fade-up text-xs text-red-600">{error}</p>}
-    </div>
-  );
-}
-
-const inputClass =
-  'w-full rounded-lg border border-black/15 bg-white px-4 py-2.5 text-sm text-black placeholder-black/25 outline-none transition-all duration-200 ease-in-out focus:border-[#1a6b5e] focus:ring-2 focus:ring-[#1a6b5e]/10 focus:shadow-sm hover:border-black/25';
 
 interface LoginFormProps {
   redirectTo: string;
@@ -130,23 +109,8 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   }
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
-      {/* ── Left panel ── */}
-      <div className="flex w-full flex-col justify-between bg-[#FFF2BD] px-10 py-10 md:w-1/2 lg:px-16">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="group flex items-center gap-2 self-start transition-opacity duration-200 hover:opacity-70"
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black transition-transform duration-200 ease-out group-hover:scale-110">
-            <span className="text-xs font-black text-[#FFF2BD]">T</span>
-          </div>
-          <span className="text-sm font-bold uppercase tracking-widest text-black">TAPOK</span>
-        </Link>
-
-        {/* Form area */}
-        <div className="mx-auto w-full max-w-sm py-10">
-          <h1 className="animate-fade-up mb-1 text-2xl font-bold text-black">Welcome back</h1>
+    <AuthPageShell>
+          <h1 className="animate-fade-up mb-1 text-[28px] font-bold leading-tight text-black sm:text-3xl">Welcome back</h1>
           <p className="animate-fade-up-1 mb-6 text-sm text-black/50">
             Don&apos;t have an account?{' '}
             <Link
@@ -162,7 +126,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={googleLoading || isSubmitting}
-            className="animate-fade-up-2 mb-6 flex w-full items-center justify-center gap-3 rounded-lg border border-black/15 bg-white px-5 py-2.5 text-sm font-medium text-black shadow-sm transition-all duration-200 ease-in-out hover:-translate-y-px hover:border-black/25 hover:shadow-[0_0_0_4px_rgba(0,0,0,0.08)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+            className="animate-fade-up-2 mb-6 flex w-full items-center justify-center gap-3 rounded-lg border border-black/15 bg-white px-5 py-3 text-sm font-medium text-black shadow-sm transition-all duration-200 ease-in-out hover:-translate-y-px hover:border-black/25 hover:shadow-[0_0_0_4px_rgba(0,0,0,0.08)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             {googleLoading ? (
               <Loader2 size={16} className="animate-spin" />
@@ -186,25 +150,25 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-            <FormField label="Email address" error={errors.email?.message} animClass="animate-fade-up-3">
+            <AuthFormField label="Email address" error={errors.email?.message} animClass="animate-fade-up-3">
               <input
                 {...register('email')}
                 type="email"
                 autoComplete="email"
                 placeholder="Enter your email"
-                className={inputClass}
+                className={authInputClass}
                 aria-invalid={!!errors.email}
               />
-            </FormField>
+            </AuthFormField>
 
-            <FormField label="Password" error={errors.password?.message} animClass="animate-fade-up-4">
+            <AuthFormField label="Password" error={errors.password?.message} animClass="animate-fade-up-4">
               <div className="relative">
                 <input
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   placeholder="Enter your password"
-                  className={`${inputClass} pr-10`}
+                  className={`${authInputClass} pr-10`}
                   aria-invalid={!!errors.password}
                 />
                 <button
@@ -220,12 +184,12 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
                   )}
                 </button>
               </div>
-            </FormField>
+            </AuthFormField>
 
             <div className="animate-fade-up-5 flex justify-end">
               <Link
                 href="/forgot-password"
-                className="text-sm font-semibold text-black/40 transition-colors duration-200 hover:text-black"
+              className="text-sm font-semibold text-black/40 transition-colors duration-200 hover:text-black"
               >
                 Forgot your password?
               </Link>
@@ -243,7 +207,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
             <button
               type="submit"
               disabled={isSubmitting || googleLoading}
-              className="animate-fade-up-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#1a6b5e] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 ease-in-out hover:-translate-y-px hover:bg-[#155a4e] hover:shadow-[0_0_0_4px_rgba(26,107,94,0.25)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+              className="animate-fade-up-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#1a6b5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 ease-in-out hover:-translate-y-px hover:bg-[#155a4e] hover:shadow-[0_0_0_4px_rgba(26,107,94,0.25)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
             >
               {isSubmitting ? (
                 <>
@@ -266,29 +230,6 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
               </Link>
             </p>
           </form>
-        </div>
-
-        {/* Footer */}
-        <p className="animate-fade-in text-xs text-black/25">© 2026 TapOK. Plans that actually happen.</p>
-      </div>
-
-      {/* ── Right panel ── */}
-      <div
-        className="hidden animate-fade-in bg-cover bg-center md:block md:w-1/2"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80')",
-        }}
-      >
-        <div className="flex h-full flex-col justify-end bg-gradient-to-t from-black/75 via-black/25 to-transparent p-12">
-          <p className="animate-slide-in-right mb-2 text-4xl font-black uppercase leading-tight tracking-tight text-[#FFF2BD]">
-            Make Plans.<br />Tap In.<br />Show Up.
-          </p>
-          <p className="animate-slide-in-right text-sm text-[#FFF2BD]/60">
-            One Chief. One Drop. Real plans.
-          </p>
-        </div>
-      </div>
-    </div>
+    </AuthPageShell>
   );
 }

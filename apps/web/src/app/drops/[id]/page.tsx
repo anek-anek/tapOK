@@ -14,7 +14,6 @@ import {
   Edit3 as IconEdit,
   Activity as IconActivity,
   X as IconX,
-  ClipboardCopy as IconClipboard,
   Ticket as IconTicket,
   LogOut as IconLogOut,
 } from 'lucide-react';
@@ -26,6 +25,7 @@ import { useDrop, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { EditDropModal } from '@/components/drop-modal';
+import { DropShareModal } from '@/components/drops/DropShareModal';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { useMounted } from '@/hooks/use-mounted';
 import { useLeaveDrop } from '@/hooks/mutations/use-drop-mutations';
@@ -103,109 +103,6 @@ function formatLogTime(iso: string) {
   });
 }
 
-function ShareModal({
-  drop,
-  onClose,
-}: {
-  drop: { name: string; shareUrl: string; joinCode: string };
-  onClose: () => void;
-}) {
-  const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedCode, setCopiedCode] = useState(false);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-    } catch {
-      return;
-    }
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 1800);
-  };
-
-  const handleCopyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(drop.joinCode);
-    } catch {
-      return;
-    }
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 1800);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-      <div className="fixed inset-0 bg-[#2a2118]/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-sm rounded-[28px] border border-[#2a2118]/10 bg-[#F7E9B2] p-6 shadow-[0_32px_80px_rgba(42,33,24,0.22)]">
-        <div className="mb-5 flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
-              Share drop
-            </p>
-            <h3 className="mt-1 truncate font-syne text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
-              {drop.name}
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/10 text-[#2a2118]/40 transition-colors hover:border-[#2a2118]/20 hover:text-[#2a2118]"
-          >
-            <IconX size={14} />
-          </button>
-        </div>
-
-        <div className="flex justify-center rounded-[20px] bg-white p-5">
-          <QRCodeSVG value={shareUrl} size={180} bgColor="#ffffff" fgColor="#2a2118" level="M" />
-        </div>
-
-        <div className="mt-3 flex items-center justify-between rounded-[18px] border border-[#2a2118]/10 bg-white/72 px-4 py-3">
-          <div>
-            <p className="font-syne text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
-              Join code
-            </p>
-            <p className="mt-0.5 font-syne text-[24px] font-bold tracking-[0.18em] text-[#2a2118]">
-              {drop.joinCode}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleCopyCode}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/80 px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/56 transition-colors hover:text-[#2a2118]"
-          >
-            {copiedCode ? <IconCheckCheck size={12} /> : <IconClipboard size={12} />}
-            {copiedCode ? 'Copied' : 'Copy'}
-          </button>
-        </div>
-
-        <div className="mt-2 flex items-center gap-3 rounded-[18px] border border-[#2a2118]/10 bg-white/72 px-4 py-3">
-          <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-[#2a2118]/46">
-            {shareUrl}
-          </span>
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/80 px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/56 transition-colors hover:text-[#2a2118]"
-          >
-            {copiedLink ? <IconCheckCheck size={12} /> : <IconClipboard size={12} />}
-            {copiedLink ? 'Copied' : 'Copy'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function LeaveConfirmModal({
   dropName,
   onConfirm,
@@ -228,7 +125,7 @@ function LeaveConfirmModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
       <div className="fixed inset-0 bg-[#2a2118]/50 backdrop-blur-sm" onClick={!isPending ? onClose : undefined} />
-      <div className="relative z-10 w-full max-w-sm rounded-[28px] border border-[#2a2118]/10 bg-[#F7E9B2] p-6 shadow-[0_32px_80px_rgba(42,33,24,0.22)]">
+      <div className="relative z-10 w-full max-w-sm rounded-t-[28px] border border-[#2a2118]/10 bg-[#F7E9B2] p-5 shadow-[0_32px_80px_rgba(42,33,24,0.22)] sm:rounded-[28px] sm:p-6">
         <div className="mb-1 flex items-start justify-between gap-3">
           <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-red-600">
             Leave drop
@@ -250,7 +147,7 @@ function LeaveConfirmModal({
           <span className="font-semibold text-[#2a2118]">{dropName}</span> and lose
           access immediately. You can rejoin later using the join code.
         </p>
-        <div className="mt-5 flex gap-2">
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
             onClick={onClose}
@@ -277,7 +174,7 @@ function PageSkeleton() {
   return (
     <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
       <TapokNavbar />
-      <main className="relative mx-auto max-w-5xl px-6 py-8 lg:px-10 lg:py-10">
+      <main className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
         <Skeleton className="mb-6 h-4 w-20 rounded-full bg-[#2a2118]/10" />
         <div className="mb-8 flex items-center gap-4">
           <Skeleton className="h-14 w-14 rounded-full bg-[#2a2118]/10" />
@@ -315,8 +212,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
     return (
       <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
         <TapokNavbar />
-        <main className="relative mx-auto max-w-5xl px-6 py-8 lg:px-10 lg:py-10">
-          <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/72 p-8 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
+        <main className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+          <div className="rounded-[24px] border border-[#2a2118]/10 bg-white/72 p-5 shadow-[0_14px_40px_rgba(42,33,24,0.05)] sm:rounded-[28px] sm:p-8">
             <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
               Not found
             </p>
@@ -358,7 +255,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
       <TapokNavbar />
 
-      <main className="relative mx-auto max-w-5xl px-6 py-8 lg:px-10 lg:py-10">
+      <main className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
         {/* Back */}
         <Link
           href="/drops"
@@ -369,12 +266,12 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         </Link>
 
         {/* Hero */}
-        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#006666] font-syne text-[14px] font-bold tracking-[0.1em] text-[#F7E9B2]">
+        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#006666] font-syne text-[13px] font-bold tracking-[0.1em] text-[#F7E9B2] sm:h-14 sm:w-14 sm:text-[14px]">
               {getInitials(drop.name)}
             </div>
-            <div>
+            <div className="min-w-0">
               <StatusPill status={drop.status} />
               <h1 className="mt-1.5 font-syne text-[clamp(22px,3.2vw,36px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
                 {drop.name}
@@ -382,11 +279,11 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
             <button
               type="button"
               onClick={() => setShareModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/75 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 transition-colors hover:border-[#2a2118]/18 hover:text-[#2a2118]"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/75 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 transition-colors hover:border-[#2a2118]/18 hover:text-[#2a2118] sm:flex-none"
             >
               <IconShare2 size={13} />
               Share
@@ -395,7 +292,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               <button
                 type="button"
                 onClick={() => setEditModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#2a2118]/12 bg-[#F7E9B2] px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118] transition-colors hover:bg-[#FFF2C7]"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2a2118]/12 bg-[#F7E9B2] px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118] transition-colors hover:bg-[#FFF2C7] sm:flex-none"
               >
                 <IconEdit size={13} />
                 Edit
@@ -405,7 +302,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               <button
                 type="button"
                 onClick={() => setLeaveModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-red-600 transition-colors hover:bg-red-100"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-red-600 transition-colors hover:bg-red-100 sm:flex-none"
               >
                 <IconLogOut size={13} />
                 Leave
@@ -419,7 +316,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
           {/* Left column */}
           <div className="space-y-4">
             {/* Details card */}
-            <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/70 p-6 shadow-[0_10px_28px_rgba(42,33,24,0.06)]">
+            <div className="rounded-[24px] border border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px] sm:p-6">
               <p className="mb-4 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
                 Drop details
               </p>
@@ -440,7 +337,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 )}
                 <div className="flex items-center gap-3 text-[14px] text-[#2a2118]/72">
                   <IconUsers size={14} className="shrink-0 text-[#2a2118]/36" />
-                  <span>
+                  <span className="min-w-0 break-words">
                     Organised by{' '}
                     <span className="font-semibold text-[#2a2118]">
                       {drop.organiser.firstName} {drop.organiser.lastName}
@@ -472,8 +369,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {/* Activity log */}
-            <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
-              <div className="flex items-center gap-2 px-6 pt-5 pb-4">
+            <div className="overflow-hidden rounded-[24px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px]">
+              <div className="flex items-center gap-2 px-4 pb-4 pt-5 sm:px-6">
                 <IconActivity size={13} className="text-[#006666]" />
                 <p className="font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
                   Activity
@@ -481,7 +378,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               </div>
 
               {!drop.activityLogs || drop.activityLogs.length === 0 ? (
-                <div className="border-t border-[#2a2118]/[0.06] px-6 py-6 text-center">
+                <div className="border-t border-[#2a2118]/[0.06] px-4 py-6 text-center sm:px-6">
                   <p className="font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
                     No activity yet
                   </p>
@@ -490,7 +387,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 drop.activityLogs.map((log) => (
                   <div
                     key={log.id}
-                    className="flex items-center gap-4 border-t border-[#2a2118]/[0.06] px-6 py-4 hover:bg-[#2a2118]/[0.015] transition-colors"
+                    className="flex items-start gap-3 border-t border-[#2a2118]/[0.06] px-4 py-4 transition-colors hover:bg-[#2a2118]/[0.015] sm:items-center sm:gap-4 sm:px-6"
                   >
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#006666]/12 font-syne text-[10px] font-extrabold tracking-[0.5px] text-[#006666]">
                       {getLogInitials(log.user.firstName, log.user.lastName)}
@@ -523,7 +420,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
           </div>
 
           {/* Right column — Share */}
-          <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/70 p-6 shadow-[0_10px_28px_rgba(42,33,24,0.06)] lg:self-start">
+          <div className="rounded-[24px] border border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px] sm:p-6 lg:self-start">
             <p className="mb-4 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
               Share
             </p>
@@ -569,7 +466,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
       </main>
 
       {shareModalOpen && (
-        <ShareModal drop={drop} onClose={() => setShareModalOpen(false)} />
+        <DropShareModal drop={drop} onClose={() => setShareModalOpen(false)} />
       )}
       {editModalOpen && (
         <EditDropModal drop={drop} onClose={() => setEditModalOpen(false)} />
