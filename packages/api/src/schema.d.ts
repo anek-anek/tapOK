@@ -22,6 +22,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the authenticated user — 404 if not in DB */
+        get: operations["UsersController_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/{id}": {
         parameters: {
             query?: never;
@@ -179,6 +196,7 @@ export interface components {
             /** Format: date-time */
             birthday?: string;
             userHandle?: string;
+            phone?: string;
             /** @description Whether the user has accepted the Terms & Conditions */
             termsAccepted: boolean;
             /**
@@ -193,6 +211,33 @@ export interface components {
              * @description Timestamp when Privacy Policy was accepted
              */
             privacyPolicyAcceptedAt?: string;
+        };
+        UserProfileDto: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            avatar?: string;
+            /** @enum {string} */
+            role: "admin" | "photographer" | "participant";
+            phone?: string;
+            /** @enum {string} */
+            gender?: "male" | "female" | "other";
+            userHandle?: string;
+            isEmailVerified: boolean;
+            isActive: boolean;
+            /** @description Number of drops created by this user */
+            dropCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        SyncUserDto: {
+            /** @example John */
+            firstName?: string;
+            /** @example Doe */
+            lastName?: string;
         };
         CreateUserDto: {
             /** @example user@example.com */
@@ -219,6 +264,8 @@ export interface components {
             birthday?: string;
             /** @example jane_doe */
             userHandle?: string;
+            /** @example +639123456789 */
+            phone?: string;
         };
         UpdateUserDto: {
             /** @example user@example.com */
@@ -245,6 +292,8 @@ export interface components {
             birthday?: string;
             /** @example jane_doe */
             userHandle?: string;
+            /** @example +639123456789 */
+            phone?: string;
         };
         Organization: {
             id: string;
@@ -348,6 +397,32 @@ export interface operations {
             };
         };
     };
+    UsersController_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileDto"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     UsersController_findOne: {
         parameters: {
             query?: never;
@@ -366,6 +441,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["User"];
                 };
+            };
+            /** @description Forbidden. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description User not found. */
             404: {
@@ -455,7 +537,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncUserDto"];
+            };
+        };
         responses: {
             201: {
                 headers: {

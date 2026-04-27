@@ -1,17 +1,22 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import type { DecodedIdToken } from 'firebase-admin/auth';
+import { DataSource } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserProfileDto } from './dto/user-profile.dto';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    private readonly dataSource: DataSource,
+  ) {}
 
   findAll(): Promise<User[]> {
     return this.usersRepository.findAll();
@@ -27,10 +32,16 @@ export class UsersService {
     return this.usersRepository.findByFirebaseUid(firebaseUid);
   }
 
-  async findMe(firebaseUid: string): Promise<User> {
+  async findMe(firebaseUid: string): Promise<UserProfileDto> {
     const user = await this.usersRepository.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('No account found for this user.');
-    return user;
+
+    const [{ count }] = await this.dataSource.query<[{ count: string }]>(
+      `SELECT COUNT(*) AS count FROM drops WHERE "organiserId" = $1`,
+      [user.id],
+    );
+
+    return { ...user, dropCount: parseInt(count, 10) };
   }
 
   create(dto: CreateUserDto): Promise<User> {

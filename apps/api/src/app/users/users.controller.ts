@@ -29,6 +29,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { UserProfileDto } from './dto/user-profile.dto';
 
 interface RequestWithUser extends Request {
   user: DecodedIdToken;
@@ -52,9 +53,9 @@ export class UsersController {
   @Get('me')
   @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Get the authenticated user — 404 if not in DB' })
-  @ApiResponse({ status: 200, type: User })
+  @ApiResponse({ status: 200, type: UserProfileDto })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  me(@Req() request: RequestWithUser): Promise<User> {
+  me(@Req() request: RequestWithUser): Promise<UserProfileDto> {
     return this.usersService.findMe(request.user.uid);
   }
 

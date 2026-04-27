@@ -43,7 +43,15 @@ export async function finalizeSession(
     const sessionRes = await fetch('/api/auth/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: freshToken }),
+      body: JSON.stringify({
+        idToken: freshToken,
+        profile: {
+          firstName: dbUser.firstName,
+          lastName: dbUser.lastName,
+          email: dbUser.email,
+          avatar: dbUser.avatar,
+        },
+      }),
     });
 
     if (!sessionRes.ok) {
