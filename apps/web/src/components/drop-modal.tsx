@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,6 +24,7 @@ import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import { Separator } from '@repo/ui/components/ui/separator';
 import { cn } from '@repo/ui/utils';
+import { ModalShell } from '@/components/modal-shell';
 import type { Drop, DropStatus } from '@/types/drop';
 
 const createSchema = z.object({
@@ -134,68 +135,6 @@ function LivePreviewCard({
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-const CLOSE_DURATION = 260;
-
-function ModalShell({
-  onClose,
-  children,
-}: {
-  onClose: () => void;
-  children: React.ReactNode | ((close: () => void) => React.ReactNode);
-}) {
-  const [closing, setClosing] = useState(false);
-  const closingRef = useRef(false);
-
-  const triggerClose = useCallback(() => {
-    if (closingRef.current) return;
-    closingRef.current = true;
-    setClosing(true);
-    setTimeout(onClose, CLOSE_DURATION);
-  }, [onClose]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') triggerClose();
-    };
-    document.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
-    };
-  }, [triggerClose]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
-      <div
-        className="fixed inset-0 bg-[#2a2118]/50 backdrop-blur-[3px]"
-        style={{
-          animation: closing
-            ? `tapok-fadeOut ${CLOSE_DURATION}ms ease-in forwards`
-            : 'tapok-fadeIn 200ms ease-out',
-        }}
-        onClick={triggerClose}
-      />
-      <div
-        className="relative z-10 max-h-[92dvh] w-full overflow-hidden overflow-y-auto rounded-t-[28px] shadow-[0_40px_100px_rgba(42,33,24,0.45)] sm:max-w-[720px] sm:rounded-[28px]"
-        style={{
-          animation: closing
-            ? `tapok-slideDown ${CLOSE_DURATION}ms cubic-bezier(0.4,0,1,1) forwards`
-            : 'tapok-slideUp 280ms cubic-bezier(0.34,1.4,0.64,1)',
-        }}
-      >
-        {typeof children === 'function' ? children(triggerClose) : children}
-      </div>
-      <style>{`
-        @keyframes tapok-fadeIn  { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes tapok-fadeOut { from { opacity: 1 } to { opacity: 0 } }
-        @keyframes tapok-slideUp   { from { opacity: 0; transform: translateY(28px) scale(0.96) } to { opacity: 1; transform: translateY(0) scale(1) } }
-        @keyframes tapok-slideDown { from { opacity: 1; transform: translateY(0)    scale(1)    } to { opacity: 0; transform: translateY(22px) scale(0.97) } }
-      `}</style>
     </div>
   );
 }
@@ -601,51 +540,59 @@ export function EditDropModal({
 
         {/* Form panel */}
         <div className="flex flex-col bg-[#F7E9B2] px-5 py-6 sm:px-7 sm:py-7">
-          <div className="flex items-start justify-between mb-6">
+          <div className="mb-6 flex items-start justify-between">
             <div>
               <div className="sm:hidden">
-                <p className="font-syne text-[9px] font-bold tracking-[2px] uppercase text-[#006666] mb-0.5">
+                <p className="mb-0.5 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#006666]">
                   Editing
                 </p>
-                <div className="font-bebas text-[24px] tracking-[1.5px] text-[#2a2118] leading-tight truncate max-w-[220px]">
+                <div className="max-w-[220px] truncate font-bebas text-[24px] leading-tight tracking-[1.5px] text-[#2a2118]">
                   {drop.name}
                 </div>
               </div>
               <div className="hidden sm:block">
-                <p className="font-syne text-[9px] font-bold tracking-[2.5px] uppercase text-[#006666] mb-1">
+                <p className="mb-1 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
                   Edit
                 </p>
-                <div className="font-bebas text-[32px] tracking-[2px] text-[#2a2118] leading-none">
+                <div className="font-bebas text-[32px] leading-none tracking-[2px] text-[#2a2118]">
                   What changed?
                 </div>
-                <p className="text-[12px] font-light text-[#2a2118]/44 mt-1.5">
+                <p className="mt-1.5 text-[12px] font-light text-[#2a2118]/44">
                   Update what needs changing.
                 </p>
               </div>
             </div>
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="icon-sm"
               onClick={onClose}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/12 text-[#2a2118]/36 hover:border-[#2a2118]/22 hover:text-[#2a2118] transition-colors mt-0.5"
+              className="mt-0.5 shrink-0 rounded-full border-[#2a2118]/12 bg-transparent text-[#2a2118]/36 hover:border-[#2a2118]/22 hover:bg-white/50 hover:text-[#2a2118]"
             >
               <IconX size={14} />
-            </button>
+              <span className="sr-only">Close</span>
+            </Button>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-4 flex-1">
+          <form onSubmit={onSubmit} className="flex-1 space-y-4">
             <div>
-              <div className="font-syne text-[9px] font-bold tracking-[2.5px] uppercase text-[#2a2118]/36 mb-2">
+              <Label
+                htmlFor="edit-drop-name"
+                className="mb-2 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+              >
                 Drop Name
-              </div>
+              </Label>
               <Controller
                 name="name"
                 control={control}
                 render={({ field }) => (
-                  <input
+                  <Input
                     {...field}
+                    id="edit-drop-name"
                     type="text"
                     autoFocus
-                    className="w-full bg-white/75 border border-[#2a2118]/[0.09] rounded-[8px] px-4 py-3 text-[15px] font-semibold text-[#2a2118] outline-none focus:border-[#006666]/45 transition-colors"
+                    aria-invalid={Boolean(errors.name)}
+                    className="h-auto rounded-[8px] border-[#2a2118]/[0.09] bg-white/75 px-4 py-3 text-[15px] font-semibold text-[#2a2118] focus-visible:border-[#006666]/45 focus-visible:ring-[#006666]/15"
                   />
                 )}
               />
@@ -658,18 +605,23 @@ export function EditDropModal({
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-3">
               <div>
-                <div className="font-syne text-[9px] font-bold tracking-[2.5px] uppercase text-[#2a2118]/36 mb-2 flex items-center gap-1.5">
+                <Label
+                  htmlFor="edit-drop-date"
+                  className="mb-2 flex items-center gap-1.5 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                >
                   <IconCalendar size={8} className="opacity-50" />
                   Date &amp; Time
-                </div>
+                </Label>
                 <Controller
                   name="scheduledAt"
                   control={control}
                   render={({ field }) => (
-                    <input
+                    <Input
                       {...field}
+                      id="edit-drop-date"
                       type="datetime-local"
-                      className="w-full bg-white/75 border border-[#2a2118]/[0.09] rounded-[8px] px-3 py-3 text-sm text-[#2a2118] outline-none focus:border-[#006666]/45 transition-colors"
+                      aria-invalid={Boolean(errors.scheduledAt)}
+                      className="h-auto rounded-[8px] border-[#2a2118]/[0.09] bg-white/75 px-3 py-3 text-sm text-[#2a2118] focus-visible:border-[#006666]/45 focus-visible:ring-[#006666]/15"
                     />
                   )}
                 />
@@ -680,18 +632,23 @@ export function EditDropModal({
                 )}
               </div>
               <div>
-                <div className="font-syne text-[9px] font-bold tracking-[2.5px] uppercase text-[#2a2118]/36 mb-2 flex items-center gap-1.5">
+                <Label
+                  htmlFor="edit-drop-location"
+                  className="mb-2 flex items-center gap-1.5 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                >
                   <IconMapPin size={8} className="opacity-50" />
                   Location
-                </div>
+                </Label>
                 <Controller
                   name="location"
                   control={control}
                   render={({ field }) => (
-                    <input
+                    <Input
                       {...field}
+                      id="edit-drop-location"
                       type="text"
-                      className="w-full bg-white/75 border border-[#2a2118]/[0.09] rounded-[8px] px-3 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 outline-none focus:border-[#006666]/45 transition-colors"
+                      aria-invalid={Boolean(errors.location)}
+                      className="h-auto rounded-[8px] border-[#2a2118]/[0.09] bg-white/75 px-3 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-[#006666]/45 focus-visible:ring-[#006666]/15"
                     />
                   )}
                 />
@@ -740,7 +697,8 @@ export function EditDropModal({
                     className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}
                   >
                     <span
-                      className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${field.value ? 'translate-x-4' : 'translate-x-0.5'}`}
+                      className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200"
+                      style={{ transform: `translateX(${field.value ? '18px' : '2px'})` }}
                     />
                   </div>
                 </button>
@@ -748,36 +706,37 @@ export function EditDropModal({
             />
 
             {updateDrop.error && (
-              <div className="bg-red-50 border border-red-200/50 rounded-[6px] px-4 py-3">
-                <p className="font-syne text-[11px] text-red-600">
+              <Alert className="rounded-[6px] border-red-200/50 bg-red-50 px-4 py-3">
+                <AlertDescription className="font-syne text-[11px] text-red-600">
                   {updateDrop.error.message ||
                     'Failed to update drop. Please try again.'}
-                </p>
-              </div>
+                </AlertDescription>
+              </Alert>
             )}
 
             <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={onClose}
-                className="py-2 text-center font-syne text-[10px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/30 transition-colors hover:text-[#2a2118]/55"
+                className="h-auto rounded-full px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/30 hover:bg-transparent hover:text-[#2a2118]/55"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={updateDrop.isPending}
-                className="flex h-[46px] w-full items-center justify-center gap-2 rounded-[8px] bg-[#2a2118] px-6 font-bebas text-[17px] tracking-[4px] text-[#F7E9B2] transition-all hover:bg-[#2a2118]/80 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="h-[46px] w-full rounded-[8px] bg-[#2a2118] px-6 font-bebas text-[17px] tracking-[4px] text-[#F7E9B2] hover:bg-[#2a2118]/80 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
                 {updateDrop.isPending ? (
                   <>
-                    <div className="w-[12px] h-[12px] border-2 border-[#F7E9B2]/30 border-t-[#F7E9B2] rounded-full animate-spin" />
+                    <span className="h-[12px] w-[12px] animate-spin rounded-full border-2 border-[#F7E9B2]/30 border-t-[#F7E9B2]" />
                     SAVING…
                   </>
                 ) : (
                   'SAVE CHANGES'
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

@@ -20,7 +20,7 @@ import { track } from '@/lib/analytics';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { useMounted } from '@/hooks/use-mounted';
-import type { DropCrew } from '@/types/drop';
+import type { DropCrew, DropCrewStatus } from '@/types/drop';
 import type { UseMutationResult } from '@tanstack/react-query';
 
 function formatDateTime(iso: string) {
@@ -47,7 +47,7 @@ function getInitials(name: string) {
 type JoinCtaProps = {
   isAuthenticated: boolean;
   isOrganiser: boolean;
-  crewStatus: 'in' | 'pending' | undefined;
+  crewStatus: DropCrewStatus | undefined;
   isNotCrew: boolean;
   joinCode: string;
   joinMutation: UseMutationResult<DropCrew, Error, void>;
@@ -137,6 +137,20 @@ function JoinCta({
         </div>
         <p className="mt-3 font-mono text-[11px] text-[#2a2118]/44">
           The organiser will review your request.
+        </p>
+      </div>
+    );
+  }
+
+  if (crewStatus === 'rejected') {
+    return (
+      <div className="text-center">
+        <div className="inline-flex items-center gap-2 rounded-full bg-red-100/80 px-4 py-2">
+          <IconLock size={13} className="text-red-700" />
+          <span className="font-mono text-[11px] font-medium text-red-700">Request Declined</span>
+        </div>
+        <p className="mt-3 font-mono text-[11px] text-[#2a2118]/44">
+          The organiser has declined your request to join.
         </p>
       </div>
     );

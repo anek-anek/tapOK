@@ -45,7 +45,7 @@ export interface Drop {
   updatedAt: string;
 }
 
-export type DropCrewStatus = 'in' | 'pending';
+export type DropCrewStatus = 'in' | 'pending' | 'rejected';
 
 export interface DropCrew {
   id: string;
@@ -53,6 +53,20 @@ export interface DropCrew {
   userId: string;
   status: DropCrewStatus;
   joinedAt: string;
+}
+
+export interface CrewMember {
+  id: string;
+  dropId: string;
+  userId: string;
+  status: DropCrewStatus;
+  joinedAt: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+  };
 }
 
 export interface CreateDropDto {

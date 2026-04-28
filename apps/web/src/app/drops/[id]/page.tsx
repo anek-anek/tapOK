@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -20,15 +20,19 @@ import {
 import {
   CheckCircle2 as IconCheckCircle,
   Clock as IconClock,
+  UserCheck as IconUserCheck,
+  UserX as IconUserX,
+  Ban as IconBan,
 } from 'lucide-react';
-import { useDrop, useMyCrewStatus } from '@/hooks/queries/use-drops';
+import { useDrop, useMyCrewStatus, useDropCrew } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { EditDropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
+import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { useMounted } from '@/hooks/use-mounted';
-import { useLeaveDrop } from '@/hooks/mutations/use-drop-mutations';
+import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest } from '@/hooks/mutations/use-drop-mutations';
 import type { DropStatus } from '@/types/drop';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
@@ -114,59 +118,52 @@ function LeaveConfirmModal({
   onClose: () => void;
   isPending: boolean;
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isPending) onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose, isPending]);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-      <div className="fixed inset-0 bg-[#2a2118]/50 backdrop-blur-sm" onClick={!isPending ? onClose : undefined} />
-      <div className="relative z-10 w-full max-w-sm rounded-t-[28px] border border-[#2a2118]/10 bg-[#F7E9B2] p-5 shadow-[0_32px_80px_rgba(42,33,24,0.22)] sm:rounded-[28px] sm:p-6">
-        <div className="mb-1 flex items-start justify-between gap-3">
-          <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-red-600">
-            Leave drop
+    <ModalShell onClose={!isPending ? onClose : () => {}}>
+      {(close) => (
+        <div className="bg-[#F7E9B2] p-5 sm:p-6">
+          <div className="mb-1 flex items-start justify-between gap-3">
+            <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-red-600">
+              Leave drop
+            </p>
+            <button
+              type="button"
+              onClick={close}
+              disabled={isPending}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/10 text-[#2a2118]/40 transition-colors hover:border-[#2a2118]/20 hover:text-[#2a2118] disabled:opacity-40"
+            >
+              <IconX size={14} />
+            </button>
+          </div>
+          <h3 className="mt-1 font-syne text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+            Are you sure?
+          </h3>
+          <p className="mt-2 text-[13px] leading-6 text-[#2a2118]/64">
+            You&apos;ll be removed from{' '}
+            <span className="font-semibold text-[#2a2118]">{dropName}</span> and lose
+            access immediately. You can rejoin later using the join code.
           </p>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isPending}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/10 text-[#2a2118]/40 transition-colors hover:border-[#2a2118]/20 hover:text-[#2a2118] disabled:opacity-40"
-          >
-            <IconX size={14} />
-          </button>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={close}
+              disabled={isPending}
+              className="flex-1 rounded-[18px] border border-[#2a2118]/12 bg-white/70 py-3 font-syne text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:bg-white/90 disabled:opacity-40"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={isPending}
+              className="flex-1 rounded-[18px] bg-red-600 py-3 font-syne text-[10px] font-bold uppercase tracking-[2px] text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+            >
+              {isPending ? 'Leaving…' : 'Leave drop'}
+            </button>
+          </div>
         </div>
-        <h3 className="mt-1 font-syne text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
-          Are you sure?
-        </h3>
-        <p className="mt-2 text-[13px] leading-6 text-[#2a2118]/64">
-          You&apos;ll be removed from{' '}
-          <span className="font-semibold text-[#2a2118]">{dropName}</span> and lose
-          access immediately. You can rejoin later using the join code.
-        </p>
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isPending}
-            className="flex-1 rounded-[18px] border border-[#2a2118]/12 bg-white/70 py-3 font-syne text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:bg-white/90 disabled:opacity-40"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={isPending}
-            className="flex-1 rounded-[18px] bg-red-600 py-3 font-syne text-[10px] font-bold uppercase tracking-[2px] text-white transition-colors hover:bg-red-700 disabled:opacity-60"
-          >
-            {isPending ? 'Leaving…' : 'Leave drop'}
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    </ModalShell>
   );
 }
 
@@ -206,6 +203,13 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const { mutate: leaveDrop, isPending: isLeaving } = useLeaveDrop(id);
 
+  const isOrganiserCheck = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
+  const { data: crew } = useDropCrew(id, { enabled: isOrganiserCheck });
+  const { mutate: approveJoinRequest, isPending: isApproving, variables: approvingUserId } = useApproveJoinRequest(id);
+  const { mutate: rejectJoinRequest, isPending: isRejecting, variables: rejectingUserId } = useRejectJoinRequest(id);
+
+  const pendingMembers = crew?.filter((m) => m.status === 'pending') ?? [];
+
   if (!mounted || isLoading) return <PageSkeleton />;
 
   if (isError || !drop) {
@@ -236,7 +240,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const isOrganiser = dbUser?.id === drop.organiserId;
+  const isOrganiser = isOrganiserCheck;
   const canEdit = isOrganiser && drop.status !== 'completed';
   const canLeave = !isOrganiser && (crewStatus?.status === 'in' || crewStatus?.status === 'pending');
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
@@ -365,8 +369,69 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     </span>
                   </div>
                 )}
+                {!isOrganiser && crewStatus?.status === 'rejected' && (
+                  <div className="flex items-center gap-2">
+                    <IconBan size={14} className="shrink-0 text-red-600" />
+                    <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-red-600">
+                      Request Rejected
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Pending requests — organiser only */}
+            {isOrganiser && pendingMembers.length > 0 && (
+              <div className="rounded-[28px] border border-amber-400/30 bg-amber-50/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
+                <div className="flex items-center gap-2 px-6 pt-5 pb-4">
+                  <IconClock size={13} className="text-amber-700" />
+                  <p className="font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-amber-700/70">
+                    Pending requests
+                  </p>
+                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/30 font-syne text-[10px] font-bold text-amber-800">
+                    {pendingMembers.length}
+                  </span>
+                </div>
+                {pendingMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center gap-4 border-t border-amber-400/20 px-6 py-4"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400/20 font-syne text-[10px] font-extrabold tracking-[0.5px] text-amber-800">
+                      {getLogInitials(member.user.firstName, member.user.lastName)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-[#2a2118]">
+                        {member.user.firstName} {member.user.lastName}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-[#2a2118]/40">
+                        Requested {formatLogTime(member.joinedAt)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => rejectJoinRequest(member.userId)}
+                        disabled={(isRejecting && rejectingUserId === member.userId) || (isApproving && approvingUserId === member.userId)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 font-syne text-[9px] font-bold uppercase tracking-[2px] text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                      >
+                        <IconUserX size={12} />
+                        {isRejecting && rejectingUserId === member.userId ? 'Rejecting…' : 'Reject'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => approveJoinRequest(member.userId)}
+                        disabled={(isApproving && approvingUserId === member.userId) || (isRejecting && rejectingUserId === member.userId)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[#006666] px-3.5 py-2 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 disabled:opacity-50"
+                      >
+                        <IconUserCheck size={12} />
+                        {isApproving && approvingUserId === member.userId ? 'Approving…' : 'Approve'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Activity log */}
             <div className="overflow-hidden rounded-[24px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px]">
@@ -397,11 +462,15 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         <strong className="font-semibold text-[#2a2118]">
                           {log.user.firstName} {log.user.lastName}
                         </strong>{' '}
-                        {log.action === 'created' && 'created this drop'}
-                        {log.action === 'updated' && 'updated this drop'}
-                        {log.action === 'joined' && 'joined this drop'}
-                        {log.action === 'join_requested' && 'requested to join this drop'}
-                        {log.action === 'left' && 'left this drop'}
+                        {{
+                          created: 'created this drop',
+                          joined: 'joined this drop',
+                          join_requested: 'requested to join this drop',
+                          join_request_approved: 'approved a join request',
+                          join_request_rejected: 'rejected a join request',
+                          left: 'left this drop',
+                          updated: 'updated this drop',
+                        }[log.action] ?? log.action.replace(/_/g, ' ')}
                         {log.action === 'updated' && log.changedFields && Object.keys(log.changedFields).length > 0 && (
                           <span className="text-[#2a2118]/40">
                             {' '}

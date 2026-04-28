@@ -1,12 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import axios from 'axios';
 import { dropsService } from '@/services/drops.service';
+import type { CrewMember } from '@/types/drop';
 
 export const dropKeys = {
   mine: () => ['drops', 'mine'] as const,
   detail: (id: string) => ['drops', id] as const,
   byJoinCode: (joinCode: string) => ['drops', 'join', joinCode] as const,
   crewMe: (id: string) => ['drops', id, 'crew', 'me'] as const,
+  crew: (id: string) => ['drops', id, 'crew'] as const,
   myActivity: () => ['drops', 'activity', 'mine'] as const,
 };
 
@@ -55,5 +57,14 @@ export function useMyCrewStatus(dropId: string, options?: { enabled?: boolean })
       if (axios.isAxiosError(error) && error.response?.status === 404) return false;
       return failureCount < 2;
     },
+  });
+}
+
+export function useDropCrew(dropId: string, options?: { enabled?: boolean }): UseQueryResult<CrewMember[]> {
+  return useQuery({
+    queryKey: dropKeys.crew(dropId),
+    queryFn: () => dropsService.getCrew(dropId),
+    enabled: (options?.enabled ?? true) && Boolean(dropId),
+    refetchInterval: 15_000,
   });
 }

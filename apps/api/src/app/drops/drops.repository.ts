@@ -79,6 +79,10 @@ export class DropsRepository {
     await this.crewRepo.delete({ dropId, userId });
   }
 
+  async updateCrewStatus(dropId: string, userId: string, status: DropCrewStatus): Promise<void> {
+    await this.crewRepo.update({ dropId, userId }, { status });
+  }
+
   findActivityFeedForUser(userId: string): Promise<DropActivityLog[]> {
     return this.logRepo
       .createQueryBuilder('log')
