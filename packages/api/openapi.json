@@ -99,6 +99,36 @@
         ]
       }
     },
+    "/users/me/frequent-crew": {
+      "get": {
+        "operationId": "UsersController_getFrequentCrew",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FrequentCrewDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the frequently seen crew for the authenticated user",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/users/{id}": {
       "get": {
         "operationId": "UsersController_findOne",
@@ -627,6 +657,26 @@
         "summary": "Remove a member from an organization",
         "tags": [
           "organizations"
+        ]
+      }
+    },
+    "/drops/cron/transition": {
+      "post": {
+        "operationId": "DropsController_runCronTransition",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Transitions applied."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Vercel Cron: transition drop statuses (requires CRON_SECRET)",
+        "tags": [
+          "drops"
         ]
       }
     },
@@ -1397,6 +1447,40 @@
           "updatedAt"
         ]
       },
+      "FrequentCrewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string"
+          },
+          "userHandle": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "frequencyCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "createdAt",
+          "frequencyCount"
+        ]
+      },
       "SyncUserDto": {
         "type": "object",
         "properties": {
@@ -1670,6 +1754,10 @@
           "expectedHeadcount": {
             "type": "number",
             "example": 20
+          },
+          "isLocked": {
+            "type": "boolean",
+            "example": false
           }
         },
         "required": [
@@ -1849,6 +1937,15 @@
           "isLocked": {
             "type": "boolean",
             "description": "Lock the drop so new joiners require approval"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ongoing",
+              "completed"
+            ],
+            "description": "Manually override the drop status"
           }
         }
       },

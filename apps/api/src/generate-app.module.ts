@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { UsersController } from './app/users/users.controller';
@@ -31,6 +32,7 @@ function stub<T>(token: T): { provide: T; useValue: object } {
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([
       { name: 'default', ...THROTTLE_DEFAULT },
       { name: 'strict', ...THROTTLE_STRICT },
