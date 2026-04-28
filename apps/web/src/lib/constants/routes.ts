@@ -1,4 +1,4 @@
-export const PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/forbidden', '/drops/join'] as const;
+export const PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/forbidden'] as const;
 
 export type PublicRoute = (typeof PUBLIC_ROUTES)[number];
 

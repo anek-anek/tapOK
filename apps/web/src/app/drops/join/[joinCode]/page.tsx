@@ -11,7 +11,6 @@ import {
   Lock as IconLock,
   CheckCircle2 as IconCheckCircle,
   Clock as IconClock,
-  LogIn as IconLogIn,
 } from 'lucide-react';
 import { useDropByJoinCode, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
@@ -45,52 +44,22 @@ function getInitials(name: string) {
 }
 
 type JoinCtaProps = {
-  isAuthenticated: boolean;
   isOrganiser: boolean;
   crewStatus: DropCrewStatus | undefined;
   isNotCrew: boolean;
-  joinCode: string;
   joinMutation: UseMutationResult<DropCrew, Error, void>;
   isLocked: boolean;
   onViewDrop: () => void;
 };
 
 function JoinCta({
-  isAuthenticated,
   isOrganiser,
   crewStatus,
   isNotCrew,
-  joinCode,
   joinMutation,
   isLocked,
   onViewDrop,
 }: JoinCtaProps) {
-  if (!isAuthenticated) {
-    return (
-      <div className="text-center">
-        <p className="mb-1 font-mono text-[11px] text-[#2a2118]/55">
-          Tap In to commit — verify your identity first.
-        </p>
-        <p className="mb-4 font-mono text-[10px] text-[#2a2118]/35">
-          No maybes. In means you&apos;re showing up.
-        </p>
-        <Link
-          href={`/login?redirectTo=/drops/join/${joinCode}`}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
-        >
-          <IconLogIn size={13} />
-          Sign in to tap in
-        </Link>
-        <Link
-          href={`/register?redirectTo=/drops/join/${joinCode}`}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/12 bg-transparent px-6 py-2.5 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/55 transition-colors hover:bg-[#2a2118]/5"
-        >
-          New here? Create account
-        </Link>
-      </div>
-    );
-  }
-
   if (isOrganiser) {
     return (
       <div className="text-center">
@@ -339,11 +308,9 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
           {/* CTA */}
           <div className="border-t border-[#2a2118]/8 px-4 py-5 sm:px-6">
             <JoinCta
-              isAuthenticated={Boolean(dbUser)}
               isOrganiser={isOrganiser}
               crewStatus={crewStatus?.status}
               isNotCrew={isNotCrew}
-              joinCode={joinCode}
               joinMutation={joinMutation}
               isLocked={drop.isLocked}
               onViewDrop={() => router.push(`/drops/${drop.id}`)}
