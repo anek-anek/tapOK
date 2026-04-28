@@ -123,7 +123,8 @@ export class DropsService {
     if (existing) throw new ConflictException('You have already joined this drop');
 
     const memberStatus = drop.isLocked ? DropCrewStatus.PENDING : DropCrewStatus.IN;
-    const crewMember = await this.dropsRepository.addCrewMember(dropId, user.id, memberStatus);
+    const isPresent = !drop.isLocked;
+    const crewMember = await this.dropsRepository.addCrewMember(dropId, user.id, memberStatus, isPresent);
 
     await this.dropsRepository.writeLog({
       dropId,
@@ -217,7 +218,7 @@ export class DropsService {
       throw new BadRequestException('User is not pending approval');
     }
 
-    await this.dropsRepository.updateCrewStatus(dropId, targetUserId, DropCrewStatus.IN);
+    await this.dropsRepository.updateCrewStatus(dropId, targetUserId, DropCrewStatus.IN, true);
 
     await this.dropsRepository.writeLog({
       dropId,
