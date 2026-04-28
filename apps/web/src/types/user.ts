@@ -28,6 +28,16 @@ export interface UserProfile extends User {
   dropCount: number;
 }
 
+export interface FrequentCrewMember {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatar?: string;
+  userHandle?: string;
+  createdAt: string;
+  frequencyCount: number;
+}
+
 export interface CreateUserDto {
   email: string;
   firstName: string;

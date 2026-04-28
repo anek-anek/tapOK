@@ -30,6 +30,7 @@ import { SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { UserProfileDto } from './dto/user-profile.dto';
+import { FrequentCrewDto } from './dto/frequent-crew.dto';
 
 interface RequestWithUser extends Request {
   user: DecodedIdToken;
@@ -57,6 +58,14 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found.' })
   me(@Req() request: RequestWithUser): Promise<UserProfileDto> {
     return this.usersService.findMe(request.user.uid);
+  }
+
+  @Get('me/frequent-crew')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Get the frequently seen crew for the authenticated user' })
+  @ApiResponse({ status: 200, type: [FrequentCrewDto] })
+  getFrequentCrew(@Req() request: RequestWithUser): Promise<FrequentCrewDto[]> {
+    return this.usersService.getFrequentCrew(request.user.uid);
   }
 
   @Get(':id')
