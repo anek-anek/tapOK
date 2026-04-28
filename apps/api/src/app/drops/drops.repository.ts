@@ -70,8 +70,8 @@ export class DropsRepository {
     });
   }
 
-  async addCrewMember(dropId: string, userId: string, status: DropCrewStatus): Promise<DropCrew> {
-    const record = this.crewRepo.create({ dropId, userId, status });
+  async addCrewMember(dropId: string, userId: string, status: DropCrewStatus, isPresent: boolean = false): Promise<DropCrew> {
+    const record = this.crewRepo.create({ dropId, userId, status, isPresent });
     return this.crewRepo.save(record);
   }
 
@@ -79,8 +79,12 @@ export class DropsRepository {
     await this.crewRepo.delete({ dropId, userId });
   }
 
-  async updateCrewStatus(dropId: string, userId: string, status: DropCrewStatus): Promise<void> {
-    await this.crewRepo.update({ dropId, userId }, { status });
+  async updateCrewStatus(dropId: string, userId: string, status: DropCrewStatus, isPresent?: boolean): Promise<void> {
+    const updateData: any = { status };
+    if (isPresent !== undefined) {
+      updateData.isPresent = isPresent;
+    }
+    await this.crewRepo.update({ dropId, userId }, updateData);
   }
 
   async updateCrewPresence(dropId: string, userId: string, isPresent: boolean): Promise<void> {
