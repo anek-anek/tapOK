@@ -11,6 +11,8 @@ import {
   Lock as IconLock,
   CheckCircle2 as IconCheckCircle,
   Clock as IconClock,
+  LogIn as IconLogIn,
+  UserPlus as IconUserPlus,
 } from 'lucide-react';
 import { useDropByJoinCode, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
@@ -50,6 +52,8 @@ type JoinCtaProps = {
   joinMutation: UseMutationResult<DropCrew, Error, void>;
   isLocked: boolean;
   onViewDrop: () => void;
+  dbUser: { id: string } | null;
+  joinCode: string;
 };
 
 function JoinCta({
@@ -59,7 +63,33 @@ function JoinCta({
   joinMutation,
   isLocked,
   onViewDrop,
+  dbUser,
+  joinCode,
 }: JoinCtaProps) {
+  if (!dbUser) {
+    return (
+      <div className="text-center">
+        <p className="font-mono text-[11px] text-[#2a2118]/55">
+          Sign in to tap in to this drop.
+        </p>
+        <Link
+          href={`/register?redirectTo=/drops/join/${joinCode}`}
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
+        >
+          <IconUserPlus size={13} />
+          Sign up to Tap In
+        </Link>
+        <Link
+          href={`/login?redirectTo=/drops/join/${joinCode}`}
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
+        >
+          <IconLogIn size={13} />
+          Log in
+        </Link>
+      </div>
+    );
+  }
+
   if (isOrganiser) {
     return (
       <div className="text-center">
@@ -133,9 +163,17 @@ function JoinCta({
 
     if (isAlreadyJoinedError) {
       return (
-        <p className="text-center font-mono text-[12px] text-[#2a2118]/55">
-          You&apos;ve already joined this drop.
-        </p>
+        <div className="text-center">
+          <p className="font-mono text-[12px] text-[#2a2118]/55">
+            You&apos;ve already joined this drop.
+          </p>
+          <button
+            onClick={onViewDrop}
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
+          >
+            View Drop
+          </button>
+        </div>
       );
     }
 
@@ -314,6 +352,8 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
               joinMutation={joinMutation}
               isLocked={drop.isLocked}
               onViewDrop={() => router.push(`/drops/${drop.id}`)}
+              dbUser={dbUser}
+              joinCode={joinCode}
             />
           </div>
         </div>

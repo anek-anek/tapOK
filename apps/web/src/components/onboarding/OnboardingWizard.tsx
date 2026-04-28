@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm, Controller } from 'react-hook-form';
@@ -119,6 +119,78 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
       <p className="mt-10 font-mono text-[11px] text-[#2a2118]/30">
         Built for friend groups who are tired of maybes.
       </p>
+    </motion.div>
+  );
+}
+
+// ─── Step 1 (Crew): Code Entry ───────────────────────────────────────────────
+
+function CrewEntry({ onBack }: { onBack: () => void }) {
+  const router = useRouter();
+  const [code, setCode] = useState('');
+
+  useEffect(() => { track('crew_code_entry_viewed'); }, []);
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) return;
+    track('crew_code_submitted', { code: trimmed });
+    router.push(`/drops/join/${trimmed}`);
+  };
+
+  return (
+    <motion.div
+      key="crew-entry"
+      variants={slide}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={{ duration: 0.3, ease: springEase }}
+      className="w-full"
+    >
+      <button
+        onClick={onBack}
+        className="mb-5 flex items-center gap-1.5 text-xs text-[#2a2118]/40 transition-colors hover:text-[#2a2118]/70"
+      >
+        ← Back
+      </button>
+
+      <h2 className="mb-1 font-bebas text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
+        Got a code?
+      </h2>
+      <p className="mb-6 text-sm text-[#2a2118]/50">
+        Enter the join code or paste the link your Chief sent you.
+      </p>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label className="font-mono text-[10px] uppercase tracking-widest text-[#2a2118]/45">
+            Join code
+          </label>
+          <input
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder="e.g. A1B2C3D4"
+            autoFocus
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            className={INPUT}
+          />
+        </div>
+
+        <motion.button
+          type="submit"
+          disabled={code.trim().length < 4}
+          whileHover={code.trim().length >= 4 ? { y: -2 } : {}}
+          whileTap={code.trim().length >= 4 ? { scale: 0.98 } : {}}
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-sm transition-all hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Tap In
+        </motion.button>
+      </form>
     </motion.div>
   );
 }
@@ -363,6 +435,7 @@ function DropBuilder({
 function DropLive({ drop }: { drop: Drop }) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const shareUrl =
     typeof window !== 'undefined'
@@ -383,7 +456,8 @@ function DropLive({ drop }: { drop: Drop }) {
     await navigator.clipboard.writeText(shareUrl);
     track('drop_share_link_copied', { dropId: drop.id });
     setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 2500);
   }
 
   async function handleShare() {
@@ -556,6 +630,7 @@ export function OnboardingWizard() {
   const firstName = params.get('name') ?? dbUser?.firstName ?? 'You';
 
   const [step, setStep] = useState(0);
+  const [path, setPath] = useState<'chief' | 'crew' | null>(null);
   const [liveDrop, setLiveDrop] = useState<Drop | null>(null);
 
   // Track when onboarding is first viewed
@@ -571,17 +646,20 @@ export function OnboardingWizard() {
           <AnimatePresence mode="wait">
             {step === 0 && (
               <OutcomeSplash
-                onChief={() => setStep(1)}
-                onCrew={() => router.push('/drops')}
+                onChief={() => { setPath('chief'); setStep(1); }}
+                onCrew={() => { setPath('crew'); setStep(1); }}
                 onSkip={() => router.push('/')}
               />
             )}
-            {step === 1 && (
+            {step === 1 && path === 'chief' && (
               <DropBuilder
                 onBack={() => setStep(0)}
                 onLive={handleLive}
                 name={firstName}
               />
+            )}
+            {step === 1 && path === 'crew' && (
+              <CrewEntry onBack={() => setStep(0)} />
             )}
             {step === 2 && liveDrop && (
               <DropLive drop={liveDrop} />

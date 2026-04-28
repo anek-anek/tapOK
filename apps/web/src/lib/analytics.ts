@@ -22,7 +22,9 @@ export type OnboardingEvent =
   | 'drop_view_clicked'
   | 'crew_invite_viewed'
   | 'crew_tap_in_clicked'
-  | 'crew_tapped_in';
+  | 'crew_tapped_in'
+  | 'crew_code_entry_viewed'
+  | 'crew_code_submitted';
 
 type EventPayload = Record<string, string | number | boolean | undefined>;
 
