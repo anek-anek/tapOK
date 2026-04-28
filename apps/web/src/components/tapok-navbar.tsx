@@ -11,7 +11,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 
 const passionOne = Passion_One({
-  weight: '400',
+  weight: ['400', '700'],
   subsets: ['latin'],
 });
 
@@ -39,11 +39,9 @@ export function TapokNavbar() {
   const initials = getInitials(dbUser?.firstName, dbUser?.lastName);
 
   const navItems: NavItem[] = [
-    { href: '/', label: 'Home', active: pathname === '/' },
-    ...(dbUser ? [
-      { href: '/activity', label: 'Activity', active: pathname === '/activity' || pathname.startsWith('/activity/') },
-      { href: '/drops', label: 'Drops', active: pathname === '/drops' || pathname.startsWith('/drops/') },
-    ] : []),
+    { href: '/drops', label: 'Events', active: pathname === '/drops' || pathname.startsWith('/drops/') },
+    { href: '/drops/create', label: 'Create Event', active: pathname === '/drops/create' },
+    { href: '/about', label: 'About Us', active: pathname === '/about' },
   ];
 
   useEffect(() => {
@@ -75,91 +73,107 @@ export function TapokNavbar() {
 
   return (
     <>
-    <div className="h-[57px]" />
-    <header className={`fixed inset-x-0 top-0 z-20 border-b border-[#2a2118]/12 bg-[linear-gradient(180deg,rgba(247,233,178,0.98),rgba(247,233,178,0.9))] shadow-[0_8px_26px_rgba(42,33,24,0.05)] backdrop-blur-[4px] transition-transform duration-300 ease-in-out ${visible ? 'translate-y-0' : '-translate-y-full'}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-10">
-        <div className="flex shrink-0 items-center gap-3">
-          <Link href="/" className={`${passionOne.className} inline-flex items-center text-[24px] leading-none tracking-[0.08em] text-[#2a2118] sm:text-[27px]`}>
-            <span className="translate-y-[1px]">TAPOK</span>
+      <div className="h-[60px]" />
+      <header
+        className={`fixed inset-x-0 top-0 z-20 border-b border-[#000]/10 bg-[#FFF4BD] shadow-[0_2px_12px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-in-out ${visible ? 'translate-y-0' : '-translate-y-full'}`}
+      >
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-8">
+          {/* Logo */}
+          <Link
+            href="/"
+            className={`${passionOne.className} inline-flex shrink-0 items-center gap-1.5 text-xl leading-none tracking-tight text-[#000] sm:text-2xl`}
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#006666] text-[#FFF4BD]">
+              TAP
+            </span>
+            <span>OK</span>
           </Link>
+
+          {/* Nav links */}
+          <nav className="flex min-w-0 flex-1 items-center justify-center gap-0.5 overflow-x-auto sm:gap-1">
+            {isReady && dbUser &&
+              navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`${passionOne.className} relative shrink-0 px-2.5 py-1.5 text-sm font-normal uppercase tracking-[1.8px] transition-colors sm:px-3.5 sm:text-base ${item.active
+                    ? 'text-[#000]'
+                    : 'text-[#000]/50 hover:text-[#000]'
+                    }`}
+                >
+                  {item.label}
+                  {item.active && (
+                    <span className="absolute inset-x-2 bottom-0 h-[2.5px] rounded-full bg-[#006666]" />
+                  )}
+                </Link>
+              ))}
+          </nav>
+
+          {/* Auth area */}
+          <div className="flex shrink-0 items-center gap-2" ref={dropdownRef}>
+            {!isReady ? (
+              <Skeleton className="h-9 w-20 rounded-full bg-[#000]/10" />
+            ) : !dbUser ? (
+              <>
+                <Link
+                  href="/login"
+                  className={`${passionOne.className} hidden rounded-full border-2 border-[#000]/25 bg-transparent px-5 py-1.5 text-sm uppercase tracking-[1.5px] text-[#000] transition-colors hover:border-[#000]/50 sm:inline-flex sm:items-center`}
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/login"
+                  className={`${passionOne.className} inline-flex items-center rounded-full bg-[#006666] px-5 py-1.5 text-sm uppercase tracking-[1.5px] text-white transition-colors hover:bg-[#005555]`}
+                >
+                  Sign Up
+                </Link>
+              </>
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setOpen((v) => !v)}
+                  aria-label={`${dbUser.firstName} ${dbUser.lastName} — account menu`}
+                  className={`${passionOne.className} inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#000]/15 bg-white text-[11px] uppercase tracking-[1.5px] text-[#000] transition-colors hover:border-[#000]/30 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/30`}
+                >
+                  {initials}
+                </button>
+
+                {open && (
+                  <div className="absolute right-0 top-[calc(100%+8px)] z-30 min-w-[190px] overflow-hidden rounded-2xl border border-[#000]/10 bg-[#FFF4BD] shadow-[0_12px_32px_rgba(0,0,0,0.12)]">
+                    {dbUser && (
+                      <div className="border-b border-[#000]/8 px-4 py-3">
+                        <p className={`${passionOne.className} text-[12px] uppercase tracking-[1.5px] text-[#000]`}>
+                          {dbUser.firstName} {dbUser.lastName}
+                        </p>
+                        <p className="mt-0.5 font-inter text-[11px] text-[#000]/45 lowercase">
+                          {dbUser.email}
+                        </p>
+                      </div>
+                    )}
+
+                    <Link
+                      href="/profile"
+                      onClick={() => setOpen(false)}
+                      className={`${passionOne.className} flex items-center gap-3 px-4 py-3 text-[11px] uppercase tracking-[1.5px] text-[#000]/70 transition-colors hover:bg-[#000]/5 hover:text-[#000]`}
+                    >
+                      <IconUser size={13} />
+                      Profile
+                    </Link>
+
+                    <button
+                      onClick={handleLogout}
+                      className={`${passionOne.className} flex w-full items-center gap-3 border-t border-[#000]/8 px-4 py-3 text-[11px] uppercase tracking-[1.5px] text-[#000]/70 transition-colors hover:bg-[#000]/5 hover:text-[#000]`}
+                    >
+                      <LogOut size={13} />
+                      Log out
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-
-        <nav className="flex min-w-0 flex-1 items-end justify-center gap-0.5 overflow-x-auto sm:gap-2">
-          {isReady && navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`relative shrink-0 px-2 pb-1.5 pt-1 font-syne text-[10px] font-bold uppercase tracking-[1.6px] transition-colors sm:px-3 sm:tracking-[2.4px] ${
-                item.active
-                  ? 'text-[#2a2118]'
-                  : 'text-[#2a2118]/55 hover:text-[#2a2118]'
-              }`}
-            >
-              {item.label}
-              <span
-                className={`absolute inset-x-3 bottom-0 h-[3px] rounded-full transition-transform ${
-                  item.active ? 'scale-x-100 bg-[#0A6D6D]' : 'scale-x-0 bg-transparent'
-                }`}
-              />
-            </Link>
-          ))}
-        </nav>
-
-        {/* Profile button + dropdown */}
-        <div className="relative" ref={dropdownRef}>
-          {!isReady ? (
-            <Skeleton className="h-11 w-11 rounded-full bg-[#2a2118]/10" />
-          ) : !dbUser ? (
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-full border border-[#2a2118]/12 bg-white/75 px-3 py-2 font-syne text-[10px] font-bold uppercase tracking-[1.6px] text-[#2a2118] transition-colors hover:border-[#2a2118]/22 hover:bg-white sm:px-4 sm:tracking-[2px]"
-            >
-              Login
-            </Link>
-          ) : (
-            <button
-              onClick={() => setOpen((v) => !v)}
-              aria-label={`${dbUser.firstName} ${dbUser.lastName} — account menu`}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#2a2118]/12 bg-white/75 font-syne text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/22 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#F7E9B2]"
-            >
-              {initials}
-            </button>
-          )}
-
-          {open && (
-            <div className="absolute right-0 top-[calc(100%+8px)] z-30 min-w-[180px] overflow-hidden rounded-2xl border border-[#2a2118]/10 bg-[#FAF4DC] shadow-[0_12px_32px_rgba(42,33,24,0.12)]">
-              {dbUser && (
-                <div className="border-b border-[#2a2118]/8 px-4 py-3">
-                  <p className="font-syne text-[11px] font-bold uppercase tracking-[1.5px] text-[#2a2118]">
-                    {dbUser.firstName} {dbUser.lastName}
-                  </p>
-                  <p className="mt-0.5 font-syne text-[10px] text-[#2a2118]/45 lowercase">
-                    {dbUser.email}
-                  </p>
-                </div>
-              )}
-
-              <Link
-                href="/profile"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 font-syne text-[11px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/70 transition-colors hover:bg-[#2a2118]/5 hover:text-[#2a2118]"
-              >
-                <IconUser size={13} />
-                Profile
-              </Link>
-
-              <button
-                onClick={handleLogout}
-                className="flex w-full items-center gap-3 border-t border-[#2a2118]/8 px-4 py-3 font-syne text-[11px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/70 transition-colors hover:bg-[#2a2118]/5 hover:text-[#2a2118]"
-              >
-                <LogOut size={13} />
-                Log out
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </header>
+      </header>
     </>
   );
 }
