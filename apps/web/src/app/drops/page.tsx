@@ -602,7 +602,7 @@ export default function DropsPage() {
       [...drops].filter((drop) => drop.status === 'completed').sort(sortRecent),
     [drops],
   );
-  const focusDrop = activeDrops[0] ?? sortedUpcoming[0] ?? null;
+  const focusDrop = activeDrops[0] ?? null;
 
   const liveTabDrops = useMemo(
     () =>
