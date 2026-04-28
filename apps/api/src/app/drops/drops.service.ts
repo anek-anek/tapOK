@@ -37,6 +37,7 @@ export class DropsService {
       scheduledAt: new Date(dto.scheduledAt),
       location: dto.location,
       expectedHeadcount: dto.expectedHeadcount,
+      isLocked: dto.isLocked ?? false,
       status: DropStatus.ACTIVE,
       joinCode,
       shareUrl,
