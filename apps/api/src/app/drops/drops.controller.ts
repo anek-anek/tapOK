@@ -24,6 +24,7 @@ import { FirebaseAuthGuard, Public } from '../../common';
 import { DropsService } from './drops.service';
 import { CreateDropDto } from './dto/create-drop.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
+import { UpdatePresenceDto } from './dto/update-presence.dto';
 import { JoinDropResponseDto } from './dto/join-drop-response.dto';
 import { CrewMemberDto } from './dto/crew-member.dto';
 import { Drop } from './entities/drop.entity';
@@ -96,6 +97,21 @@ export class DropsController {
     @Req() request: RequestWithUser,
   ): Promise<JoinDropResponseDto> {
     return this.dropsService.getMyCrewStatus(id, request.user.uid);
+  }
+
+  @Patch(':id/crew/me/presence')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Mark yourself in or out for a drop (active crew members only)' })
+  @ApiResponse({ status: 204, description: 'Presence updated.' })
+  @ApiResponse({ status: 400, description: 'Not an active crew member.' })
+  @ApiResponse({ status: 404, description: 'Not a crew member of this drop.' })
+  updatePresence(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePresenceDto,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.updatePresence(id, request.user.uid, dto.isPresent);
   }
 
   @Patch(':id')

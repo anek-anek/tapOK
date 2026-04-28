@@ -31,6 +31,10 @@ export class DropCrew {
   @Column({ type: 'enum', enum: DropCrewStatus, default: DropCrewStatus.IN })
   status: DropCrewStatus;
 
+  @ApiProperty({ default: false })
+  @Column({ type: 'boolean', default: false })
+  isPresent: boolean;
+
   @ApiProperty()
   @CreateDateColumn()
   joinedAt: Date;

@@ -31,7 +31,7 @@ import { EditDropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
-import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember } from '@/hooks/mutations/use-drop-mutations';
+import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence } from '@/hooks/mutations/use-drop-mutations';
 import type { DropStatus } from '@/types/drop';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
@@ -201,6 +201,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const { mutate: leaveDrop, isPending: isLeaving } = useLeaveDrop(id);
+  const { mutate: updatePresence, isPending: isUpdatingPresence } = useUpdatePresence(id);
 
   const isOrganiserCheck = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
   const { data: crew } = useDropCrew(id, { enabled: isOrganiserCheck });
@@ -360,6 +361,39 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     <span className="inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-[#006666]">
                       You&apos;re In
                     </span>
+                  </div>
+                )}
+                {!isOrganiser && crewStatus?.status === 'in' && (
+                  <div className="flex items-center gap-3 pt-1">
+                    <p className="font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/40">
+                      Mark presence
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={isUpdatingPresence}
+                        onClick={() => updatePresence(true)}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[1.8px] transition-colors disabled:opacity-50 ${
+                          crewStatus.isPresent
+                            ? 'border-[#006666] bg-[#006666] text-[#F7E9B2]'
+                            : 'border-[#006666]/20 bg-transparent text-[#006666] hover:bg-[#006666]/10'
+                        }`}
+                      >
+                        Marked In
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isUpdatingPresence}
+                        onClick={() => updatePresence(false)}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[1.8px] transition-colors disabled:opacity-50 ${
+                          !crewStatus.isPresent
+                            ? 'border-red-500 bg-red-500 text-white'
+                            : 'border-red-200 bg-transparent text-red-500 hover:bg-red-50'
+                        }`}
+                      >
+                        Marked Out
+                      </button>
+                    </div>
                   </div>
                 )}
                 {!isOrganiser && crewStatus?.status === 'pending' && (
@@ -522,6 +556,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                           left: 'left this drop',
                           updated: 'updated this drop',
                           member_removed: 'removed a crew member from this drop',
+                          marked_in: 'marked themselves in',
+                          marked_out: 'marked themselves out',
                         }[log.action] ?? log.action.replace(/_/g, ' ')}
                         {log.action === 'updated' && log.changedFields && Object.keys(log.changedFields).length > 0 && (
                           <span className="text-[#2a2118]/40">
