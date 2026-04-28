@@ -1,9 +1,13 @@
 import { api } from './api';
-import type { User, UserProfile, CreateUserDto, UpdateUserDto } from '@/types/user';
+import type { User, UserProfile, CreateUserDto, UpdateUserDto, FrequentCrewMember } from '@/types/user';
 
 export const usersService = {
   getMe(): Promise<UserProfile> {
     return api.get<UserProfile>('/users/me').then((r) => r.data);
+  },
+
+  getFrequentCrew(): Promise<FrequentCrewMember[]> {
+    return api.get<FrequentCrewMember[]>('/users/me/frequent-crew').then((r) => r.data);
   },
 
   getAll(): Promise<User[]> {

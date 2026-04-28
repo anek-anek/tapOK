@@ -8,6 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
+import { FrequentCrewDto } from './dto/frequent-crew.dto';
 
 @Injectable()
 export class UsersService {
@@ -86,5 +87,34 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async getFrequentCrew(firebaseUid: string): Promise<FrequentCrewDto[]> {
+    const user = await this.usersRepository.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('No account found for this user.');
+
+    const results = await this.dataSource.query(
+      `
+      SELECT u.id, u."firstName", u."lastName", u.avatar, u."userHandle", u."createdAt", COUNT(c2."dropId") AS "frequencyCount"
+      FROM drop_crew c1
+      JOIN drop_crew c2 ON c1."dropId" = c2."dropId" AND c1."userId" != c2."userId"
+      JOIN users u ON u.id = c2."userId"
+      WHERE c1."userId" = $1 AND c1.status = 'IN' AND c2.status = 'IN'
+      GROUP BY u.id, u."firstName", u."lastName", u.avatar, u."userHandle", u."createdAt"
+      ORDER BY "frequencyCount" DESC
+      LIMIT 5
+      `,
+      [user.id],
+    );
+
+    return results.map((r: any) => ({
+      id: r.id,
+      firstName: r.firstName,
+      lastName: r.lastName,
+      avatar: r.avatar,
+      userHandle: r.userHandle,
+      createdAt: r.createdAt,
+      frequencyCount: parseInt(r.frequencyCount, 10),
+    }));
   }
 }
