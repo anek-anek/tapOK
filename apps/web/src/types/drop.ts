@@ -61,6 +61,7 @@ export interface CrewMember {
   dropId: string;
   userId: string;
   status: DropCrewStatus;
+  isPresent: boolean;
   joinedAt: string;
   user: {
     id: string;

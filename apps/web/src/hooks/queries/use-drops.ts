@@ -72,6 +72,6 @@ export function useDropCrew(dropId: string, options?: { enabled?: boolean }): Us
     queryKey: dropKeys.crew(dropId),
     queryFn: () => dropsService.getCrew(dropId),
     enabled: (options?.enabled ?? true) && Boolean(dropId),
-    refetchInterval: 15_000,
+    refetchInterval: 5_000,
   });
 }
