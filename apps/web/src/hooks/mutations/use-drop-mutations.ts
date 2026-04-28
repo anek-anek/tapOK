@@ -68,3 +68,15 @@ export function useLeaveDrop(dropId: string): UseMutationResult<void, Error, voi
     },
   });
 }
+
+export function useRemoveCrewMember(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => dropsService.removeCrewMember(dropId, userId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.crew(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}

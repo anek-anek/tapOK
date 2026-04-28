@@ -187,4 +187,20 @@ export class DropsController {
   ): Promise<void> {
     return this.dropsService.rejectPendingMember(id, userId, request.user.uid);
   }
+
+  @Patch(':id/crew/:userId/remove')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove an active crew member (organiser only)' })
+  @ApiResponse({ status: 204, description: 'Crew member removed.' })
+  @ApiResponse({ status: 400, description: 'User is not an active crew member.' })
+  @ApiResponse({ status: 403, description: 'Only the organiser can remove crew members.' })
+  @ApiResponse({ status: 404, description: 'Drop or crew member not found.' })
+  removeCrewMember(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.removeCrewMember(id, userId, request.user.uid);
+  }
 }
