@@ -20,8 +20,9 @@ import {
 } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { DecodedIdToken } from 'firebase-admin/auth';
-import { FirebaseAuthGuard, Public } from '../../common';
+import { CronGuard, FirebaseAuthGuard, Public } from '../../common';
 import { DropsService } from './drops.service';
+import { DropsCronService } from './drops-cron.service';
 import { CreateDropDto } from './dto/create-drop.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
 import { UpdatePresenceDto } from './dto/update-presence.dto';
@@ -38,7 +39,20 @@ interface RequestWithUser extends Request {
 @ApiBearerAuth()
 @Controller('drops')
 export class DropsController {
-  constructor(private readonly dropsService: DropsService) {}
+  constructor(
+    private readonly dropsService: DropsService,
+    private readonly dropsCronService: DropsCronService,
+  ) {}
+
+  @Post('cron/transition')
+  @Public()
+  @UseGuards(CronGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Vercel Cron: transition drop statuses (requires CRON_SECRET)' })
+  @ApiResponse({ status: 200, description: 'Transitions applied.' })
+  runCronTransition(): Promise<{ toOngoing: number; toCompleted: number }> {
+    return this.dropsCronService.transitionDropStatuses();
+  }
 
   @Post()
   @UseGuards(FirebaseAuthGuard)

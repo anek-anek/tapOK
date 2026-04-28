@@ -84,4 +84,5 @@ export interface UpdateDropDto {
   scheduledAt?: string;
   location?: string;
   isLocked?: boolean;
+  status?: DropStatus;
 }

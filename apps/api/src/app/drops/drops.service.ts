@@ -87,19 +87,27 @@ export class DropsService {
     if (dto.scheduledAt !== undefined) changedFields['scheduledAt'] = dto.scheduledAt;
     if (dto.location !== undefined) changedFields['location'] = dto.location;
     if (dto.isLocked !== undefined) changedFields['isLocked'] = dto.isLocked;
+    if (dto.status !== undefined) changedFields['status'] = dto.status;
 
     await this.dropsRepository.update(id, {
       ...(dto.name !== undefined && { name: dto.name }),
       ...(dto.scheduledAt !== undefined && { scheduledAt: new Date(dto.scheduledAt) }),
       ...(dto.location !== undefined && { location: dto.location }),
       ...(dto.isLocked !== undefined && { isLocked: dto.isLocked }),
+      ...(dto.status !== undefined && { status: dto.status }),
     });
+
+    const statusActionMap: Partial<Record<DropStatus, string>> = {
+      [DropStatus.ONGOING]: 'marked_ongoing',
+      [DropStatus.COMPLETED]: 'marked_completed',
+    };
+    const action = dto.status !== undefined ? (statusActionMap[dto.status] ?? 'updated') : 'updated';
 
     await this.dropsRepository.writeLog({
       dropId: id,
       userId: drop.organiserId,
-      action: 'updated',
-      changedFields,
+      action,
+      changedFields: action === 'updated' ? changedFields : undefined,
     });
 
     return this.findOne(id);

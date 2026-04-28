@@ -7,10 +7,11 @@ import { DropCrew } from './entities/drop-crew.entity';
 import { DropsRepository } from './drops.repository';
 import { DropsService } from './drops.service';
 import { DropsController } from './drops.controller';
+import { DropsCronService } from './drops-cron.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Drop, DropActivityLog, DropCrew]), UsersModule],
-  providers: [DropsRepository, DropsService],
+  providers: [DropsRepository, DropsService, DropsCronService],
   controllers: [DropsController],
   exports: [DropsService],
 })

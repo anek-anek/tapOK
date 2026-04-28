@@ -17,5 +17,11 @@
       "src": "/(.*)",
       "dest": "dist/main.js"
     }
+  ],
+  "crons": [
+    {
+      "path": "/drops/cron/transition",
+      "schedule": "* * * * *"
+    }
   ]
 }

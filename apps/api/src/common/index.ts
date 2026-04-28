@@ -9,5 +9,6 @@ export * from './enums/gender.enum';
 export * from './enums/org-role.enum';
 export * from './enums/user-role.enum';
 export * from './firebase/firebase.module';
+export * from './guards/cron.guard';
 export * from './guards/firebase-auth.guard';
 export * from './guards/roles.guard';
