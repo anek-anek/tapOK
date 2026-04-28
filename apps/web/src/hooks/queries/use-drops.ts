@@ -6,11 +6,13 @@ import type { CrewMember } from '@/types/drop';
 
 export const dropKeys = {
   mine: (uid: string) => ['drops', 'mine', uid] as const,
+  minePrefix: () => ['drops', 'mine'] as const,
   detail: (id: string) => ['drops', id] as const,
   byJoinCode: (joinCode: string) => ['drops', 'join', joinCode] as const,
   crewMe: (id: string) => ['drops', id, 'crew', 'me'] as const,
   crew: (id: string) => ['drops', id, 'crew'] as const,
   myActivity: (uid: string) => ['drops', 'activity', 'mine', uid] as const,
+  myActivityPrefix: () => ['drops', 'activity', 'mine'] as const,
 };
 
 export function useMyDrops(options?: { enabled?: boolean }) {
