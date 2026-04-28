@@ -39,6 +39,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/me/frequent-crew": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the frequently seen crew for the authenticated user */
+        get: operations["UsersController_getFrequentCrew"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/{id}": {
         parameters: {
             query?: never;
@@ -163,6 +180,23 @@ export interface paths {
         head?: never;
         /** Update a member role (owner/admin only) */
         patch: operations["OrganizationsController_updateMemberRole"];
+        trace?: never;
+    };
+    "/drops/cron/transition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Vercel Cron: transition drop statuses (requires CRON_SECRET) */
+        post: operations["DropsController_runCronTransition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/drops": {
@@ -439,6 +473,16 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        FrequentCrewDto: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            avatar?: string;
+            userHandle?: string;
+            /** Format: date-time */
+            createdAt: string;
+            frequencyCount: number;
+        };
         SyncUserDto: {
             /** @example John */
             firstName?: string;
@@ -554,6 +598,8 @@ export interface components {
             location: string;
             /** @example 20 */
             expectedHeadcount?: number;
+            /** @example false */
+            isLocked?: boolean;
         };
         Drop: {
             id: string;
@@ -609,6 +655,11 @@ export interface components {
             location?: string;
             /** @description Lock the drop so new joiners require approval */
             isLocked?: boolean;
+            /**
+             * @description Manually override the drop status
+             * @enum {string}
+             */
+            status?: "active" | "ongoing" | "completed";
         };
         CrewMemberUserDto: {
             id: string;
@@ -709,6 +760,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    UsersController_getFrequentCrew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrequentCrewDto"][];
+                };
             };
         };
     };
@@ -1074,6 +1144,24 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_runCronTransition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Transitions applied. */
             200: {
                 headers: {
                     [name: string]: unknown;

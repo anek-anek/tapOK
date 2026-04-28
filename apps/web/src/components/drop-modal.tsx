@@ -11,6 +11,7 @@ import {
   MapPin as IconMapPin,
   Users as IconUsers,
   Lock as IconLock,
+  ChevronDown as IconChevronDown,
 } from 'lucide-react';
 import {
   useCreateDrop,
@@ -40,11 +41,14 @@ const createSchema = z.object({
   isLocked: z.boolean().optional(),
 });
 
+const DROP_STATUSES: DropStatus[] = ['active', 'ongoing', 'completed'];
+
 const editSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
   scheduledAt: z.string().optional(),
   location: z.string().min(1, 'Location is required').optional(),
   isLocked: z.boolean().optional(),
+  status: z.enum(['active', 'ongoing', 'completed']).optional(),
 });
 
 type CreateValues = {
@@ -54,7 +58,7 @@ type CreateValues = {
   expectedHeadcount: number | '' | undefined;
   isLocked?: boolean;
 };
-type EditValues = z.infer<typeof editSchema>;
+type EditValues = z.infer<typeof editSchema> & { status?: DropStatus };
 
 function formatPreviewDate(iso: string) {
   if (!iso) return null;
@@ -511,6 +515,7 @@ export function EditDropModal({
       scheduledAt: new Date(drop.scheduledAt).toISOString().slice(0, 16),
       location: drop.location,
       isLocked: drop.isLocked,
+      status: drop.status,
     },
   });
 
@@ -520,6 +525,7 @@ export function EditDropModal({
       scheduledAt?: string;
       location?: string;
       isLocked?: boolean;
+      status?: DropStatus;
     } = {};
     if (values.name !== drop.name) dto.name = values.name;
     if (
@@ -530,6 +536,7 @@ export function EditDropModal({
     }
     if (values.location !== drop.location) dto.location = values.location;
     if (values.isLocked !== drop.isLocked) dto.isLocked = values.isLocked;
+    if (values.status !== drop.status) dto.status = values.status;
 
     if (Object.keys(dto).length === 0) {
       onClose();
@@ -751,6 +758,38 @@ export function EditDropModal({
                 </button>
               )}
             />
+
+            <div>
+              <Label
+                htmlFor="edit-drop-status"
+                className="mb-2 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+              >
+                Status
+              </Label>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <div className="relative">
+                    <select
+                      {...field}
+                      id="edit-drop-status"
+                      className="h-auto w-full appearance-none rounded-[8px] border border-[#2a2118]/[0.09] bg-white/75 px-4 py-3 pr-9 text-sm font-semibold text-[#2a2118] focus:border-[#006666]/45 focus:outline-none focus:ring-2 focus:ring-[#006666]/15"
+                    >
+                      {DROP_STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {STATUS_LABEL[s]}
+                        </option>
+                      ))}
+                    </select>
+                    <IconChevronDown
+                      size={13}
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#2a2118]/36"
+                    />
+                  </div>
+                )}
+              />
+            </div>
 
             {updateDrop.error && (
               <Alert className="rounded-[6px] border-red-200/50 bg-red-50 px-4 py-3">

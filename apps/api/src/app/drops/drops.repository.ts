@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { DropCrewStatus } from '../../common';
+import { LessThanOrEqual, Repository } from 'typeorm';
+import { DropCrewStatus, DropStatus } from '../../common';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
@@ -89,6 +89,36 @@ export class DropsRepository {
 
   async updateCrewPresence(dropId: string, userId: string, isPresent: boolean): Promise<void> {
     await this.crewRepo.update({ dropId, userId }, { isPresent });
+  }
+
+  findActiveDueForOngoing(now: Date): Promise<Drop[]> {
+    return this.dropRepo.find({
+      where: { status: DropStatus.ACTIVE, scheduledAt: LessThanOrEqual(now) },
+      select: ['id', 'organiserId'],
+    });
+  }
+
+  findOngoingDueForCompletion(cutoff: Date): Promise<Drop[]> {
+    return this.dropRepo.find({
+      where: { status: DropStatus.ONGOING, scheduledAt: LessThanOrEqual(cutoff) },
+      select: ['id', 'organiserId'],
+    });
+  }
+
+  async bulkTransitionStatus(ids: string[], status: DropStatus): Promise<void> {
+    if (ids.length === 0) return;
+    await this.dropRepo
+      .createQueryBuilder()
+      .update(Drop)
+      .set({ status })
+      .whereInIds(ids)
+      .execute();
+  }
+
+  async bulkWriteLogs(entries: Partial<DropActivityLog>[]): Promise<void> {
+    if (entries.length === 0) return;
+    const logs = this.logRepo.create(entries);
+    await this.logRepo.save(logs);
   }
 
   findActivityFeedForUser(userId: string): Promise<DropActivityLog[]> {

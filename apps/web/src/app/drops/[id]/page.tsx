@@ -243,8 +243,9 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   const isOrganiser = isOrganiserCheck;
-  const canEdit = isOrganiser && drop.status !== 'completed';
-  const canLeave = !isOrganiser && (crewStatus?.status === 'in' || crewStatus?.status === 'pending');
+  const isCompleted = drop.status === 'completed';
+  const canEdit = isOrganiser && !isCompleted;
+  const canLeave = !isOrganiser && !isCompleted && (crewStatus?.status === 'in' || crewStatus?.status === 'pending');
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
 
   return (
@@ -363,7 +364,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     </span>
                   </div>
                 )}
-                {!isOrganiser && crewStatus?.status === 'in' && (
+                {!isOrganiser && crewStatus?.status === 'in' && !isCompleted && (
                   <div className="flex items-center gap-3 pt-1">
                     <p className="font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/40">
                       Mark presence
@@ -423,8 +424,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
 
-            {/* Pending requests — organiser only */}
-            {isOrganiser && pendingMembers.length > 0 && (
+            {/* Pending requests — organiser only, hidden once completed */}
+            {isOrganiser && !isCompleted && pendingMembers.length > 0 && (
               <div className="rounded-[28px] border border-amber-400/30 bg-amber-50/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
                 <div className="flex items-center gap-2 px-6 pt-5 pb-4">
                   <IconClock size={13} className="text-amber-700" />
@@ -523,15 +524,17 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     >
                       {member.isPresent ? 'In' : 'Out'}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => removeCrewMember(member.userId)}
-                      disabled={isRemoving && removingUserId === member.userId}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 font-syne text-[9px] font-bold uppercase tracking-[2px] text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
-                    >
-                      <IconUserX size={12} />
-                      {isRemoving && removingUserId === member.userId ? 'Removing…' : 'Remove'}
-                    </button>
+                    {!isCompleted && (
+                      <button
+                        type="button"
+                        onClick={() => removeCrewMember(member.userId)}
+                        disabled={isRemoving && removingUserId === member.userId}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 font-syne text-[9px] font-bold uppercase tracking-[2px] text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                      >
+                        <IconUserX size={12} />
+                        {isRemoving && removingUserId === member.userId ? 'Removing…' : 'Remove'}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -577,6 +580,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                           member_removed: 'removed a crew member from this drop',
                           marked_in: 'marked themselves in',
                           marked_out: 'marked themselves out',
+                          marked_ongoing: 'marked this drop as ongoing',
+                          marked_completed: 'marked this drop as completed',
                         }[log.action] ?? log.action.replace(/_/g, ' ')}
                         {log.action === 'updated' && log.changedFields && Object.keys(log.changedFields).length > 0 && (
                           <span className="text-[#2a2118]/40">
