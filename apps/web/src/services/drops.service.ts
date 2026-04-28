@@ -1,5 +1,6 @@
 import { api } from './api';
-import type { Drop, CreateDropDto, UpdateDropDto, DropActivityLog, DropCrew } from '@/types/drop';
+import type { Drop, CreateDropDto, UpdateDropDto, DropActivityLog, DropCrew, CrewMember } from '@/types/drop';
+
 
 export const dropsService = {
   getMyDrops(): Promise<Drop[]> {
@@ -36,5 +37,17 @@ export const dropsService = {
 
   getMyActivity(): Promise<DropActivityLog[]> {
     return api.get<DropActivityLog[]>('/drops/activity/mine').then((r) => r.data);
+  },
+
+  getCrew(id: string): Promise<CrewMember[]> {
+    return api.get<CrewMember[]>(`/drops/${id}/crew`).then((r) => r.data);
+  },
+
+  approveJoinRequest(dropId: string, userId: string): Promise<void> {
+    return api.patch(`/drops/${dropId}/crew/${userId}/approve`).then(() => undefined);
+  },
+
+  rejectJoinRequest(dropId: string, userId: string): Promise<void> {
+    return api.patch(`/drops/${dropId}/crew/${userId}/reject`).then(() => undefined);
   },
 };

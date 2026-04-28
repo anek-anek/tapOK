@@ -25,6 +25,7 @@ import { DropsService } from './drops.service';
 import { CreateDropDto } from './dto/create-drop.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
 import { JoinDropResponseDto } from './dto/join-drop-response.dto';
+import { CrewMemberDto } from './dto/crew-member.dto';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 
@@ -140,5 +141,50 @@ export class DropsController {
     @Req() request: RequestWithUser,
   ): Promise<void> {
     return this.dropsService.leaveDrop(id, request.user.uid);
+  }
+
+  @Get(':id/crew')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Get all crew members for a drop (organiser only)' })
+  @ApiResponse({ status: 200, type: [CrewMemberDto] })
+  @ApiResponse({ status: 403, description: 'Only the organiser can view the crew list.' })
+  @ApiResponse({ status: 404, description: 'Drop not found.' })
+  getDropCrew(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<CrewMemberDto[]> {
+    return this.dropsService.getDropCrew(id, request.user.uid) as Promise<CrewMemberDto[]>;
+  }
+
+  @Patch(':id/crew/:userId/approve')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Approve a pending join request (organiser only)' })
+  @ApiResponse({ status: 204, description: 'Join request approved.' })
+  @ApiResponse({ status: 400, description: 'User is not pending approval.' })
+  @ApiResponse({ status: 403, description: 'Only the organiser can approve join requests.' })
+  @ApiResponse({ status: 404, description: 'Drop or crew member not found.' })
+  approvePendingMember(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.approvePendingMember(id, userId, request.user.uid);
+  }
+
+  @Patch(':id/crew/:userId/reject')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Reject a pending join request (organiser only)' })
+  @ApiResponse({ status: 204, description: 'Join request rejected.' })
+  @ApiResponse({ status: 400, description: 'User is not pending approval.' })
+  @ApiResponse({ status: 403, description: 'Only the organiser can reject join requests.' })
+  @ApiResponse({ status: 404, description: 'Drop or crew member not found.' })
+  rejectPendingMember(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.rejectPendingMember(id, userId, request.user.uid);
   }
 }

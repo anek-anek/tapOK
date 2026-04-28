@@ -1,0 +1,67 @@
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+const CLOSE_DURATION = 260;
+
+export { CLOSE_DURATION };
+
+export function ModalShell({
+  onClose,
+  children,
+}: {
+  onClose: () => void;
+  children: React.ReactNode | ((close: () => void) => React.ReactNode);
+}) {
+  const [closing, setClosing] = useState(false);
+  const closingRef = useRef(false);
+
+  const triggerClose = useCallback(() => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    setClosing(true);
+    setTimeout(onClose, CLOSE_DURATION);
+  }, [onClose]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') triggerClose();
+    };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [triggerClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
+      <div
+        className="fixed inset-0 bg-[#2a2118]/50 backdrop-blur-[3px]"
+        style={{
+          animation: closing
+            ? `tapok-fadeOut ${CLOSE_DURATION}ms ease-in forwards`
+            : 'tapok-fadeIn 200ms ease-out',
+        }}
+        onClick={triggerClose}
+      />
+      <div
+        className="relative z-10 max-h-[92dvh] w-full overflow-hidden overflow-y-auto rounded-t-[28px] shadow-[0_40px_100px_rgba(42,33,24,0.45)] sm:max-w-[720px] sm:rounded-[28px]"
+        style={{
+          animation: closing
+            ? `tapok-slideDown ${CLOSE_DURATION}ms cubic-bezier(0.4,0,1,1) forwards`
+            : 'tapok-slideUp 280ms cubic-bezier(0.34,1.4,0.64,1)',
+        }}
+      >
+        {typeof children === 'function' ? children(triggerClose) : children}
+      </div>
+      <style>{`
+        @keyframes tapok-fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes tapok-fadeOut { from { opacity: 1 } to { opacity: 0 } }
+        @keyframes tapok-slideUp   { from { opacity: 0; transform: translateY(28px) scale(0.96) } to { opacity: 1; transform: translateY(0) scale(1) } }
+        @keyframes tapok-slideDown { from { opacity: 1; transform: translateY(0)    scale(1)    } to { opacity: 0; transform: translateY(22px) scale(0.97) } }
+      `}</style>
+    </div>
+  );
+}

@@ -157,6 +157,76 @@ export class DropsService {
     });
   }
 
+  async getDropCrew(dropId: string, firebaseUid: string): Promise<DropCrew[]> {
+    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('Authenticated user not found in database');
+
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== user.id) {
+      throw new ForbiddenException('Only the organiser can view the crew list');
+    }
+
+    return this.dropsRepository.findCrewMembers(dropId);
+  }
+
+  async rejectPendingMember(dropId: string, targetUserId: string, firebaseUid: string): Promise<void> {
+    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!organiser) throw new NotFoundException('Authenticated user not found in database');
+
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== organiser.id) {
+      throw new ForbiddenException('Only the organiser can reject join requests');
+    }
+
+    const member = await this.dropsRepository.findCrewMember(dropId, targetUserId);
+    if (!member) throw new NotFoundException('User is not a crew member of this drop');
+
+    if (member.status !== DropCrewStatus.PENDING) {
+      throw new BadRequestException('User is not pending approval');
+    }
+
+    await this.dropsRepository.updateCrewStatus(dropId, targetUserId, DropCrewStatus.REJECTED);
+
+    await this.dropsRepository.writeLog({
+      dropId,
+      userId: organiser.id,
+      action: 'join_request_rejected',
+      changedFields: { rejectedUserId: targetUserId },
+    });
+  }
+
+  async approvePendingMember(dropId: string, targetUserId: string, firebaseUid: string): Promise<void> {
+    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!organiser) throw new NotFoundException('Authenticated user not found in database');
+
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== organiser.id) {
+      throw new ForbiddenException('Only the organiser can approve join requests');
+    }
+
+    const member = await this.dropsRepository.findCrewMember(dropId, targetUserId);
+    if (!member) throw new NotFoundException('User is not a crew member of this drop');
+
+    if (member.status !== DropCrewStatus.PENDING) {
+      throw new BadRequestException('User is not pending approval');
+    }
+
+    await this.dropsRepository.updateCrewStatus(dropId, targetUserId, DropCrewStatus.IN);
+
+    await this.dropsRepository.writeLog({
+      dropId,
+      userId: organiser.id,
+      action: 'join_request_approved',
+      changedFields: { approvedUserId: targetUserId },
+    });
+  }
+
   async getMyCrewStatus(dropId: string, firebaseUid: string): Promise<DropCrew> {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');

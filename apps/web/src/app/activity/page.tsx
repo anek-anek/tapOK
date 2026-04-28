@@ -95,8 +95,14 @@ function describeAction(log: DropActivityLog, isYou: boolean): React.ReactNode {
       return <>{bold(name)} tapped in</>;
     case 'join_requested':
       return <>{bold(name)} requested to join</>;
+    case 'join_request_approved':
+      return <>{bold(name)} approved a join request</>;
+    case 'join_request_rejected':
+      return <>{bold(name)} rejected a join request</>;
+    case 'left':
+      return <>{bold(name)} left the drop</>;
     default:
-      return <>{bold(name)} {log.action}</>;
+      return <>{bold(name)} {log.action.replace(/_/g, ' ')}</>;
   }
 }
 

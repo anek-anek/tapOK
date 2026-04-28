@@ -3,6 +3,30 @@ import type { CreateDropDto, UpdateDropDto, Drop, DropCrew } from '@/types/drop'
 import { dropsService } from '@/services/drops.service';
 import { dropKeys } from '@/hooks/queries/use-drops';
 
+export function useApproveJoinRequest(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => dropsService.approveJoinRequest(dropId, userId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.crew(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+export function useRejectJoinRequest(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => dropsService.rejectJoinRequest(dropId, userId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.crew(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
 export function useCreateDrop(): UseMutationResult<Drop, Error, CreateDropDto> {
   return useMutation({
     mutationFn: (dto: CreateDropDto) => dropsService.create(dto),
