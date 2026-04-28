@@ -37,6 +37,7 @@ const createSchema = z.object({
     .min(1)
     .optional()
     .or(z.literal('')),
+  isLocked: z.boolean().optional(),
 });
 
 const editSchema = z.object({
@@ -51,6 +52,7 @@ type CreateValues = {
   scheduledAt: string;
   location: string;
   expectedHeadcount: number | '' | undefined;
+  isLocked?: boolean;
 };
 type EditValues = z.infer<typeof editSchema>;
 
@@ -164,6 +166,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
       scheduledAt: '',
       location: '',
       expectedHeadcount: '',
+      isLocked: false,
     },
   });
 
@@ -185,6 +188,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
             expectedHeadcount: values.expectedHeadcount
               ? Number(values.expectedHeadcount)
               : undefined,
+            isLocked: values.isLocked ?? false,
           };
           const drop = await createDrop.mutateAsync(dto);
           pendingIdRef.current = drop.id;
@@ -366,6 +370,49 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                     )}
                   />
                 </div>
+
+                <Controller
+                  name="isLocked"
+                  control={control}
+                  render={({ field }) => (
+                    <button
+                      type="button"
+                      onClick={() => field.onChange(!field.value)}
+                      className={`flex w-full items-center justify-between rounded-[10px] border px-4 py-3 transition-colors ${
+                        field.value
+                          ? 'border-amber-400/40 bg-amber-50/80'
+                          : 'border-[#2a2118]/[0.09] bg-white/75 hover:border-[#2a2118]/18'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <IconLock
+                          size={13}
+                          className={field.value ? 'text-amber-700' : 'text-[#2a2118]/30'}
+                        />
+                        <div className="text-left">
+                          <p
+                            className={`font-syne text-[10px] font-bold uppercase tracking-[2px] ${field.value ? 'text-amber-800' : 'text-[#2a2118]/60'}`}
+                          >
+                            Lock Drop
+                          </p>
+                          <p
+                            className={`text-[11px] font-light leading-tight ${field.value ? 'text-amber-700/70' : 'text-[#2a2118]/36'}`}
+                          >
+                            New joiners will require approval
+                          </p>
+                        </div>
+                      </div>
+                      <div
+                        className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}
+                      >
+                        <span
+                          className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200"
+                          style={{ transform: `translateX(${field.value ? '18px' : '2px'})` }}
+                        />
+                      </div>
+                    </button>
+                  )}
+                />
 
                 {createDrop.error && (
                   <Alert className="rounded-[6px] border-red-200/50 bg-red-50 px-4 py-3">

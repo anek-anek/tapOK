@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -16,6 +16,7 @@ import {
   Share2 as IconShare2,
   ExternalLink as IconExternalLink,
   Loader2 as IconLoader,
+  Lock as IconLock,
 } from 'lucide-react';
 import { useCreateDrop } from '@/hooks/mutations/use-drop-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -29,6 +30,7 @@ const dropSchema = z.object({
   name: z.string().min(1, 'Give your drop a name'),
   scheduledAt: z.string().min(1, 'Pick a time'),
   location: z.string().min(1, 'Where are you meeting?'),
+  isLocked: z.boolean().optional(),
 });
 
 type DropFormValues = z.infer<typeof dropSchema>;
@@ -167,13 +169,15 @@ function DropBuilder({
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<DropFormValues>({
     resolver: zodResolver(dropSchema),
-    defaultValues: { name: '', scheduledAt: '', location: '' },
+    defaultValues: { name: '', scheduledAt: '', location: '', isLocked: false },
   });
 
   const [dropName, scheduledAt, location] = watch(['name', 'scheduledAt', 'location']);
+
   const filled: [boolean, boolean, boolean] = [
     dropName.trim().length > 0,
     scheduledAt.length > 0,
@@ -194,6 +198,7 @@ function DropBuilder({
         name: values.name.trim(),
         scheduledAt: new Date(values.scheduledAt).toISOString(),
         location: values.location.trim(),
+        isLocked: values.isLocked ?? false,
       });
       track('drop_created', { dropId: drop.id });
       onLive(drop);
@@ -283,6 +288,43 @@ function DropBuilder({
           />
           {errors.location && <p className="text-xs text-red-600">{errors.location.message}</p>}
         </div>
+
+        <Controller
+          name="isLocked"
+          control={control}
+          render={({ field }) => (
+            <button
+              type="button"
+              onClick={() => field.onChange(!field.value)}
+              className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 transition-colors ${
+                field.value
+                  ? 'border-amber-400/40 bg-amber-50/80'
+                  : 'border-[#2a2118]/12 bg-white hover:border-[#2a2118]/20'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <IconLock
+                  size={13}
+                  className={field.value ? 'text-amber-700' : 'text-[#2a2118]/30'}
+                />
+                <div className="text-left">
+                  <p className={`font-mono text-[10px] uppercase tracking-widest ${field.value ? 'text-amber-800' : 'text-[#2a2118]/55'}`}>
+                    Lock Drop
+                  </p>
+                  <p className={`text-xs font-light leading-tight ${field.value ? 'text-amber-700/70' : 'text-[#2a2118]/35'}`}>
+                    New joiners will require approval
+                  </p>
+                </div>
+              </div>
+              <div className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}>
+                <span
+                  className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200"
+                  style={{ transform: `translateX(${field.value ? '18px' : '2px'})` }}
+                />
+              </div>
+            </button>
+          )}
+        />
 
         {serverError && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsDateString,
   IsInt,
   IsNotEmpty,
@@ -28,4 +29,9 @@ export class CreateDropDto {
   @IsInt()
   @Min(1)
   expectedHeadcount?: number;
+
+  @ApiPropertyOptional({ example: false })
+  @IsOptional()
+  @IsBoolean()
+  isLocked?: boolean;
 }

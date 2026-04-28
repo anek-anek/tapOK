@@ -75,6 +75,7 @@ export interface CreateDropDto {
   scheduledAt: string;
   location: string;
   expectedHeadcount?: number;
+  isLocked?: boolean;
 }
 
 export interface UpdateDropDto {
