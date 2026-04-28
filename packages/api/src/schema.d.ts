@@ -199,6 +199,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drops/activity/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the authenticated user's activity logs across all drops */
+        get: operations["DropsController_getMyActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drops/join/{joinCode}": {
         parameters: {
             query?: never;
@@ -245,10 +262,28 @@ export interface paths {
         get: operations["DropsController_getMyCrewStatus"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Leave a drop */
+        delete: operations["DropsController_leaveDrop"];
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/crew/me/presence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark yourself in or out for a drop (active crew members only) */
+        patch: operations["DropsController_updatePresence"];
         trace?: never;
     };
     "/drops/{id}/join": {
@@ -266,6 +301,74 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/crew": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all crew members for a drop (organiser only) */
+        get: operations["DropsController_getDropCrew"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/crew/{userId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Approve a pending join request (organiser only) */
+        patch: operations["DropsController_approvePendingMember"];
+        trace?: never;
+    };
+    "/drops/{id}/crew/{userId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Reject a pending join request (organiser only) */
+        patch: operations["DropsController_rejectPendingMember"];
+        trace?: never;
+    };
+    "/drops/{id}/crew/{userId}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Remove an active crew member (organiser only) */
+        patch: operations["DropsController_removeCrewMember"];
         trace?: never;
     };
 }
@@ -472,14 +575,30 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        DropActivityLog: {
+            id: string;
+            dropId: string;
+            userId: string;
+            user: components["schemas"]["User"];
+            action: string;
+            changedFields?: Record<string, never>;
+            /** Format: date-time */
+            createdAt: string;
+        };
         JoinDropResponseDto: {
             id: string;
             dropId: string;
             userId: string;
             /** @enum {string} */
-            status: "in" | "pending";
+            status: "in" | "pending" | "rejected" | "removed";
+            /** @default false */
+            isPresent: boolean;
             /** Format: date-time */
             joinedAt: string;
+        };
+        UpdatePresenceDto: {
+            /** @description Whether the crew member is marking themselves as present */
+            isPresent: boolean;
         };
         UpdateDropDto: {
             /** @example Golden Hour Shoot */
@@ -490,6 +609,24 @@ export interface components {
             location?: string;
             /** @description Lock the drop so new joiners require approval */
             isLocked?: boolean;
+        };
+        CrewMemberUserDto: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            avatar?: string;
+        };
+        CrewMemberDto: {
+            id: string;
+            dropId: string;
+            userId: string;
+            /** @enum {string} */
+            status: "in" | "pending" | "rejected" | "removed";
+            /** @default false */
+            isPresent: boolean;
+            /** Format: date-time */
+            joinedAt: string;
+            user: components["schemas"]["CrewMemberUserDto"];
         };
     };
     responses: never;
@@ -987,6 +1124,25 @@ export interface operations {
             };
         };
     };
+    DropsController_getMyActivity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DropActivityLog"][];
+                };
+            };
+        };
+    };
     DropsController_findByJoinCode: {
         parameters: {
             query?: never;
@@ -1117,6 +1273,78 @@ export interface operations {
             };
         };
     };
+    DropsController_leaveDrop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successfully left the drop. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Organiser cannot leave their own drop. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop or crew membership not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_updatePresence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePresenceDto"];
+            };
+        };
+        responses: {
+            /** @description Presence updated. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not an active crew member. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a crew member of this drop. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     DropsController_joinDrop: {
         parameters: {
             query?: never;
@@ -1159,6 +1387,167 @@ export interface operations {
             };
             /** @description Already joined this drop. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_getDropCrew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrewMemberDto"][];
+                };
+            };
+            /** @description Only the organiser can view the crew list. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_approvePendingMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Join request approved. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User is not pending approval. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the organiser can approve join requests. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop or crew member not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_rejectPendingMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Join request rejected. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User is not pending approval. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the organiser can reject join requests. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop or crew member not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_removeCrewMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Crew member removed. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User is not an active crew member. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the organiser can remove crew members. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop or crew member not found. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

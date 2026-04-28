@@ -28,6 +28,9 @@ export class CrewMemberDto {
   @ApiProperty({ enum: DropCrewStatus })
   status: DropCrewStatus;
 
+  @ApiProperty({ default: false })
+  isPresent: boolean;
+
   @ApiProperty()
   joinedAt: Date;
 

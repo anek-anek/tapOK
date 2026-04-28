@@ -697,6 +697,36 @@
         ]
       }
     },
+    "/drops/activity/mine": {
+      "get": {
+        "operationId": "DropsController_getMyActivity",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DropActivityLog"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the authenticated user's activity logs across all drops",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
     "/drops/join/{joinCode}": {
       "get": {
         "operationId": "DropsController_findByJoinCode",
@@ -865,6 +895,84 @@
         "tags": [
           "drops"
         ]
+      },
+      "delete": {
+        "operationId": "DropsController_leaveDrop",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully left the drop."
+          },
+          "403": {
+            "description": "Organiser cannot leave their own drop."
+          },
+          "404": {
+            "description": "Drop or crew membership not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Leave a drop",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/crew/me/presence": {
+      "patch": {
+        "operationId": "DropsController_updatePresence",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePresenceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Presence updated."
+          },
+          "400": {
+            "description": "Not an active crew member."
+          },
+          "404": {
+            "description": "Not a crew member of this drop."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark yourself in or out for a drop (active crew members only)",
+        "tags": [
+          "drops"
+        ]
       }
     },
     "/drops/{id}/join": {
@@ -910,6 +1018,189 @@
           }
         ],
         "summary": "Join a drop",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/crew": {
+      "get": {
+        "operationId": "DropsController_getDropCrew",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CrewMemberDto"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only the organiser can view the crew list."
+          },
+          "404": {
+            "description": "Drop not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all crew members for a drop (organiser only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/crew/{userId}/approve": {
+      "patch": {
+        "operationId": "DropsController_approvePendingMember",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Join request approved."
+          },
+          "400": {
+            "description": "User is not pending approval."
+          },
+          "403": {
+            "description": "Only the organiser can approve join requests."
+          },
+          "404": {
+            "description": "Drop or crew member not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a pending join request (organiser only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/crew/{userId}/reject": {
+      "patch": {
+        "operationId": "DropsController_rejectPendingMember",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Join request rejected."
+          },
+          "400": {
+            "description": "User is not pending approval."
+          },
+          "403": {
+            "description": "Only the organiser can reject join requests."
+          },
+          "404": {
+            "description": "Drop or crew member not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a pending join request (organiser only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/crew/{userId}/remove": {
+      "patch": {
+        "operationId": "DropsController_removeCrewMember",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Crew member removed."
+          },
+          "400": {
+            "description": "User is not an active crew member."
+          },
+          "403": {
+            "description": "Only the organiser can remove crew members."
+          },
+          "404": {
+            "description": "Drop or crew member not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove an active crew member (organiser only)",
         "tags": [
           "drops"
         ]
@@ -1454,6 +1745,41 @@
           "updatedAt"
         ]
       },
+      "DropActivityLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "action": {
+            "type": "string"
+          },
+          "changedFields": {
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "dropId",
+          "userId",
+          "user",
+          "action",
+          "createdAt"
+        ]
+      },
       "JoinDropResponseDto": {
         "type": "object",
         "properties": {
@@ -1470,8 +1796,14 @@
             "type": "string",
             "enum": [
               "in",
-              "pending"
+              "pending",
+              "rejected",
+              "removed"
             ]
+          },
+          "isPresent": {
+            "type": "boolean",
+            "default": false
           },
           "joinedAt": {
             "format": "date-time",
@@ -1483,7 +1815,20 @@
           "dropId",
           "userId",
           "status",
+          "isPresent",
           "joinedAt"
+        ]
+      },
+      "UpdatePresenceDto": {
+        "type": "object",
+        "properties": {
+          "isPresent": {
+            "type": "boolean",
+            "description": "Whether the crew member is marking themselves as present"
+          }
+        },
+        "required": [
+          "isPresent"
         ]
       },
       "UpdateDropDto": {
@@ -1506,6 +1851,71 @@
             "description": "Lock the drop so new joiners require approval"
           }
         }
+      },
+      "CrewMemberUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "CrewMemberDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in",
+              "pending",
+              "rejected",
+              "removed"
+            ]
+          },
+          "isPresent": {
+            "type": "boolean",
+            "default": false
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/CrewMemberUserDto"
+          }
+        },
+        "required": [
+          "id",
+          "dropId",
+          "userId",
+          "status",
+          "isPresent",
+          "joinedAt",
+          "user"
+        ]
       }
     }
   }

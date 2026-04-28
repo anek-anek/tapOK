@@ -80,3 +80,17 @@ export function useRemoveCrewMember(dropId: string): UseMutationResult<void, Err
     },
   });
 }
+
+export function useUpdatePresence(dropId: string): UseMutationResult<void, Error, boolean> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (isPresent: boolean) => dropsService.updatePresence(dropId, isPresent),
+    onSuccess: (_data, isPresent) => {
+      queryClient.setQueryData(dropKeys.crewMe(dropId), (prev: DropCrew | undefined) =>
+        prev ? { ...prev, isPresent } : prev,
+      );
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}

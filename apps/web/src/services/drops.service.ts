@@ -54,4 +54,8 @@ export const dropsService = {
   removeCrewMember(dropId: string, userId: string): Promise<void> {
     return api.patch(`/drops/${dropId}/crew/${userId}/remove`).then(() => undefined);
   },
+
+  updatePresence(dropId: string, isPresent: boolean): Promise<void> {
+    return api.patch(`/drops/${dropId}/crew/me/presence`, { isPresent }).then(() => undefined);
+  },
 };
