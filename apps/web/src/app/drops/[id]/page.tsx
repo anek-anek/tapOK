@@ -321,7 +321,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         {/* Two-column layout */}
         <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
           {/* Left column */}
-          <div className="space-y-4">
+          <div className="order-2 space-y-4 lg:order-1">
             {/* Details card */}
             <div className="rounded-[24px] border border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px] sm:p-6">
               <p className="mb-4 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
@@ -414,11 +414,21 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                   </div>
                 )}
                 {!isOrganiser && crewStatus?.status === 'removed' && (
-                  <div className="flex items-center gap-2">
-                    <IconBan size={14} className="shrink-0 text-red-700" />
-                    <span className="inline-flex items-center rounded-full border border-red-300 bg-red-100 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-red-700">
-                      Removed
-                    </span>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <IconBan size={14} className="shrink-0 text-red-700" />
+                      <span className="inline-flex items-center rounded-full border border-red-300 bg-red-100 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-red-700">
+                        Removed
+                      </span>
+                    </div>
+                    {!isCompleted && (
+                      <Link
+                        href={`/drops/join/${drop.joinCode}`}
+                        className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#006666]/20 bg-[#006666]/10 px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[1.8px] text-[#006666] transition-colors hover:bg-[#006666]/15"
+                      >
+                        Re-join Drop
+                      </Link>
+                    )}
                   </div>
                 )}
               </div>
@@ -601,7 +611,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
           </div>
 
           {/* Right column — Share */}
-          <div className="rounded-[24px] border border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px] sm:p-6 lg:self-start">
+          <div className="order-1 rounded-[24px] border border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px] sm:p-6 lg:order-2 lg:self-start">
             <p className="mb-4 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
               Share
             </p>
@@ -666,6 +676,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleCopy = async () => {
     try {
@@ -674,7 +685,8 @@ function CopyButton({ text }: { text: string }) {
       return;
     }
     setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setCopied(false), 1800);
   };
 
   return (

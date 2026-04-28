@@ -366,6 +366,16 @@ function FocusDropCard({
 }
 
 function GateCard() {
+  const router = useRouter();
+  const [gateCode, setGateCode] = useState('');
+
+  const handleGateJoin = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const code = gateCode.trim().toUpperCase();
+    if (code.length < 4) return;
+    router.push(`/drops/join/${code}`);
+  };
+
   return (
     <Card className="gap-0 rounded-[24px] border border-[#2a2118]/10 bg-white/72 p-5 shadow-[0_14px_40px_rgba(42,33,24,0.06)] ring-0 sm:rounded-[28px] sm:p-7">
       <CardContent className="px-0">
@@ -395,6 +405,30 @@ function GateCard() {
           >
             Sign up
           </Link>
+        </div>
+        <div className="mt-5 border-t border-[#2a2118]/8 pt-5">
+          <p className="font-syne text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
+            Got a join code?
+          </p>
+          <form onSubmit={handleGateJoin} className="mt-3 flex gap-2">
+            <Input
+              value={gateCode}
+              onChange={(e) => setGateCode(e.target.value.toUpperCase())}
+              placeholder="ENTER CODE"
+              inputMode="text"
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+              className="h-10 min-w-0 flex-1 rounded-full border-[#2a2118]/10 bg-white/90 px-4 font-syne text-[11px] font-bold tracking-[2.2px] text-[#2a2118] placeholder:text-[#2a2118]/24 focus-visible:border-[#006666]/35 focus-visible:ring-[#006666]/20"
+            />
+            <Button
+              type="submit"
+              disabled={gateCode.trim().length < 4}
+              className="h-10 rounded-full bg-[#2a2118] px-4 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-[#2a2118]/90 disabled:opacity-50"
+            >
+              Go
+            </Button>
+          </form>
         </div>
       </CardContent>
     </Card>
