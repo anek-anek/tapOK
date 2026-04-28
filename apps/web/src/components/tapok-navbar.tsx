@@ -28,7 +28,7 @@ function getInitials(firstName?: string, lastName?: string) {
 }
 
 export function TapokNavbar() {
-  const { dbUser, loading } = useAuth();
+  const { dbUser, loading, isReady } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -85,7 +85,7 @@ export function TapokNavbar() {
         </div>
 
         <nav className="flex min-w-0 flex-1 items-end justify-center gap-0.5 overflow-x-auto sm:gap-2">
-          {!loading && navItems.map((item) => (
+          {isReady && navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -107,7 +107,7 @@ export function TapokNavbar() {
 
         {/* Profile button + dropdown */}
         <div className="relative" ref={dropdownRef}>
-          {loading ? (
+          {!isReady ? (
             <Skeleton className="h-11 w-11 rounded-full bg-[#2a2118]/10" />
           ) : !dbUser ? (
             <Link

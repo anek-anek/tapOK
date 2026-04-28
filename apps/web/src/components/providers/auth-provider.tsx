@@ -1,7 +1,8 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
+import { useQueryClient } from '@tanstack/react-query';
 import { auth } from '@/lib/firebase';
 import { setAuthToken } from '@/services/api';
 import { finalizeSession } from '@/lib/auth/finalize-session';
@@ -25,7 +26,7 @@ interface AuthContextValue {
   user: User | null;
   dbUser: DbUser | null;
   loading: boolean;
-  /** Hydrate the context after a successful registration without waiting for onAuthStateChanged. */
+  isReady: boolean;
   setSession: (firebaseUser: User, dbUser: DbUser) => void;
 }
 
@@ -33,6 +34,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   dbUser: null,
   loading: true,
+  isReady: false,
   setSession: () => undefined,
 });
 
@@ -49,20 +51,25 @@ function readProfileCookie(): DbUser | null {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [dbUser, setDbUser] = useState<DbUser | null>(readProfileCookie);
+  const cookieUser = readProfileCookie();
+  const [dbUser, setDbUser] = useState<DbUser | null>(cookieUser);
   const [loading, setLoading] = useState(true);
+  const [isReady, setIsReady] = useState(cookieUser !== null);
+  const queryClient = useQueryClient();
+  const prevUidRef = useRef<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // The register page manages its own sync (createUserWithEmailAndPassword
-        // + finalizeSession with sync:true). If AuthProvider races and calls
-        // GET /users/me before the sync completes, it gets a 404 and deletes
-        // the brand-new Firebase account. Skip here; the form sets state itself.
         if (window.location.pathname === '/register') {
           setLoading(false);
           return;
         }
+
+        if (prevUidRef.current !== null && prevUidRef.current !== firebaseUser.uid) {
+          queryClient.clear();
+        }
+        prevUidRef.current = firebaseUser.uid;
 
         const result = await finalizeSession(firebaseUser, { sync: false });
         if (result.ok) {
@@ -74,6 +81,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => undefined);
         }
       } else {
+        queryClient.clear();
+        prevUidRef.current = null;
         setAuthToken(null);
         setDbUser(null);
         setUser(null);
@@ -81,19 +90,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setLoading(false);
+      setIsReady(true);
     });
 
     return unsubscribe;
-  }, []);
+  }, [queryClient]);
 
   const setSession = useCallback((firebaseUser: User, dbUser: DbUser) => {
     setUser(firebaseUser);
     setDbUser(dbUser);
     setLoading(false);
+    setIsReady(true);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, dbUser, loading, setSession }}>
+    <AuthContext.Provider value={{ user, dbUser, loading, isReady, setSession }}>
       {children}
     </AuthContext.Provider>
   );

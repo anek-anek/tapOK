@@ -7,7 +7,6 @@ import { ActivePanel } from './_components/active-panel';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMyActivity } from '@/hooks/queries/use-drops';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
-import { useMounted } from '@/hooks/use-mounted';
 import type { DropActivityLog } from '@/types/drop';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -316,15 +315,15 @@ function GateCard() {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function ActivityPage() {
-  const mounted = useMounted();
-  const { user, dbUser, loading } = useAuth();
+  const { user, dbUser, loading, isReady } = useAuth();
   const {
     data: activityLogs = [],
     isLoading: activityLoading,
     isError: activityError,
   } = useMyActivity({ enabled: Boolean(user) && !loading });
+  const isHardLoading = activityLoading && !activityLogs.length;
 
-  if (!mounted) {
+  if (!isReady) {
     return (
       <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
         <TapokNavbar />
@@ -376,7 +375,7 @@ export default function ActivityPage() {
           <Feed
             currentUserId={dbUser?.id}
             logs={activityLogs}
-            isLoading={activityLoading}
+            isLoading={isHardLoading}
             isError={activityError}
           />
           <ActivePanel
