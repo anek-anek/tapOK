@@ -50,4 +50,8 @@ export const dropsService = {
   rejectJoinRequest(dropId: string, userId: string): Promise<void> {
     return api.patch(`/drops/${dropId}/crew/${userId}/reject`).then(() => undefined);
   },
+
+  removeCrewMember(dropId: string, userId: string): Promise<void> {
+    return api.patch(`/drops/${dropId}/crew/${userId}/remove`).then(() => undefined);
+  },
 };

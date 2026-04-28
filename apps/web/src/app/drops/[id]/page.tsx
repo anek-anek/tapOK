@@ -31,7 +31,7 @@ import { EditDropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
-import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest } from '@/hooks/mutations/use-drop-mutations';
+import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember } from '@/hooks/mutations/use-drop-mutations';
 import type { DropStatus } from '@/types/drop';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
@@ -206,8 +206,10 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const { data: crew } = useDropCrew(id, { enabled: isOrganiserCheck });
   const { mutate: approveJoinRequest, isPending: isApproving, variables: approvingUserId } = useApproveJoinRequest(id);
   const { mutate: rejectJoinRequest, isPending: isRejecting, variables: rejectingUserId } = useRejectJoinRequest(id);
+  const { mutate: removeCrewMember, isPending: isRemoving, variables: removingUserId } = useRemoveCrewMember(id);
 
   const pendingMembers = crew?.filter((m) => m.status === 'pending') ?? [];
+  const activeMembers = crew?.filter((m) => m.status === 'in') ?? [];
 
   if (!isReady || isHardLoading) return <PageSkeleton />;
 
@@ -376,6 +378,14 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     </span>
                   </div>
                 )}
+                {!isOrganiser && crewStatus?.status === 'removed' && (
+                  <div className="flex items-center gap-2">
+                    <IconBan size={14} className="shrink-0 text-red-700" />
+                    <span className="inline-flex items-center rounded-full border border-red-300 bg-red-100 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-red-700">
+                      Removed
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -432,6 +442,48 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             )}
 
+            {/* Active crew members — organiser only */}
+            {isOrganiser && activeMembers.length > 0 && (
+              <div className="rounded-[28px] border border-[#006666]/20 bg-[#006666]/5 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
+                <div className="flex items-center gap-2 px-6 pt-5 pb-4">
+                  <IconUsers size={13} className="text-[#006666]" />
+                  <p className="font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]/70">
+                    Crew members
+                  </p>
+                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#006666]/15 font-syne text-[10px] font-bold text-[#006666]">
+                    {activeMembers.length}
+                  </span>
+                </div>
+                {activeMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center gap-4 border-t border-[#006666]/10 px-6 py-4"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#006666]/15 font-syne text-[10px] font-extrabold tracking-[0.5px] text-[#006666]">
+                      {getLogInitials(member.user.firstName, member.user.lastName)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-[#2a2118]">
+                        {member.user.firstName} {member.user.lastName}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-[#2a2118]/40">
+                        Joined {formatLogTime(member.joinedAt)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeCrewMember(member.userId)}
+                      disabled={isRemoving && removingUserId === member.userId}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 font-syne text-[9px] font-bold uppercase tracking-[2px] text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                    >
+                      <IconUserX size={12} />
+                      {isRemoving && removingUserId === member.userId ? 'Removing…' : 'Remove'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Activity log */}
             <div className="overflow-hidden rounded-[24px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px]">
               <div className="flex items-center gap-2 px-4 pb-4 pt-5 sm:px-6">
@@ -469,6 +521,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                           join_request_rejected: 'rejected a join request',
                           left: 'left this drop',
                           updated: 'updated this drop',
+                          member_removed: 'removed a crew member from this drop',
                         }[log.action] ?? log.action.replace(/_/g, ' ')}
                         {log.action === 'updated' && log.changedFields && Object.keys(log.changedFields).length > 0 && (
                           <span className="text-[#2a2118]/40">
