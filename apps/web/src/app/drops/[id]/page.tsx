@@ -488,6 +488,16 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     {activeMembers.length}
                   </span>
                 </div>
+                <div className="flex items-center gap-3 border-t border-[#006666]/10 px-6 py-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#006666]/25 bg-[#006666]/10 px-3 py-1 font-syne text-[9px] font-bold uppercase tracking-[1.8px] text-[#006666]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#006666]" />
+                    {activeMembers.filter((m) => m.isPresent).length} In
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 font-syne text-[9px] font-bold uppercase tracking-[1.8px] text-red-600">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                    {activeMembers.filter((m) => !m.isPresent).length} Out
+                  </span>
+                </div>
                 {activeMembers.map((member) => (
                   <div
                     key={member.id}
@@ -504,6 +514,15 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         Joined {formatLogTime(member.joinedAt)}
                       </p>
                     </div>
+                    <span
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 font-syne text-[9px] font-bold uppercase tracking-[1.8px] ${
+                        member.isPresent
+                          ? 'border-[#006666]/25 bg-[#006666]/10 text-[#006666]'
+                          : 'border-red-200 bg-red-50 text-red-500'
+                      }`}
+                    >
+                      {member.isPresent ? 'In' : 'Out'}
+                    </span>
                     <button
                       type="button"
                       onClick={() => removeCrewMember(member.userId)}
