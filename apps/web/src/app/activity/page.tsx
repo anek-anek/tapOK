@@ -116,7 +116,7 @@ function getBadge(action: string): BadgeType {
 
 function FeedAvatar({ initials, style }: { initials: string; style: AvatarStyle }) {
   return (
-    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-syne text-[11px] font-extrabold tracking-[0.5px] flex-shrink-0 ${avatarCls[style]}`}>
+    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-passion text-[11px] font-extrabold tracking-[0.5px] flex-shrink-0 ${avatarCls[style]}`}>
       {initials}
     </div>
   );
@@ -137,7 +137,7 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
           {describeAction(log, isYou)}
         </p>
         <div className="flex items-center gap-2 mt-1.5">
-          <span className="font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-[#006666] bg-[#006666]/10 border border-[#006666]/15 px-2.5 py-1 rounded-full">
+          <span className="font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-[#006666] bg-[#006666]/10 border border-[#006666]/15 px-2.5 py-1 rounded-full">
             {log.drop?.name ?? 'Drop'}
           </span>
           <span className="text-[#2a2118]/28 text-[11px]">·</span>
@@ -146,11 +146,11 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
       </div>
 
       {badge === 'in' ? (
-        <span className="inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#006666] flex-shrink-0">
+        <span className="inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#006666] flex-shrink-0">
           In
         </span>
       ) : badge === 'out' ? (
-        <span className="inline-flex items-center rounded-full border border-[#2a2118]/12 bg-[#2a2118]/6 px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/46 flex-shrink-0">
+        <span className="inline-flex items-center rounded-full border border-[#2a2118]/12 bg-[#2a2118]/6 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/46 flex-shrink-0">
           Out
         </span>
       ) : (
@@ -207,10 +207,10 @@ function Feed({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+          <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
             Activity
           </p>
-          <h1 className="mt-2 font-syne text-[clamp(28px,3.8vw,48px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+          <h1 className="mt-2 font-passion text-[clamp(28px,3.8vw,48px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
             What&apos;s Happening
           </h1>
           <p className="mt-2 text-[14px] leading-relaxed text-[#2a2118]/56">
@@ -219,7 +219,7 @@ function Feed({
               : `${headerEventCount} event${headerEventCount !== 1 ? 's' : ''} across your Drops.`}
           </p>
         </div>
-        <div className="flex items-center gap-1.5 flex-shrink-0 mt-2 rounded-full border border-[#006666]/20 bg-[#006666]/10 px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#006666]">
+        <div className="flex items-center gap-1.5 flex-shrink-0 mt-2 rounded-full border border-[#006666]/20 bg-[#006666]/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#006666]">
           <span className="h-1.5 w-1.5 rounded-full bg-[#006666] animate-pulse" />
           Live
         </div>
@@ -229,10 +229,10 @@ function Feed({
         <FeedSkeleton />
       ) : isError ? (
         <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/72 p-6 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
-          <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
+          <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
             Something slipped
           </p>
-          <h2 className="mt-3 font-syne text-[24px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+          <h2 className="mt-3 font-passion text-[24px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
             Could not load your activity.
           </h2>
           <p className="mt-3 text-[14px] leading-7 text-[#2a2118]/64">
@@ -241,10 +241,10 @@ function Feed({
         </div>
       ) : grouped.length === 0 ? (
         <div className="rounded-[28px] border border-dashed border-[#2a2118]/14 bg-white/60 p-7 shadow-[0_14px_40px_rgba(42,33,24,0.04)]">
-          <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
+          <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
             No activity yet
           </p>
-          <h2 className="mt-3 font-syne text-[22px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+          <h2 className="mt-3 font-passion text-[22px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
             Your log is empty
           </h2>
           <p className="mt-3 max-w-lg text-[14px] leading-7 text-[#2a2118]/64">
@@ -253,7 +253,7 @@ function Feed({
           <div className="mt-5">
             <Link
               href="/drops"
-              className="inline-flex items-center gap-2 rounded-full bg-[#006666] px-5 py-3 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
+              className="inline-flex items-center gap-2 rounded-full bg-[#006666] px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
             >
               Go to Drops
             </Link>
@@ -264,7 +264,7 @@ function Feed({
           {grouped.map((group, gi) => (
             <div key={group.label}>
               <div className={`px-6 py-3 ${gi > 0 ? 'border-t border-[#2a2118]/8' : ''}`}>
-                <span className="font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/30">
+                <span className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/30">
                   {group.label}
                 </span>
               </div>
@@ -287,23 +287,23 @@ function Feed({
 function GateCard() {
   return (
     <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/72 p-7 shadow-[0_14px_40px_rgba(42,33,24,0.06)]">
-      <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+      <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
         Authentication required
       </p>
-      <h2 className="mt-3 font-syne text-[clamp(28px,3.8vw,44px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+      <h2 className="mt-3 font-passion text-[clamp(28px,3.8vw,44px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
         Sign in to see your activity.
       </h2>
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 rounded-full bg-[#006666] px-5 py-3 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          className="inline-flex items-center gap-2 rounded-full bg-[#006666] px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         >
           <LogIn size={14} />
           Log in
         </Link>
         <Link
           href="/register"
-          className="inline-flex items-center gap-2 rounded-full border border-[#2a2118]/10 bg-white/75 px-5 py-3 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/18 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          className="inline-flex items-center gap-2 rounded-full border border-[#2a2118]/10 bg-white/75 px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/18 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         >
           Sign up
         </Link>

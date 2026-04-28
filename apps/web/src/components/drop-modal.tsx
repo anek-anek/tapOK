@@ -104,12 +104,12 @@ function LivePreviewCard({
         <CardContent className="px-0">
           <Badge
             variant="outline"
-            className="mb-3 h-auto gap-[6px] rounded-full border-[#006666]/15 bg-[#006666]/10 px-2 py-1 font-syne text-[8px] font-bold uppercase tracking-[2px] text-[#006666]"
+            className="mb-3 h-auto gap-[6px] rounded-full border-[#006666]/15 bg-[#006666]/10 px-2 py-1 font-passion text-[8px] font-bold uppercase tracking-[2px] text-[#006666]"
           >
             <span className="h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[#006666]" />
             Active
           </Badge>
-          <div className="mb-3 min-h-[27px] font-bebas text-[22px] leading-tight tracking-[1.5px] text-[#2a2118]">
+          <div className="mb-3 min-h-[27px] font-passion text-[22px] leading-tight tracking-[1.5px] text-[#2a2118]">
             {name || <span className="opacity-20">Your drop name</span>}
           </div>
           <div className="space-y-[5px]">
@@ -132,10 +132,10 @@ function LivePreviewCard({
           </div>
           <Separator className="mt-3 bg-[#2a2118]/[0.07]" />
           <div className="pt-3">
-            <div className="font-syne text-[7px] font-bold tracking-[2px] uppercase text-[#2a2118]/18 mb-[4px]">
+            <div className="font-passion text-[7px] font-bold tracking-[2px] uppercase text-[#2a2118]/18 mb-[4px]">
               Join Code
             </div>
-            <div className="font-syne text-[11px] font-bold tracking-[5px] text-[#2a2118]/14 select-none">
+            <div className="font-passion text-[11px] font-bold tracking-[5px] text-[#2a2118]/14 select-none">
               ------
             </div>
           </div>
@@ -205,11 +205,11 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
             <aside className="relative hidden overflow-hidden bg-[#2a2118] px-7 pb-8 pt-8 sm:flex sm:flex-col sm:justify-between">
               <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle_at_1px_1px,#F7E9B2_1px,transparent_0)] [background-size:22px_22px]" />
               <div>
-                <p className="mb-5 font-syne text-[8px] font-bold uppercase tracking-[3px] text-[#F7E9B2]/22">
+                <p className="mb-5 font-passion text-[8px] font-bold uppercase tracking-[3px] text-[#F7E9B2]/22">
                   TapOk
                 </p>
                 <div
-                  className="select-none font-bebas leading-[0.88] tracking-[2px] text-[#F7E9B2]/[0.08]"
+                  className="select-none font-passion leading-[0.88] tracking-[2px] text-[#F7E9B2]/[0.08]"
                   style={{ fontSize: 'clamp(52px,5.5vw,72px)' }}
                   aria-hidden
                 >
@@ -222,7 +222,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                 </p>
               </div>
               <div>
-                <p className="mb-3 font-syne text-[8px] font-bold uppercase tracking-[2.5px] text-[#F7E9B2]/22">
+                <p className="mb-3 font-passion text-[8px] font-bold uppercase tracking-[2.5px] text-[#F7E9B2]/22">
                   Preview
                 </p>
                 <LivePreviewCard
@@ -238,10 +238,10 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
             <div className="flex flex-col bg-[#F7E9B2] px-5 py-6 sm:px-7 sm:py-7">
               <div className="mb-6 flex items-start justify-between">
                 <div>
-                  <p className="mb-1 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+                  <p className="mb-1 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
                     Create
                   </p>
-                  <div className="font-bebas text-[32px] leading-none tracking-[2px] text-[#2a2118]">
+                  <div className="font-passion text-[32px] leading-none tracking-[2px] text-[#2a2118]">
                     New Drop.
                   </div>
                   <p className="mt-1.5 text-[12px] font-light text-[#2a2118]/44">
@@ -264,7 +264,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                 <div>
                   <Label
                     htmlFor="create-drop-name"
-                    className="mb-2 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                    className="mb-2 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
                   >
                     Drop Name
                   </Label>
@@ -284,7 +284,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                     )}
                   />
                   {errors.name && (
-                    <p className="mt-1.5 font-syne text-[10px] text-red-500/80">
+                    <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
                       {errors.name.message}
                     </p>
                   )}
@@ -294,7 +294,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                   <div>
                     <Label
                       htmlFor="create-drop-date"
-                      className="mb-2 flex items-center gap-1.5 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                      className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
                     >
                       <IconCalendar size={8} className="opacity-50" />
                       Date &amp; Time
@@ -313,7 +313,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                       )}
                     />
                     {errors.scheduledAt && (
-                      <p className="mt-1.5 font-syne text-[10px] text-red-500/80">
+                      <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
                         {errors.scheduledAt.message}
                       </p>
                     )}
@@ -321,7 +321,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                   <div>
                     <Label
                       htmlFor="create-drop-location"
-                      className="mb-2 flex items-center gap-1.5 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                      className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
                     >
                       <IconMapPin size={8} className="opacity-50" />
                       Location
@@ -341,7 +341,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                       )}
                     />
                     {errors.location && (
-                      <p className="mt-1.5 font-syne text-[10px] text-red-500/80">
+                      <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
                         {errors.location.message}
                       </p>
                     )}
@@ -351,7 +351,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                 <div>
                   <Label
                     htmlFor="create-drop-headcount"
-                    className="mb-2 flex items-center gap-1.5 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                    className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
                   >
                     <IconUsers size={8} className="opacity-50" />
                     Headcount
@@ -395,7 +395,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                         />
                         <div className="text-left">
                           <p
-                            className={`font-syne text-[10px] font-bold uppercase tracking-[2px] ${field.value ? 'text-amber-800' : 'text-[#2a2118]/60'}`}
+                            className={`font-passion text-[10px] font-bold uppercase tracking-[2px] ${field.value ? 'text-amber-800' : 'text-[#2a2118]/60'}`}
                           >
                             Lock Drop
                           </p>
@@ -420,7 +420,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
 
                 {createDrop.error && (
                   <Alert className="rounded-[6px] border-red-200/50 bg-red-50 px-4 py-3">
-                    <AlertDescription className="font-syne text-[11px] text-red-600">
+                    <AlertDescription className="font-passion text-[11px] text-red-600">
                       {createDrop.error.message ||
                         'Failed to create drop. Please try again.'}
                     </AlertDescription>
@@ -432,14 +432,14 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                     type="button"
                     variant="ghost"
                     onClick={close}
-                    className="h-auto rounded-full px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/30 hover:bg-transparent hover:text-[#2a2118]/55"
+                    className="h-auto rounded-full px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/30 hover:bg-transparent hover:text-[#2a2118]/55"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     disabled={createDrop.isPending}
-                    className="h-[46px] w-full rounded-[8px] bg-[#006666] px-6 font-bebas text-[17px] tracking-[4px] text-[#F7E9B2] hover:bg-[#006666]/85 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                    className="h-[46px] w-full rounded-[8px] bg-[#006666] px-6 font-passion text-[17px] tracking-[4px] text-[#F7E9B2] hover:bg-[#006666]/85 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                   >
                     {createDrop.isPending ? (
                       <>
@@ -553,17 +553,17 @@ export function EditDropModal({
         {/* Dark left panel — context, desktop only */}
         <div className="hidden sm:flex flex-col justify-between bg-[#2a2118] px-7 pt-8 pb-8">
           <div>
-            <p className="font-syne text-[8px] font-bold tracking-[3px] uppercase text-[#F7E9B2]/22 mb-4">
+            <p className="font-passion text-[8px] font-bold tracking-[3px] uppercase text-[#F7E9B2]/22 mb-4">
               Editing
             </p>
             <div
-              className="font-bebas tracking-[1.5px] text-[#F7E9B2] leading-tight mb-3"
+              className="font-passion tracking-[1.5px] text-[#F7E9B2] leading-tight mb-3"
               style={{ fontSize: 'clamp(22px,2.8vw,30px)' }}
             >
               {drop.name}
             </div>
             <span
-              className={`inline-flex items-center gap-1.5 font-syne text-[8px] font-bold tracking-[1.5px] uppercase px-2.5 py-1 rounded-full border ${STATUS_CLS[drop.status]}`}
+              className={`inline-flex items-center gap-1.5 font-passion text-[8px] font-bold tracking-[1.5px] uppercase px-2.5 py-1 rounded-full border ${STATUS_CLS[drop.status]}`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[drop.status]}`}
@@ -582,10 +582,10 @@ export function EditDropModal({
               <span className="truncate">{drop.location}</span>
             </div>
             <div className="mt-5 pt-5 border-t border-[#F7E9B2]/[0.06]">
-              <p className="font-syne text-[8px] font-bold tracking-[2.5px] uppercase text-[#F7E9B2]/18 mb-1.5">
+              <p className="font-passion text-[8px] font-bold tracking-[2.5px] uppercase text-[#F7E9B2]/18 mb-1.5">
                 Join Code
               </p>
-              <p className="font-syne text-[15px] font-bold tracking-[5px] text-[#F7E9B2]/22">
+              <p className="font-passion text-[15px] font-bold tracking-[5px] text-[#F7E9B2]/22">
                 {drop.joinCode}
               </p>
             </div>
@@ -597,18 +597,18 @@ export function EditDropModal({
           <div className="mb-6 flex items-start justify-between">
             <div>
               <div className="sm:hidden">
-                <p className="mb-0.5 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#006666]">
+                <p className="mb-0.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#006666]">
                   Editing
                 </p>
-                <div className="max-w-[220px] truncate font-bebas text-[24px] leading-tight tracking-[1.5px] text-[#2a2118]">
+                <div className="max-w-[220px] truncate font-passion text-[24px] leading-tight tracking-[1.5px] text-[#2a2118]">
                   {drop.name}
                 </div>
               </div>
               <div className="hidden sm:block">
-                <p className="mb-1 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+                <p className="mb-1 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
                   Edit
                 </p>
-                <div className="font-bebas text-[32px] leading-none tracking-[2px] text-[#2a2118]">
+                <div className="font-passion text-[32px] leading-none tracking-[2px] text-[#2a2118]">
                   What changed?
                 </div>
                 <p className="mt-1.5 text-[12px] font-light text-[#2a2118]/44">
@@ -632,7 +632,7 @@ export function EditDropModal({
             <div>
               <Label
                 htmlFor="edit-drop-name"
-                className="mb-2 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                className="mb-2 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
               >
                 Drop Name
               </Label>
@@ -651,7 +651,7 @@ export function EditDropModal({
                 )}
               />
               {errors.name && (
-                <p className="mt-1.5 font-syne text-[10px] text-red-500/80">
+                <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
                   {errors.name.message}
                 </p>
               )}
@@ -661,7 +661,7 @@ export function EditDropModal({
               <div>
                 <Label
                   htmlFor="edit-drop-date"
-                  className="mb-2 flex items-center gap-1.5 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                  className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
                 >
                   <IconCalendar size={8} className="opacity-50" />
                   Date &amp; Time
@@ -680,7 +680,7 @@ export function EditDropModal({
                   )}
                 />
                 {errors.scheduledAt && (
-                  <p className="mt-1.5 font-syne text-[10px] text-red-500/80">
+                  <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
                     {errors.scheduledAt.message}
                   </p>
                 )}
@@ -688,7 +688,7 @@ export function EditDropModal({
               <div>
                 <Label
                   htmlFor="edit-drop-location"
-                  className="mb-2 flex items-center gap-1.5 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                  className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
                 >
                   <IconMapPin size={8} className="opacity-50" />
                   Location
@@ -707,7 +707,7 @@ export function EditDropModal({
                   )}
                 />
                 {errors.location && (
-                  <p className="mt-1.5 font-syne text-[10px] text-red-500/80">
+                  <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
                     {errors.location.message}
                   </p>
                 )}
@@ -736,7 +736,7 @@ export function EditDropModal({
                     />
                     <div className="text-left">
                       <p
-                        className={`font-syne text-[10px] font-bold uppercase tracking-[2px] ${field.value ? 'text-amber-800' : 'text-[#2a2118]/60'}`}
+                        className={`font-passion text-[10px] font-bold uppercase tracking-[2px] ${field.value ? 'text-amber-800' : 'text-[#2a2118]/60'}`}
                       >
                         Lock Drop
                       </p>
@@ -762,7 +762,7 @@ export function EditDropModal({
             <div>
               <Label
                 htmlFor="edit-drop-status"
-                className="mb-2 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                className="mb-2 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
               >
                 Status
               </Label>
@@ -793,7 +793,7 @@ export function EditDropModal({
 
             {updateDrop.error && (
               <Alert className="rounded-[6px] border-red-200/50 bg-red-50 px-4 py-3">
-                <AlertDescription className="font-syne text-[11px] text-red-600">
+                <AlertDescription className="font-passion text-[11px] text-red-600">
                   {updateDrop.error.message ||
                     'Failed to update drop. Please try again.'}
                 </AlertDescription>
@@ -805,14 +805,14 @@ export function EditDropModal({
                 type="button"
                 variant="ghost"
                 onClick={onClose}
-                className="h-auto rounded-full px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/30 hover:bg-transparent hover:text-[#2a2118]/55"
+                className="h-auto rounded-full px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/30 hover:bg-transparent hover:text-[#2a2118]/55"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={updateDrop.isPending}
-                className="h-[46px] w-full rounded-[8px] bg-[#2a2118] px-6 font-bebas text-[17px] tracking-[4px] text-[#F7E9B2] hover:bg-[#2a2118]/80 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="h-[46px] w-full rounded-[8px] bg-[#2a2118] px-6 font-passion text-[17px] tracking-[4px] text-[#F7E9B2] hover:bg-[#2a2118]/80 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
                 {updateDrop.isPending ? (
                   <>

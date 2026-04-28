@@ -54,10 +54,10 @@ export function DropShareModal({ drop, onClose }: DropShareModalProps) {
         <div className="bg-[#F7E9B2] p-5 sm:p-6">
           <div className="mb-5 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+              <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
                 Share drop
               </p>
-              <h3 className="mt-1 truncate font-syne text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+              <h3 className="mt-1 truncate font-passion text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
                 {drop.name}
               </h3>
             </div>
@@ -79,17 +79,17 @@ export function DropShareModal({ drop, onClose }: DropShareModalProps) {
 
           <div className="mt-3 flex items-center justify-between rounded-[18px] border border-[#2a2118]/10 bg-white/72 px-4 py-3">
             <div>
-              <p className="font-syne text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
+              <p className="font-passion text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
                 Join code
               </p>
-              <p className="mt-0.5 font-syne text-[24px] font-bold tracking-[0.18em] text-[#2a2118]">
+              <p className="mt-0.5 font-passion text-[24px] font-bold tracking-[0.18em] text-[#2a2118]">
                 {drop.joinCode}
               </p>
             </div>
             <button
               type="button"
               onClick={handleCopyCode}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/80 px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/56 transition-colors hover:text-[#2a2118]"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/80 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/56 transition-colors hover:text-[#2a2118]"
             >
               {copiedCode ? <IconCheckCheck size={12} /> : <IconClipboard size={12} />}
               {copiedCode ? 'Copied' : 'Copy'}
@@ -97,13 +97,13 @@ export function DropShareModal({ drop, onClose }: DropShareModalProps) {
           </div>
 
           <div className="mt-2 flex items-center gap-3 rounded-[18px] border border-[#2a2118]/10 bg-white/72 px-4 py-3">
-            <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-[#2a2118]/46">
+            <span className="min-w-0 flex-1 truncate font-inter text-[12px] text-[#2a2118]/46">
               {shareUrl}
             </span>
             <button
               type="button"
               onClick={handleCopyLink}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/80 px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/56 transition-colors hover:text-[#2a2118]"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/80 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/56 transition-colors hover:text-[#2a2118]"
             >
               {copiedLink ? <IconCheckCheck size={12} /> : <IconClipboard size={12} />}
               {copiedLink ? 'Copied' : 'Copy'}

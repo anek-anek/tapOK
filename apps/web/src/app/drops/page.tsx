@@ -142,10 +142,10 @@ function SectionTitle({
 }) {
   return (
     <div className="max-w-3xl">
-      <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+      <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
         {eyebrow}
       </p>
-      <h1 className="mt-3 font-syne text-[clamp(32px,4.2vw,60px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
+      <h1 className="mt-3 font-passion text-[clamp(32px,4.2vw,60px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
         {title}
       </h1>
       {description ? (
@@ -164,7 +164,7 @@ function StatusPill({ status }: { status: DropStatus }) {
     <Badge
       variant="outline"
       className={cn(
-        'h-auto rounded-full px-2.5 py-1 font-syne text-[9px] font-bold uppercase tracking-[2.1px]',
+        'h-auto rounded-full px-2.5 py-1 font-passion text-[9px] font-bold uppercase tracking-[2.1px]',
         meta.tone,
       )}
     >
@@ -199,13 +199,13 @@ function CompactDropCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <StatusPill status={drop.status} />
-            <span className="font-syne text-[9px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/30">
+            <span className="font-passion text-[9px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/30">
               {drop.joinCode}
             </span>
           </div>
 
           <div className="mt-3 flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#006666] font-syne text-[12px] font-bold tracking-[0.12em] text-[#F7E9B2]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#006666] font-passion text-[12px] font-bold tracking-[0.12em] text-[#F7E9B2]">
               {getInitials(drop.name)}
             </div>
             <div className="min-w-0">
@@ -250,7 +250,7 @@ function CompactDropCard({
             href={`/drops/${drop.id}`}
             className={cn(
               buttonVariants({ variant: 'outline' }),
-              'h-auto flex-1 rounded-full border-[#2a2118]/12 bg-[#F7E9B2] px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118] hover:bg-[#FFF2C7] focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white sm:flex-none',
+              'h-auto flex-1 rounded-full border-[#2a2118]/12 bg-[#F7E9B2] px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118] hover:bg-[#FFF2C7] focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white sm:flex-none',
             )}
           >
             Open
@@ -261,7 +261,7 @@ function CompactDropCard({
               type="button"
               variant="outline"
               onClick={() => onEdit(drop)}
-              className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-transparent px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-transparent hover:text-[#2a2118] focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white sm:flex-none"
+              className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-transparent px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-transparent hover:text-[#2a2118] focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white sm:flex-none"
             >
               <Edit3 size={13} />
               Edit
@@ -271,7 +271,7 @@ function CompactDropCard({
             type="button"
             variant="outline"
             onClick={() => onShare(drop)}
-            className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-white/80 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-white hover:text-[#2a2118] focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white sm:flex-none"
+            className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-white/80 px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-white hover:text-[#2a2118] focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white sm:flex-none"
           >
             <ClipboardCopy size={13} />
             Share
@@ -298,18 +298,18 @@ function FocusDropCard({
       )}
     >
       {/* Eyebrow */}
-      <p className="mb-3 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+      <p className="mb-3 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
         Featured drop
       </p>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#006666] font-syne text-[12px] font-bold tracking-[0.12em] text-[#F7E9B2]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#006666] font-passion text-[12px] font-bold tracking-[0.12em] text-[#F7E9B2]">
             {getInitials(drop.name)}
           </div>
           <div className="min-w-0">
             <StatusPill status={drop.status} />
-            <h2 className="mt-1.5 truncate font-syne text-[clamp(18px,2vw,24px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
+            <h2 className="mt-1.5 truncate font-passion text-[clamp(18px,2vw,24px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
               {drop.name}
             </h2>
           </div>
@@ -320,7 +320,7 @@ function FocusDropCard({
             href={`/drops/${drop.id}`}
             className={cn(
               buttonVariants(),
-              'h-auto flex-1 rounded-full border-[#2a2118]/12 bg-[#006666] px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#F7E9B2] hover:bg-[#006666]/90 focus-visible:ring-[#006666]/25 sm:flex-none',
+              'h-auto flex-1 rounded-full border-[#2a2118]/12 bg-[#006666] px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#F7E9B2] hover:bg-[#006666]/90 focus-visible:ring-[#006666]/25 sm:flex-none',
             )}
           >
             Open
@@ -330,7 +330,7 @@ function FocusDropCard({
             type="button"
             variant="outline"
             onClick={() => onShare(drop)}
-            className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-white/80 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-white hover:text-[#2a2118] focus-visible:ring-[#006666]/25 sm:flex-none"
+            className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-white/80 px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-white hover:text-[#2a2118] focus-visible:ring-[#006666]/25 sm:flex-none"
           >
             <ClipboardCopy size={13} />
             Share
@@ -379,10 +379,10 @@ function GateCard() {
   return (
     <Card className="gap-0 rounded-[24px] border border-[#2a2118]/10 bg-white/72 p-5 shadow-[0_14px_40px_rgba(42,33,24,0.06)] ring-0 sm:rounded-[28px] sm:p-7">
       <CardContent className="px-0">
-        <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+        <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
           Authentication required
         </p>
-        <h2 className="mt-3 font-syne text-[clamp(28px,3.8vw,44px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+        <h2 className="mt-3 font-passion text-[clamp(28px,3.8vw,44px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
           Sign in to manage or join a Drop.
         </h2>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -390,7 +390,7 @@ function GateCard() {
             href="/login"
             className={cn(
               buttonVariants(),
-              'h-auto rounded-full bg-[#006666] px-5 py-3 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-[#006666]/90 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white',
+              'h-auto rounded-full bg-[#006666] px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-[#006666]/90 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white',
             )}
           >
             <LogIn size={14} />
@@ -400,14 +400,14 @@ function GateCard() {
             href="/register"
             className={cn(
               buttonVariants({ variant: 'outline' }),
-              'h-auto rounded-full border-[#2a2118]/10 bg-white/75 px-5 py-3 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118] hover:border-[#2a2118]/18 hover:bg-white focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white',
+              'h-auto rounded-full border-[#2a2118]/10 bg-white/75 px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118] hover:border-[#2a2118]/18 hover:bg-white focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white',
             )}
           >
             Sign up
           </Link>
         </div>
         <div className="mt-5 border-t border-[#2a2118]/8 pt-5">
-          <p className="font-syne text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
+          <p className="font-passion text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
             Got a join code?
           </p>
           <form onSubmit={handleGateJoin} className="mt-3 flex gap-2">
@@ -419,12 +419,12 @@ function GateCard() {
               autoCapitalize="characters"
               autoComplete="off"
               spellCheck={false}
-              className="h-10 min-w-0 flex-1 rounded-full border-[#2a2118]/10 bg-white/90 px-4 font-syne text-[11px] font-bold tracking-[2.2px] text-[#2a2118] placeholder:text-[#2a2118]/24 focus-visible:border-[#006666]/35 focus-visible:ring-[#006666]/20"
+              className="h-10 min-w-0 flex-1 rounded-full border-[#2a2118]/10 bg-white/90 px-4 font-passion text-[11px] font-bold tracking-[2.2px] text-[#2a2118] placeholder:text-[#2a2118]/24 focus-visible:border-[#006666]/35 focus-visible:ring-[#006666]/20"
             />
             <Button
               type="submit"
               disabled={gateCode.trim().length < 4}
-              className="h-10 rounded-full bg-[#2a2118] px-4 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-[#2a2118]/90 disabled:opacity-50"
+              className="h-10 rounded-full bg-[#2a2118] px-4 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-[#2a2118]/90 disabled:opacity-50"
             >
               Go
             </Button>
@@ -442,7 +442,7 @@ function EmptyState() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#006666]/10 text-[#006666]">
           <Plus size={22} />
         </div>
-        <h2 className="mt-4 font-syne text-[22px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+        <h2 className="mt-4 font-passion text-[22px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
           No Drops yet
         </h2>
         <p className="mt-3 max-w-lg text-[14px] leading-7 text-[#2a2118]/64">
@@ -710,7 +710,7 @@ export default function DropsPage() {
         <section className="mb-6 grid gap-4 sm:mb-8 lg:grid-cols-[minmax(0,1fr)_330px]">
           <div className="flex flex-col justify-center gap-4">
             <div>
-              <h1 className="font-syne text-[clamp(32px,4.2vw,60px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
+              <h1 className="font-passion text-[clamp(32px,4.2vw,60px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
                 Your Drops
               </h1>
               <p className="mt-2 text-[15px] leading-relaxed text-[#2a2118]/56">
@@ -762,7 +762,7 @@ export default function DropsPage() {
 
           <Card className="gap-0 rounded-[24px] border border-[#2a2118]/10 bg-[linear-gradient(135deg,rgba(255,249,229,0.96),rgba(255,241,196,0.78))] p-4 shadow-[0_14px_34px_rgba(42,33,24,0.06)] ring-0 sm:rounded-[30px] sm:p-5">
             <CardContent className="px-0">
-              <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+              <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
                 Quick actions
               </p>
               <div className="mt-4 grid gap-3">
@@ -772,10 +772,10 @@ export default function DropsPage() {
                   className="group h-auto w-full justify-between rounded-[20px] bg-[#006666] px-5 py-4 hover:bg-[#006666]/90 focus-visible:ring-[#006666]/25"
                 >
                   <div>
-                    <p className="font-syne text-[9px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2]/50">
+                    <p className="font-passion text-[9px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2]/50">
                       Create
                     </p>
-                    <p className="mt-0.5 font-syne text-[16px] font-bold uppercase tracking-[-0.02em] text-[#F7E9B2]">
+                    <p className="mt-0.5 font-passion text-[16px] font-bold uppercase tracking-[-0.02em] text-[#F7E9B2]">
                       New Drop
                     </p>
                   </div>
@@ -785,7 +785,7 @@ export default function DropsPage() {
                 </Button>
                 <Card className="gap-0 rounded-[20px] border border-[#2a2118]/10 bg-white/72 p-4 ring-0">
                   <CardContent className="px-0">
-                    <p className="font-syne text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
+                    <p className="font-passion text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
                       Got a code?
                     </p>
                     <form
@@ -802,11 +802,11 @@ export default function DropsPage() {
                         autoCapitalize="characters"
                         autoComplete="off"
                         spellCheck="false"
-                        className="h-10 min-w-0 flex-1 rounded-full border-[#2a2118]/10 bg-white/90 px-4 font-syne text-[11px] font-bold tracking-[2.2px] text-[#2a2118] placeholder:text-[#2a2118]/24 focus-visible:border-[#006666]/35 focus-visible:ring-[#006666]/20"
+                        className="h-10 min-w-0 flex-1 rounded-full border-[#2a2118]/10 bg-white/90 px-4 font-passion text-[11px] font-bold tracking-[2.2px] text-[#2a2118] placeholder:text-[#2a2118]/24 focus-visible:border-[#006666]/35 focus-visible:ring-[#006666]/20"
                       />
                       <Button
                         type="submit"
-                        className="h-10 rounded-full bg-[#2a2118] px-4 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-[#2a2118]/90"
+                        className="h-10 rounded-full bg-[#2a2118] px-4 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-[#2a2118]/90"
                       >
                         Go
                       </Button>
@@ -823,10 +823,10 @@ export default function DropsPage() {
             <BoardSkeleton variant="list" />
           ) : isError ? (
             <Alert className="rounded-[28px] border-[#2a2118]/10 bg-white/72 p-6 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
-              <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
+              <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
                 Something slipped
               </p>
-              <AlertTitle className="mt-3 font-syne text-[24px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+              <AlertTitle className="mt-3 font-passion text-[24px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
                 We could not load your Drops.
               </AlertTitle>
               <AlertDescription className="mt-3 max-w-xl text-[14px] leading-7 text-[#2a2118]/64">
@@ -854,7 +854,7 @@ export default function DropsPage() {
                   >
                     <TabsTrigger
                       value="live"
-                      className="relative flex-none gap-2 rounded-none pb-3 pr-6 font-syne text-[11px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/38 hover:text-[#2a2118]/70 data-active:text-[#2a2118] data-active:after:bg-[#006666]"
+                      className="relative flex-none gap-2 rounded-none pb-3 pr-6 font-passion text-[11px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/38 hover:text-[#2a2118]/70 data-active:text-[#2a2118] data-active:after:bg-[#006666]"
                     >
                       <span className="relative">
                         Live
@@ -879,7 +879,7 @@ export default function DropsPage() {
                     </TabsTrigger>
                     <TabsTrigger
                       value="completed"
-                      className="relative flex-none gap-2 rounded-none pb-3 pr-6 font-syne text-[11px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/38 hover:text-[#2a2118]/70 data-active:text-[#2a2118] data-active:after:bg-[#006666]"
+                      className="relative flex-none gap-2 rounded-none pb-3 pr-6 font-passion text-[11px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/38 hover:text-[#2a2118]/70 data-active:text-[#2a2118] data-active:after:bg-[#006666]"
                     >
                       Completed
                       <Badge
@@ -908,12 +908,12 @@ export default function DropsPage() {
                         />
                       ))
                     ) : focusDrop && focusDrop.status !== 'completed' ? (
-                      <p className="py-3 text-center font-syne text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
+                      <p className="py-3 text-center font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
                         Only one live drop — featured above
                       </p>
                     ) : (
                       <div className="rounded-[22px] border border-dashed border-[#2a2118]/14 bg-white/65 p-5 text-center">
-                        <p className="font-syne text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
+                        <p className="font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
                           Nothing live right now
                         </p>
                         <p className="mt-2 text-[13px] leading-6 text-[#2a2118]/58">
@@ -943,7 +943,7 @@ export default function DropsPage() {
                         ))
                       ) : (
                         <div className="rounded-[22px] border border-dashed border-[#2a2118]/14 bg-white/65 p-5 text-center">
-                          <p className="font-syne text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
+                          <p className="font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
                             No completed Drops yet
                           </p>
                           <p className="mt-2 text-[13px] leading-6 text-[#2a2118]/58">

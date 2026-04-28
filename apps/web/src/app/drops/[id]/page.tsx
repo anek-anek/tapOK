@@ -58,7 +58,7 @@ const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string
 function StatusPill({ status }: { status: DropStatus }) {
   const meta = STATUS_META[status];
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-syne text-[9px] font-bold uppercase tracking-[2.1px] ${meta.tone}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-passion text-[9px] font-bold uppercase tracking-[2.1px] ${meta.tone}`}>
       {meta.pulse ? (
         <span className="relative flex h-1.5 w-1.5 shrink-0">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -122,7 +122,7 @@ function LeaveConfirmModal({
       {(close) => (
         <div className="bg-[#F7E9B2] p-5 sm:p-6">
           <div className="mb-1 flex items-start justify-between gap-3">
-            <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-red-600">
+            <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-red-600">
               Leave drop
             </p>
             <button
@@ -134,7 +134,7 @@ function LeaveConfirmModal({
               <IconX size={14} />
             </button>
           </div>
-          <h3 className="mt-1 font-syne text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+          <h3 className="mt-1 font-passion text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
             Are you sure?
           </h3>
           <p className="mt-2 text-[13px] leading-6 text-[#2a2118]/64">
@@ -147,7 +147,7 @@ function LeaveConfirmModal({
               type="button"
               onClick={close}
               disabled={isPending}
-              className="flex-1 rounded-[18px] border border-[#2a2118]/12 bg-white/70 py-3 font-syne text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:bg-white/90 disabled:opacity-40"
+              className="flex-1 rounded-[18px] border border-[#2a2118]/12 bg-white/70 py-3 font-passion text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:bg-white/90 disabled:opacity-40"
             >
               Cancel
             </button>
@@ -155,7 +155,7 @@ function LeaveConfirmModal({
               type="button"
               onClick={onConfirm}
               disabled={isPending}
-              className="flex-1 rounded-[18px] bg-red-600 py-3 font-syne text-[10px] font-bold uppercase tracking-[2px] text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+              className="flex-1 rounded-[18px] bg-red-600 py-3 font-passion text-[10px] font-bold uppercase tracking-[2px] text-white transition-colors hover:bg-red-700 disabled:opacity-60"
             >
               {isPending ? 'Leaving…' : 'Leave drop'}
             </button>
@@ -220,10 +220,10 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         <TapokNavbar />
         <main className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
           <div className="rounded-[24px] border border-[#2a2118]/10 bg-white/72 p-5 shadow-[0_14px_40px_rgba(42,33,24,0.05)] sm:rounded-[28px] sm:p-8">
-            <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
+            <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
               Not found
             </p>
-            <h2 className="mt-3 font-syne text-[24px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+            <h2 className="mt-3 font-passion text-[24px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
               We could not find this Drop.
             </h2>
             <p className="mt-3 max-w-xl text-[14px] leading-7 text-[#2a2118]/64">
@@ -231,7 +231,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </p>
             <Link
               href="/drops"
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#006666] px-5 py-3 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#006666] px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
             >
               <IconArrowLeft size={13} />
               Back to Drops
@@ -266,7 +266,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         {/* Back */}
         <Link
           href="/drops"
-          className="mb-6 inline-flex items-center gap-2 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/40 transition-colors hover:text-[#2a2118]/70"
+          className="mb-6 inline-flex items-center gap-2 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/40 transition-colors hover:text-[#2a2118]/70"
         >
           <IconArrowLeft size={13} />
           Drops
@@ -275,12 +275,12 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         {/* Hero */}
         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#006666] font-syne text-[13px] font-bold tracking-[0.1em] text-[#F7E9B2] sm:h-14 sm:w-14 sm:text-[14px]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#006666] font-passion text-[13px] font-bold tracking-[0.1em] text-[#F7E9B2] sm:h-14 sm:w-14 sm:text-[14px]">
               {getInitials(drop.name)}
             </div>
             <div className="min-w-0">
               <StatusPill status={drop.status} />
-              <h1 className="mt-1.5 font-syne text-[clamp(22px,3.2vw,36px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
+              <h1 className="mt-1.5 font-passion text-[clamp(22px,3.2vw,36px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
                 {drop.name}
               </h1>
             </div>
@@ -290,7 +290,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             <button
               type="button"
               onClick={() => setShareModalOpen(true)}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/75 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 transition-colors hover:border-[#2a2118]/18 hover:text-[#2a2118] sm:flex-none"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/75 px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 transition-colors hover:border-[#2a2118]/18 hover:text-[#2a2118] sm:flex-none"
             >
               <IconShare2 size={13} />
               Share
@@ -299,7 +299,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               <button
                 type="button"
                 onClick={() => setEditModalOpen(true)}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2a2118]/12 bg-[#F7E9B2] px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118] transition-colors hover:bg-[#FFF2C7] sm:flex-none"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2a2118]/12 bg-[#F7E9B2] px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118] transition-colors hover:bg-[#FFF2C7] sm:flex-none"
               >
                 <IconEdit size={13} />
                 Edit
@@ -309,7 +309,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               <button
                 type="button"
                 onClick={() => setLeaveModalOpen(true)}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2 font-syne text-[10px] font-bold uppercase tracking-[2.1px] text-red-600 transition-colors hover:bg-red-100 sm:flex-none"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-red-600 transition-colors hover:bg-red-100 sm:flex-none"
               >
                 <IconLogOut size={13} />
                 Leave
@@ -324,7 +324,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
           <div className="order-2 space-y-4 lg:order-1">
             {/* Details card */}
             <div className="rounded-[24px] border border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px] sm:p-6">
-              <p className="mb-4 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
+              <p className="mb-4 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
                 Drop details
               </p>
               <div className="space-y-3.5">
@@ -350,7 +350,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                       {drop.organiser.firstName} {drop.organiser.lastName}
                     </span>
                     {isOrganiser && (
-                      <span className="ml-1.5 inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-2 py-0.5 font-syne text-[8px] font-bold uppercase tracking-[1.5px] text-[#006666]">
+                      <span className="ml-1.5 inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-2 py-0.5 font-passion text-[8px] font-bold uppercase tracking-[1.5px] text-[#006666]">
                         You
                       </span>
                     )}
@@ -359,14 +359,14 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 {!isOrganiser && crewStatus?.status === 'in' && (
                   <div className="flex items-center gap-2">
                     <IconCheckCircle size={14} className="shrink-0 text-[#006666]" />
-                    <span className="inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-[#006666]">
+                    <span className="inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-2.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-[#006666]">
                       You&apos;re In
                     </span>
                   </div>
                 )}
                 {!isOrganiser && crewStatus?.status === 'in' && !isCompleted && (
                   <div className="flex items-center gap-3 pt-1">
-                    <p className="font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/40">
+                    <p className="font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/40">
                       Mark presence
                     </p>
                     <div className="flex items-center gap-1.5">
@@ -374,7 +374,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         type="button"
                         disabled={isUpdatingPresence}
                         onClick={() => updatePresence(true)}
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[1.8px] transition-colors disabled:opacity-50 ${
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[1.8px] transition-colors disabled:opacity-50 ${
                           crewStatus.isPresent
                             ? 'border-[#006666] bg-[#006666] text-[#F7E9B2]'
                             : 'border-[#006666]/20 bg-transparent text-[#006666] hover:bg-[#006666]/10'
@@ -386,7 +386,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         type="button"
                         disabled={isUpdatingPresence}
                         onClick={() => updatePresence(false)}
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[1.8px] transition-colors disabled:opacity-50 ${
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[1.8px] transition-colors disabled:opacity-50 ${
                           !crewStatus.isPresent
                             ? 'border-red-500 bg-red-500 text-white'
                             : 'border-red-200 bg-transparent text-red-500 hover:bg-red-50'
@@ -400,7 +400,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 {!isOrganiser && crewStatus?.status === 'pending' && (
                   <div className="flex items-center gap-2">
                     <IconClock size={14} className="shrink-0 text-amber-700" />
-                    <span className="inline-flex items-center rounded-full border border-amber-400/30 bg-amber-100/80 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-amber-700">
+                    <span className="inline-flex items-center rounded-full border border-amber-400/30 bg-amber-100/80 px-2.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-amber-700">
                       Awaiting Approval
                     </span>
                   </div>
@@ -408,7 +408,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 {!isOrganiser && crewStatus?.status === 'rejected' && (
                   <div className="flex items-center gap-2">
                     <IconBan size={14} className="shrink-0 text-red-600" />
-                    <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-red-600">
+                    <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-red-600">
                       Request Rejected
                     </span>
                   </div>
@@ -417,14 +417,14 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       <IconBan size={14} className="shrink-0 text-red-700" />
-                      <span className="inline-flex items-center rounded-full border border-red-300 bg-red-100 px-2.5 py-0.5 font-syne text-[9px] font-bold uppercase tracking-[1.5px] text-red-700">
+                      <span className="inline-flex items-center rounded-full border border-red-300 bg-red-100 px-2.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-red-700">
                         Removed
                       </span>
                     </div>
                     {!isCompleted && (
                       <Link
                         href={`/drops/join/${drop.joinCode}`}
-                        className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#006666]/20 bg-[#006666]/10 px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[1.8px] text-[#006666] transition-colors hover:bg-[#006666]/15"
+                        className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#006666]/20 bg-[#006666]/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-[#006666] transition-colors hover:bg-[#006666]/15"
                       >
                         Re-join Drop
                       </Link>
@@ -439,10 +439,10 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               <div className="rounded-[28px] border border-amber-400/30 bg-amber-50/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
                 <div className="flex items-center gap-2 px-6 pt-5 pb-4">
                   <IconClock size={13} className="text-amber-700" />
-                  <p className="font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-amber-700/70">
+                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-amber-700/70">
                     Pending requests
                   </p>
-                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/30 font-syne text-[10px] font-bold text-amber-800">
+                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/30 font-passion text-[10px] font-bold text-amber-800">
                     {pendingMembers.length}
                   </span>
                 </div>
@@ -451,7 +451,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     key={member.id}
                     className="flex items-center gap-4 border-t border-amber-400/20 px-6 py-4"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400/20 font-syne text-[10px] font-extrabold tracking-[0.5px] text-amber-800">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400/20 font-passion text-[10px] font-extrabold tracking-[0.5px] text-amber-800">
                       {getLogInitials(member.user.firstName, member.user.lastName)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -467,7 +467,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         type="button"
                         onClick={() => rejectJoinRequest(member.userId)}
                         disabled={(isRejecting && rejectingUserId === member.userId) || (isApproving && approvingUserId === member.userId)}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 font-syne text-[9px] font-bold uppercase tracking-[2px] text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 font-passion text-[9px] font-bold uppercase tracking-[2px] text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
                       >
                         <IconUserX size={12} />
                         {isRejecting && rejectingUserId === member.userId ? 'Rejecting…' : 'Reject'}
@@ -476,7 +476,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         type="button"
                         onClick={() => approveJoinRequest(member.userId)}
                         disabled={(isApproving && approvingUserId === member.userId) || (isRejecting && rejectingUserId === member.userId)}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#006666] px-3.5 py-2 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[#006666] px-3.5 py-2 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 disabled:opacity-50"
                       >
                         <IconUserCheck size={12} />
                         {isApproving && approvingUserId === member.userId ? 'Approving…' : 'Approve'}
@@ -492,19 +492,19 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               <div className="rounded-[28px] border border-[#006666]/20 bg-[#006666]/5 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
                 <div className="flex items-center gap-2 px-6 pt-5 pb-4">
                   <IconUsers size={13} className="text-[#006666]" />
-                  <p className="font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]/70">
+                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]/70">
                     Crew members
                   </p>
-                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#006666]/15 font-syne text-[10px] font-bold text-[#006666]">
+                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#006666]/15 font-passion text-[10px] font-bold text-[#006666]">
                     {activeMembers.length}
                   </span>
                 </div>
                 <div className="flex items-center gap-3 border-t border-[#006666]/10 px-6 py-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#006666]/25 bg-[#006666]/10 px-3 py-1 font-syne text-[9px] font-bold uppercase tracking-[1.8px] text-[#006666]">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#006666]/25 bg-[#006666]/10 px-3 py-1 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-[#006666]">
                     <span className="h-1.5 w-1.5 rounded-full bg-[#006666]" />
                     {activeMembers.filter((m) => m.isPresent).length} In
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 font-syne text-[9px] font-bold uppercase tracking-[1.8px] text-red-600">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-red-600">
                     <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
                     {activeMembers.filter((m) => !m.isPresent).length} Out
                   </span>
@@ -514,7 +514,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     key={member.id}
                     className="flex items-center gap-4 border-t border-[#006666]/10 px-6 py-4"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#006666]/15 font-syne text-[10px] font-extrabold tracking-[0.5px] text-[#006666]">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#006666]/15 font-passion text-[10px] font-extrabold tracking-[0.5px] text-[#006666]">
                       {getLogInitials(member.user.firstName, member.user.lastName)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -526,7 +526,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                       </p>
                     </div>
                     <span
-                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 font-syne text-[9px] font-bold uppercase tracking-[1.8px] ${
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 font-passion text-[9px] font-bold uppercase tracking-[1.8px] ${
                         member.isPresent
                           ? 'border-[#006666]/25 bg-[#006666]/10 text-[#006666]'
                           : 'border-red-200 bg-red-50 text-red-500'
@@ -539,7 +539,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         type="button"
                         onClick={() => removeCrewMember(member.userId)}
                         disabled={isRemoving && removingUserId === member.userId}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 font-syne text-[9px] font-bold uppercase tracking-[2px] text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 font-passion text-[9px] font-bold uppercase tracking-[2px] text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
                       >
                         <IconUserX size={12} />
                         {isRemoving && removingUserId === member.userId ? 'Removing…' : 'Remove'}
@@ -554,14 +554,14 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             <div className="overflow-hidden rounded-[24px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px]">
               <div className="flex items-center gap-2 px-4 pb-4 pt-5 sm:px-6">
                 <IconActivity size={13} className="text-[#006666]" />
-                <p className="font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
+                <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
                   Activity
                 </p>
               </div>
 
               {!drop.activityLogs || drop.activityLogs.length === 0 ? (
                 <div className="border-t border-[#2a2118]/[0.06] px-4 py-6 text-center sm:px-6">
-                  <p className="font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
+                  <p className="font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
                     No activity yet
                   </p>
                 </div>
@@ -571,7 +571,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     key={log.id}
                     className="flex items-start gap-3 border-t border-[#2a2118]/[0.06] px-4 py-4 transition-colors hover:bg-[#2a2118]/[0.015] sm:items-center sm:gap-4 sm:px-6"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#006666]/12 font-syne text-[10px] font-extrabold tracking-[0.5px] text-[#006666]">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#006666]/12 font-passion text-[10px] font-extrabold tracking-[0.5px] text-[#006666]">
                       {getLogInitials(log.user.firstName, log.user.lastName)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -612,7 +612,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
           {/* Right column — Share */}
           <div className="order-1 rounded-[24px] border border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px] sm:p-6 lg:order-2 lg:self-start">
-            <p className="mb-4 font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
+            <p className="mb-4 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
               Share
             </p>
 
@@ -621,11 +621,11 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             <div className="mt-3 rounded-[18px] border border-[#2a2118]/10 bg-[#F7E9B2]/50 px-4 py-3">
-              <p className="font-syne text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
+              <p className="font-passion text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
                 Join code
               </p>
               <div className="mt-1 flex items-center justify-between gap-3">
-                <p className="font-syne text-[22px] font-bold tracking-[0.18em] text-[#2a2118]">
+                <p className="font-passion text-[22px] font-bold tracking-[0.18em] text-[#2a2118]">
                   {drop.joinCode}
                 </p>
                 <CopyButton text={drop.joinCode} />
@@ -633,11 +633,11 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             <div className="mt-2 rounded-[18px] border border-[#2a2118]/10 bg-[#F7E9B2]/50 px-4 py-3">
-              <p className="font-syne text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
+              <p className="font-passion text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
                 Share link
               </p>
               <div className="mt-1.5 flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-[#2a2118]/46">
+                <span className="min-w-0 flex-1 truncate font-inter text-[11px] text-[#2a2118]/46">
                   {shareUrl}
                 </span>
                 <CopyButton text={shareUrl} />
@@ -647,7 +647,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             <button
               type="button"
               onClick={() => setShareModalOpen(true)}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#006666] py-3 font-syne text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#006666] py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
             >
               <IconShare2 size={13} />
               Share drop
@@ -693,7 +693,7 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/80 px-3 py-1.5 font-syne text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/56 transition-colors hover:text-[#2a2118]"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/80 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/56 transition-colors hover:text-[#2a2118]"
     >
       {copied ? <IconCheckCheck size={12} /> : <IconCopy size={12} />}
       {copied ? 'Copied' : 'Copy'}

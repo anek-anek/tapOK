@@ -26,7 +26,7 @@ export function FrequentCrewList() {
 
   return (
     <div className="mt-8">
-      <h2 className="mb-4 font-mono text-[10px] tracking-widest text-[#2a2118]/40 uppercase">
+      <h2 className="mb-4 font-inter text-[10px] tracking-widest text-[#2a2118]/40 uppercase">
         Frequently Seen Crew
       </h2>
       <div className="flex flex-col gap-3">
@@ -36,7 +36,7 @@ export function FrequentCrewList() {
             href={`/profile/${member.id}`}
             className="group flex items-center gap-4 rounded-2xl border border-[#2a2118]/10 bg-[#FAF4DC] p-4 transition-colors hover:border-[#2a2118]/30 hover:bg-[#F0E9C8]"
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/20 bg-[#2a2118] font-mono text-sm font-bold text-[#F0E9C8]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/20 bg-[#2a2118] font-inter text-sm font-bold text-[#F0E9C8]">
               {member.avatar ? (
                 <img
                   src={member.avatar}
@@ -48,15 +48,15 @@ export function FrequentCrewList() {
               )}
             </div>
             <div className="flex-1">
-              <p className="font-mono text-sm font-bold text-[#2a2118] uppercase transition-colors group-hover:text-[#1A5C52]">
+              <p className="font-inter text-sm font-bold text-[#2a2118] uppercase transition-colors group-hover:text-[#1A5C52]">
                 {member.firstName} {member.lastName}
               </p>
               {member.userHandle && (
-                <p className="font-mono text-xs text-[#2a2118]/50">@{member.userHandle}</p>
+                <p className="font-inter text-xs text-[#2a2118]/50">@{member.userHandle}</p>
               )}
             </div>
             <div className="text-right">
-              <span className="flex h-8 min-w-[2rem] items-center justify-center rounded-full bg-[#1A5C52]/10 px-2.5 font-mono text-xs font-bold text-[#1A5C52]">
+              <span className="flex h-8 min-w-[2rem] items-center justify-center rounded-full bg-[#1A5C52]/10 px-2.5 font-inter text-xs font-bold text-[#1A5C52]">
                 {member.frequencyCount} {member.frequencyCount === 1 ? 'drop' : 'drops'}
               </span>
             </div>
