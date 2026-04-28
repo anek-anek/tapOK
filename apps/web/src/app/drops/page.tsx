@@ -39,7 +39,6 @@ import {
   TabsTrigger,
 } from '@repo/ui/components/ui/tabs';
 import { cn } from '@repo/ui/utils';
-import { useMounted } from '@/hooks/use-mounted';
 import type { Drop, DropStatus } from '@/types/drop';
 
 type StatusMeta = {
@@ -574,9 +573,8 @@ function DropsPageSkeleton({
 }
 
 export default function DropsPage() {
-  const mounted = useMounted();
   const router = useRouter();
-  const { user, dbUser, loading } = useAuth();
+  const { user, dbUser, loading, isReady } = useAuth();
   const {
     data: drops = [],
     isLoading,
@@ -584,6 +582,7 @@ export default function DropsPage() {
   } = useMyDrops({
     enabled: Boolean(user) && !loading,
   });
+  const isHardLoading = isLoading && !drops.length;
   const [shareModalDrop, setShareModalDrop] = useState<Drop | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editDrop, setEditDrop] = useState<Drop | null>(null);
@@ -637,7 +636,7 @@ export default function DropsPage() {
     }
   };
 
-  if (!mounted) {
+  if (!isReady) {
     return <DropsPageSkeleton />;
   }
 
@@ -786,8 +785,8 @@ export default function DropsPage() {
         </section>
 
         <section className="space-y-4 sm:space-y-6">
-          {loading || isLoading ? (
-            <BoardSkeleton variant={drops.length > 0 ? 'list' : 'empty'} />
+          {loading || isHardLoading ? (
+            <BoardSkeleton variant="list" />
           ) : isError ? (
             <Alert className="rounded-[28px] border-[#2a2118]/10 bg-white/72 p-6 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
               <p className="font-syne text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">

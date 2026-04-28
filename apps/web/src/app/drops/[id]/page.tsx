@@ -31,7 +31,6 @@ import { EditDropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
-import { useMounted } from '@/hooks/use-mounted';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest } from '@/hooks/mutations/use-drop-mutations';
 import type { DropStatus } from '@/types/drop';
 
@@ -194,9 +193,9 @@ function PageSkeleton() {
 
 export default function DropDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
-  const mounted = useMounted();
-  const { dbUser } = useAuth();
+  const { dbUser, isReady } = useAuth();
   const { data: drop, isLoading, isError } = useDrop(id);
+  const isHardLoading = isLoading && !drop;
   const { data: crewStatus } = useMyCrewStatus(id, { enabled: Boolean(dbUser) });
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -210,7 +209,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
   const pendingMembers = crew?.filter((m) => m.status === 'pending') ?? [];
 
-  if (!mounted || isLoading) return <PageSkeleton />;
+  if (!isReady || isHardLoading) return <PageSkeleton />;
 
   if (isError || !drop) {
     return (
