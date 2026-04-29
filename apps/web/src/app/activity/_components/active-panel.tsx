@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { CalendarDays, MapPin } from 'lucide-react';
 import { useMyDrops } from '@/hooks/queries/use-drops';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Drop, DropActivityLog } from '@/types/drop';
 
 interface DropPreview {

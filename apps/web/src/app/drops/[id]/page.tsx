@@ -30,7 +30,7 @@ import { TapokNavbar } from '@/components/tapok-navbar';
 import { EditDropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
 import { ModalShell } from '@/components/modal-shell';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence } from '@/hooks/mutations/use-drop-mutations';
 import type { DropStatus } from '@/types/drop';
 

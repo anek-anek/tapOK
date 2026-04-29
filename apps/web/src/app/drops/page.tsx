@@ -25,20 +25,20 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from '@repo/ui/components/ui/alert';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Button, buttonVariants } from '@repo/ui/components/ui/button';
-import { Card, CardContent } from '@repo/ui/components/ui/card';
-import { Input } from '@repo/ui/components/ui/input';
-import { Separator } from '@repo/ui/components/ui/separator';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+} from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@repo/ui/components/ui/tabs';
-import { cn } from '@repo/ui/utils';
+} from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 import type { Drop, DropStatus } from '@/types/drop';
 
 type StatusMeta = {

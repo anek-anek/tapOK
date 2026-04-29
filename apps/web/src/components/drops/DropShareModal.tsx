@@ -8,7 +8,7 @@ import {
   X as IconX,
 } from 'lucide-react';
 import { ModalShell } from '@/components/modal-shell';
-import { Button } from '@repo/ui/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 type DropShareModalProps = {
   drop: {

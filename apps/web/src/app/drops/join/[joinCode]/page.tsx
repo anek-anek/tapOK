@@ -19,7 +19,7 @@ import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
 import { track } from '@/lib/analytics';
 import { TapokNavbar } from '@/components/tapok-navbar';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMounted } from '@/hooks/use-mounted';
 import type { DropCrew, DropCrewStatus } from '@/types/drop';
 import type { UseMutationResult } from '@tanstack/react-query';

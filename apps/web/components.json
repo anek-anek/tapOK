@@ -4,8 +4,8 @@
   "rsc": true,
   "tsx": true,
   "tailwind": {
-    "config": "../../apps/web/tailwind.config.js",
-    "css": "../../apps/web/src/app/globals.css",
+    "config": "",
+    "css": "src/app/globals.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
@@ -14,9 +14,9 @@
   "rtl": false,
   "aliases": {
     "components": "@/components",
-    "utils": "@/utils/utils",
+    "utils": "@/lib/utils",
     "ui": "@/components/ui",
-    "lib": "@/utils",
+    "lib": "@/lib",
     "hooks": "@/hooks"
   },
   "menuColor": "default",

@@ -6,7 +6,7 @@ import { TapokNavbar } from '@/components/tapok-navbar';
 import { ActivePanel } from './_components/active-panel';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMyActivity } from '@/hooks/queries/use-drops';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { DropActivityLog } from '@/types/drop';
 
 // ── helpers ──────────────────────────────────────────────────────────────────

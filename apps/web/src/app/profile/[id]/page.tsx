@@ -6,7 +6,7 @@ import { Calendar, User as UserIcon } from 'lucide-react';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { useUser } from '@/hooks/queries/use-users';
 import { useMounted } from '@/hooks/use-mounted';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function getInitials(firstName: string, lastName: string): string {
   return `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase();

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useFrequentCrew } from '@/hooks/queries/use-users';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function getInitials(firstName: string, lastName: string): string {
   return `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase();

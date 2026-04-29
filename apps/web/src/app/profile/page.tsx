@@ -7,7 +7,7 @@ import { useCurrentUser } from '@/hooks/queries/use-users';
 import { useUpdateUser } from '@/hooks/mutations/use-user-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMounted } from '@/hooks/use-mounted';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { FrequentCrewList } from '@/components/profile/frequent-crew-list';
 
 function getInitials(firstName: string, lastName: string): string {
