@@ -1783,7 +1783,8 @@
             "type": "string"
           },
           "expectedHeadcount": {
-            "type": "number"
+            "type": "number",
+            "nullable": true
           },
           "status": {
             "type": "string",
@@ -1933,6 +1934,11 @@
           "location": {
             "type": "string",
             "example": "Rizal Park, Manila"
+          },
+          "expectedHeadcount": {
+            "type": "number",
+            "example": 20,
+            "nullable": true
           },
           "isLocked": {
             "type": "boolean",

@@ -27,7 +27,7 @@ import {
 import { useDrop, useMyCrewStatus, useDropCrew } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
-import { EditDropModal } from '@/components/drop-modal';
+import { DropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -660,7 +660,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         <DropShareModal drop={drop} onClose={() => setShareModalOpen(false)} />
       )}
       {editModalOpen && (
-        <EditDropModal drop={drop} onClose={() => setEditModalOpen(false)} />
+        <DropModal drop={drop} onClose={() => setEditModalOpen(false)} />
       )}
       {leaveModalOpen && (
         <LeaveConfirmModal

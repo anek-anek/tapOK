@@ -28,21 +28,24 @@ function getInitials(firstName?: string, lastName?: string) {
 }
 
 export function TapokNavbar() {
-  const { dbUser, loading, isReady } = useAuth();
+  const { dbUser, isReady } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const initials = getInitials(dbUser?.firstName, dbUser?.lastName);
 
   const navItems: NavItem[] = [
-    { href: '/drops', label: 'Events', active: pathname === '/drops' || pathname.startsWith('/drops/') },
-    { href: '/drops/create', label: 'Create Event', active: pathname === '/drops/create' },
-    { href: '/about', label: 'About Us', active: pathname === '/about' },
+    { href: '/drops', label: 'Drops', active: pathname === '/drops' || pathname.startsWith('/drops/') },
+    { href: '/activity', label: 'Activity', active: pathname === '/activity' },
+    { href: '/discover', label: 'Discover', active: pathname === '/discover' },
   ];
 
   useEffect(() => {
@@ -61,10 +64,9 @@ export function TapokNavbar() {
       setVisible(current < lastScrollY.current || current < 10);
       lastScrollY.current = current;
 
-      // Calculate scroll progress
       const winScroll = window.scrollY;
       const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrolled = (winScroll / height) * 100;
+      const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
       setScrollProgress(scrolled);
     }
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -81,10 +83,10 @@ export function TapokNavbar() {
   return (
     <>
       <div className="h-[60px]" />
-      
-      {/* Progress Bar (Visible only when navbar is hidden) */}
-      <div 
-        className={`fixed left-0 top-0 z-60 h-[3px] bg-tok-teal transition-all duration-300 ease-in-out ${!visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+
+      {/* Progress bar visible when navbar is hidden */}
+      <div
+        className={`fixed left-0 top-0 z-60 h-[3px] bg-tok-teal transition-all duration-300 ease-in-out ${!visible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
         style={{ width: `${scrollProgress}%` }}
       />
 
@@ -105,15 +107,14 @@ export function TapokNavbar() {
 
           {/* Nav links */}
           <nav className="flex min-w-0 flex-1 items-center justify-center gap-0.5 overflow-x-auto sm:gap-1">
-            {isReady && dbUser &&
+            {mounted && isReady && dbUser &&
               navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`${passionOne.className} relative shrink-0 px-2.5 py-1.5 text-sm font-normal uppercase tracking-[1.8px] transition-colors sm:px-3.5 sm:text-base ${item.active
-                    ? 'text-black'
-                    : 'text-black/50 hover:text-black'
-                    }`}
+                  className={`${passionOne.className} relative shrink-0 px-2.5 py-1.5 text-sm font-normal uppercase tracking-[1.8px] transition-colors sm:px-3.5 sm:text-base ${
+                    item.active ? 'text-black' : 'text-black/50 hover:text-black'
+                  }`}
                 >
                   {item.label}
                   {item.active && (

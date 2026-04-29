@@ -38,23 +38,17 @@ const AuthContext = createContext<AuthContextValue>({
   setSession: () => undefined,
 });
 
-function readProfileCookie(): DbUser | null {
-  if (typeof document === 'undefined') return null;
-  const raw = document.cookie.split('; ').find((c) => c.startsWith('user_profile='));
-  if (!raw) return null;
-  try {
-    return JSON.parse(decodeURIComponent(raw.split('=')[1] ?? '')) as DbUser;
-  } catch {
-    return null;
-  }
-}
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({
+  children,
+  initialDbUser = null,
+}: {
+  children: React.ReactNode;
+  initialDbUser?: DbUser | null;
+}) {
   const [user, setUser] = useState<User | null>(null);
-  const cookieUser = readProfileCookie();
-  const [dbUser, setDbUser] = useState<DbUser | null>(cookieUser);
+  const [dbUser, setDbUser] = useState<DbUser | null>(initialDbUser);
   const [loading, setLoading] = useState(true);
-  const [isReady, setIsReady] = useState(cookieUser !== null);
+  const [isReady, setIsReady] = useState(initialDbUser !== null);
   const queryClient = useQueryClient();
   const prevUidRef = useRef<string | null>(null);
 
