@@ -64,8 +64,8 @@ export default function ForgotPasswordPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FFF2BD]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#1a6b5e]" />
+      <div className="flex min-h-screen items-center justify-center bg-[#FFF4BD]">
+        <Loader2 className="h-6 w-6 animate-spin text-[#006666]" />
       </div>
     );
   }
@@ -73,36 +73,66 @@ export default function ForgotPasswordPage() {
   return (
     <AuthPageShell>
           {sentTo ? (
-            <div className="animate-fade-up flex flex-col items-center gap-4 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1a6b5e]/10">
-                <MailCheck size={28} className="text-[#1a6b5e]" />
+            <div className="animate-fade-up flex flex-col gap-5">
+              <div
+                className="flex h-14 w-14 items-center justify-center bg-[#006666]"
+                style={{ border: '2px solid #000', boxShadow: '4px 4px 0 #000' }}
+              >
+                <MailCheck size={24} className="text-[#FFF4BD]" />
               </div>
-              <h1 className="text-[28px] font-bold leading-tight text-black sm:text-3xl">Check your inbox</h1>
-              <p className="text-sm text-black/50">
-                We sent a password reset link to{' '}
-                <span className="font-semibold text-black/70">{sentTo}</span>. Check your spam folder if you don&apos;t see it.
+              <h1
+                className="font-passion font-bold uppercase leading-none text-black"
+                style={{ fontSize: 'clamp(28px, 4vw, 44px)', letterSpacing: '-0.01em' }}
+              >
+                CHECK YOUR INBOX.
+              </h1>
+              <p className="font-inter text-sm text-black/50">
+                We sent a reset link to{' '}
+                <span className="font-semibold text-black/70">{sentTo}</span>. Check spam if you don&apos;t see it.
               </p>
               <Link
                 href="/login"
-                className="mt-2 text-sm font-semibold text-[#1a6b5e] underline-offset-4 transition-all duration-200 hover:underline"
+                className="font-passion text-sm uppercase tracking-wider text-[#006666] underline-offset-4 transition-colors duration-150 hover:underline"
               >
-                Back to sign in
+                ← Back to sign in
               </Link>
             </div>
           ) : (
             <>
-              <h1 className="animate-fade-up mb-1 text-[28px] font-bold leading-tight text-black sm:text-3xl">
-                Reset your password
-              </h1>
-              <p className="animate-fade-up-1 mb-1 text-sm text-black/50">
-                Enter your email and we&apos;ll send you a reset link.
-              </p>
-              <Link
-                href="/login"
-                className="animate-fade-up-1 mb-6 inline-block text-sm font-semibold text-[#1a6b5e] underline-offset-4 transition-all duration-200 hover:underline"
-              >
-                Back to sign in
-              </Link>
+              <div className="animate-fade-up mb-6">
+                <div
+                  className="mb-3 inline-flex items-center"
+                  style={{
+                    background: '#006666',
+                    color: '#FFF4BD',
+                    fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    padding: '4px 10px',
+                    border: '2px solid #000',
+                    boxShadow: '3px 3px 0 #000',
+                  }}
+                >
+                  LOCKED OUT?
+                </div>
+                <h1
+                  className="font-passion font-bold uppercase leading-none text-black"
+                  style={{ fontSize: 'clamp(28px, 4vw, 44px)', letterSpacing: '-0.01em' }}
+                >
+                  RESET YOUR KEY.
+                </h1>
+                <p className="mt-2 font-inter text-sm text-black/50">
+                  Enter your email and we&apos;ll send you a reset link.
+                </p>
+                <Link
+                  href="/login"
+                  className="mt-1 inline-block font-inter text-xs font-semibold uppercase tracking-wider text-[#006666] underline-offset-4 transition-colors duration-150 hover:underline"
+                >
+                  ← Back to sign in
+                </Link>
+              </div>
 
               <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
                 <AuthFormField label="Email address" error={errors.email?.message} animClass="animate-fade-up-2">
@@ -117,15 +147,32 @@ export default function ForgotPasswordPage() {
                 </AuthFormField>
 
                 {serverError && (
-                  <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3">
-                    <p className="text-xs text-red-700">{serverError}</p>
+                  <div
+                    className="border-2 border-red-600 bg-red-50 px-4 py-3"
+                    style={{ boxShadow: '3px 3px 0 #dc2626' }}
+                  >
+                    <p className="font-inter text-xs text-red-700">{serverError}</p>
                   </div>
                 )}
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="animate-fade-up-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#1a6b5e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 ease-in-out hover:-translate-y-px hover:bg-[#155a4e] hover:shadow-[0_0_0_4px_rgba(26,107,94,0.25)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+                  aria-disabled={isSubmitting}
+                  onClick={(e) => { if (isSubmitting) e.preventDefault(); }}
+                  className="animate-fade-up-3 flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white active:scale-[0.98]"
+                  style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease', opacity: isSubmitting ? 0.6 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
+                  onMouseEnter={(e) => {
+                    if (!isSubmitting) {
+                      (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px) scale(1.04)';
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 28px rgba(0,102,102,0.38)';
+                      (e.currentTarget as HTMLElement).style.backgroundColor = '#005555';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = '';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '';
+                    (e.currentTarget as HTMLElement).style.backgroundColor = '';
+                  }}
                 >
                   {isSubmitting ? (
                     <>
@@ -133,7 +180,7 @@ export default function ForgotPasswordPage() {
                       <span className="animate-fade-in">Sending…</span>
                     </>
                   ) : (
-                    'Send reset link'
+                    'SEND RESET LINK'
                   )}
                 </button>
               </form>
