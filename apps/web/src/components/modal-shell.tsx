@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const CLOSE_DURATION = 260;
+const CLOSE_DURATION = 180;
 
 export { CLOSE_DURATION };
 
@@ -47,7 +47,7 @@ export function ModalShell({
         onClick={triggerClose}
       />
       <div
-        className="relative z-10 max-h-[92dvh] w-full overflow-hidden overflow-y-auto rounded-t-[28px] shadow-[0_40px_100px_rgba(42,33,24,0.45)] sm:max-w-[720px] sm:rounded-[28px]"
+        className="absolute inset-x-0 bottom-0 z-10 max-h-[92dvh] overflow-hidden overflow-y-auto rounded-t-[28px] shadow-[0_40px_100px_rgba(42,33,24,0.45)] sm:relative sm:inset-x-auto sm:bottom-auto sm:w-full sm:max-w-[720px] sm:rounded-[28px]"
         style={{
           animation: closing
             ? `tapok-slideDown ${CLOSE_DURATION}ms cubic-bezier(0.4,0,1,1) forwards`
