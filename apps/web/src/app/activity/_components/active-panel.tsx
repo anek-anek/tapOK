@@ -109,7 +109,7 @@ function DropRow({ drop }: { drop: DropPreview }) {
           </span>
         </div>
       </div>
-      <span className="font-syne text-[8px] font-bold uppercase tracking-[1px] text-[#006666] bg-[#006666]/10 border border-[#006666]/15 px-2 py-1 rounded-full flex-shrink-0 mt-1">
+      <span className="font-passion text-[8px] font-bold uppercase tracking-[1px] text-[#006666] bg-[#006666]/10 border border-[#006666]/15 px-2 py-1 rounded-full flex-shrink-0 mt-1">
         {STATUS_LABEL[drop.status]}
       </span>
     </Link>
@@ -171,12 +171,12 @@ export function ActivePanel({
       {/* Active Drops */}
       <div className="rounded-[22px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.05)] overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-4 pb-3">
-          <p className="font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
+          <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
             Active Drops
           </p>
           <Link
             href="/drops"
-            className="font-syne text-[10px] font-bold tracking-[1px] text-[#006666] hover:underline"
+            className="font-passion text-[10px] font-bold tracking-[1px] text-[#006666] hover:underline"
           >
             See all
           </Link>
@@ -199,7 +199,7 @@ export function ActivePanel({
       {/* Frequently Seen */}
       <div className="rounded-[22px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.05)] overflow-hidden">
         <div className="px-5 pt-4 pb-3">
-          <p className="font-syne text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
+          <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
             Frequently Seen
           </p>
         </div>
@@ -217,7 +217,7 @@ export function ActivePanel({
               className="flex items-center gap-3 px-5 py-3 border-t border-[#2a2118]/[0.06]"
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center font-syne text-[10px] font-extrabold flex-shrink-0 ${avatarColor(i)}`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-passion text-[10px] font-extrabold flex-shrink-0 ${avatarColor(i)}`}
               >
                 {person.initials}
               </div>
@@ -227,7 +227,7 @@ export function ActivePanel({
                 </p>
                 <p className="text-[11px] text-[#2a2118]/46 mt-0.5">{lastSeenSub(person)}</p>
               </div>
-              <span className="font-syne text-[20px] font-bold text-[#006666] leading-none">
+              <span className="font-passion text-[20px] font-bold text-[#006666] leading-none">
                 {person.count}
               </span>
             </div>

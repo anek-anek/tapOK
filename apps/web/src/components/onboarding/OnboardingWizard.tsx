@@ -63,10 +63,10 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
       transition={{ duration: 0.3, ease: springEase }}
       className="flex w-full flex-col"
     >
-      <p className="mb-2 font-mono text-[10px] uppercase tracking-[3px] text-[#2a2118]/35">
+      <p className="mb-2 font-inter text-[10px] uppercase tracking-[3px] text-[#2a2118]/35">
         Welcome to TapOK
       </p>
-      <h1 className="mb-2 font-bebas text-[44px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[52px]">
+      <h1 className="mb-2 font-passion text-[44px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[52px]">
         The plan starts<br />with you.
       </h1>
       <p className="mb-8 text-sm text-[#2a2118]/50">What brings you here today?</p>
@@ -80,7 +80,7 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
           className="group flex items-center justify-between gap-4 rounded-2xl border border-[#2a2118]/10 bg-white px-4 py-4 text-left shadow-sm transition-shadow hover:shadow-md sm:px-6 sm:py-5"
         >
           <div>
-            <p className="mb-0.5 font-syne text-sm font-bold uppercase tracking-wider text-[#2a2118]">
+            <p className="mb-0.5 font-passion text-sm font-bold uppercase tracking-wider text-[#2a2118]">
               Drop a plan
             </p>
             <p className="text-xs text-[#2a2118]/45">I&apos;m the Chief — I&apos;ll organise this</p>
@@ -98,7 +98,7 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
           className="group flex items-center justify-between gap-4 rounded-2xl border border-[#2a2118]/10 bg-white px-4 py-4 text-left shadow-sm transition-shadow hover:shadow-md sm:px-6 sm:py-5"
         >
           <div>
-            <p className="mb-0.5 font-syne text-sm font-bold uppercase tracking-wider text-[#2a2118]">
+            <p className="mb-0.5 font-passion text-sm font-bold uppercase tracking-wider text-[#2a2118]">
               Join a drop
             </p>
             <p className="text-xs text-[#2a2118]/45">I have a link or join code from a Chief</p>
@@ -111,12 +111,12 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
 
       <button
         onClick={onSkip}
-        className="mt-3 self-center font-mono text-[10px] text-[#2a2118]/30 transition-colors hover:text-[#2a2118]/60 underline underline-offset-4"
+        className="mt-3 self-center font-inter text-[10px] text-[#2a2118]/30 transition-colors hover:text-[#2a2118]/60 underline underline-offset-4"
       >
         Skip for now
       </button>
 
-      <p className="mt-10 font-mono text-[11px] text-[#2a2118]/30">
+      <p className="mt-10 font-inter text-[11px] text-[#2a2118]/30">
         Built for friend groups who are tired of maybes.
       </p>
     </motion.div>
@@ -156,7 +156,7 @@ function CrewEntry({ onBack }: { onBack: () => void }) {
         ← Back
       </button>
 
-      <h2 className="mb-1 font-bebas text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
+      <h2 className="mb-1 font-passion text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
         Got a code?
       </h2>
       <p className="mb-6 text-sm text-[#2a2118]/50">
@@ -165,7 +165,7 @@ function CrewEntry({ onBack }: { onBack: () => void }) {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="font-mono text-[10px] uppercase tracking-widest text-[#2a2118]/45">
+          <label className="font-inter text-[10px] uppercase tracking-widest text-[#2a2118]/45">
             Join code
           </label>
           <input
@@ -186,7 +186,7 @@ function CrewEntry({ onBack }: { onBack: () => void }) {
           disabled={code.trim().length < 4}
           whileHover={code.trim().length >= 4 ? { y: -2 } : {}}
           whileTap={code.trim().length >= 4 ? { scale: 0.98 } : {}}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-sm transition-all hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-sm transition-all hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Tap In
         </motion.button>
@@ -213,7 +213,7 @@ function ProgressChip({ filled }: { filled: [boolean, boolean, boolean] }) {
           {f ? <IconCheck size={10} strokeWidth={3} /> : i + 1}
         </motion.div>
       ))}
-      <span className="font-mono text-[10px] text-[#2a2118]/40">
+      <span className="font-inter text-[10px] text-[#2a2118]/40">
         {done === 3 ? 'Ready to go live' : `${3 - done} thing${3 - done !== 1 ? 's' : ''} to go`}
       </span>
     </div>
@@ -298,7 +298,7 @@ function DropBuilder({
 
       <ProgressChip filled={filled} />
 
-      <h2 className="mb-1 font-bebas text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
+      <h2 className="mb-1 font-passion text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
         Drop a plan.
       </h2>
       <p className="mb-6 text-sm text-[#2a2118]/50">
@@ -307,7 +307,7 @@ function DropBuilder({
 
       {/* Host preview */}
       <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-[#2a2118]/8 bg-[#F7E9B2]/40 px-4 py-2.5">
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#006666] font-mono text-[9px] font-bold text-[#F7E9B2]">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#006666] font-inter text-[9px] font-bold text-[#F7E9B2]">
           {name.charAt(0).toUpperCase()}
         </div>
         <p className="text-xs text-[#2a2118]/55">
@@ -318,7 +318,7 @@ function DropBuilder({
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {/* Drop name */}
         <div className="flex flex-col gap-1.5">
-          <label className="font-mono text-[10px] uppercase tracking-widest text-[#2a2118]/45">
+          <label className="font-inter text-[10px] uppercase tracking-widest text-[#2a2118]/45">
             Name
           </label>
           <input
@@ -333,7 +333,7 @@ function DropBuilder({
 
         {/* Date/time */}
         <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-[#2a2118]/45">
+          <label className="flex items-center gap-1.5 font-inter text-[10px] uppercase tracking-widest text-[#2a2118]/45">
             <IconCalendar size={11} />
             When
           </label>
@@ -348,7 +348,7 @@ function DropBuilder({
 
         {/* Location */}
         <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-[#2a2118]/45">
+          <label className="flex items-center gap-1.5 font-inter text-[10px] uppercase tracking-widest text-[#2a2118]/45">
             <IconMapPin size={11} />
             Where
           </label>
@@ -380,7 +380,7 @@ function DropBuilder({
                   className={field.value ? 'text-amber-700' : 'text-[#2a2118]/30'}
                 />
                 <div className="text-left">
-                  <p className={`font-mono text-[10px] uppercase tracking-widest ${field.value ? 'text-amber-800' : 'text-[#2a2118]/55'}`}>
+                  <p className={`font-inter text-[10px] uppercase tracking-widest ${field.value ? 'text-amber-800' : 'text-[#2a2118]/55'}`}>
                     Lock Drop
                   </p>
                   <p className={`text-xs font-light leading-tight ${field.value ? 'text-amber-700/70' : 'text-[#2a2118]/35'}`}>
@@ -405,7 +405,7 @@ function DropBuilder({
         )}
 
         <div className="mt-1 flex flex-col gap-2">
-          <p className="text-center font-mono text-[9px] uppercase tracking-[2px] text-[#2a2118]/25">
+          <p className="text-center font-inter text-[9px] uppercase tracking-[2px] text-[#2a2118]/25">
             No maybes — crew taps In or Out
           </p>
           <motion.button
@@ -413,7 +413,7 @@ function DropBuilder({
             disabled={isSubmitting || !allFilled}
             whileHover={allFilled ? { y: -2 } : {}}
             whileTap={allFilled ? { scale: 0.98 } : {}}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-sm transition-all hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-sm transition-all hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
@@ -495,12 +495,12 @@ function DropLive({ drop }: { drop: Drop }) {
           transition={{ repeat: Infinity, repeatDelay: 1.0, duration: 0.55 }}
           className="h-1.5 w-1.5 rounded-full bg-[#006666]"
         />
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[2px] text-[#006666]">
+        <span className="font-inter text-[10px] font-semibold uppercase tracking-[2px] text-[#006666]">
           Drop is live
         </span>
       </motion.div>
 
-      <h2 className="mb-1 font-bebas text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
+      <h2 className="mb-1 font-passion text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
         Your drop is live.
       </h2>
       <p className="mb-6 text-sm text-[#2a2118]/50">Now get your first In.</p>
@@ -514,7 +514,7 @@ function DropLive({ drop }: { drop: Drop }) {
       >
         <div className="flex items-start justify-between gap-3 p-4 sm:p-5">
           <div className="min-w-0 flex-1">
-            <p className="mb-2.5 font-syne text-[15px] font-bold text-[#2a2118]">{drop.name}</p>
+            <p className="mb-2.5 font-passion text-[15px] font-bold text-[#2a2118]">{drop.name}</p>
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2 text-xs text-[#2a2118]/55">
                 <IconCalendar size={11} className="shrink-0" />
@@ -534,14 +534,14 @@ function DropLive({ drop }: { drop: Drop }) {
             transition={{ delay: 0.36, duration: 0.32, ease: [0.34, 1.56, 0.64, 1] }}
             className="ml-3 shrink-0 rounded border border-[#006666]/60 px-1.5 py-0.5"
           >
-            <span className="font-mono text-[8px] font-bold uppercase tracking-[2px] text-[#006666]">
+            <span className="font-inter text-[8px] font-bold uppercase tracking-[2px] text-[#006666]">
               Live
             </span>
           </motion.div>
         </div>
 
         <div className="border-t border-[#2a2118]/8 px-5 py-2.5">
-          <p className="font-mono text-[10px] text-[#2a2118]/35">
+          <p className="font-inter text-[10px] text-[#2a2118]/35">
             Join code:{' '}
             <span className="font-bold tracking-wider text-[#2a2118]/60">{drop.joinCode}</span>
           </p>
@@ -555,11 +555,11 @@ function DropLive({ drop }: { drop: Drop }) {
         transition={{ delay: 0.28, duration: 0.35 }}
         className="mb-5"
       >
-        <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[2px] text-[#2a2118]/35">
+        <p className="mb-1.5 font-inter text-[10px] uppercase tracking-[2px] text-[#2a2118]/35">
           Send this where the chaos usually starts
         </p>
         <div className="flex items-stretch overflow-hidden rounded-xl border border-[#2a2118]/10 bg-white">
-          <p className="flex-1 truncate px-4 py-2.5 font-mono text-[11px] text-[#2a2118]/55">
+          <p className="flex-1 truncate px-4 py-2.5 font-inter text-[11px] text-[#2a2118]/55">
             {shareUrl}
           </p>
           <button
@@ -571,7 +571,7 @@ function DropLive({ drop }: { drop: Drop }) {
             ) : (
               <IconCopy size={12} className="text-[#2a2118]/40" />
             )}
-            <span className="font-mono text-[10px] text-[#2a2118]/50">
+            <span className="font-inter text-[10px] text-[#2a2118]/50">
               {copied ? 'Copied!' : 'Copy'}
             </span>
           </button>
@@ -589,7 +589,7 @@ function DropLive({ drop }: { drop: Drop }) {
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleShare}
-          className="flex items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-sm transition-all hover:bg-[#006666]/90"
+          className="flex items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-sm transition-all hover:bg-[#006666]/90"
         >
           <IconShare2 size={13} />
           Send to crew
@@ -597,7 +597,7 @@ function DropLive({ drop }: { drop: Drop }) {
 
         <button
           onClick={() => { track('drop_view_clicked', { dropId: drop.id }); router.push(`/drops/${drop.id}`); }}
-          className="flex items-center justify-center gap-2 rounded-full border border-[#2a2118]/12 bg-transparent px-6 py-3 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/55 transition-colors hover:bg-[#2a2118]/5"
+          className="flex items-center justify-center gap-2 rounded-full border border-[#2a2118]/12 bg-transparent px-6 py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/55 transition-colors hover:bg-[#2a2118]/5"
         >
           <IconExternalLink size={12} />
           View my drop
@@ -609,7 +609,7 @@ function DropLive({ drop }: { drop: Drop }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.65, duration: 0.5 }}
-        className="mt-7 font-mono text-[10px] italic leading-relaxed text-[#2a2118]/30"
+        className="mt-7 font-inter text-[10px] italic leading-relaxed text-[#2a2118]/30"
       >
         &ldquo;We built TapOK because plans deserve better than buried DMs. Your first drop is live.
         Now make it happen.&rdquo;

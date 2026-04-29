@@ -9,13 +9,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        'tok-cream':     '#F5EFB8',
-        'tok-cream-dim': '#ede87a',
-        'tok-black':     '#0D0D0D',
-        'tok-teal':      '#2A7D6B',
-        'tok-teal-mid':  '#3a9e88',
+        'tok-cream':     '#FFF4BD',
+        'tok-cream-dim': '#F5EFB8',
+        'tok-black':     '#000000',
+        'tok-teal':      '#006666',
+        'tok-teal-mid':  '#0a8080',
         'tok-teal-pale': '#c8e8e0',
-        'tok-white':     '#FEFEF8',
+        'tok-white':     '#FFFFFF',
         'tok-muted':     '#6b6b50',
         'tok-muted-lt':  '#9a9a78',
         background: "var(--background)",
@@ -74,11 +74,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans:     ["var(--font-sans)", "sans-serif"],
-        heading:  ["var(--font-heading)", "sans-serif"],
-        bebas:    ["var(--font-bebas)", "sans-serif"],
-        syne:     ["var(--font-syne)", "sans-serif"],
-        'dm-sans':["var(--font-dm-sans)", "sans-serif"],
+        passion:  ["var(--font-passion)", "sans-serif"],
+        inter:    ["var(--font-inter)", "sans-serif"],
       },
       keyframes: {
         livepulse: {

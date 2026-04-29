@@ -61,17 +61,20 @@ a {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px #f3eda8 inset !important;
-  -webkit-text-fill-color: #2a2118 !important;
-  caret-color: #2a2118;
+  -webkit-box-shadow: 0 0 0 1000px #FFF4BD inset !important;
+  -webkit-text-fill-color: #000000 !important;
+  caret-color: #000000;
+}
+
+.font-inter {
+  font-family: var(--font-inter), sans-serif;
+}
+
+.font-passion {
+  font-family: var(--font-passion), sans-serif;
 }
 
 @layer base {
-  .theme {
-    --font-heading: var(--font-sans);
-    --font-sans: var(--font-sans);
-  }
-
   :root {
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
@@ -151,6 +154,6 @@ input:-webkit-autofill:focus {
   }
 
   html {
-    @apply font-sans;
+    font-family: var(--font-inter), sans-serif;
   }
 }

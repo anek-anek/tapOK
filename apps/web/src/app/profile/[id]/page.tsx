@@ -60,17 +60,17 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
       <TapokNavbar />
 
       <main className="relative mx-auto max-w-2xl px-6 py-16">
-        <p className="mb-2 font-mono text-xs tracking-widest text-[#2a2118]/40 uppercase">Profile</p>
+        <p className="mb-2 font-inter text-xs tracking-widest text-[#2a2118]/40 uppercase">Profile</p>
 
         <div className="mb-10 flex items-start justify-between">
-          <h1 className="font-mono text-4xl font-bold tracking-tight text-[#2a2118] uppercase">
+          <h1 className="font-inter text-4xl font-bold tracking-tight text-[#2a2118] uppercase">
             User Info
           </h1>
         </div>
 
         {/* Avatar + name */}
         <div className="mb-8 flex items-center gap-6">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/20 bg-[#2a2118] font-mono text-2xl font-bold text-[#F0E9C8] overflow-hidden">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/20 bg-[#2a2118] font-inter text-2xl font-bold text-[#F0E9C8] overflow-hidden">
             {user.avatar ? (
               <img
                 src={user.avatar}
@@ -82,9 +82,9 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-mono text-2xl font-bold text-[#2a2118] uppercase">{fullName}</p>
+            <p className="font-inter text-2xl font-bold text-[#2a2118] uppercase">{fullName}</p>
             {user.userHandle && (
-              <p className="font-mono text-sm text-[#2a2118]/40">@{user.userHandle}</p>
+              <p className="font-inter text-sm text-[#2a2118]/40">@{user.userHandle}</p>
             )}
           </div>
         </div>
@@ -94,16 +94,16 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
           <div className="flex items-center gap-4 border-b border-[#2a2118]/8 px-6 py-4">
             <UserIcon size={16} className="shrink-0 text-[#2a2118]/40" />
             <div>
-              <p className="font-mono text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Role</p>
-              <p className="font-mono text-sm text-[#2a2118] uppercase">{user.role}</p>
+              <p className="font-inter text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Role</p>
+              <p className="font-inter text-sm text-[#2a2118] uppercase">{user.role}</p>
             </div>
           </div>
           
           <div className="flex items-center gap-4 px-6 py-4">
             <Calendar size={16} className="shrink-0 text-[#2a2118]/40" />
             <div>
-              <p className="font-mono text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Member since</p>
-              <p className="font-mono text-sm text-[#2a2118]">
+              <p className="font-inter text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Member since</p>
+              <p className="font-inter text-sm text-[#2a2118]">
                 {new Date(user.createdAt).toLocaleDateString('en-US', {
                   month: 'long',
                   year: 'numeric',

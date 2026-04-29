@@ -69,19 +69,19 @@ function JoinCta({
   if (!dbUser) {
     return (
       <div className="text-center">
-        <p className="font-mono text-[11px] text-[#2a2118]/55">
+        <p className="font-inter text-[11px] text-[#2a2118]/55">
           Sign in to tap in to this drop.
         </p>
         <Link
           href={`/register?redirectTo=/drops/join/${joinCode}`}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
         >
           <IconUserPlus size={13} />
           Sign up to Tap In
         </Link>
         <Link
           href={`/login?redirectTo=/drops/join/${joinCode}`}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
         >
           <IconLogIn size={13} />
           Log in
@@ -95,11 +95,11 @@ function JoinCta({
       <div className="text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#006666]/10 px-4 py-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#006666]" />
-          <span className="font-mono text-[11px] font-medium text-[#006666]">You organised this drop</span>
+          <span className="font-inter text-[11px] font-medium text-[#006666]">You organised this drop</span>
         </div>
         <button
           onClick={onViewDrop}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
         >
           View Drop
         </button>
@@ -112,14 +112,14 @@ function JoinCta({
       <div className="text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#006666]/10 px-4 py-2">
           <IconCheckCircle size={13} className="text-[#006666]" />
-          <span className="font-mono text-[11px] font-medium text-[#006666]">You&apos;re In</span>
+          <span className="font-inter text-[11px] font-medium text-[#006666]">You&apos;re In</span>
         </div>
-        <p className="mt-2 font-mono text-[10px] text-[#2a2118]/40">
+        <p className="mt-2 font-inter text-[10px] text-[#2a2118]/40">
           You&apos;re locked in. Everyone knows where you stand.
         </p>
         <button
           onClick={onViewDrop}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
         >
           View Drop
         </button>
@@ -132,9 +132,9 @@ function JoinCta({
       <div className="text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-amber-100/80 px-4 py-2">
           <IconClock size={13} className="text-amber-700" />
-          <span className="font-mono text-[11px] font-medium text-amber-700">Awaiting Approval</span>
+          <span className="font-inter text-[11px] font-medium text-amber-700">Awaiting Approval</span>
         </div>
-        <p className="mt-3 font-mono text-[11px] text-[#2a2118]/44">
+        <p className="mt-3 font-inter text-[11px] text-[#2a2118]/44">
           The organiser will review your request.
         </p>
       </div>
@@ -146,9 +146,9 @@ function JoinCta({
       <div className="text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-red-100/80 px-4 py-2">
           <IconLock size={13} className="text-red-700" />
-          <span className="font-mono text-[11px] font-medium text-red-700">Request Declined</span>
+          <span className="font-inter text-[11px] font-medium text-red-700">Request Declined</span>
         </div>
-        <p className="mt-3 font-mono text-[11px] text-[#2a2118]/44">
+        <p className="mt-3 font-inter text-[11px] text-[#2a2118]/44">
           The organiser has declined your request to join.
         </p>
       </div>
@@ -164,12 +164,12 @@ function JoinCta({
     if (isAlreadyJoinedError) {
       return (
         <div className="text-center">
-          <p className="font-mono text-[12px] text-[#2a2118]/55">
+          <p className="font-inter text-[12px] text-[#2a2118]/55">
             You&apos;ve already joined this drop.
           </p>
           <button
             onClick={onViewDrop}
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
           >
             View Drop
           </button>
@@ -182,7 +182,7 @@ function JoinCta({
         <button
           disabled={isJoining}
           onClick={() => { track('crew_tap_in_clicked'); joinMutation.mutate(); }}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-syne text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isJoining ? (
             <>
@@ -197,12 +197,12 @@ function JoinCta({
           )}
         </button>
         {isLocked && (
-          <p className="mt-2 text-center font-mono text-[10px] text-[#2a2118]/40">
+          <p className="mt-2 text-center font-inter text-[10px] text-[#2a2118]/40">
             Your request will be sent for approval
           </p>
         )}
         {joinError && !isAlreadyJoinedError && (
-          <p className="mt-2 text-center font-mono text-[11px] text-red-600/70">
+          <p className="mt-2 text-center font-inter text-[11px] text-red-600/70">
             Something went wrong. Please try again.
           </p>
         )}
@@ -250,7 +250,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <Skeleton className="mx-auto h-1.5 w-20 rounded-full bg-[#2a2118]/15" />
-            <p className="mt-4 font-mono text-xs text-[#2a2118]/40">Looking up drop…</p>
+            <p className="mt-4 font-inter text-xs text-[#2a2118]/40">Looking up drop…</p>
           </div>
         </div>
       </div>
@@ -263,8 +263,8 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
         <TapokNavbar />
         <div className="flex flex-1 items-center justify-center px-4">
           <div className="w-full max-w-sm rounded-2xl border border-[#2a2118]/8 bg-[#F7E9B2]/60 p-5 text-center sm:p-8">
-            <p className="font-mono text-sm text-[#2a2118]/60">Drop not found or the link has expired.</p>
-            <Link href="/" className="mt-4 inline-block font-mono text-xs text-[#2a2118]/40 underline">
+            <p className="font-inter text-sm text-[#2a2118]/60">Drop not found or the link has expired.</p>
+            <Link href="/" className="mt-4 inline-block font-inter text-xs text-[#2a2118]/40 underline">
               Go home
             </Link>
           </div>
@@ -302,14 +302,14 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
           {/* Header */}
           <div className="border-b border-[#2a2118]/8 bg-[#F7E9B2]/50 px-4 py-5 sm:px-6">
             <div className="flex items-start gap-3 sm:items-center sm:gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#006666] font-syne text-[12px] font-bold tracking-[0.1em] text-[#F7E9B2] sm:h-12 sm:w-12 sm:text-[13px]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#006666] font-passion text-[12px] font-bold tracking-[0.1em] text-[#F7E9B2] sm:h-12 sm:w-12 sm:text-[13px]">
                 {getInitials(drop.name)}
               </div>
               <div className="min-w-0">
-                <p className="font-mono text-[9px] uppercase tracking-[2px] text-[#2a2118]/44">
+                <p className="font-inter text-[9px] uppercase tracking-[2px] text-[#2a2118]/44">
                   {organiserName} made a drop — are you in?
                 </p>
-                <h1 className="truncate font-syne text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118] sm:text-[20px]">
+                <h1 className="truncate font-passion text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118] sm:text-[20px]">
                   {drop.name}
                 </h1>
               </div>
@@ -320,25 +320,25 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
           <div className="space-y-3 px-4 py-5 sm:px-6">
             <div className="flex items-center gap-3">
               <IconCalendar size={14} className="shrink-0 text-[#2a2118]/40" />
-              <span className="font-mono text-[12px] text-[#2a2118]/70">{formatDateTime(drop.scheduledAt)}</span>
+              <span className="font-inter text-[12px] text-[#2a2118]/70">{formatDateTime(drop.scheduledAt)}</span>
             </div>
             <div className="flex items-center gap-3">
               <IconMapPin size={14} className="shrink-0 text-[#2a2118]/40" />
-              <span className="min-w-0 break-words font-mono text-[12px] text-[#2a2118]/70">{drop.location}</span>
+              <span className="min-w-0 break-words font-inter text-[12px] text-[#2a2118]/70">{drop.location}</span>
             </div>
             {drop.expectedHeadcount && (
               <div className="flex items-center gap-3">
                 <IconUsers size={14} className="shrink-0 text-[#2a2118]/40" />
-                <span className="font-mono text-[12px] text-[#2a2118]/70">{drop.expectedHeadcount} expected</span>
+                <span className="font-inter text-[12px] text-[#2a2118]/70">{drop.expectedHeadcount} expected</span>
               </div>
             )}
             <div className="pt-0.5">
-              <span className="font-mono text-[11px] text-[#2a2118]/44">by {organiserName}</span>
+              <span className="font-inter text-[11px] text-[#2a2118]/44">by {organiserName}</span>
             </div>
             {drop.isLocked && (
               <div className="flex items-center gap-2 rounded-lg bg-amber-50/80 px-3 py-2">
                 <IconLock size={12} className="shrink-0 text-amber-700" />
-                <span className="font-mono text-[11px] text-amber-700">This drop requires approval to join</span>
+                <span className="font-inter text-[11px] text-amber-700">This drop requires approval to join</span>
               </div>
             )}
           </div>

@@ -101,7 +101,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-[#F7E9B2]">
         <TapokNavbar />
         <div className="flex min-h-[60vh] items-center justify-center">
-          <span className="font-mono text-sm text-[#2a2118]/40">No profile found.</span>
+          <span className="font-inter text-sm text-[#2a2118]/40">No profile found.</span>
         </div>
       </div>
     );
@@ -127,17 +127,17 @@ export default function ProfilePage() {
       <TapokNavbar />
 
       <main className="relative mx-auto max-w-2xl px-6 py-16">
-        <p className="mb-2 font-mono text-xs tracking-widest text-[#2a2118]/40 uppercase">Profile</p>
+        <p className="mb-2 font-inter text-xs tracking-widest text-[#2a2118]/40 uppercase">Profile</p>
 
         <div className="mb-10 flex items-start justify-between">
-          <h1 className="font-mono text-4xl font-bold tracking-tight text-[#2a2118] uppercase">
+          <h1 className="font-inter text-4xl font-bold tracking-tight text-[#2a2118] uppercase">
             Your Details
           </h1>
 
           {!editing ? (
             <button
               onClick={startEdit}
-              className="flex items-center gap-2 rounded-lg border border-[#2a2118]/15 bg-[#FAF4DC] px-4 py-2 font-mono text-xs text-[#2a2118]/60 transition-colors hover:border-[#2a2118]/30 hover:text-[#2a2118]"
+              className="flex items-center gap-2 rounded-lg border border-[#2a2118]/15 bg-[#FAF4DC] px-4 py-2 font-inter text-xs text-[#2a2118]/60 transition-colors hover:border-[#2a2118]/30 hover:text-[#2a2118]"
             >
               <Pencil size={12} />
               EDIT
@@ -146,7 +146,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={cancelEdit}
-                className="flex items-center gap-2 rounded-lg border border-[#2a2118]/15 bg-[#FAF4DC] px-4 py-2 font-mono text-xs text-[#2a2118]/50 transition-colors hover:border-[#2a2118]/30"
+                className="flex items-center gap-2 rounded-lg border border-[#2a2118]/15 bg-[#FAF4DC] px-4 py-2 font-inter text-xs text-[#2a2118]/50 transition-colors hover:border-[#2a2118]/30"
               >
                 <X size={12} />
                 CANCEL
@@ -154,7 +154,7 @@ export default function ProfilePage() {
               <button
                 onClick={saveEdit}
                 disabled={updateUser.isPending}
-                className="flex items-center gap-2 rounded-lg bg-[#1A5C52] px-4 py-2 font-mono text-xs text-white transition-opacity disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg bg-[#1A5C52] px-4 py-2 font-inter text-xs text-white transition-opacity disabled:opacity-50"
               >
                 <Check size={12} />
                 {updateUser.isPending ? 'SAVING...' : 'SAVE'}
@@ -165,7 +165,7 @@ export default function ProfilePage() {
 
         {/* Avatar + name */}
         <div className="mb-8 flex items-center gap-6">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/20 bg-[#2a2118] font-mono text-2xl font-bold text-[#F0E9C8]">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/20 bg-[#2a2118] font-inter text-2xl font-bold text-[#F0E9C8]">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
@@ -175,20 +175,20 @@ export default function ProfilePage() {
                   value={form.firstName}
                   onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
                   placeholder="First name"
-                  className="w-full rounded-lg border border-[#2a2118]/20 bg-[#FAF4DC] px-3 py-2 font-mono text-sm text-[#2a2118] outline-none focus:border-[#1A5C52]"
+                  className="w-full rounded-lg border border-[#2a2118]/20 bg-[#FAF4DC] px-3 py-2 font-inter text-sm text-[#2a2118] outline-none focus:border-[#1A5C52]"
                 />
                 <input
                   value={form.lastName}
                   onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
                   placeholder="Last name"
-                  className="w-full rounded-lg border border-[#2a2118]/20 bg-[#FAF4DC] px-3 py-2 font-mono text-sm text-[#2a2118] outline-none focus:border-[#1A5C52]"
+                  className="w-full rounded-lg border border-[#2a2118]/20 bg-[#FAF4DC] px-3 py-2 font-inter text-sm text-[#2a2118] outline-none focus:border-[#1A5C52]"
                 />
               </div>
             ) : (
-              <p className="font-mono text-2xl font-bold text-[#2a2118] uppercase">{fullName}</p>
+              <p className="font-inter text-2xl font-bold text-[#2a2118] uppercase">{fullName}</p>
             )}
             {profile?.userHandle && !editing && (
-              <p className="font-mono text-sm text-[#2a2118]/40">@{profile.userHandle}</p>
+              <p className="font-inter text-sm text-[#2a2118]/40">@{profile.userHandle}</p>
             )}
           </div>
         </div>
@@ -199,8 +199,8 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4 border-b border-[#2a2118]/8 px-6 py-4">
             <Mail size={16} className="shrink-0 text-[#2a2118]/40" />
             <div>
-              <p className="font-mono text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Email</p>
-              <p className="font-mono text-sm text-[#2a2118]">{displayUser.email}</p>
+              <p className="font-inter text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Email</p>
+              <p className="font-inter text-sm text-[#2a2118]">{displayUser.email}</p>
             </div>
           </div>
 
@@ -208,16 +208,16 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4 border-b border-[#2a2118]/8 px-6 py-4">
             <Phone size={16} className="shrink-0 text-[#2a2118]/40" />
             <div className="flex-1">
-              <p className="font-mono text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Phone</p>
+              <p className="font-inter text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Phone</p>
               {editing ? (
                 <input
                   value={form.phone}
                   onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                   placeholder="+639123456789"
-                  className="mt-0.5 w-full rounded-lg border border-[#2a2118]/20 bg-[#F0E9C8] px-3 py-1.5 font-mono text-sm text-[#2a2118] outline-none focus:border-[#1A5C52]"
+                  className="mt-0.5 w-full rounded-lg border border-[#2a2118]/20 bg-[#F0E9C8] px-3 py-1.5 font-inter text-sm text-[#2a2118] outline-none focus:border-[#1A5C52]"
                 />
               ) : (
-                <p className="font-mono text-sm text-[#2a2118]">
+                <p className="font-inter text-sm text-[#2a2118]">
                   {profile?.phone ?? <span className="text-[#2a2118]/30">Not set</span>}
                 </p>
               )}
@@ -228,8 +228,8 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4 px-6 py-4">
             <Calendar size={16} className="shrink-0 text-[#2a2118]/40" />
             <div>
-              <p className="font-mono text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Member since</p>
-              <p className="font-mono text-sm text-[#2a2118]">
+              <p className="font-inter text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Member since</p>
+              <p className="font-inter text-sm text-[#2a2118]">
                 {new Date(displayUser.createdAt).toLocaleDateString('en-US', {
                   month: 'long',
                   year: 'numeric',
@@ -242,11 +242,11 @@ export default function ProfilePage() {
         {/* Drop count */}
         <div className="overflow-hidden rounded-2xl border border-[#2a2118]/10 bg-[#FAF4DC]">
           <div className="border-b border-[#2a2118]/8 px-6 py-3">
-            <p className="font-mono text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Activity</p>
+            <p className="font-inter text-[10px] tracking-widest text-[#2a2118]/40 uppercase">Activity</p>
           </div>
           <div className="flex items-center justify-between px-6 py-5">
-            <p className="font-mono text-sm font-semibold text-[#2a2118] uppercase">Drops Created</p>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1A5C52] font-mono text-sm font-bold text-white">
+            <p className="font-inter text-sm font-semibold text-[#2a2118] uppercase">Drops Created</p>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1A5C52] font-inter text-sm font-bold text-white">
               {dropCount}
             </span>
           </div>
@@ -256,7 +256,7 @@ export default function ProfilePage() {
         <FrequentCrewList />
 
         {updateUser.isError && (
-          <p className="mt-4 font-mono text-xs text-red-500">
+          <p className="mt-4 font-inter text-xs text-red-500">
             Failed to save. Please try again.
           </p>
         )}
