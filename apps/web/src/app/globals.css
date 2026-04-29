@@ -25,38 +25,31 @@ a {
   }
 }
 
-/* Floating overlay scrollbar — macOS style */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
-
-*:hover {
-  scrollbar-color: rgba(42, 33, 24, 0.18) transparent;
-}
-
+/* ========== Custom Scrollbar ========== */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 999px;
-  transition: background 0.2s ease;
+  background: var(--muted-foreground);
+  border-radius: 9999px;
 }
 
-*:hover::-webkit-scrollbar-thumb {
-  background: rgba(42, 33, 24, 0.18);
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ring);
 }
 
-*:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(42, 33, 24, 0.35);
-}
+/* ─────────────────────────────────────────────────────── */
 
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
