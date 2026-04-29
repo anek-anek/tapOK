@@ -289,12 +289,12 @@ export function HowItWorks({ dbUser, mounted, loading }: { dbUser: unknown; moun
             3 STEPS. THAT&apos;S IT.
           </div>
           <h2
-            className="font-passion font-bold uppercase leading-none text-[#000]"
+            className="font-passion font-bold uppercase leading-none text-black"
             style={{ fontSize: 'clamp(36px,6vw,68px)', letterSpacing: '-0.01em' }}
           >
             HOW DOES TAPOK WORK?
           </h2>
-          <p className="max-w-md font-inter text-base leading-relaxed text-[#000]/50">
+          <p className="max-w-md font-inter text-base leading-relaxed text-black/50">
             Tap each card to see what happens — it&apos;s faster than reading a manual.
           </p>
         </div>
@@ -335,7 +335,7 @@ export function HowItWorks({ dbUser, mounted, loading }: { dbUser: unknown; moun
             >
               Start your first Drop
             </Link>
-            <p className="font-inter text-xs text-[#000]/35 uppercase tracking-widest">
+            <p className="font-inter text-xs text-black/35 uppercase tracking-widest">
               free to use · no maybes allowed
             </p>
           </div>
@@ -629,7 +629,7 @@ export default function Home() {
   const { dbUser, loading } = useAuth();
 
   return (
-    <div className="min-h-screen bg-[#FFF4BD] text-[#000000] font-inter">
+    <div className="min-h-screen bg-[#FFF4BD] text-tok-black font-inter">
       <TapokNavbar />
 
       <main>
@@ -637,13 +637,13 @@ export default function Home() {
         <section className="relative overflow-hidden bg-[#FFF4BD]">
           <div className="flex min-h-[calc(100vh-60px)] flex-col lg:flex-row lg:items-stretch">
             <div className="relative z-10 flex flex-col items-start justify-center px-8 py-14 lg:w-[42%] lg:px-16 lg:py-20 xl:px-24">
-              <h1 className="font-passion font-bold uppercase leading-none text-[#000000]">
+              <h1 className="font-passion font-bold uppercase leading-none text-tok-black">
                 <span className="block text-[clamp(40px,6vw,80px)]">FIND EVENTS.</span>
                 <span className="block text-[clamp(40px,6vw,80px)]">JOIN PEOPLE.</span>
-                <span className="block text-[clamp(40px,6vw,80px)] text-[#006666]">MAKE MEMORIES.</span>
+                <span className="block text-[clamp(40px,6vw,80px)] text-tok-teal">MAKE MEMORIES.</span>
               </h1>
 
-              <p className="mt-5 font-inter text-lg leading-relaxed text-[#000000]/70">
+              <p className="mt-5 font-inter text-lg leading-relaxed text-tok-black/70">
                 Discover and book amazing events happening near you.<br />
                 Connect. Participate. Enjoy.
               </p>
@@ -651,7 +651,7 @@ export default function Home() {
               {mounted && !loading && (
                 <Link
                   href={dbUser ? '/drops' : '/login'}
-                  className="mt-8 inline-block rounded-full bg-[#006666] px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white active:scale-[0.98]"
+                  className="mt-8 inline-block rounded-full bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white active:scale-[0.98]"
                   style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease' }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px) scale(1.04)';
@@ -668,7 +668,7 @@ export default function Home() {
                 </Link>
               )}
               {mounted && loading && (
-                <div className="mt-8 h-[52px] w-[180px] animate-pulse rounded-full bg-[#006666]/30" />
+                <div className="mt-8 h-[52px] w-[180px] animate-pulse rounded-full bg-tok-teal/30" />
               )}
             </div>
 
@@ -687,7 +687,7 @@ export default function Home() {
         </section>
 
         {/* ── WHY USE TAPOK ── */}
-        <section className="bg-[#006666] px-6 py-14 md:px-16 lg:px-24">
+        <section className="bg-tok-teal px-6 py-14 md:px-16 lg:px-24">
           <div className="mx-auto max-w-7xl">
             <div className="mb-12 flex items-center justify-center gap-10">
               <BurstDecoration />
@@ -727,10 +727,10 @@ export default function Home() {
                       className="select-none object-contain"
                     />
                   </div>
-                  <p className="mb-2 font-passion text-xl font-bold uppercase tracking-tight text-[#006666]">
+                  <p className="mb-2 font-passion text-xl font-bold uppercase tracking-tight text-tok-teal">
                     {title}
                   </p>
-                  <p className="font-inter text-base leading-snug text-[#000] font-semibold">
+                  <p className="font-inter text-base leading-snug text-black font-semibold">
                     {desc}
                   </p>
                 </div>
@@ -747,7 +747,7 @@ export default function Home() {
                     {label}
                   </span>
                   {i < trustItems.length - 1 && (
-                    <div className="ml-6 hidden h-6 w-[1px] bg-white/10 lg:block" />
+                    <div className="ml-6 hidden h-6 w-px bg-white/10 lg:block" />
                   )}
                 </div>
               ))}
@@ -762,7 +762,7 @@ export default function Home() {
         <FeatureTour />
       </main>
 
-      <footer className="bg-[#006666] px-6 md:px-16 lg:px-24">
+      <footer className="bg-tok-teal px-6 md:px-16 lg:px-24">
         <div className="mx-auto flex h-20 max-w-7xl items-center gap-4">
           <span className="font-passion text-lg font-bold uppercase tracking-tight text-[#FFF4BD]">TapOK</span>
           <div className="mx-4 h-4 w-px bg-[#FFF4BD]/20" />

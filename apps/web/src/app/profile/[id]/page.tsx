@@ -47,7 +47,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   const fullName = `${user.firstName} ${user.lastName}`.trim();
 
   return (
-    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-[#006666]/15">
+    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.12]"
         style={{

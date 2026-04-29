@@ -231,7 +231,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </p>
             <Link
               href="/drops"
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#006666] px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-tok-teal px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90"
             >
               <IconArrowLeft size={13} />
               Back to Drops
@@ -249,7 +249,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
 
   return (
-    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-[#006666]/15">
+    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.12]"
         style={{
@@ -275,7 +275,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         {/* Hero */}
         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#006666] font-passion text-[13px] font-bold tracking-[0.1em] text-[#F7E9B2] sm:h-14 sm:w-14 sm:text-[14px]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-tok-teal font-passion text-[13px] font-bold tracking-widest text-[#F7E9B2] sm:h-14 sm:w-14 sm:text-[14px]">
               {getInitials(drop.name)}
             </div>
             <div className="min-w-0">
@@ -344,13 +344,13 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 )}
                 <div className="flex items-center gap-3 text-[14px] text-[#2a2118]/72">
                   <IconUsers size={14} className="shrink-0 text-[#2a2118]/36" />
-                  <span className="min-w-0 break-words">
+                  <span className="min-w-0 wrap-break-word">
                     Organised by{' '}
                     <span className="font-semibold text-[#2a2118]">
                       {drop.organiser.firstName} {drop.organiser.lastName}
                     </span>
                     {isOrganiser && (
-                      <span className="ml-1.5 inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-2 py-0.5 font-passion text-[8px] font-bold uppercase tracking-[1.5px] text-[#006666]">
+                      <span className="ml-1.5 inline-flex items-center rounded-full border border-tok-teal/20 bg-tok-teal/10 px-2 py-0.5 font-passion text-[8px] font-bold uppercase tracking-[1.5px] text-tok-teal">
                         You
                       </span>
                     )}
@@ -358,8 +358,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
                 {!isOrganiser && crewStatus?.status === 'in' && (
                   <div className="flex items-center gap-2">
-                    <IconCheckCircle size={14} className="shrink-0 text-[#006666]" />
-                    <span className="inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-2.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-[#006666]">
+                    <IconCheckCircle size={14} className="shrink-0 text-tok-teal" />
+                    <span className="inline-flex items-center rounded-full border border-tok-teal/20 bg-tok-teal/10 px-2.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-tok-teal">
                       You&apos;re In
                     </span>
                   </div>
@@ -376,8 +376,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         onClick={() => updatePresence(true)}
                         className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[1.8px] transition-colors disabled:opacity-50 ${
                           crewStatus.isPresent
-                            ? 'border-[#006666] bg-[#006666] text-[#F7E9B2]'
-                            : 'border-[#006666]/20 bg-transparent text-[#006666] hover:bg-[#006666]/10'
+                            ? 'border-tok-teal bg-tok-teal text-[#F7E9B2]'
+                            : 'border-tok-teal/20 bg-transparent text-tok-teal hover:bg-tok-teal/10'
                         }`}
                       >
                         Marked In
@@ -424,7 +424,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     {!isCompleted && (
                       <Link
                         href={`/drops/join/${drop.joinCode}`}
-                        className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#006666]/20 bg-[#006666]/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-[#006666] transition-colors hover:bg-[#006666]/15"
+                        className="inline-flex w-fit items-center gap-1.5 rounded-full border border-tok-teal/20 bg-tok-teal/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-tok-teal transition-colors hover:bg-tok-teal/15"
                       >
                         Re-join Drop
                       </Link>
@@ -476,7 +476,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         type="button"
                         onClick={() => approveJoinRequest(member.userId)}
                         disabled={(isApproving && approvingUserId === member.userId) || (isRejecting && rejectingUserId === member.userId)}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#006666] px-3.5 py-2 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-tok-teal px-3.5 py-2 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90 disabled:opacity-50"
                       >
                         <IconUserCheck size={12} />
                         {isApproving && approvingUserId === member.userId ? 'Approving…' : 'Approve'}
@@ -489,19 +489,19 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
             {/* Active crew members — organiser only */}
             {isOrganiser && activeMembers.length > 0 && (
-              <div className="rounded-[28px] border border-[#006666]/20 bg-[#006666]/5 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
+              <div className="rounded-[28px] border border-tok-teal/20 bg-tok-teal/5 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
                 <div className="flex items-center gap-2 px-6 pt-5 pb-4">
-                  <IconUsers size={13} className="text-[#006666]" />
-                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]/70">
+                  <IconUsers size={13} className="text-tok-teal" />
+                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-teal/70">
                     Crew members
                   </p>
-                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#006666]/15 font-passion text-[10px] font-bold text-[#006666]">
+                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-tok-teal/15 font-passion text-[10px] font-bold text-tok-teal">
                     {activeMembers.length}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 border-t border-[#006666]/10 px-6 py-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#006666]/25 bg-[#006666]/10 px-3 py-1 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-[#006666]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#006666]" />
+                <div className="flex items-center gap-3 border-t border-tok-teal/10 px-6 py-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-tok-teal/25 bg-tok-teal/10 px-3 py-1 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-tok-teal">
+                    <span className="h-1.5 w-1.5 rounded-full bg-tok-teal" />
                     {activeMembers.filter((m) => m.isPresent).length} In
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-red-600">
@@ -512,9 +512,9 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 {activeMembers.map((member) => (
                   <div
                     key={member.id}
-                    className="flex items-center gap-4 border-t border-[#006666]/10 px-6 py-4"
+                    className="flex items-center gap-4 border-t border-tok-teal/10 px-6 py-4"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#006666]/15 font-passion text-[10px] font-extrabold tracking-[0.5px] text-[#006666]">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-tok-teal/15 font-passion text-[10px] font-extrabold tracking-[0.5px] text-tok-teal">
                       {getLogInitials(member.user.firstName, member.user.lastName)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -528,7 +528,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     <span
                       className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 font-passion text-[9px] font-bold uppercase tracking-[1.8px] ${
                         member.isPresent
-                          ? 'border-[#006666]/25 bg-[#006666]/10 text-[#006666]'
+                          ? 'border-tok-teal/25 bg-tok-teal/10 text-tok-teal'
                           : 'border-red-200 bg-red-50 text-red-500'
                       }`}
                     >
@@ -553,14 +553,14 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             {/* Activity log */}
             <div className="overflow-hidden rounded-[24px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px]">
               <div className="flex items-center gap-2 px-4 pb-4 pt-5 sm:px-6">
-                <IconActivity size={13} className="text-[#006666]" />
+                <IconActivity size={13} className="text-tok-teal" />
                 <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
                   Activity
                 </p>
               </div>
 
               {!drop.activityLogs || drop.activityLogs.length === 0 ? (
-                <div className="border-t border-[#2a2118]/[0.06] px-4 py-6 text-center sm:px-6">
+                <div className="border-t border-[#2a2118]/6 px-4 py-6 text-center sm:px-6">
                   <p className="font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
                     No activity yet
                   </p>
@@ -569,9 +569,9 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 drop.activityLogs.map((log) => (
                   <div
                     key={log.id}
-                    className="flex items-start gap-3 border-t border-[#2a2118]/[0.06] px-4 py-4 transition-colors hover:bg-[#2a2118]/[0.015] sm:items-center sm:gap-4 sm:px-6"
+                    className="flex items-start gap-3 border-t border-[#2a2118]/6 px-4 py-4 transition-colors hover:bg-[#2a2118]/1.5 sm:items-center sm:gap-4 sm:px-6"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#006666]/12 font-passion text-[10px] font-extrabold tracking-[0.5px] text-[#006666]">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-tok-teal/12 font-passion text-[10px] font-extrabold tracking-[0.5px] text-tok-teal">
                       {getLogInitials(log.user.firstName, log.user.lastName)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -647,7 +647,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             <button
               type="button"
               onClick={() => setShareModalOpen(true)}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#006666] py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-[18px] bg-tok-teal py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90"
             >
               <IconShare2 size={13} />
               Share drop

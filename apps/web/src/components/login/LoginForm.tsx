@@ -103,7 +103,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#FFF4BD]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#006666]" />
+        <Loader2 className="h-6 w-6 animate-spin text-tok-teal" />
       </div>
     );
   }
@@ -138,7 +138,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           Don&apos;t have an account?{' '}
           <Link
             href={`/register${redirectTo !== '/' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`}
-            className="font-semibold text-[#006666] underline-offset-4 transition-colors duration-150 hover:underline"
+            className="font-semibold text-tok-teal underline-offset-4 transition-colors duration-150 hover:underline"
           >
             Sign up
           </Link>
@@ -224,7 +224,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         <div className="animate-fade-up-5 flex justify-end">
           <Link
             href="/forgot-password"
-            className="font-inter text-xs font-semibold uppercase tracking-wider text-black/40 transition-colors duration-150 hover:text-[#006666]"
+            className="font-inter text-xs font-semibold uppercase tracking-wider text-black/40 transition-colors duration-150 hover:text-tok-teal"
           >
             Forgot password?
           </Link>
@@ -244,7 +244,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           type="submit"
           aria-disabled={isSubmitting || googleLoading}
           onClick={(e) => { if (isSubmitting || googleLoading) e.preventDefault(); }}
-          className="animate-fade-up-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white active:scale-[0.98]"
+          className="animate-fade-up-6 flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white active:scale-[0.98]"
           style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease', opacity: isSubmitting || googleLoading ? 0.6 : 1, cursor: isSubmitting || googleLoading ? 'not-allowed' : 'pointer' }}
           onMouseEnter={(e) => {
             if (!isSubmitting && !googleLoading) {

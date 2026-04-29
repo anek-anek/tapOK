@@ -14,9 +14,9 @@ import type { DropActivityLog } from '@/types/drop';
 type AvatarStyle = 'teal' | 'dark' | 'pale' | 'muted';
 
 const avatarCls: Record<AvatarStyle, string> = {
-  teal:  'bg-[#006666] text-[#F7E9B2]',
+  teal:  'bg-tok-teal text-[#F7E9B2]',
   dark:  'bg-[#2a2118] text-[#F7E9B2]',
-  pale:  'bg-[#006666]/12 text-[#006666]',
+  pale:  'bg-tok-teal/12 text-tok-teal',
   muted: 'bg-[#2a2118]/10 text-[#2a2118]/46',
 };
 
@@ -116,7 +116,7 @@ function getBadge(action: string): BadgeType {
 
 function FeedAvatar({ initials, style }: { initials: string; style: AvatarStyle }) {
   return (
-    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-passion text-[11px] font-extrabold tracking-[0.5px] flex-shrink-0 ${avatarCls[style]}`}>
+    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-passion text-[11px] font-extrabold tracking-[0.5px] shrink-0 ${avatarCls[style]}`}>
       {initials}
     </div>
   );
@@ -129,7 +129,7 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
   const initials = isYou ? 'YOU' : getInitials(log.user.firstName, log.user.lastName);
 
   return (
-    <div className="flex items-center gap-4 px-6 py-4 border-t border-[#2a2118]/[0.06] hover:bg-[#2a2118]/[0.015] transition-colors cursor-pointer">
+    <div className="flex items-center gap-4 px-6 py-4 border-t border-[#2a2118]/6 hover:bg-[#2a2118]/1.5 transition-colors cursor-pointer">
       <FeedAvatar initials={initials} style={style} />
 
       <div className="flex-1 min-w-0">
@@ -137,7 +137,7 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
           {describeAction(log, isYou)}
         </p>
         <div className="flex items-center gap-2 mt-1.5">
-          <span className="font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-[#006666] bg-[#006666]/10 border border-[#006666]/15 px-2.5 py-1 rounded-full">
+          <span className="font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-tok-teal bg-tok-teal/10 border border-tok-teal/15 px-2.5 py-1 rounded-full">
             {log.drop?.name ?? 'Drop'}
           </span>
           <span className="text-[#2a2118]/28 text-[11px]">·</span>
@@ -146,15 +146,15 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
       </div>
 
       {badge === 'in' ? (
-        <span className="inline-flex items-center rounded-full border border-[#006666]/20 bg-[#006666]/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#006666] flex-shrink-0">
+        <span className="inline-flex items-center rounded-full border border-tok-teal/20 bg-tok-teal/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-teal shrink-0">
           In
         </span>
       ) : badge === 'out' ? (
-        <span className="inline-flex items-center rounded-full border border-[#2a2118]/12 bg-[#2a2118]/6 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/46 flex-shrink-0">
+        <span className="inline-flex items-center rounded-full border border-[#2a2118]/12 bg-[#2a2118]/6 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/46 shrink-0">
           Out
         </span>
       ) : (
-        <div className="w-10 flex-shrink-0" />
+        <div className="w-10 shrink-0" />
       )}
     </div>
   );
@@ -162,8 +162,8 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
 
 function FeedItemSkeleton() {
   return (
-    <div className="flex items-center gap-4 px-6 py-4 border-t border-[#2a2118]/[0.06]">
-      <Skeleton className="h-10 w-10 rounded-full flex-shrink-0 bg-[#2a2118]/10" />
+    <div className="flex items-center gap-4 px-6 py-4 border-t border-[#2a2118]/6">
+      <Skeleton className="h-10 w-10 rounded-full shrink-0 bg-[#2a2118]/10" />
       <div className="flex-1 space-y-2">
         <Skeleton className="h-3.5 w-3/5 rounded bg-[#2a2118]/10" />
         <div className="flex items-center gap-2">
@@ -171,7 +171,7 @@ function FeedItemSkeleton() {
           <Skeleton className="h-3 w-16 rounded-full bg-[#2a2118]/6" />
         </div>
       </div>
-      <Skeleton className="h-7 w-10 rounded-full flex-shrink-0 bg-[#2a2118]/6" />
+      <Skeleton className="h-7 w-10 rounded-full shrink-0 bg-[#2a2118]/6" />
     </div>
   );
 }
@@ -207,7 +207,7 @@ function Feed({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+          <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
             Activity
           </p>
           <h1 className="mt-2 font-passion text-[clamp(28px,3.8vw,48px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
@@ -219,8 +219,8 @@ function Feed({
               : `${headerEventCount} event${headerEventCount !== 1 ? 's' : ''} across your Drops.`}
           </p>
         </div>
-        <div className="flex items-center gap-1.5 flex-shrink-0 mt-2 rounded-full border border-[#006666]/20 bg-[#006666]/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#006666]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#006666] animate-pulse" />
+        <div className="flex items-center gap-1.5 shrink-0 mt-2 rounded-full border border-tok-teal/20 bg-tok-teal/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-teal">
+          <span className="h-1.5 w-1.5 rounded-full bg-tok-teal animate-pulse" />
           Live
         </div>
       </div>
@@ -253,7 +253,7 @@ function Feed({
           <div className="mt-5">
             <Link
               href="/drops"
-              className="inline-flex items-center gap-2 rounded-full bg-[#006666] px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
+              className="inline-flex items-center gap-2 rounded-full bg-tok-teal px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90"
             >
               Go to Drops
             </Link>
@@ -287,7 +287,7 @@ function Feed({
 function GateCard() {
   return (
     <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/72 p-7 shadow-[0_14px_40px_rgba(42,33,24,0.06)]">
-      <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+      <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
         Authentication required
       </p>
       <h2 className="mt-3 font-passion text-[clamp(28px,3.8vw,44px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
@@ -296,14 +296,14 @@ function GateCard() {
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 rounded-full bg-[#006666] px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          className="inline-flex items-center gap-2 rounded-full bg-tok-teal px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-tok-teal/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         >
           <LogIn size={14} />
           Log in
         </Link>
         <Link
           href="/register"
-          className="inline-flex items-center gap-2 rounded-full border border-[#2a2118]/10 bg-white/75 px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/18 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          className="inline-flex items-center gap-2 rounded-full border border-[#2a2118]/10 bg-white/75 px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/18 hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-tok-teal/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         >
           Sign up
         </Link>
@@ -331,7 +331,7 @@ export default function ActivityPage() {
           <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
             <div className="space-y-6">
               <div className="space-y-2">
-                <Skeleton className="h-2.5 w-16 rounded-full bg-[#006666]/20" />
+                <Skeleton className="h-2.5 w-16 rounded-full bg-tok-teal/20" />
                 <Skeleton className="h-10 w-64 rounded bg-[#2a2118]/10" />
                 <Skeleton className="h-4 w-52 rounded-full bg-[#2a2118]/8" />
               </div>
@@ -346,7 +346,7 @@ export default function ActivityPage() {
 
   if (!loading && !user) {
     return (
-      <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-[#006666]/15">
+      <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
         <TapokNavbar />
         <main className="mx-auto flex min-h-[calc(100vh-88px)] max-w-5xl items-center px-6 py-10 lg:px-10">
           <div className="w-full max-w-lg">
@@ -358,7 +358,7 @@ export default function ActivityPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-[#006666]/15">
+    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.12]"
         style={{

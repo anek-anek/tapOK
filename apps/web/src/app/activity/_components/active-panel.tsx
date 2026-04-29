@@ -24,8 +24,8 @@ interface FrequentPerson {
 }
 
 const AVATAR_COLORS = [
-  'bg-[#006666] text-[#F7E9B2]',
-  'bg-[#006666]/12 text-[#006666]',
+  'bg-tok-teal text-[#F7E9B2]',
+  'bg-tok-teal/12 text-tok-teal',
   'bg-[#2a2118]/10 text-[#2a2118]/56',
   'bg-[#2a2118] text-[#F7E9B2]',
 ] as const;
@@ -91,25 +91,25 @@ function DropRow({ drop }: { drop: DropPreview }) {
   return (
     <Link
       href={`/drops/${drop.id}`}
-      className="flex items-start gap-3 px-5 py-3.5 border-t border-[#2a2118]/[0.06] hover:bg-[#2a2118]/[0.02] transition-colors"
+      className="flex items-start gap-3 px-5 py-3.5 border-t border-[#2a2118]/6 hover:bg-[#2a2118]/2 transition-colors"
     >
-      <div className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${STATUS_DOT[drop.status]}`} />
+      <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${STATUS_DOT[drop.status]}`} />
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-semibold text-[#2a2118] truncate">
           {drop.name}
         </p>
         <div className="mt-1 flex flex-col gap-0.5 text-[11px] text-[#2a2118]/46">
           <span className="flex items-center gap-1">
-            <CalendarDays size={10} className="opacity-60 flex-shrink-0" />
+            <CalendarDays size={10} className="opacity-60 shrink-0" />
             {formatShortDate(drop.scheduledAt)}
           </span>
           <span className="flex items-center gap-1">
-            <MapPin size={10} className="opacity-60 flex-shrink-0" />
+            <MapPin size={10} className="opacity-60 shrink-0" />
             <span className="truncate">{drop.location}</span>
           </span>
         </div>
       </div>
-      <span className="font-passion text-[8px] font-bold uppercase tracking-[1px] text-[#006666] bg-[#006666]/10 border border-[#006666]/15 px-2 py-1 rounded-full flex-shrink-0 mt-1">
+      <span className="font-passion text-[8px] font-bold uppercase tracking-[1px] text-tok-teal bg-tok-teal/10 border border-tok-teal/15 px-2 py-1 rounded-full shrink-0 mt-1">
         {STATUS_LABEL[drop.status]}
       </span>
     </Link>
@@ -118,8 +118,8 @@ function DropRow({ drop }: { drop: DropPreview }) {
 
 function DropSkeleton() {
   return (
-    <div className="flex items-start gap-3 px-5 py-3.5 border-t border-[#2a2118]/[0.06]">
-      <Skeleton className="mt-1.5 h-2 w-2 rounded-full flex-shrink-0 bg-[#2a2118]/10" />
+    <div className="flex items-start gap-3 px-5 py-3.5 border-t border-[#2a2118]/6">
+      <Skeleton className="mt-1.5 h-2 w-2 rounded-full shrink-0 bg-[#2a2118]/10" />
       <div className="flex-1 space-y-1.5">
         <Skeleton className="h-3 w-3/4 rounded bg-[#2a2118]/10" />
         <Skeleton className="h-2.5 w-1/2 rounded bg-[#2a2118]/[0.07]" />
@@ -130,8 +130,8 @@ function DropSkeleton() {
 
 function PersonSkeleton() {
   return (
-    <div className="flex items-center gap-3 px-5 py-3 border-t border-[#2a2118]/[0.06]">
-      <Skeleton className="h-8 w-8 rounded-full flex-shrink-0 bg-[#2a2118]/10" />
+    <div className="flex items-center gap-3 px-5 py-3 border-t border-[#2a2118]/6">
+      <Skeleton className="h-8 w-8 rounded-full shrink-0 bg-[#2a2118]/10" />
       <div className="flex-1 space-y-1.5">
         <Skeleton className="h-3 w-24 rounded bg-[#2a2118]/10" />
         <Skeleton className="h-2.5 w-16 rounded-full bg-[#2a2118]/[0.07]" />
@@ -176,7 +176,7 @@ export function ActivePanel({
           </p>
           <Link
             href="/drops"
-            className="font-passion text-[10px] font-bold tracking-[1px] text-[#006666] hover:underline"
+            className="font-passion text-[10px] font-bold tracking-[1px] text-tok-teal hover:underline"
           >
             See all
           </Link>
@@ -214,10 +214,10 @@ export function ActivePanel({
           frequentlySeen.map((person, i) => (
             <div
               key={person.userId}
-              className="flex items-center gap-3 px-5 py-3 border-t border-[#2a2118]/[0.06]"
+              className="flex items-center gap-3 px-5 py-3 border-t border-[#2a2118]/6"
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center font-passion text-[10px] font-extrabold flex-shrink-0 ${avatarColor(i)}`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-passion text-[10px] font-extrabold shrink-0 ${avatarColor(i)}`}
               >
                 {person.initials}
               </div>
@@ -227,7 +227,7 @@ export function ActivePanel({
                 </p>
                 <p className="text-[11px] text-[#2a2118]/46 mt-0.5">{lastSeenSub(person)}</p>
               </div>
-              <span className="font-passion text-[20px] font-bold text-[#006666] leading-none">
+              <span className="font-passion text-[20px] font-bold text-tok-teal leading-none">
                 {person.count}
               </span>
             </div>

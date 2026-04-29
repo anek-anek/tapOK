@@ -56,7 +56,7 @@ export function FrequentCrewList() {
               )}
             </div>
             <div className="text-right">
-              <span className="flex h-8 min-w-[2rem] items-center justify-center rounded-full bg-[#1A5C52]/10 px-2.5 font-inter text-xs font-bold text-[#1A5C52]">
+              <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-[#1A5C52]/10 px-2.5 font-inter text-xs font-bold text-[#1A5C52]">
                 {member.frequencyCount} {member.frequencyCount === 1 ? 'drop' : 'drops'}
               </span>
             </div>

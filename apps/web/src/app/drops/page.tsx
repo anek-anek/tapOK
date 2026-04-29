@@ -66,7 +66,7 @@ const STATUS_META: Record<DropStatus, StatusMeta> = {
 };
 
 const STATUS_STRIPE: Record<DropStatus, string> = {
-  active: 'border-l-[#006666]',
+  active: 'border-l-tok-teal',
   ongoing: 'border-l-[#c47b10]',
   completed: 'border-l-[#2a2118]/18',
 };
@@ -142,7 +142,7 @@ function SectionTitle({
 }) {
   return (
     <div className="max-w-3xl">
-      <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+      <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
         {eyebrow}
       </p>
       <h1 className="mt-3 font-passion text-[clamp(32px,4.2vw,60px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
@@ -205,7 +205,7 @@ function CompactDropCard({
           </div>
 
           <div className="mt-3 flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#006666] font-passion text-[12px] font-bold tracking-[0.12em] text-[#F7E9B2]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-tok-teal font-passion text-[12px] font-bold tracking-[0.12em] text-[#F7E9B2]">
               {getInitials(drop.name)}
             </div>
             <div className="min-w-0">
@@ -250,7 +250,7 @@ function CompactDropCard({
             href={`/drops/${drop.id}`}
             className={cn(
               buttonVariants({ variant: 'outline' }),
-              'h-auto flex-1 rounded-full border-[#2a2118]/12 bg-[#F7E9B2] px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118] hover:bg-[#FFF2C7] focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white sm:flex-none',
+              'h-auto flex-1 rounded-full border-[#2a2118]/12 bg-[#F7E9B2] px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118] hover:bg-[#FFF2C7] focus-visible:ring-tok-teal/25 focus-visible:ring-offset-white sm:flex-none',
             )}
           >
             Open
@@ -261,7 +261,7 @@ function CompactDropCard({
               type="button"
               variant="outline"
               onClick={() => onEdit(drop)}
-              className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-transparent px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-transparent hover:text-[#2a2118] focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white sm:flex-none"
+              className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-transparent px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-transparent hover:text-[#2a2118] focus-visible:ring-tok-teal/25 focus-visible:ring-offset-white sm:flex-none"
             >
               <Edit3 size={13} />
               Edit
@@ -271,7 +271,7 @@ function CompactDropCard({
             type="button"
             variant="outline"
             onClick={() => onShare(drop)}
-            className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-white/80 px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-white hover:text-[#2a2118] focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white sm:flex-none"
+            className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-white/80 px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-white hover:text-[#2a2118] focus-visible:ring-tok-teal/25 focus-visible:ring-offset-white sm:flex-none"
           >
             <ClipboardCopy size={13} />
             Share
@@ -298,13 +298,13 @@ function FocusDropCard({
       )}
     >
       {/* Eyebrow */}
-      <p className="mb-3 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+      <p className="mb-3 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-teal">
         Featured drop
       </p>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#006666] font-passion text-[12px] font-bold tracking-[0.12em] text-[#F7E9B2]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-tok-teal font-passion text-[12px] font-bold tracking-[0.12em] text-[#F7E9B2]">
             {getInitials(drop.name)}
           </div>
           <div className="min-w-0">
@@ -320,7 +320,7 @@ function FocusDropCard({
             href={`/drops/${drop.id}`}
             className={cn(
               buttonVariants(),
-              'h-auto flex-1 rounded-full border-[#2a2118]/12 bg-[#006666] px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#F7E9B2] hover:bg-[#006666]/90 focus-visible:ring-[#006666]/25 sm:flex-none',
+              'h-auto flex-1 rounded-full border-[#2a2118]/12 bg-tok-teal px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#F7E9B2] hover:bg-tok-teal/90 focus-visible:ring-tok-teal/25 sm:flex-none',
             )}
           >
             Open
@@ -330,7 +330,7 @@ function FocusDropCard({
             type="button"
             variant="outline"
             onClick={() => onShare(drop)}
-            className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-white/80 px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-white hover:text-[#2a2118] focus-visible:ring-[#006666]/25 sm:flex-none"
+            className="h-auto flex-1 rounded-full border-[#2a2118]/10 bg-white/80 px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 hover:border-[#2a2118]/18 hover:bg-white hover:text-[#2a2118] focus-visible:ring-tok-teal/25 sm:flex-none"
           >
             <ClipboardCopy size={13} />
             Share
@@ -379,7 +379,7 @@ function GateCard() {
   return (
     <Card className="gap-0 rounded-[24px] border border-[#2a2118]/10 bg-white/72 p-5 shadow-[0_14px_40px_rgba(42,33,24,0.06)] ring-0 sm:rounded-[28px] sm:p-7">
       <CardContent className="px-0">
-        <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+        <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
           Authentication required
         </p>
         <h2 className="mt-3 font-passion text-[clamp(28px,3.8vw,44px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
@@ -390,7 +390,7 @@ function GateCard() {
             href="/login"
             className={cn(
               buttonVariants(),
-              'h-auto rounded-full bg-[#006666] px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-[#006666]/90 focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white',
+              'h-auto rounded-full bg-tok-teal px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-tok-teal/90 focus-visible:ring-tok-teal/25 focus-visible:ring-offset-white',
             )}
           >
             <LogIn size={14} />
@@ -400,7 +400,7 @@ function GateCard() {
             href="/register"
             className={cn(
               buttonVariants({ variant: 'outline' }),
-              'h-auto rounded-full border-[#2a2118]/10 bg-white/75 px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118] hover:border-[#2a2118]/18 hover:bg-white focus-visible:ring-[#006666]/25 focus-visible:ring-offset-white',
+              'h-auto rounded-full border-[#2a2118]/10 bg-white/75 px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118] hover:border-[#2a2118]/18 hover:bg-white focus-visible:ring-tok-teal/25 focus-visible:ring-offset-white',
             )}
           >
             Sign up
@@ -419,7 +419,7 @@ function GateCard() {
               autoCapitalize="characters"
               autoComplete="off"
               spellCheck={false}
-              className="h-10 min-w-0 flex-1 rounded-full border-[#2a2118]/10 bg-white/90 px-4 font-passion text-[11px] font-bold tracking-[2.2px] text-[#2a2118] placeholder:text-[#2a2118]/24 focus-visible:border-[#006666]/35 focus-visible:ring-[#006666]/20"
+              className="h-10 min-w-0 flex-1 rounded-full border-[#2a2118]/10 bg-white/90 px-4 font-passion text-[11px] font-bold tracking-[2.2px] text-[#2a2118] placeholder:text-[#2a2118]/24 focus-visible:border-tok-teal/35 focus-visible:ring-tok-teal/20"
             />
             <Button
               type="submit"
@@ -439,7 +439,7 @@ function EmptyState() {
   return (
     <Card className="gap-0 rounded-[26px] border border-dashed border-[#2a2118]/14 bg-[linear-gradient(135deg,rgba(255,255,255,0.72),rgba(255,249,229,0.58))] p-5 shadow-[0_14px_40px_rgba(42,33,24,0.04)] ring-0 sm:rounded-[30px] sm:p-7">
       <CardContent className="px-0">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#006666]/10 text-[#006666]">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-tok-teal/10 text-tok-teal">
           <Plus size={22} />
         </div>
         <h2 className="mt-4 font-passion text-[22px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
@@ -458,7 +458,7 @@ function EmptyStateSkeleton() {
   return (
     <Card className="gap-0 rounded-[26px] border border-dashed border-[#2a2118]/14 bg-white/58 p-5 shadow-[0_14px_40px_rgba(42,33,24,0.04)] ring-0 sm:rounded-[30px] sm:p-7">
       <CardContent className="px-0">
-        <Skeleton className="h-12 w-12 rounded-full bg-[#006666]/10" />
+        <Skeleton className="h-12 w-12 rounded-full bg-tok-teal/10" />
         <Skeleton className="mt-5 h-6 w-44 rounded bg-[#2a2118]/10" />
         <div className="mt-4 space-y-3">
           <Skeleton className="h-3 w-full max-w-md rounded-full bg-[#2a2118]/8" />
@@ -474,7 +474,7 @@ function FocusDropCardSkeleton() {
   return (
     <Card className="gap-0 rounded-[26px] border border-l-[5px] border-l-[#2a2118]/12 border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_12px_32px_rgba(42,33,24,0.06)] ring-0 sm:p-5">
       {/* Eyebrow */}
-      <Skeleton className="mb-3 h-2.5 w-20 rounded-full bg-[#006666]/15" />
+      <Skeleton className="mb-3 h-2.5 w-20 rounded-full bg-tok-teal/15" />
       {/* Top row */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
@@ -539,9 +539,9 @@ function CompactDropCardSkeleton() {
 function QuickActionsSkeleton() {
   return (
     <Card className="gap-0 rounded-[24px] border border-[#2a2118]/10 bg-white/40 p-4 shadow-[0_14px_34px_rgba(42,33,24,0.06)] ring-0 sm:rounded-[30px] sm:p-5">
-      <Skeleton className="h-3 w-28 rounded-full bg-[#006666]/16" />
+      <Skeleton className="h-3 w-28 rounded-full bg-tok-teal/16" />
       <div className="mt-4 grid gap-3">
-        <Skeleton className="h-[66px] rounded-[20px] bg-[#006666]/18" />
+        <Skeleton className="h-[66px] rounded-[20px] bg-tok-teal/18" />
         <div className="rounded-[20px] border border-[#2a2118]/10 bg-white/50 p-4">
           <Skeleton className="h-2.5 w-20 rounded-full bg-[#2a2118]/10" />
           <div className="mt-3 flex gap-2">
@@ -676,7 +676,7 @@ export default function DropsPage() {
 
   if (!loading && !user) {
     return (
-      <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-[#006666]/15">
+      <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
         <TapokNavbar />
         <main className="mx-auto flex min-h-[calc(100vh-88px)] max-w-5xl items-center px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
           <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]">
@@ -693,7 +693,7 @@ export default function DropsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-[#006666]/15">
+    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.12]"
         style={{
@@ -723,7 +723,7 @@ export default function DropsPage() {
                   variant="outline"
                   className="h-auto gap-2 rounded-full border-[#2a2118]/10 bg-white/70 px-3 py-1.5 text-[13px] font-normal"
                 >
-                  <Users size={13} className="text-[#006666]" />
+                  <Users size={13} className="text-tok-teal" />
                   <span className="font-semibold text-[#2a2118]">
                     {plannedHeadcount}
                   </span>
@@ -733,7 +733,7 @@ export default function DropsPage() {
                   variant="outline"
                   className="h-auto gap-2 rounded-full border-[#2a2118]/10 bg-white/70 px-3 py-1.5 text-[13px] font-normal"
                 >
-                  <CalendarDays size={13} className="text-[#006666]" />
+                  <CalendarDays size={13} className="text-tok-teal" />
                   <span className="font-semibold text-[#2a2118]">
                     {drops.length}
                   </span>
@@ -762,14 +762,14 @@ export default function DropsPage() {
 
           <Card className="gap-0 rounded-[24px] border border-[#2a2118]/10 bg-[linear-gradient(135deg,rgba(255,249,229,0.96),rgba(255,241,196,0.78))] p-4 shadow-[0_14px_34px_rgba(42,33,24,0.06)] ring-0 sm:rounded-[30px] sm:p-5">
             <CardContent className="px-0">
-              <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+              <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
                 Quick actions
               </p>
               <div className="mt-4 grid gap-3">
                 <Button
                   type="button"
                   onClick={() => setCreateModalOpen(true)}
-                  className="group h-auto w-full justify-between rounded-[20px] bg-[#006666] px-5 py-4 hover:bg-[#006666]/90 focus-visible:ring-[#006666]/25"
+                  className="group h-auto w-full justify-between rounded-[20px] bg-tok-teal px-5 py-4 hover:bg-tok-teal/90 focus-visible:ring-tok-teal/25"
                 >
                   <div>
                     <p className="font-passion text-[9px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2]/50">
@@ -802,7 +802,7 @@ export default function DropsPage() {
                         autoCapitalize="characters"
                         autoComplete="off"
                         spellCheck="false"
-                        className="h-10 min-w-0 flex-1 rounded-full border-[#2a2118]/10 bg-white/90 px-4 font-passion text-[11px] font-bold tracking-[2.2px] text-[#2a2118] placeholder:text-[#2a2118]/24 focus-visible:border-[#006666]/35 focus-visible:ring-[#006666]/20"
+                        className="h-10 min-w-0 flex-1 rounded-full border-[#2a2118]/10 bg-white/90 px-4 font-passion text-[11px] font-bold tracking-[2.2px] text-[#2a2118] placeholder:text-[#2a2118]/24 focus-visible:border-tok-teal/35 focus-visible:ring-tok-teal/20"
                       />
                       <Button
                         type="submit"
@@ -854,7 +854,7 @@ export default function DropsPage() {
                   >
                     <TabsTrigger
                       value="live"
-                      className="relative flex-none gap-2 rounded-none pb-3 pr-6 font-passion text-[11px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/38 hover:text-[#2a2118]/70 data-active:text-[#2a2118] data-active:after:bg-[#006666]"
+                      className="relative flex-none gap-2 rounded-none pb-3 pr-6 font-passion text-[11px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/38 hover:text-[#2a2118]/70 data-active:text-[#2a2118] data-active:after:bg-tok-teal"
                     >
                       <span className="relative">
                         Live
@@ -879,7 +879,7 @@ export default function DropsPage() {
                     </TabsTrigger>
                     <TabsTrigger
                       value="completed"
-                      className="relative flex-none gap-2 rounded-none pb-3 pr-6 font-passion text-[11px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/38 hover:text-[#2a2118]/70 data-active:text-[#2a2118] data-active:after:bg-[#006666]"
+                      className="relative flex-none gap-2 rounded-none pb-3 pr-6 font-passion text-[11px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/38 hover:text-[#2a2118]/70 data-active:text-[#2a2118] data-active:after:bg-tok-teal"
                     >
                       Completed
                       <Badge

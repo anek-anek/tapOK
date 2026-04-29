@@ -48,7 +48,7 @@ const springEase = [0.32, 0.72, 0, 1] as const;
 // ─── Shared input style ──────────────────────────────────────────────────────
 
 const INPUT =
-  'w-full rounded-xl border border-[#2a2118]/12 bg-white px-4 py-3 text-sm text-[#2a2118] placeholder-[#2a2118]/25 outline-none transition-all duration-200 focus:border-[#006666] focus:ring-2 focus:ring-[#006666]/10 hover:border-[#2a2118]/20';
+  'w-full rounded-xl border border-[#2a2118]/12 bg-white px-4 py-3 text-sm text-[#2a2118] placeholder-[#2a2118]/25 outline-hidden transition-all duration-200 focus:border-tok-teal focus:ring-2 focus:ring-tok-teal/10 hover:border-[#2a2118]/20';
 
 // ─── Step 0: Outcome Splash ──────────────────────────────────────────────────
 
@@ -77,7 +77,7 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => { track('onboarding_path_chief'); onChief(); }}
-          className="group flex items-center justify-between gap-4 rounded-2xl border border-[#2a2118]/10 bg-white px-4 py-4 text-left shadow-sm transition-shadow hover:shadow-md sm:px-6 sm:py-5"
+          className="group flex items-center justify-between gap-4 rounded-2xl border border-[#2a2118]/10 bg-white px-4 py-4 text-left shadow-xs transition-shadow hover:shadow-md sm:px-6 sm:py-5"
         >
           <div>
             <p className="mb-0.5 font-passion text-sm font-bold uppercase tracking-wider text-[#2a2118]">
@@ -85,7 +85,7 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
             </p>
             <p className="text-xs text-[#2a2118]/45">I&apos;m the Chief — I&apos;ll organise this</p>
           </div>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#006666] text-[#F7E9B2] transition-transform group-hover:scale-110">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-tok-teal text-[#F7E9B2] transition-transform group-hover:scale-110">
             <IconArrowRight size={14} />
           </div>
         </motion.button>
@@ -95,7 +95,7 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => { track('onboarding_path_crew'); onCrew(); }}
-          className="group flex items-center justify-between gap-4 rounded-2xl border border-[#2a2118]/10 bg-white px-4 py-4 text-left shadow-sm transition-shadow hover:shadow-md sm:px-6 sm:py-5"
+          className="group flex items-center justify-between gap-4 rounded-2xl border border-[#2a2118]/10 bg-white px-4 py-4 text-left shadow-xs transition-shadow hover:shadow-md sm:px-6 sm:py-5"
         >
           <div>
             <p className="mb-0.5 font-passion text-sm font-bold uppercase tracking-wider text-[#2a2118]">
@@ -186,7 +186,7 @@ function CrewEntry({ onBack }: { onBack: () => void }) {
           disabled={code.trim().length < 4}
           whileHover={code.trim().length >= 4 ? { y: -2 } : {}}
           whileTap={code.trim().length >= 4 ? { scale: 0.98 } : {}}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-sm transition-all hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-xs transition-all hover:bg-tok-teal/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Tap In
         </motion.button>
@@ -207,7 +207,7 @@ function ProgressChip({ filled }: { filled: [boolean, boolean, boolean] }) {
           animate={f ? { scale: [1, 1.28, 1] } : { scale: 1 }}
           transition={{ duration: 0.22 }}
           className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold transition-colors duration-200 ${
-            f ? 'bg-[#006666] text-white' : 'bg-[#2a2118]/10 text-[#2a2118]/35'
+            f ? 'bg-tok-teal text-white' : 'bg-[#2a2118]/10 text-[#2a2118]/35'
           }`}
         >
           {f ? <IconCheck size={10} strokeWidth={3} /> : i + 1}
@@ -307,7 +307,7 @@ function DropBuilder({
 
       {/* Host preview */}
       <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-[#2a2118]/8 bg-[#F7E9B2]/40 px-4 py-2.5">
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#006666] font-inter text-[9px] font-bold text-[#F7E9B2]">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tok-teal font-inter text-[9px] font-bold text-[#F7E9B2]">
           {name.charAt(0).toUpperCase()}
         </div>
         <p className="text-xs text-[#2a2118]/55">
@@ -390,7 +390,7 @@ function DropBuilder({
               </div>
               <div className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}>
                 <span
-                  className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200"
+                  className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-all duration-200"
                   style={{ transform: `translateX(${field.value ? '18px' : '2px'})` }}
                 />
               </div>
@@ -413,7 +413,7 @@ function DropBuilder({
             disabled={isSubmitting || !allFilled}
             whileHover={allFilled ? { y: -2 } : {}}
             whileTap={allFilled ? { scale: 0.98 } : {}}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-sm transition-all hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-xs transition-all hover:bg-tok-teal/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
@@ -488,14 +488,14 @@ function DropLive({ drop }: { drop: Drop }) {
         initial={{ opacity: 0, scale: 0.82 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1, duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
-        className="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-[#006666]/10 px-3.5 py-1.5"
+        className="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-tok-teal/10 px-3.5 py-1.5"
       >
         <motion.span
           animate={{ scale: [1, 1.5, 1], opacity: [1, 0.25, 1] }}
           transition={{ repeat: Infinity, repeatDelay: 1.0, duration: 0.55 }}
-          className="h-1.5 w-1.5 rounded-full bg-[#006666]"
+          className="h-1.5 w-1.5 rounded-full bg-tok-teal"
         />
-        <span className="font-inter text-[10px] font-semibold uppercase tracking-[2px] text-[#006666]">
+        <span className="font-inter text-[10px] font-semibold uppercase tracking-[2px] text-tok-teal">
           Drop is live
         </span>
       </motion.div>
@@ -510,7 +510,7 @@ function DropLive({ drop }: { drop: Drop }) {
         initial={{ y: 18, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.18, duration: 0.38 }}
-        className="mb-5 overflow-hidden rounded-2xl border border-[#2a2118]/10 border-l-[4px] border-l-[#006666] bg-white shadow-[0_8px_24px_rgba(42,33,24,0.07)]"
+        className="mb-5 overflow-hidden rounded-2xl border border-[#2a2118]/10 border-l-4 border-l-tok-teal bg-white shadow-[0_8px_24px_rgba(42,33,24,0.07)]"
       >
         <div className="flex items-start justify-between gap-3 p-4 sm:p-5">
           <div className="min-w-0 flex-1">
@@ -532,9 +532,9 @@ function DropLive({ drop }: { drop: Drop }) {
             initial={{ rotate: -14, scale: 0, opacity: 0 }}
             animate={{ rotate: 0, scale: 1, opacity: 1 }}
             transition={{ delay: 0.36, duration: 0.32, ease: [0.34, 1.56, 0.64, 1] }}
-            className="ml-3 shrink-0 rounded border border-[#006666]/60 px-1.5 py-0.5"
+            className="ml-3 shrink-0 rounded border border-tok-teal/60 px-1.5 py-0.5"
           >
-            <span className="font-inter text-[8px] font-bold uppercase tracking-[2px] text-[#006666]">
+            <span className="font-inter text-[8px] font-bold uppercase tracking-[2px] text-tok-teal">
               Live
             </span>
           </motion.div>
@@ -567,7 +567,7 @@ function DropLive({ drop }: { drop: Drop }) {
             className="flex shrink-0 items-center gap-1.5 border-l border-[#2a2118]/8 px-3.5 py-2.5 transition-colors hover:bg-[#F7E9B2]/60"
           >
             {copied ? (
-              <IconCheck size={12} className="text-[#006666]" />
+              <IconCheck size={12} className="text-tok-teal" />
             ) : (
               <IconCopy size={12} className="text-[#2a2118]/40" />
             )}
@@ -589,7 +589,7 @@ function DropLive({ drop }: { drop: Drop }) {
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleShare}
-          className="flex items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-sm transition-all hover:bg-[#006666]/90"
+          className="flex items-center justify-center gap-2 rounded-full bg-tok-teal px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-xs transition-all hover:bg-tok-teal/90"
         >
           <IconShare2 size={13} />
           Send to crew

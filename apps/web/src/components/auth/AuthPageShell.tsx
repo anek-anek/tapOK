@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 export const authInputClass =
-  'w-full border-2 border-black bg-[#FFF4BD] px-4 py-3 text-sm text-black placeholder-black/30 outline-none transition-all duration-150 ease-in-out focus:bg-white focus:shadow-[4px_4px_0_#000] focus:ring-0 hover:border-[#006666] font-inter rounded-none';
+  'w-full border-2 border-black bg-[#FFF4BD] px-4 py-3 text-sm text-black placeholder-black/30 outline-hidden transition-all duration-150 ease-in-out focus:bg-white focus:shadow-[4px_4px_0_#000] focus:ring-0 hover:border-tok-teal font-inter rounded-none';
 
 type AuthFormFieldProps = {
   label: string;
@@ -91,7 +91,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
         {/* Logo */}
         <Link
           href="/"
-          className="inline-flex shrink-0 items-center gap-1.5 font-passion text-xl leading-none tracking-tight text-[#000] sm:text-2xl"
+          className="inline-flex shrink-0 items-center gap-1.5 font-passion text-xl leading-none tracking-tight text-black sm:text-2xl"
           style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease' }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px) scale(1.04)';
@@ -102,7 +102,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
             (e.currentTarget as HTMLElement).style.opacity = '1';
           }}
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#006666] text-xl text-[#FFF4BD]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-tok-teal text-xl text-[#FFF4BD]">
             TAP
           </span>
           <span>OK</span>
@@ -125,7 +125,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
         {/* Top tag */}
         <div className="flex items-center gap-3">
           <span
-            className="auth-live-dot inline-block h-2 w-2 rounded-full bg-[#006666]"
+            className="auth-live-dot inline-block h-2 w-2 rounded-full bg-tok-teal"
           />
           <span
             className="font-passion text-xs uppercase tracking-[0.2em] text-[#FFF4BD]/40"
@@ -163,7 +163,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
                 }}
               >
                 <span
-                  className="font-passion text-xs font-bold text-[#006666]"
+                  className="font-passion text-xs font-bold text-tok-teal"
                   style={{ letterSpacing: '0.08em' }}
                 >
                   {item.num}

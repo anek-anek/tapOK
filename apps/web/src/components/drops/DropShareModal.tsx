@@ -54,7 +54,7 @@ export function DropShareModal({ drop, onClose }: DropShareModalProps) {
         <div className="bg-[#F7E9B2] p-5 sm:p-6">
           <div className="mb-5 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+              <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
                 Share drop
               </p>
               <h3 className="mt-1 truncate font-passion text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">

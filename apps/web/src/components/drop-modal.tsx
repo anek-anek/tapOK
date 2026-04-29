@@ -104,9 +104,9 @@ function LivePreviewCard({
         <CardContent className="px-0">
           <Badge
             variant="outline"
-            className="mb-3 h-auto gap-[6px] rounded-full border-[#006666]/15 bg-[#006666]/10 px-2 py-1 font-passion text-[8px] font-bold uppercase tracking-[2px] text-[#006666]"
+            className="mb-3 h-auto gap-[6px] rounded-full border-tok-teal/15 bg-tok-teal/10 px-2 py-1 font-passion text-[8px] font-bold uppercase tracking-[2px] text-tok-teal"
           >
-            <span className="h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[#006666]" />
+            <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-tok-teal" />
             Active
           </Badge>
           <div className="mb-3 min-h-[27px] font-passion text-[22px] leading-tight tracking-[1.5px] text-[#2a2118]">
@@ -114,18 +114,18 @@ function LivePreviewCard({
           </div>
           <div className="space-y-[5px]">
             <div className="flex items-center gap-[6px] text-[10px] font-light text-[#2a2118]/50">
-              <IconCalendar size={9} className="opacity-40 flex-shrink-0" />
+              <IconCalendar size={9} className="opacity-40 shrink-0" />
               {date ?? <span className="opacity-40">Date &amp; time</span>}
             </div>
             <div className="flex items-center gap-[6px] text-[10px] font-light text-[#2a2118]/50">
-              <IconMapPin size={9} className="opacity-40 flex-shrink-0" />
+              <IconMapPin size={9} className="opacity-40 shrink-0" />
               <span className="truncate">
                 {location || <span className="opacity-40">Location</span>}
               </span>
             </div>
             {count > 0 && (
               <div className="flex items-center gap-[6px] text-[10px] font-light text-[#2a2118]/50">
-                <IconUsers size={9} className="opacity-40 flex-shrink-0" />
+                <IconUsers size={9} className="opacity-40 shrink-0" />
                 {count} expected
               </div>
             )}
@@ -203,13 +203,13 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
           <div className="grid grid-cols-1 sm:grid-cols-[240px_1fr]">
             {/* Dark left panel — desktop only */}
             <aside className="relative hidden overflow-hidden bg-[#2a2118] px-7 pb-8 pt-8 sm:flex sm:flex-col sm:justify-between">
-              <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle_at_1px_1px,#F7E9B2_1px,transparent_0)] [background-size:22px_22px]" />
+              <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#F7E9B2_1px,transparent_0)] bg-size-[22px_22px]" />
               <div>
                 <p className="mb-5 font-passion text-[8px] font-bold uppercase tracking-[3px] text-[#F7E9B2]/22">
                   TapOk
                 </p>
                 <div
-                  className="select-none font-passion leading-[0.88] tracking-[2px] text-[#F7E9B2]/[0.08]"
+                  className="select-none font-passion leading-[0.88] tracking-[2px] text-[#F7E9B2]/8"
                   style={{ fontSize: 'clamp(52px,5.5vw,72px)' }}
                   aria-hidden
                 >
@@ -238,7 +238,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
             <div className="flex flex-col bg-[#F7E9B2] px-5 py-6 sm:px-7 sm:py-7">
               <div className="mb-6 flex items-start justify-between">
                 <div>
-                  <p className="mb-1 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+                  <p className="mb-1 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-teal">
                     Create
                   </p>
                   <div className="font-passion text-[32px] leading-none tracking-[2px] text-[#2a2118]">
@@ -279,7 +279,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                         placeholder="e.g. Rooftop Drinks"
                         autoFocus
                         aria-invalid={Boolean(errors.name)}
-                        className="h-auto rounded-[8px] border-[#2a2118]/[0.09] bg-white/75 px-4 py-3 text-[15px] font-semibold text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-[#006666]/45 focus-visible:ring-[#006666]/15"
+                        className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-4 py-3 text-[15px] font-semibold text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
                       />
                     )}
                   />
@@ -308,7 +308,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                           id="create-drop-date"
                           type="datetime-local"
                           aria-invalid={Boolean(errors.scheduledAt)}
-                          className="h-auto rounded-[8px] border-[#2a2118]/[0.09] bg-white/75 px-3 py-3 text-sm text-[#2a2118] focus-visible:border-[#006666]/45 focus-visible:ring-[#006666]/15"
+                          className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm text-[#2a2118] focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
                         />
                       )}
                     />
@@ -336,7 +336,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                           type="text"
                           placeholder="e.g. Sunset Beach"
                           aria-invalid={Boolean(errors.location)}
-                          className="h-auto rounded-[8px] border-[#2a2118]/[0.09] bg-white/75 px-3 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-[#006666]/45 focus-visible:ring-[#006666]/15"
+                          className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
                         />
                       )}
                     />
@@ -369,7 +369,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                         type="number"
                         min={1}
                         placeholder="e.g. 20"
-                        className="h-auto rounded-[8px] border-[#2a2118]/[0.09] bg-white/75 px-4 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-[#006666]/45 focus-visible:ring-[#006666]/15"
+                        className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-4 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
                       />
                     )}
                   />
@@ -385,7 +385,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                       className={`flex w-full items-center justify-between rounded-[10px] border px-4 py-3 transition-colors ${
                         field.value
                           ? 'border-amber-400/40 bg-amber-50/80'
-                          : 'border-[#2a2118]/[0.09] bg-white/75 hover:border-[#2a2118]/18'
+                          : 'border-[#2a2118]/9 bg-white/75 hover:border-[#2a2118]/18'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -410,7 +410,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                         className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}
                       >
                         <span
-                          className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200"
+                          className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-all duration-200"
                           style={{ transform: `translateX(${field.value ? '18px' : '2px'})` }}
                         />
                       </div>
@@ -439,7 +439,7 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                   <Button
                     type="submit"
                     disabled={createDrop.isPending}
-                    className="h-[46px] w-full rounded-[8px] bg-[#006666] px-6 font-passion text-[17px] tracking-[4px] text-[#F7E9B2] hover:bg-[#006666]/85 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                    className="h-[46px] w-full rounded-[8px] bg-tok-teal px-6 font-passion text-[17px] tracking-[4px] text-[#F7E9B2] hover:bg-tok-teal/85 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                   >
                     {createDrop.isPending ? (
                       <>
@@ -467,8 +467,8 @@ const STATUS_LABEL: Record<DropStatus, string> = {
 };
 
 const STATUS_CLS: Record<DropStatus, string> = {
-  active: 'text-emerald-700 bg-emerald-500/[0.12] border-emerald-500/20',
-  ongoing: 'text-amber-700 bg-amber-500/[0.12] border-amber-500/20',
+  active: 'text-emerald-700 bg-emerald-500/12 border-emerald-500/20',
+  ongoing: 'text-amber-700 bg-amber-500/12 border-amber-500/20',
   completed: 'text-[#2a2118]/38 bg-[#2a2118]/6 border-[#2a2118]/10',
 };
 
@@ -574,14 +574,14 @@ export function EditDropModal({
 
           <div className="space-y-2.5 text-[11px] font-light text-[#F7E9B2]/30">
             <div className="flex items-center gap-2">
-              <IconCalendar size={10} className="opacity-60 flex-shrink-0" />
+              <IconCalendar size={10} className="opacity-60 shrink-0" />
               {formatDate(drop.scheduledAt)}
             </div>
             <div className="flex items-center gap-2">
-              <IconMapPin size={10} className="opacity-60 flex-shrink-0" />
+              <IconMapPin size={10} className="opacity-60 shrink-0" />
               <span className="truncate">{drop.location}</span>
             </div>
-            <div className="mt-5 pt-5 border-t border-[#F7E9B2]/[0.06]">
+            <div className="mt-5 pt-5 border-t border-[#F7E9B2]/6">
               <p className="font-passion text-[8px] font-bold tracking-[2.5px] uppercase text-[#F7E9B2]/18 mb-1.5">
                 Join Code
               </p>
@@ -597,7 +597,7 @@ export function EditDropModal({
           <div className="mb-6 flex items-start justify-between">
             <div>
               <div className="sm:hidden">
-                <p className="mb-0.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#006666]">
+                <p className="mb-0.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-teal">
                   Editing
                 </p>
                 <div className="max-w-[220px] truncate font-passion text-[24px] leading-tight tracking-[1.5px] text-[#2a2118]">
@@ -605,7 +605,7 @@ export function EditDropModal({
                 </div>
               </div>
               <div className="hidden sm:block">
-                <p className="mb-1 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#006666]">
+                <p className="mb-1 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-teal">
                   Edit
                 </p>
                 <div className="font-passion text-[32px] leading-none tracking-[2px] text-[#2a2118]">
@@ -646,7 +646,7 @@ export function EditDropModal({
                     type="text"
                     autoFocus
                     aria-invalid={Boolean(errors.name)}
-                    className="h-auto rounded-[8px] border-[#2a2118]/[0.09] bg-white/75 px-4 py-3 text-[15px] font-semibold text-[#2a2118] focus-visible:border-[#006666]/45 focus-visible:ring-[#006666]/15"
+                    className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-4 py-3 text-[15px] font-semibold text-[#2a2118] focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
                   />
                 )}
               />
@@ -675,7 +675,7 @@ export function EditDropModal({
                       id="edit-drop-date"
                       type="datetime-local"
                       aria-invalid={Boolean(errors.scheduledAt)}
-                      className="h-auto rounded-[8px] border-[#2a2118]/[0.09] bg-white/75 px-3 py-3 text-sm text-[#2a2118] focus-visible:border-[#006666]/45 focus-visible:ring-[#006666]/15"
+                      className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm text-[#2a2118] focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
                     />
                   )}
                 />
@@ -702,7 +702,7 @@ export function EditDropModal({
                       id="edit-drop-location"
                       type="text"
                       aria-invalid={Boolean(errors.location)}
-                      className="h-auto rounded-[8px] border-[#2a2118]/[0.09] bg-white/75 px-3 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-[#006666]/45 focus-visible:ring-[#006666]/15"
+                      className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
                     />
                   )}
                 />
@@ -724,7 +724,7 @@ export function EditDropModal({
                   className={`flex w-full items-center justify-between rounded-[10px] border px-4 py-3 transition-colors ${
                     field.value
                       ? 'border-amber-400/40 bg-amber-50/80'
-                      : 'border-[#2a2118]/[0.09] bg-white/75 hover:border-[#2a2118]/18'
+                      : 'border-[#2a2118]/9 bg-white/75 hover:border-[#2a2118]/18'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -751,7 +751,7 @@ export function EditDropModal({
                     className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}
                   >
                     <span
-                      className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200"
+                      className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-all duration-200"
                       style={{ transform: `translateX(${field.value ? '18px' : '2px'})` }}
                     />
                   </div>
@@ -774,7 +774,7 @@ export function EditDropModal({
                     <select
                       {...field}
                       id="edit-drop-status"
-                      className="h-auto w-full appearance-none rounded-[8px] border border-[#2a2118]/[0.09] bg-white/75 px-4 py-3 pr-9 text-sm font-semibold text-[#2a2118] focus:border-[#006666]/45 focus:outline-none focus:ring-2 focus:ring-[#006666]/15"
+                      className="h-auto w-full appearance-none rounded-[8px] border border-[#2a2118]/9 bg-white/75 px-4 py-3 pr-9 text-sm font-semibold text-[#2a2118] focus:border-tok-teal/45 focus:outline-hidden focus:ring-2 focus:ring-tok-teal/15"
                     >
                       {DROP_STATUSES.map((s) => (
                         <option key={s} value={s}>
