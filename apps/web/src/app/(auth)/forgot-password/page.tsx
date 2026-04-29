@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#FFF4BD]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#006666]" />
+        <Loader2 className="h-6 w-6 animate-spin text-tok-teal" />
       </div>
     );
   }
@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
           {sentTo ? (
             <div className="animate-fade-up flex flex-col gap-5">
               <div
-                className="flex h-14 w-14 items-center justify-center bg-[#006666]"
+                className="flex h-14 w-14 items-center justify-center bg-tok-teal"
                 style={{ border: '2px solid #000', boxShadow: '4px 4px 0 #000' }}
               >
                 <MailCheck size={24} className="text-[#FFF4BD]" />
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
               </p>
               <Link
                 href="/login"
-                className="font-passion text-sm uppercase tracking-wider text-[#006666] underline-offset-4 transition-colors duration-150 hover:underline"
+                className="font-passion text-sm uppercase tracking-wider text-tok-teal underline-offset-4 transition-colors duration-150 hover:underline"
               >
                 ← Back to sign in
               </Link>
@@ -128,7 +128,7 @@ export default function ForgotPasswordPage() {
                 </p>
                 <Link
                   href="/login"
-                  className="mt-1 inline-block font-inter text-xs font-semibold uppercase tracking-wider text-[#006666] underline-offset-4 transition-colors duration-150 hover:underline"
+                  className="mt-1 inline-block font-inter text-xs font-semibold uppercase tracking-wider text-tok-teal underline-offset-4 transition-colors duration-150 hover:underline"
                 >
                   ← Back to sign in
                 </Link>
@@ -159,7 +159,7 @@ export default function ForgotPasswordPage() {
                   type="submit"
                   aria-disabled={isSubmitting}
                   onClick={(e) => { if (isSubmitting) e.preventDefault(); }}
-                  className="animate-fade-up-3 flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white active:scale-[0.98]"
+                  className="animate-fade-up-3 flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white active:scale-[0.98]"
                   style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease', opacity: isSubmitting ? 0.6 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
                   onMouseEnter={(e) => {
                     if (!isSubmitting) {

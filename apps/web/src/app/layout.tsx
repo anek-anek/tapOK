@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Passion_One, Inter } from 'next/font/google';
-import { cn } from '@repo/ui/utils';
+import { Passion_One, Inter, Geist } from 'next/font/google';
+import { cn } from '@/lib/utils';
 import { Analytics } from '@vercel/analytics/react';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const passionOne = Passion_One({
   subsets: ['latin'],
@@ -29,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(passionOne.variable, inter.variable)}>
+    <html lang="en" className={cn(passionOne.variable, inter.variable, "font-sans", geist.variable)}>
       <body>
         <QueryProvider>
           <AuthProvider>{children}</AuthProvider>

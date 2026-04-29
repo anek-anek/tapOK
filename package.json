@@ -18,7 +18,7 @@
     "migration:run": "npm run migration:run --workspace=api",
     "migration:revert": "npm run migration:revert --workspace=api",
     "generate:api": "turbo run generate --filter=api --log-order stream && turbo run generate --filter=@repo/api --log-order stream",
-    "ui:add": "npx shadcn@latest add -c packages/ui",
+    "ui:add": "npx shadcn@latest add -c apps/web",
     "e2e:web": "npm run e2e --workspace=web-e2e",
     "e2e:web:headed": "npm run e2e:headed --workspace=web-e2e",
     "e2e:web:ui": "npm run e2e:ui --workspace=web-e2e"

@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-[#FFF4BD]">
-          <Loader2 className="h-6 w-6 animate-spin text-[#006666]" />
+          <Loader2 className="h-6 w-6 animate-spin text-tok-teal" />
         </div>
       }
     >

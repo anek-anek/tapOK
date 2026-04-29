@@ -7,7 +7,7 @@ import { useCurrentUser } from '@/hooks/queries/use-users';
 import { useUpdateUser } from '@/hooks/mutations/use-user-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMounted } from '@/hooks/use-mounted';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { FrequentCrewList } from '@/components/profile/frequent-crew-list';
 
 function getInitials(firstName: string, lastName: string): string {
@@ -114,7 +114,7 @@ export default function ProfilePage() {
   const dropCount = profile?.dropCount ?? 0;
 
   return (
-    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-[#006666]/15">
+    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.12]"
         style={{
@@ -175,13 +175,13 @@ export default function ProfilePage() {
                   value={form.firstName}
                   onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
                   placeholder="First name"
-                  className="w-full rounded-lg border border-[#2a2118]/20 bg-[#FAF4DC] px-3 py-2 font-inter text-sm text-[#2a2118] outline-none focus:border-[#1A5C52]"
+                  className="w-full rounded-lg border border-[#2a2118]/20 bg-[#FAF4DC] px-3 py-2 font-inter text-sm text-[#2a2118] outline-hidden focus:border-[#1A5C52]"
                 />
                 <input
                   value={form.lastName}
                   onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
                   placeholder="Last name"
-                  className="w-full rounded-lg border border-[#2a2118]/20 bg-[#FAF4DC] px-3 py-2 font-inter text-sm text-[#2a2118] outline-none focus:border-[#1A5C52]"
+                  className="w-full rounded-lg border border-[#2a2118]/20 bg-[#FAF4DC] px-3 py-2 font-inter text-sm text-[#2a2118] outline-hidden focus:border-[#1A5C52]"
                 />
               </div>
             ) : (
@@ -214,7 +214,7 @@ export default function ProfilePage() {
                   value={form.phone}
                   onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                   placeholder="+639123456789"
-                  className="mt-0.5 w-full rounded-lg border border-[#2a2118]/20 bg-[#F0E9C8] px-3 py-1.5 font-inter text-sm text-[#2a2118] outline-none focus:border-[#1A5C52]"
+                  className="mt-0.5 w-full rounded-lg border border-[#2a2118]/20 bg-[#F0E9C8] px-3 py-1.5 font-inter text-sm text-[#2a2118] outline-hidden focus:border-[#1A5C52]"
                 />
               ) : (
                 <p className="font-inter text-sm text-[#2a2118]">

@@ -11,7 +11,7 @@ export default function OnboardingPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-[#FFF2BD]">
-          <Loader2 className="h-6 w-6 animate-spin text-[#006666]" />
+          <Loader2 className="h-6 w-6 animate-spin text-tok-teal" />
         </div>
       }
     >

@@ -19,7 +19,7 @@ import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
 import { track } from '@/lib/analytics';
 import { TapokNavbar } from '@/components/tapok-navbar';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMounted } from '@/hooks/use-mounted';
 import type { DropCrew, DropCrewStatus } from '@/types/drop';
 import type { UseMutationResult } from '@tanstack/react-query';
@@ -74,7 +74,7 @@ function JoinCta({
         </p>
         <Link
           href={`/register?redirectTo=/drops/join/${joinCode}`}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90"
         >
           <IconUserPlus size={13} />
           Sign up to Tap In
@@ -93,9 +93,9 @@ function JoinCta({
   if (isOrganiser) {
     return (
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#006666]/10 px-4 py-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#006666]" />
-          <span className="font-inter text-[11px] font-medium text-[#006666]">You organised this drop</span>
+        <div className="inline-flex items-center gap-2 rounded-full bg-tok-teal/10 px-4 py-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-tok-teal" />
+          <span className="font-inter text-[11px] font-medium text-tok-teal">You organised this drop</span>
         </div>
         <button
           onClick={onViewDrop}
@@ -110,9 +110,9 @@ function JoinCta({
   if (crewStatus === 'in') {
     return (
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#006666]/10 px-4 py-2">
-          <IconCheckCircle size={13} className="text-[#006666]" />
-          <span className="font-inter text-[11px] font-medium text-[#006666]">You&apos;re In</span>
+        <div className="inline-flex items-center gap-2 rounded-full bg-tok-teal/10 px-4 py-2">
+          <IconCheckCircle size={13} className="text-tok-teal" />
+          <span className="font-inter text-[11px] font-medium text-tok-teal">You&apos;re In</span>
         </div>
         <p className="mt-2 font-inter text-[10px] text-[#2a2118]/40">
           You&apos;re locked in. Everyone knows where you stand.
@@ -182,7 +182,7 @@ function JoinCta({
         <button
           disabled={isJoining}
           onClick={() => { track('crew_tap_in_clicked'); joinMutation.mutate(); }}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#006666] px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-[#006666]/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isJoining ? (
             <>
@@ -287,7 +287,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   const organiserName = `${drop.organiser.firstName} ${drop.organiser.lastName}`;
 
   return (
-    <div className="min-h-screen bg-[#EDECE8] text-[#2a2118] selection:bg-[#006666]/15">
+    <div className="min-h-screen bg-[#EDECE8] text-[#2a2118] selection:bg-tok-teal/15">
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.08]"
         style={{
@@ -302,7 +302,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
           {/* Header */}
           <div className="border-b border-[#2a2118]/8 bg-[#F7E9B2]/50 px-4 py-5 sm:px-6">
             <div className="flex items-start gap-3 sm:items-center sm:gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#006666] font-passion text-[12px] font-bold tracking-[0.1em] text-[#F7E9B2] sm:h-12 sm:w-12 sm:text-[13px]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-tok-teal font-passion text-[12px] font-bold tracking-widest text-[#F7E9B2] sm:h-12 sm:w-12 sm:text-[13px]">
                 {getInitials(drop.name)}
               </div>
               <div className="min-w-0">
@@ -324,7 +324,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
             </div>
             <div className="flex items-center gap-3">
               <IconMapPin size={14} className="shrink-0 text-[#2a2118]/40" />
-              <span className="min-w-0 break-words font-inter text-[12px] text-[#2a2118]/70">{drop.location}</span>
+              <span className="min-w-0 wrap-break-word font-inter text-[12px] text-[#2a2118]/70">{drop.location}</span>
             </div>
             {drop.expectedHeadcount && (
               <div className="flex items-center gap-3">
