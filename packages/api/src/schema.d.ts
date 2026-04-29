@@ -607,7 +607,7 @@ export interface components {
             /** Format: date-time */
             scheduledAt: string;
             location: string;
-            expectedHeadcount?: number;
+            expectedHeadcount?: number | null;
             /** @enum {string} */
             status: "active" | "ongoing" | "completed";
             joinCode: string;
@@ -653,6 +653,8 @@ export interface components {
             scheduledAt?: string;
             /** @example Rizal Park, Manila */
             location?: string;
+            /** @example 20 */
+            expectedHeadcount?: number | null;
             /** @description Lock the drop so new joiners require approval */
             isLocked?: boolean;
             /**

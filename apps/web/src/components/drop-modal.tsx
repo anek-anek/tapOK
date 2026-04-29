@@ -1,15 +1,15 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { format } from 'date-fns';
 import {
   X as IconX,
   Calendar as IconCalendar,
   MapPin as IconMapPin,
-  Users as IconUsers,
   Lock as IconLock,
   ChevronDown as IconChevronDown,
 } from 'lucide-react';
@@ -18,47 +18,51 @@ import {
   useUpdateDrop,
 } from '@/hooks/mutations/use-drop-mutations';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ModalShell } from '@/components/modal-shell';
-import type { Drop, DropStatus } from '@/types/drop';
+import type { Drop } from '@/types/drop';
 
-const createSchema = z.object({
+const expectedHeadcountSchema = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .optional()
+  .or(z.literal(''));
+
+const dropFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   scheduledAt: z.string().min(1, 'Date & time is required'),
   location: z.string().min(1, 'Location is required'),
-  expectedHeadcount: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .optional()
-    .or(z.literal('')),
+  expectedHeadcount: expectedHeadcountSchema,
   isLocked: z.boolean().optional(),
 });
 
-const DROP_STATUSES: DropStatus[] = ['active', 'ongoing', 'completed'];
-
-const editSchema = z.object({
-  name: z.string().min(1, 'Name is required').optional(),
-  scheduledAt: z.string().optional(),
-  location: z.string().min(1, 'Location is required').optional(),
-  isLocked: z.boolean().optional(),
-  status: z.enum(['active', 'ongoing', 'completed']).optional(),
+const createSchema = dropFormSchema;
+const editSchema = dropFormSchema.partial({
+  name: true,
+  scheduledAt: true,
+  location: true,
+  expectedHeadcount: true,
 });
 
-type CreateValues = {
+type FormValues = {
   name: string;
   scheduledAt: string;
   location: string;
   expectedHeadcount: number | '' | undefined;
   isLocked?: boolean;
 };
-type EditValues = z.infer<typeof editSchema> & { status?: DropStatus };
+
+const COMPLETE_TIME_PATTERN = /^\d{1,2}:\d{2}$/;
 
 function formatPreviewDate(iso: string) {
   if (!iso) return null;
@@ -78,193 +82,354 @@ function formatPreviewDate(iso: string) {
   }
 }
 
-function LivePreviewCard({
-  name,
-  scheduledAt,
-  location,
-  expectedHeadcount,
+/** Parses an ISO/datetime-local string into { time12, period } using local time */
+function isoToTimeParts(iso: string): { time12: string; period: 'AM' | 'PM' } {
+  if (!iso) return { time12: '', period: 'AM' };
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return { time12: '', period: 'AM' };
+
+  const h24 = d.getHours();
+  const m = d.getMinutes();
+  const period: 'AM' | 'PM' = h24 >= 12 ? 'PM' : 'AM';
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  const mStr = String(m).padStart(2, '0');
+
+  return { time12: `${h12}:${mStr}`, period };
+}
+
+/** Parses a 12-hour "H:mm" string + period into a 24-hour "HH:mm" string */
+function time12To24(time12: string, period: 'AM' | 'PM'): string {
+  const [hStr, mStr] = (time12 || '12:00').split(':');
+  let h = parseInt(hStr ?? '12', 10) % 12;
+  if (period === 'PM') h += 12;
+  return `${String(h).padStart(2, '0')}:${(mStr ?? '00').padStart(2, '0')}`;
+}
+
+/** Merges a Date and a "HH:mm" 24-hour string into a datetime-local string "YYYY-MM-DDTHH:mm" */
+function mergeDateAndTime(date: Date | undefined, time24: string): string {
+  const baseDate = date || new Date();
+  const dateStr = format(baseDate, 'yyyy-MM-dd');
+  return `${dateStr}T${time24}`;
+}
+
+function toIsoString(value: string): string {
+  return new Date(value).toISOString();
+}
+
+function normalizeExpectedHeadcount(value: FormValues['expectedHeadcount']) {
+  return value ? Number(value) : undefined;
+}
+
+function getUpdatedExpectedHeadcount(
+  value: FormValues['expectedHeadcount'],
+  currentValue?: number | null,
+) {
+  if (value === '') {
+    return currentValue === undefined ? undefined : null;
+  }
+
+  return normalizeExpectedHeadcount(value);
+}
+
+/** Shared date + time picker that writes a datetime-local string via onChange */
+function DateTimePicker({
+  value,
+  onChange,
+  error,
+  id,
 }: {
-  name: string;
-  scheduledAt: string;
-  location: string;
-  expectedHeadcount: string | number | undefined;
+  value: string;
+  onChange: (val: string) => void;
+  error?: string;
+  id?: string;
 }) {
-  const date = formatPreviewDate(scheduledAt);
-  const count = expectedHeadcount ? Number(expectedHeadcount) : 0;
-  const hasAny = !!(name || scheduledAt || location);
+  const [open, setOpen] = useState(false);
+
+  const selectedDate = value ? new Date(value) : undefined;
+  const { time12, period } = isoToTimeParts(value);
+
+  // Local draft so the user can type freely; we only commit valid "h:mm" values
+  const [draft, setDraft] = useState(time12);
+  useEffect(() => {
+    setDraft(time12);
+  }, [time12]);
+
+  const commitDateTime = (time24: string) => {
+    onChange(mergeDateAndTime(selectedDate, time24));
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    setOpen(false);
+    onChange(mergeDateAndTime(date, time12To24(time12, period)));
+  };
+
+  const handleTimeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let raw = e.target.value;
+
+    // Only allow numbers and colon
+    raw = raw.replace(/[^\d:]/g, '');
+
+    // Basic format restriction: H:mm or HH:mm
+    const parts = raw.split(':');
+
+    // Don't allow more than one colon
+    if (parts.length > 2) return;
+
+    // Validate hours part (should be 1-12)
+    if (parts[0]) {
+      const h = parseInt(parts[0] ?? '', 10);
+      if (h > 12) return;
+    }
+
+    // Validate minutes part (should be 0-59)
+    if (parts[1]) {
+      const m = parseInt(parts[1] ?? '', 10);
+      if (m > 59) return;
+      if (parts[1].length > 2) return;
+    }
+
+    setDraft(raw);
+
+    // Commit only when it looks like a complete and valid "h:mm" or "hh:mm"
+    if (COMPLETE_TIME_PATTERN.test(raw)) {
+      const h = parseInt(parts[0] ?? '', 10);
+      if (h >= 1 && h <= 12) {
+        commitDateTime(time12To24(raw, period));
+      }
+    }
+  };
+
+  const handleTimeBlur = () => {
+    // On blur, normalise or clear the draft
+    if (COMPLETE_TIME_PATTERN.test(draft)) {
+      const normalised = time12To24(draft, period);
+      const nextValue = mergeDateAndTime(selectedDate, normalised);
+      onChange(nextValue);
+      setDraft(isoToTimeParts(nextValue).time12);
+    } else {
+      // Revert to last committed value
+      setDraft(time12);
+    }
+  };
+
+  const togglePeriod = (p: 'AM' | 'PM') => {
+    commitDateTime(time12To24(time12, p));
+  };
 
   return (
-    <div
-      className={cn(
-        'transition-all duration-300',
-        hasAny ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-35',
-      )}
-    >
-      <Card className="w-full max-w-[220px] gap-0 rounded-[10px] border border-[#2a2118]/10 bg-[#F7E9B2] p-5 ring-0">
-        <CardContent className="px-0">
-          <Badge
-            variant="outline"
-            className="mb-3 h-auto gap-[6px] rounded-full border-tok-teal/15 bg-tok-teal/10 px-2 py-1 font-passion text-[8px] font-bold uppercase tracking-[2px] text-tok-teal"
+    <FieldGroup className="flex flex-row items-end gap-2.5">
+      <Field className="min-w-0 flex-1">
+        <FieldLabel
+          htmlFor={`${id}-date`}
+          className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
+        >
+          Date
+        </FieldLabel>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger
+            id={`${id}-date`}
+            className="flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none focus-visible:outline-none"
           >
-            <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-tok-teal" />
-            Active
-          </Badge>
-          <div className="mb-3 min-h-[27px] font-passion text-[22px] leading-tight tracking-[1.5px] text-[#2a2118]">
-            {name || <span className="opacity-20">Your drop name</span>}
-          </div>
-          <div className="space-y-[5px]">
-            <div className="flex items-center gap-[6px] text-[10px] font-light text-[#2a2118]/50">
-              <IconCalendar size={9} className="opacity-40 shrink-0" />
-              {date ?? <span className="opacity-40">Date &amp; time</span>}
-            </div>
-            <div className="flex items-center gap-[6px] text-[10px] font-light text-[#2a2118]/50">
-              <IconMapPin size={9} className="opacity-40 shrink-0" />
-              <span className="truncate">
-                {location || <span className="opacity-40">Location</span>}
-              </span>
-            </div>
-            {count > 0 && (
-              <div className="flex items-center gap-[6px] text-[10px] font-light text-[#2a2118]/50">
-                <IconUsers size={9} className="opacity-40 shrink-0" />
-                {count} expected
-              </div>
-            )}
-          </div>
-          <Separator className="mt-3 bg-[#2a2118]/[0.07]" />
-          <div className="pt-3">
-            <div className="font-passion text-[7px] font-bold tracking-[2px] uppercase text-[#2a2118]/18 mb-[4px]">
-              Join Code
-            </div>
-            <div className="font-passion text-[11px] font-bold tracking-[5px] text-[#2a2118]/14 select-none">
-              ------
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            {selectedDate ? format(selectedDate, 'MMM d, yyyy') : <span className="text-tok-black/15">Pick date</span>}
+            <IconChevronDown size={16} className="text-tok-black/40" strokeWidth={2.5} />
+          </PopoverTrigger>
+          <PopoverContent className="w-auto rounded-sm border-[3px] border-tok-black bg-white p-0 shadow-[6px_6px_0px_#1C1C1A]" align="start">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              captionLayout="dropdown"
+              defaultMonth={selectedDate}
+              onSelect={handleDateSelect}
+            />
+          </PopoverContent>
+        </Popover>
+      </Field>
+
+      {/* 12-hour time input */}
+      <Field className="w-24 shrink-0">
+        <FieldLabel
+          htmlFor={`${id}-time`}
+          className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
+        >
+          Time
+        </FieldLabel>
+        <Input
+          type="text"
+          id={`${id}-time`}
+          value={draft}
+          onChange={handleTimeInput}
+          onBlur={handleTimeBlur}
+          placeholder="h:mm"
+          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+      </Field>
+
+      {/* AM/PM toggle */}
+      <Field className="w-20 shrink-0">
+        <div className="flex h-12 items-stretch overflow-hidden rounded-sm border-[3px] border-tok-black bg-white">
+          {(['AM', 'PM'] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => togglePeriod(p)}
+              className={`flex-1 font-passion text-xs font-bold tracking-[1px] transition-all ${period === p
+                ? 'bg-tok-teal text-[#F7E9B2]'
+                : 'text-tok-black/40 hover:bg-tok-black/5'
+                }`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </Field>
+    </FieldGroup>
   );
 }
 
-export function CreateDropModal({ onClose }: { onClose: () => void }) {
+export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void }) {
+  const isEdit = !!drop;
   const router = useRouter();
   const createDrop = useCreateDrop();
+  const updateDrop = useUpdateDrop(drop?.id ?? '');
   const pendingIdRef = useRef<string | null>(null);
 
   const wrappedClose = useCallback(() => {
     onClose();
-    if (pendingIdRef.current) {
+    if (pendingIdRef.current && !isEdit) {
       router.push(`/drops/${pendingIdRef.current}`);
     }
-  }, [onClose, router]);
+  }, [onClose, router, isEdit]);
 
   const {
     control,
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<CreateValues>({
+  } = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(createSchema) as any,
-    defaultValues: {
-      name: '',
-      scheduledAt: '',
-      location: '',
-      expectedHeadcount: '',
-      isLocked: false,
+    resolver: zodResolver(isEdit ? editSchema : createSchema) as any,
+    values: {
+      name: drop?.name ?? '',
+      scheduledAt: drop?.scheduledAt ? new Date(drop.scheduledAt).toISOString() : '',
+      location: drop?.location ?? '',
+      expectedHeadcount: drop?.expectedHeadcount ?? '',
+      isLocked: drop?.isLocked ?? false,
     },
   });
 
-  const [name, scheduledAt, location, expectedHeadcount] = watch([
+  const [name, scheduledAt, location] = watch([
     'name',
     'scheduledAt',
     'location',
-    'expectedHeadcount',
   ]);
+
+  const isPending = createDrop.isPending || updateDrop.isPending;
+  const serverError = createDrop.error || updateDrop.error;
 
   return (
     <ModalShell onClose={wrappedClose}>
       {(close) => {
         const onSubmit = handleSubmit(async (values) => {
-          const dto = {
-            name: values.name,
-            scheduledAt: new Date(values.scheduledAt).toISOString(),
-            location: values.location,
-            expectedHeadcount: values.expectedHeadcount
-              ? Number(values.expectedHeadcount)
-              : undefined,
-            isLocked: values.isLocked ?? false,
-          };
-          const drop = await createDrop.mutateAsync(dto);
-          pendingIdRef.current = drop.id;
-          close();
+          const scheduledAtIso = values.scheduledAt ? toIsoString(values.scheduledAt) : undefined;
+          const expectedHeadcount = normalizeExpectedHeadcount(values.expectedHeadcount);
+
+          if (isEdit && drop) {
+            const dto: Parameters<typeof updateDrop.mutateAsync>[0] = {};
+            if (values.name !== drop.name) dto.name = values.name;
+            if (scheduledAtIso && scheduledAtIso !== drop.scheduledAt) dto.scheduledAt = scheduledAtIso;
+            if (values.location !== drop.location) dto.location = values.location;
+            const updatedExpectedHeadcount = getUpdatedExpectedHeadcount(
+              values.expectedHeadcount,
+              drop.expectedHeadcount,
+            );
+            if (updatedExpectedHeadcount !== undefined && updatedExpectedHeadcount !== drop.expectedHeadcount) {
+              dto.expectedHeadcount = updatedExpectedHeadcount;
+            }
+            if (values.isLocked !== drop.isLocked) dto.isLocked = values.isLocked;
+
+            if (Object.keys(dto).length > 0) {
+              await updateDrop.mutateAsync(dto);
+            }
+            close();
+          } else {
+            const dto = {
+              name: values.name,
+              scheduledAt: scheduledAtIso ?? toIsoString(values.scheduledAt),
+              location: values.location,
+              expectedHeadcount,
+              isLocked: values.isLocked ?? false,
+            };
+            const result = await createDrop.mutateAsync(dto);
+            pendingIdRef.current = result.id;
+            close();
+          }
         });
 
         return (
-          <div className="grid grid-cols-1 sm:grid-cols-[240px_1fr]">
+          <div className="grid grid-cols-1 overflow-hidden rounded-2xl border-[3px] border-tok-black bg-white shadow-[10px_10px_0px_#1C1C1A] sm:grid-cols-[220px_1fr]">
             {/* Dark left panel — desktop only */}
-            <aside className="relative hidden overflow-hidden bg-[#2a2118] px-7 pb-8 pt-8 sm:flex sm:flex-col sm:justify-between">
-              <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#F7E9B2_1px,transparent_0)] bg-size-[22px_22px]" />
+            <aside className="hidden flex-col justify-between bg-tok-teal px-6 py-8 sm:flex">
               <div>
-                <p className="mb-5 font-passion text-[8px] font-bold uppercase tracking-[3px] text-[#F7E9B2]/22">
-                  TapOk
+                <p className="mb-3 font-passion text-[9px] font-bold uppercase tracking-[3.5px] text-[#F7E9B2]/50">
+                  {isEdit ? 'DROP UPDATE' : 'INITIALIZING DROP'}
                 </p>
                 <div
-                  className="select-none font-passion leading-[0.88] tracking-[2px] text-[#F7E9B2]/8"
-                  style={{ fontSize: 'clamp(52px,5.5vw,72px)' }}
-                  aria-hidden
+                  className="font-passion leading-tight tracking-[1.2px] text-[#F7E9B2]"
+                  style={{ fontSize: 'clamp(20px,2.5vw,28px)' }}
                 >
-                  DROP
-                  <br />
-                  IT.
+                  {name || <span className="text-[#F7E9B2]/30">{isEdit ? drop?.name : 'Untitled.'}</span>}
                 </div>
-                <p className="mt-3 max-w-[160px] text-[11px] font-light leading-relaxed text-[#F7E9B2]/28">
-                  Set the time. Set the place. Drop it.
-                </p>
               </div>
-              <div>
-                <p className="mb-3 font-passion text-[8px] font-bold uppercase tracking-[2.5px] text-[#F7E9B2]/22">
-                  Preview
-                </p>
-                <LivePreviewCard
-                  name={name}
-                  scheduledAt={scheduledAt}
-                  location={location}
-                  expectedHeadcount={expectedHeadcount}
-                />
+
+              <div className="space-y-3 text-[11px] font-bold text-[#F7E9B2]/60">
+                {scheduledAt && (
+                  <div className="flex items-center gap-2.5">
+                    <IconCalendar size={12} className="text-amber-400" strokeWidth={2.5} />
+                    <span className="font-passion uppercase tracking-wider">{formatPreviewDate(scheduledAt)}</span>
+                  </div>
+                )}
+                {location && (
+                  <div className="flex items-center gap-2.5">
+                    <IconMapPin size={12} className="text-amber-400" strokeWidth={2.5} />
+                    <span className="font-passion truncate uppercase tracking-wider">{location}</span>
+                  </div>
+                )}
+                <div className="mt-6 border-t-2 border-dashed border-[#F7E9B2]/10 pt-6">
+                  <p className="mb-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#F7E9B2]/40">
+                    JOIN TOKEN
+                  </p>
+                  <p className="font-passion text-xl font-bold tracking-[5px] text-[#F7E9B2]">
+                    {isEdit ? drop?.joinCode : '------'}
+                  </p>
+                </div>
               </div>
             </aside>
 
             {/* Form panel */}
-            <div className="flex flex-col bg-[#F7E9B2] px-5 py-6 sm:px-7 sm:py-7">
-              <div className="mb-6 flex items-start justify-between">
-                <div>
-                  <p className="mb-1 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-teal">
-                    Create
+            <div className="flex flex-col bg-[#FFF4BD] px-6 py-7 sm:px-8 sm:py-8">
+              <div className="mb-6 flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <p className="mb-1 font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
+                    {isEdit ? 'SYSTEM: UPDATE' : 'SYSTEM: CREATE'}
                   </p>
-                  <div className="font-passion text-[32px] leading-none tracking-[2px] text-[#2a2118]">
-                    New Drop.
-                  </div>
-                  <p className="mt-1.5 text-[12px] font-light text-[#2a2118]/44">
-                    Fill in the details and drop it.
-                  </p>
+                  <h2 className="font-passion text-3xl font-bold leading-none tracking-tight text-tok-black">
+                    {isEdit ? 'EDIT DROP.' : 'NEW DROP.'}
+                  </h2>
                 </div>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="icon-sm"
                   onClick={close}
-                  className="mt-0.5 shrink-0 rounded-full border-[#2a2118]/12 bg-transparent text-[#2a2118]/36 hover:border-[#2a2118]/22 hover:bg-white/50 hover:text-[#2a2118]"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
                 >
-                  <IconX size={14} />
-                  <span className="sr-only">Close</span>
-                </Button>
+                  <IconX size={18} strokeWidth={2.5} />
+                </button>
               </div>
 
-              <form onSubmit={onSubmit} className="flex flex-1 flex-col space-y-4">
-                <div>
+              <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-5">
+                <div className="space-y-1.5">
                   <Label
-                    htmlFor="create-drop-name"
-                    className="mb-2 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                    htmlFor="drop-modal-name"
+                    className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
                   >
                     Drop Name
                   </Label>
@@ -274,559 +439,156 @@ export function CreateDropModal({ onClose }: { onClose: () => void }) {
                     render={({ field }) => (
                       <Input
                         {...field}
-                        id="create-drop-name"
+                        id="drop-modal-name"
                         type="text"
                         placeholder="e.g. Rooftop Drinks"
                         autoFocus
-                        aria-invalid={Boolean(errors.name)}
-                        className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-4 py-3 text-[15px] font-semibold text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
+                        className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     )}
                   />
                   {errors.name && (
-                    <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
+                    <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-500">
                       {errors.name.message}
                     </p>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-3">
-                  <div>
-                    <Label
-                      htmlFor="create-drop-date"
-                      className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
-                    >
-                      <IconCalendar size={8} className="opacity-50" />
-                      Date &amp; Time
-                    </Label>
-                    <Controller
-                      name="scheduledAt"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="create-drop-date"
-                          type="datetime-local"
-                          aria-invalid={Boolean(errors.scheduledAt)}
-                          className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm text-[#2a2118] focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
-                        />
-                      )}
-                    />
-                    {errors.scheduledAt && (
-                      <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
-                        {errors.scheduledAt.message}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label
-                      htmlFor="create-drop-location"
-                      className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
-                    >
-                      <IconMapPin size={8} className="opacity-50" />
-                      Location
-                    </Label>
-                    <Controller
-                      name="location"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="create-drop-location"
-                          type="text"
-                          placeholder="e.g. Sunset Beach"
-                          aria-invalid={Boolean(errors.location)}
-                          className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
-                        />
-                      )}
-                    />
-                    {errors.location && (
-                      <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
-                        {errors.location.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <Label
-                    htmlFor="create-drop-headcount"
-                    className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
-                  >
-                    <IconUsers size={8} className="opacity-50" />
-                    Headcount
-                    <span className="font-normal normal-case tracking-normal text-[#2a2118]/22">
-                      — optional
-                    </span>
-                  </Label>
+                <div className="space-y-1.5">
                   <Controller
-                    name="expectedHeadcount"
+                    name="scheduledAt"
                     control={control}
                     render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="create-drop-headcount"
-                        type="number"
-                        min={1}
-                        placeholder="e.g. 20"
-                        className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-4 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
+                      <DateTimePicker
+                        id="drop-modal"
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={errors.scheduledAt?.message}
                       />
                     )}
                   />
                 </div>
 
-                <Controller
-                  name="isLocked"
-                  control={control}
-                  render={({ field }) => (
-                    <button
-                      type="button"
-                      onClick={() => field.onChange(!field.value)}
-                      className={`flex w-full items-center justify-between rounded-[10px] border px-4 py-3 transition-colors ${
-                        field.value
-                          ? 'border-amber-400/40 bg-amber-50/80'
-                          : 'border-[#2a2118]/9 bg-white/75 hover:border-[#2a2118]/18'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <IconLock
-                          size={13}
-                          className={field.value ? 'text-amber-700' : 'text-[#2a2118]/30'}
-                        />
-                        <div className="text-left">
-                          <p
-                            className={`font-passion text-[10px] font-bold uppercase tracking-[2px] ${field.value ? 'text-amber-800' : 'text-[#2a2118]/60'}`}
-                          >
-                            Lock Drop
-                          </p>
-                          <p
-                            className={`text-[11px] font-light leading-tight ${field.value ? 'text-amber-700/70' : 'text-[#2a2118]/36'}`}
-                          >
-                            New joiners will require approval
-                          </p>
-                        </div>
-                      </div>
-                      <div
-                        className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}
-                      >
-                        <span
-                          className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-all duration-200"
-                          style={{ transform: `translateX(${field.value ? '18px' : '2px'})` }}
-                        />
-                      </div>
-                    </button>
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="drop-modal-location"
+                    className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
+                  >
+                    Location
+                  </Label>
+                  <Controller
+                    name="location"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="drop-modal-location"
+                        type="text"
+                        placeholder="e.g. Sunset Beach"
+                        className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      />
+                    )}
+                  />
+                  {errors.location && (
+                    <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-500">
+                      {errors.location.message}
+                    </p>
                   )}
-                />
+                </div>
 
-                {createDrop.error && (
-                  <Alert className="rounded-[6px] border-red-200/50 bg-red-50 px-4 py-3">
-                    <AlertDescription className="font-passion text-[11px] text-red-600">
-                      {createDrop.error.message ||
-                        'Failed to create drop. Please try again.'}
-                    </AlertDescription>
-                  </Alert>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="drop-modal-headcount"
+                      className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
+                    >
+                      Headcount <span className="normal-case opacity-40 font-normal">— Optional</span>
+                    </Label>
+                    <Controller
+                      name="expectedHeadcount"
+                      control={control}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          id="drop-modal-headcount"
+                          type="number"
+                          min={1}
+                          placeholder="e.g. 20"
+                          onWheel={(e) => e.currentTarget.blur()}
+                          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40">
+                      Security
+                    </Label>
+                    <Controller
+                      name="isLocked"
+                      control={control}
+                      render={({ field }) => (
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(!field.value)}
+                          className={`flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all ${
+                            field.value ? 'bg-amber-400 text-tok-black shadow-none translate-y-0' : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <IconLock size={14} strokeWidth={2.5} />
+                            <span className="font-passion font-bold uppercase tracking-wider text-sm">
+                              {field.value ? 'Locked' : 'Open'}
+                            </span>
+                          </div>
+                          <div
+                            className={`h-3.5 w-3.5 rounded-full border-2 border-tok-black ${
+                              field.value ? 'bg-tok-black' : 'bg-white'
+                            }`}
+                          />
+                        </button>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {serverError && (
+                  <div className="rounded-sm border-[3px] border-red-500 bg-red-50 p-3">
+                    <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-600">
+                      {serverError.message || `ERROR: Failed to ${isEdit ? 'update' : 'create'} drop.`}
+                    </p>
+                  </div>
                 )}
 
-                <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-                  <Button
+                <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                  <button
                     type="button"
-                    variant="ghost"
                     onClick={close}
-                    className="h-auto rounded-full px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/30 hover:bg-transparent hover:text-[#2a2118]/55"
+                    className="h-11 rounded-sm border-[3px] border-tok-black bg-white px-6 font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
                   >
                     Cancel
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="submit"
-                    disabled={createDrop.isPending}
-                    className="h-[46px] w-full rounded-[8px] bg-tok-teal px-6 font-passion text-[17px] tracking-[4px] text-[#F7E9B2] hover:bg-tok-teal/85 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                    disabled={isPending}
+                    className="flex h-11 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal px-8 font-passion text-base font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
                   >
-                    {createDrop.isPending ? (
+                    {isPending ? (
                       <>
-                        <span className="h-[12px] w-[12px] animate-spin rounded-full border-2 border-[#F7E9B2]/30 border-t-[#F7E9B2]" />
-                        DROPPING…
+                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#F7E9B2]/30 border-t-[#F7E9B2]" />
+                        <span className="text-sm">Processing...</span>
                       </>
                     ) : (
-                      'DROP IT'
+                      <span>{isEdit ? 'Save Drop' : 'Deploy Drop'}</span>
                     )}
-                  </Button>
+                  </button>
                 </div>
               </form>
             </div>
           </div>
         );
       }}
-    </ModalShell>
-  );
-}
-
-const STATUS_LABEL: Record<DropStatus, string> = {
-  active: 'Active',
-  ongoing: 'Ongoing',
-  completed: 'Done',
-};
-
-const STATUS_CLS: Record<DropStatus, string> = {
-  active: 'text-emerald-700 bg-emerald-500/12 border-emerald-500/20',
-  ongoing: 'text-amber-700 bg-amber-500/12 border-amber-500/20',
-  completed: 'text-[#2a2118]/38 bg-[#2a2118]/6 border-[#2a2118]/10',
-};
-
-const STATUS_DOT: Record<DropStatus, string> = {
-  active: 'bg-emerald-500',
-  ongoing: 'bg-amber-500',
-  completed: 'bg-[#2a2118]/30',
-};
-
-function formatDate(iso: string) {
-  try {
-    const d = new Date(iso);
-    return (
-      d.toLocaleDateString(undefined, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      }) +
-      ' · ' +
-      d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-    );
-  } catch {
-    return iso;
-  }
-}
-
-export function EditDropModal({
-  drop,
-  onClose,
-}: {
-  drop: Drop;
-  onClose: () => void;
-}) {
-  const updateDrop = useUpdateDrop(drop.id);
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<EditValues>({
-    resolver: zodResolver(editSchema),
-    values: {
-      name: drop.name,
-      scheduledAt: new Date(drop.scheduledAt).toISOString().slice(0, 16),
-      location: drop.location,
-      isLocked: drop.isLocked,
-      status: drop.status,
-    },
-  });
-
-  const onSubmit = handleSubmit(async (values) => {
-    const dto: {
-      name?: string;
-      scheduledAt?: string;
-      location?: string;
-      isLocked?: boolean;
-      status?: DropStatus;
-    } = {};
-    if (values.name !== drop.name) dto.name = values.name;
-    if (
-      values.scheduledAt &&
-      new Date(values.scheduledAt).toISOString() !== drop.scheduledAt
-    ) {
-      dto.scheduledAt = new Date(values.scheduledAt).toISOString();
-    }
-    if (values.location !== drop.location) dto.location = values.location;
-    if (values.isLocked !== drop.isLocked) dto.isLocked = values.isLocked;
-    if (values.status !== drop.status) dto.status = values.status;
-
-    if (Object.keys(dto).length === 0) {
-      onClose();
-      return;
-    }
-
-    await updateDrop.mutateAsync(dto);
-    onClose();
-  });
-
-  return (
-    <ModalShell onClose={onClose}>
-      <div className="grid grid-cols-1 sm:grid-cols-[240px_1fr]">
-        {/* Dark left panel — context, desktop only */}
-        <div className="hidden sm:flex flex-col justify-between bg-[#2a2118] px-7 pt-8 pb-8">
-          <div>
-            <p className="font-passion text-[8px] font-bold tracking-[3px] uppercase text-[#F7E9B2]/22 mb-4">
-              Editing
-            </p>
-            <div
-              className="font-passion tracking-[1.5px] text-[#F7E9B2] leading-tight mb-3"
-              style={{ fontSize: 'clamp(22px,2.8vw,30px)' }}
-            >
-              {drop.name}
-            </div>
-            <span
-              className={`inline-flex items-center gap-1.5 font-passion text-[8px] font-bold tracking-[1.5px] uppercase px-2.5 py-1 rounded-full border ${STATUS_CLS[drop.status]}`}
-            >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[drop.status]}`}
-              />
-              {STATUS_LABEL[drop.status]}
-            </span>
-          </div>
-
-          <div className="space-y-2.5 text-[11px] font-light text-[#F7E9B2]/30">
-            <div className="flex items-center gap-2">
-              <IconCalendar size={10} className="opacity-60 shrink-0" />
-              {formatDate(drop.scheduledAt)}
-            </div>
-            <div className="flex items-center gap-2">
-              <IconMapPin size={10} className="opacity-60 shrink-0" />
-              <span className="truncate">{drop.location}</span>
-            </div>
-            <div className="mt-5 pt-5 border-t border-[#F7E9B2]/6">
-              <p className="font-passion text-[8px] font-bold tracking-[2.5px] uppercase text-[#F7E9B2]/18 mb-1.5">
-                Join Code
-              </p>
-              <p className="font-passion text-[15px] font-bold tracking-[5px] text-[#F7E9B2]/22">
-                {drop.joinCode}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Form panel */}
-        <div className="flex flex-col bg-[#F7E9B2] px-5 py-6 sm:px-7 sm:py-7">
-          <div className="mb-6 flex items-start justify-between">
-            <div>
-              <div className="sm:hidden">
-                <p className="mb-0.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-teal">
-                  Editing
-                </p>
-                <div className="max-w-[220px] truncate font-passion text-[24px] leading-tight tracking-[1.5px] text-[#2a2118]">
-                  {drop.name}
-                </div>
-              </div>
-              <div className="hidden sm:block">
-                <p className="mb-1 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-teal">
-                  Edit
-                </p>
-                <div className="font-passion text-[32px] leading-none tracking-[2px] text-[#2a2118]">
-                  What changed?
-                </div>
-                <p className="mt-1.5 text-[12px] font-light text-[#2a2118]/44">
-                  Update what needs changing.
-                </p>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              onClick={onClose}
-              className="mt-0.5 shrink-0 rounded-full border-[#2a2118]/12 bg-transparent text-[#2a2118]/36 hover:border-[#2a2118]/22 hover:bg-white/50 hover:text-[#2a2118]"
-            >
-              <IconX size={14} />
-              <span className="sr-only">Close</span>
-            </Button>
-          </div>
-
-          <form onSubmit={onSubmit} className="flex-1 space-y-4">
-            <div>
-              <Label
-                htmlFor="edit-drop-name"
-                className="mb-2 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
-              >
-                Drop Name
-              </Label>
-              <Controller
-                name="name"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    id="edit-drop-name"
-                    type="text"
-                    autoFocus
-                    aria-invalid={Boolean(errors.name)}
-                    className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-4 py-3 text-[15px] font-semibold text-[#2a2118] focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
-                  />
-                )}
-              />
-              {errors.name && (
-                <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-3">
-              <div>
-                <Label
-                  htmlFor="edit-drop-date"
-                  className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
-                >
-                  <IconCalendar size={8} className="opacity-50" />
-                  Date &amp; Time
-                </Label>
-                <Controller
-                  name="scheduledAt"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      id="edit-drop-date"
-                      type="datetime-local"
-                      aria-invalid={Boolean(errors.scheduledAt)}
-                      className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm text-[#2a2118] focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
-                    />
-                  )}
-                />
-                {errors.scheduledAt && (
-                  <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
-                    {errors.scheduledAt.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label
-                  htmlFor="edit-drop-location"
-                  className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
-                >
-                  <IconMapPin size={8} className="opacity-50" />
-                  Location
-                </Label>
-                <Controller
-                  name="location"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      id="edit-drop-location"
-                      type="text"
-                      aria-invalid={Boolean(errors.location)}
-                      className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
-                    />
-                  )}
-                />
-                {errors.location && (
-                  <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
-                    {errors.location.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <Controller
-              name="isLocked"
-              control={control}
-              render={({ field }) => (
-                <button
-                  type="button"
-                  onClick={() => field.onChange(!field.value)}
-                  className={`flex w-full items-center justify-between rounded-[10px] border px-4 py-3 transition-colors ${
-                    field.value
-                      ? 'border-amber-400/40 bg-amber-50/80'
-                      : 'border-[#2a2118]/9 bg-white/75 hover:border-[#2a2118]/18'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <IconLock
-                      size={13}
-                      className={
-                        field.value ? 'text-amber-700' : 'text-[#2a2118]/30'
-                      }
-                    />
-                    <div className="text-left">
-                      <p
-                        className={`font-passion text-[10px] font-bold uppercase tracking-[2px] ${field.value ? 'text-amber-800' : 'text-[#2a2118]/60'}`}
-                      >
-                        Lock Drop
-                      </p>
-                      <p
-                        className={`text-[11px] font-light leading-tight ${field.value ? 'text-amber-700/70' : 'text-[#2a2118]/36'}`}
-                      >
-                        New joiners will require approval
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}
-                  >
-                    <span
-                      className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-all duration-200"
-                      style={{ transform: `translateX(${field.value ? '18px' : '2px'})` }}
-                    />
-                  </div>
-                </button>
-              )}
-            />
-
-            <div>
-              <Label
-                htmlFor="edit-drop-status"
-                className="mb-2 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
-              >
-                Status
-              </Label>
-              <Controller
-                name="status"
-                control={control}
-                render={({ field }) => (
-                  <div className="relative">
-                    <select
-                      {...field}
-                      id="edit-drop-status"
-                      className="h-auto w-full appearance-none rounded-[8px] border border-[#2a2118]/9 bg-white/75 px-4 py-3 pr-9 text-sm font-semibold text-[#2a2118] focus:border-tok-teal/45 focus:outline-hidden focus:ring-2 focus:ring-tok-teal/15"
-                    >
-                      {DROP_STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {STATUS_LABEL[s]}
-                        </option>
-                      ))}
-                    </select>
-                    <IconChevronDown
-                      size={13}
-                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#2a2118]/36"
-                    />
-                  </div>
-                )}
-              />
-            </div>
-
-            {updateDrop.error && (
-              <Alert className="rounded-[6px] border-red-200/50 bg-red-50 px-4 py-3">
-                <AlertDescription className="font-passion text-[11px] text-red-600">
-                  {updateDrop.error.message ||
-                    'Failed to update drop. Please try again.'}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={onClose}
-                className="h-auto rounded-full px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/30 hover:bg-transparent hover:text-[#2a2118]/55"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={updateDrop.isPending}
-                className="h-[46px] w-full rounded-[8px] bg-[#2a2118] px-6 font-passion text-[17px] tracking-[4px] text-[#F7E9B2] hover:bg-[#2a2118]/80 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-              >
-                {updateDrop.isPending ? (
-                  <>
-                    <span className="h-[12px] w-[12px] animate-spin rounded-full border-2 border-[#F7E9B2]/30 border-t-[#F7E9B2]" />
-                    SAVING…
-                  </>
-                ) : (
-                  'SAVE CHANGES'
-                )}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
     </ModalShell>
   );
 }

@@ -86,6 +86,7 @@ export class DropsService {
     if (dto.name !== undefined) changedFields['name'] = dto.name;
     if (dto.scheduledAt !== undefined) changedFields['scheduledAt'] = dto.scheduledAt;
     if (dto.location !== undefined) changedFields['location'] = dto.location;
+    if (dto.expectedHeadcount !== undefined) changedFields['expectedHeadcount'] = dto.expectedHeadcount;
     if (dto.isLocked !== undefined) changedFields['isLocked'] = dto.isLocked;
     if (dto.status !== undefined) changedFields['status'] = dto.status;
 
@@ -93,6 +94,7 @@ export class DropsService {
       ...(dto.name !== undefined && { name: dto.name }),
       ...(dto.scheduledAt !== undefined && { scheduledAt: new Date(dto.scheduledAt) }),
       ...(dto.location !== undefined && { location: dto.location }),
+      ...(dto.expectedHeadcount !== undefined && { expectedHeadcount: dto.expectedHeadcount }),
       ...(dto.isLocked !== undefined && { isLocked: dto.isLocked }),
       ...(dto.status !== undefined && { status: dto.status }),
     });

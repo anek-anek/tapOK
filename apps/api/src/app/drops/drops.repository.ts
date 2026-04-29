@@ -49,7 +49,12 @@ export class DropsRepository {
     return this.dropRepo.save(drop);
   }
 
-  async update(id: string, data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked'>>): Promise<void> {
+  async update(
+    id: string,
+    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked'>> & {
+      expectedHeadcount?: number | null;
+    },
+  ): Promise<void> {
     await this.dropRepo.update(id, data);
   }
 

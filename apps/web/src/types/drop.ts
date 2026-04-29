@@ -33,7 +33,7 @@ export interface Drop {
   name: string;
   scheduledAt: string;
   location: string;
-  expectedHeadcount?: number;
+  expectedHeadcount?: number | null;
   status: DropStatus;
   joinCode: string;
   shareUrl: string;
@@ -83,6 +83,7 @@ export interface UpdateDropDto {
   name?: string;
   scheduledAt?: string;
   location?: string;
+  expectedHeadcount?: number | null;
   isLocked?: boolean;
   status?: DropStatus;
 }

@@ -32,9 +32,9 @@ export class Drop {
   @Column()
   location: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, nullable: true, type: Number })
   @Column({ type: 'integer', nullable: true })
-  expectedHeadcount?: number;
+  expectedHeadcount?: number | null;
 
   @ApiProperty({ enum: DropStatus })
   @Column({ type: 'enum', enum: DropStatus, default: DropStatus.ACTIVE })

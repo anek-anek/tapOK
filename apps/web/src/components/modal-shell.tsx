@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const CLOSE_DURATION = 260;
+const CLOSE_DURATION = 180;
 
 export { CLOSE_DURATION };
 
@@ -28,10 +28,31 @@ export function ModalShell({
       if (e.key === 'Escape') triggerClose();
     };
     document.addEventListener('keydown', onKey);
+
+    // Lock scroll - more aggressive for cross-browser support
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+
+    // Calculate scrollbar width to prevent layout shift
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
+
+      const otherModals = document.querySelectorAll('.fixed.inset-0.z-50');
+      if (otherModals.length <= 1) {
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalHtmlOverflow;
+        document.body.style.paddingRight = originalPaddingRight;
+      }
     };
   }, [triggerClose]);
 
@@ -47,7 +68,7 @@ export function ModalShell({
         onClick={triggerClose}
       />
       <div
-        className="relative z-10 max-h-[92dvh] w-full overflow-hidden overflow-y-auto rounded-t-[28px] shadow-[0_40px_100px_rgba(42,33,24,0.45)] sm:max-w-[720px] sm:rounded-[28px]"
+        className="absolute inset-x-0 bottom-0 z-10 max-h-[92dvh] sm:relative sm:inset-x-auto sm:bottom-auto sm:w-full sm:max-w-[720px]"
         style={{
           animation: closing
             ? `tapok-slideDown ${CLOSE_DURATION}ms cubic-bezier(0.4,0,1,1) forwards`
