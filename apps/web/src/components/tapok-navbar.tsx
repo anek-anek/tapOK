@@ -33,6 +33,7 @@ export function TapokNavbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
@@ -59,6 +60,12 @@ export function TapokNavbar() {
       const current = window.scrollY;
       setVisible(current < lastScrollY.current || current < 10);
       lastScrollY.current = current;
+
+      // Calculate scroll progress
+      const winScroll = window.scrollY;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      setScrollProgress(scrolled);
     }
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -74,8 +81,15 @@ export function TapokNavbar() {
   return (
     <>
       <div className="h-[60px]" />
+      
+      {/* Progress Bar (Visible only when navbar is hidden) */}
+      <div 
+        className={`fixed left-0 top-0 z-[60] h-[3px] bg-[#006666] transition-all duration-300 ease-in-out ${!visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+        style={{ width: `${scrollProgress}%` }}
+      />
+
       <header
-        className={`fixed inset-x-0 top-0 z-20 border-b border-[#000]/10 bg-[#FFF4BD] shadow-[0_2px_12px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-in-out ${visible ? 'translate-y-0' : '-translate-y-full'}`}
+        className={`fixed inset-x-0 top-0 z-50 bg-[#FFF4BD] transition-transform duration-300 ease-in-out ${visible ? 'translate-y-0' : '-translate-y-full'}`}
       >
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-8">
           {/* Logo */}
@@ -83,7 +97,7 @@ export function TapokNavbar() {
             href="/"
             className={`${passionOne.className} inline-flex shrink-0 items-center gap-1.5 text-xl leading-none tracking-tight text-[#000] sm:text-2xl`}
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#006666] text-[#FFF4BD]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#006666] text-xl text-[#FFF4BD]">
               TAP
             </span>
             <span>OK</span>
@@ -117,13 +131,35 @@ export function TapokNavbar() {
               <>
                 <Link
                   href="/login"
-                  className={`${passionOne.className} hidden rounded-full border-2 border-[#000]/25 bg-transparent px-5 py-1.5 text-sm uppercase tracking-[1.5px] text-[#000] transition-colors hover:border-[#000]/50 sm:inline-flex sm:items-center`}
+                  className={`${passionOne.className} hidden rounded-full border-2 border-[#000]/25 bg-transparent px-5 py-1.5 text-base uppercase tracking-[1.5px] text-[#000] sm:inline-flex sm:items-center`}
+                  style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, border-color 0.18s ease' }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px) scale(1.04)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 18px rgba(0,0,0,0.13)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,0,0,0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = '';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '';
+                    (e.currentTarget as HTMLElement).style.borderColor = '';
+                  }}
                 >
                   Log In
                 </Link>
                 <Link
                   href="/login"
-                  className={`${passionOne.className} inline-flex items-center rounded-full bg-[#006666] px-5 py-1.5 text-sm uppercase tracking-[1.5px] text-white transition-colors hover:bg-[#005555]`}
+                  className={`${passionOne.className} inline-flex items-center rounded-full bg-[#006666] px-5 py-1.5 text-base uppercase tracking-[1.5px] text-white`}
+                  style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease' }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px) scale(1.04)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 22px rgba(0,102,102,0.35)';
+                    (e.currentTarget as HTMLElement).style.backgroundColor = '#005555';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = '';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '';
+                    (e.currentTarget as HTMLElement).style.backgroundColor = '';
+                  }}
                 >
                   Sign Up
                 </Link>
