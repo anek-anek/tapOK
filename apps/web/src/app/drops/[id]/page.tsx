@@ -29,6 +29,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { DropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
+import { DigitalTicket } from '@/components/drops/DigitalTicket';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence } from '@/hooks/mutations/use-drop-mutations';
@@ -36,21 +37,21 @@ import type { DropStatus } from '@/types/drop';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
   active: {
-    label: 'Active',
-    tone: 'bg-emerald-500/10 text-emerald-800 border-emerald-500/20',
-    dot: 'bg-emerald-500',
+    label: 'Live Now',
+    tone: 'bg-emerald-500 text-white border-black',
+    dot: 'bg-white',
     pulse: true,
   },
   ongoing: {
     label: 'Ongoing',
-    tone: 'bg-amber-500/10 text-amber-800 border-amber-500/20',
-    dot: 'bg-amber-500',
+    tone: 'bg-amber-400 text-black border-black',
+    dot: 'bg-black',
     pulse: false,
   },
   completed: {
-    label: 'Completed',
-    tone: 'bg-[#2a2118]/6 text-[#2a2118]/46 border-[#2a2118]/10',
-    dot: 'bg-[#2a2118]/36',
+    label: 'Finished',
+    tone: 'bg-[#1C1C1A]/10 text-[#1C1C1A]/40 border-[#1C1C1A]/10',
+    dot: 'bg-[#1C1C1A]/20',
     pulse: false,
   },
 };
@@ -58,14 +59,14 @@ const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string
 function StatusPill({ status }: { status: DropStatus }) {
   const meta = STATUS_META[status];
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-passion text-[9px] font-bold uppercase tracking-[2.1px] ${meta.tone}`}>
+    <span className={`inline-flex items-center gap-2 rounded-sm border-2 px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-[1.5px] shadow-[2px_2px_0px_#1C1C1A] ${meta.tone}`}>
       {meta.pulse ? (
-        <span className="relative flex h-1.5 w-1.5 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-          <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+          <span className={`relative inline-flex h-2 w-2 rounded-full ${meta.dot}`} />
         </span>
       ) : (
-        <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+        <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
       )}
       {meta.label}
     </span>
@@ -118,36 +119,36 @@ function LeaveConfirmModal({
   isPending: boolean;
 }) {
   return (
-    <ModalShell onClose={!isPending ? onClose : () => {}}>
+    <ModalShell onClose={!isPending ? onClose : () => { }}>
       {(close) => (
-        <div className="bg-[#F7E9B2] p-5 sm:p-6">
-          <div className="mb-1 flex items-start justify-between gap-3">
-            <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-red-600">
-              Leave drop
+        <div className="rounded-[4px] border-[3px] border-tok-black bg-[#FFF4BD] p-6 shadow-[8px_8px_0px_#1C1C1A]">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <p className="font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-red-600">
+              Abandon Drop
             </p>
             <button
               type="button"
               onClick={close}
               disabled={isPending}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/10 text-[#2a2118]/40 transition-colors hover:border-[#2a2118]/20 hover:text-[#2a2118] disabled:opacity-40"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-colors hover:bg-red-50 disabled:opacity-40"
             >
-              <IconX size={14} />
+              <IconX size={16} strokeWidth={2.5} />
             </button>
           </div>
-          <h3 className="mt-1 font-passion text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
-            Are you sure?
+          <h3 className="mt-1 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
+            ARE YOU SURE?
           </h3>
-          <p className="mt-2 text-[13px] leading-6 text-[#2a2118]/64">
+          <p className="mt-3 font-inter text-sm leading-relaxed text-tok-black/60">
             You&apos;ll be removed from{' '}
-            <span className="font-semibold text-[#2a2118]">{dropName}</span> and lose
-            access immediately. You can rejoin later using the join code.
+            <span className="font-bold text-tok-black">{dropName}</span> and lose
+            access immediately. Re-entry requires the join code.
           </p>
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={close}
               disabled={isPending}
-              className="flex-1 rounded-[18px] border border-[#2a2118]/12 bg-white/70 py-3 font-passion text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118] transition-colors hover:bg-white/90 disabled:opacity-40"
+              className="flex-1 rounded-[4px] border-[3px] border-tok-black bg-white py-3.5 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40"
             >
               Cancel
             </button>
@@ -155,7 +156,7 @@ function LeaveConfirmModal({
               type="button"
               onClick={onConfirm}
               disabled={isPending}
-              className="flex-1 rounded-[18px] bg-red-600 py-3 font-passion text-[10px] font-bold uppercase tracking-[2px] text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+              className="flex-1 rounded-[4px] border-[3px] border-tok-black bg-red-500 py-3.5 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-60"
             >
               {isPending ? 'Leaving…' : 'Leave drop'}
             </button>
@@ -168,23 +169,26 @@ function LeaveConfirmModal({
 
 function PageSkeleton() {
   return (
-    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
+    <div className="min-h-screen bg-[#FFF4BD] text-[#1C1C1A]">
       <TapokNavbar />
-      <main className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
-        <Skeleton className="mb-6 h-4 w-20 rounded-full bg-[#2a2118]/10" />
-        <div className="mb-8 flex items-center gap-4">
-          <Skeleton className="h-14 w-14 rounded-full bg-[#2a2118]/10" />
-          <div className="space-y-2">
-            <Skeleton className="h-3 w-16 rounded-full bg-[#2a2118]/10" />
-            <Skeleton className="h-7 w-52 rounded bg-[#2a2118]/10" />
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10">
+        <Skeleton className="mb-8 h-4 w-24 rounded-full bg-black/5" />
+        <div className="mb-10 rounded-[4px] border-[3px] border-black bg-tok-teal/20 p-6 sm:p-10 lg:p-12 shadow-[8px_8px_0px_rgba(0,0,0,0.1)]">
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-32 rounded-sm bg-black/10" />
+            <Skeleton className="h-16 w-3/4 rounded bg-black/10" />
+            <div className="flex gap-4">
+              <Skeleton className="h-4 w-40 rounded-full bg-black/10" />
+              <Skeleton className="h-4 w-40 rounded-full bg-black/10" />
+            </div>
           </div>
         </div>
-        <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
-          <div className="space-y-4">
-            <Skeleton className="h-44 rounded-[28px] border border-[#2a2118]/10 bg-white/55" />
-            <Skeleton className="h-64 rounded-[28px] border border-[#2a2118]/10 bg-white/55" />
+        <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+          <div className="space-y-8">
+            <Skeleton className="h-64 rounded-[4px] border-[3px] border-black/10 bg-white/50" />
+            <Skeleton className="h-96 rounded-[4px] border-[3px] border-black/10 bg-white/50" />
           </div>
-          <Skeleton className="h-80 rounded-[28px] border border-[#2a2118]/10 bg-white/55" />
+          <Skeleton className="h-[500px] rounded-[4px] border-[3px] border-black/10 bg-white/50" />
         </div>
       </main>
     </div>
@@ -216,25 +220,25 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
   if (isError || !drop) {
     return (
-      <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
+      <div className="min-h-screen bg-[#FFF4BD] text-tok-black">
         <TapokNavbar />
-        <main className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
-          <div className="rounded-[24px] border border-[#2a2118]/10 bg-white/72 p-5 shadow-[0_14px_40px_rgba(42,33,24,0.05)] sm:rounded-[28px] sm:p-8">
-            <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
-              Not found
+        <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-10">
+          <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-8 shadow-[8px_8px_0px_#1C1C1A] sm:p-12">
+            <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+              System Error
             </p>
-            <h2 className="mt-3 font-passion text-[24px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
-              We could not find this Drop.
+            <h2 className="mt-4 font-passion text-[clamp(28px,4vw,48px)] font-bold uppercase tracking-tight text-tok-black">
+              Drop not found.
             </h2>
-            <p className="mt-3 max-w-xl text-[14px] leading-7 text-[#2a2118]/64">
-              It may have been removed or the link is incorrect.
+            <p className="mt-4 max-w-xl font-inter text-base leading-relaxed text-tok-black/60">
+              This drop may have been purged, or the link provided is invalid. Check the join code and try again.
             </p>
             <Link
               href="/drops"
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-tok-teal px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90"
+              className="mt-8 inline-flex items-center gap-2.5 rounded-[4px] border-[3px] border-tok-black bg-tok-teal px-6 py-3.5 font-passion text-sm font-bold uppercase tracking-[2px] text-white transition-all hover:-translate-y-1 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
             >
-              <IconArrowLeft size={13} />
-              Back to Drops
+              <IconArrowLeft size={16} strokeWidth={2.5} />
+              Return to Board
             </Link>
           </div>
         </main>
@@ -249,410 +253,311 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
 
   return (
-    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
-      <div
-        className="pointer-events-none fixed inset-0 opacity-[0.12]"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 1px 1px, rgba(42,33,24,0.42) 1px, transparent 0)',
-          backgroundSize: '28px 28px',
-        }}
+    <div className="min-h-screen bg-[#FFF4BD] font-inter text-[#1C1C1A] selection:bg-tok-teal/15">
+      {/* Visual background flourishes */}
+      <div className="pointer-events-none fixed inset-0 opacity-[0.03]"
+        style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #000 1px, transparent 0)', backgroundSize: '24px 24px' }}
       />
-      <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(circle_at_top_left,rgba(0,102,102,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(42,33,24,0.08),transparent_28%)]" />
 
       <TapokNavbar />
 
-      <main className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+      <main className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10">
         {/* Back */}
         <Link
           href="/drops"
-          className="mb-6 inline-flex items-center gap-2 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/40 transition-colors hover:text-[#2a2118]/70"
+          className="mb-8 inline-flex items-center gap-2 font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-[#1C1C1A]/40 transition-colors hover:text-[#1C1C1A]"
         >
-          <IconArrowLeft size={13} />
-          Drops
+          <IconArrowLeft size={14} strokeWidth={2.5} />
+          Back to Drops
         </Link>
 
-        {/* Hero */}
-        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-tok-teal font-passion text-[13px] font-bold tracking-widest text-[#F7E9B2] sm:h-14 sm:w-14 sm:text-[14px]">
-              {getInitials(drop.name)}
-            </div>
-            <div className="min-w-0">
-              <StatusPill status={drop.status} />
-              <h1 className="mt-1.5 font-passion text-[clamp(22px,3.2vw,36px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
+        {/* Billboard Hero Section */}
+        <section className="relative mb-10 overflow-hidden rounded-[4px] border-[3px] border-tok-black bg-tok-teal p-6 shadow-[8px_8px_0px_#1C1C1A] sm:p-10 lg:p-12">
+          {/* Subtle noise/texture overlay would go here if needed */}
+          <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+            <div className="flex-1">
+              <div className="mb-4 flex items-center gap-3">
+                <StatusPill status={drop.status} />
+                <span className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-[#F7E9B2]/40">
+                  CODE: {drop.joinCode}
+                </span>
+              </div>
+              <h1 className="font-passion text-[clamp(36px,6vw,72px)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-[#F7E9B2]">
                 {drop.name}
               </h1>
+              <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
+                <div className="flex items-center gap-2.5 text-[#F7E9B2]/70">
+                  <IconCalendar size={16} className="text-[#F7E9B2]/40" strokeWidth={2.5} />
+                  <span className="font-passion text-sm font-bold uppercase tracking-wider">{formatDateTime(drop.scheduledAt)}</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-[#F7E9B2]/70">
+                  <IconMapPin size={16} className="text-[#F7E9B2]/40" strokeWidth={2.5} />
+                  <span className="font-passion text-sm font-bold uppercase tracking-wider">{drop.location}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShareModalOpen(true)}
+                className="group relative flex h-12 items-center gap-2.5 rounded-[4px] border-[3px] border-tok-black bg-white px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] lg:hidden"
+              >
+                <IconShare2 size={16} strokeWidth={2.5} />
+                Share
+              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(true)}
+                  className="group relative flex h-12 items-center gap-2.5 rounded-[4px] border-[3px] border-tok-black bg-[#F7E9B2] px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A]"
+                >
+                  <IconEdit size={16} strokeWidth={2.5} />
+                  Edit Drop
+                </button>
+              )}
+              {canLeave && (
+                <button
+                  type="button"
+                  onClick={() => setLeaveModalOpen(true)}
+                  className="group relative flex h-12 items-center gap-2.5 rounded-[4px] border-[3px] border-tok-black bg-red-500 px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A]"
+                >
+                  <IconLogOut size={16} strokeWidth={2.5} />
+                  Leave
+                </button>
+              )}
             </div>
           </div>
-
-          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
-            <button
-              type="button"
-              onClick={() => setShareModalOpen(true)}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/75 px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118]/56 transition-colors hover:border-[#2a2118]/18 hover:text-[#2a2118] sm:flex-none"
-            >
-              <IconShare2 size={13} />
-              Share
-            </button>
-            {canEdit && (
-              <button
-                type="button"
-                onClick={() => setEditModalOpen(true)}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[#2a2118]/12 bg-[#F7E9B2] px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-[#2a2118] transition-colors hover:bg-[#FFF2C7] sm:flex-none"
-              >
-                <IconEdit size={13} />
-                Edit
-              </button>
-            )}
-            {canLeave && (
-              <button
-                type="button"
-                onClick={() => setLeaveModalOpen(true)}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[2.1px] text-red-600 transition-colors hover:bg-red-100 sm:flex-none"
-              >
-                <IconLogOut size={13} />
-                Leave
-              </button>
-            )}
+          {/* Big decorative background initials */}
+          <div className="pointer-events-none absolute -bottom-10 -right-4 font-passion text-[180px] font-bold leading-none text-[#F7E9B2]/5 opacity-20 select-none">
+            {getInitials(drop.name)}
           </div>
-        </div>
+        </section>
 
-        {/* Two-column layout */}
-        <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
-          {/* Left column */}
-          <div className="order-2 space-y-4 lg:order-1">
-            {/* Details card */}
-            <div className="rounded-[24px] border border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px] sm:p-6">
-              <p className="mb-4 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
-                Drop details
-              </p>
-              <div className="space-y-3.5">
-                <div className="flex items-center gap-3 text-[14px] text-[#2a2118]/72">
-                  <IconCalendar size={14} className="shrink-0 text-[#2a2118]/36" />
-                  {formatDateTime(drop.scheduledAt)}
-                </div>
-                <div className="flex items-center gap-3 text-[14px] text-[#2a2118]/72">
-                  <IconMapPin size={14} className="shrink-0 text-[#2a2118]/36" />
-                  {drop.location}
-                </div>
-                {drop.expectedHeadcount && (
-                  <div className="flex items-center gap-3 text-[14px] text-[#2a2118]/72">
-                    <IconTicket size={14} className="shrink-0 text-[#2a2118]/36" />
-                    {drop.expectedHeadcount} expected
-                  </div>
-                )}
-                <div className="flex items-center gap-3 text-[14px] text-[#2a2118]/72">
-                  <IconUsers size={14} className="shrink-0 text-[#2a2118]/36" />
-                  <span className="min-w-0 wrap-break-word">
-                    Organised by{' '}
-                    <span className="font-semibold text-[#2a2118]">
-                      {drop.organiser.firstName} {drop.organiser.lastName}
-                    </span>
-                    {isOrganiser && (
-                      <span className="ml-1.5 inline-flex items-center rounded-full border border-tok-teal/20 bg-tok-teal/10 px-2 py-0.5 font-passion text-[8px] font-bold uppercase tracking-[1.5px] text-tok-teal">
-                        You
-                      </span>
-                    )}
-                  </span>
-                </div>
-                {!isOrganiser && crewStatus?.status === 'in' && (
-                  <div className="flex items-center gap-2">
-                    <IconCheckCircle size={14} className="shrink-0 text-tok-teal" />
-                    <span className="inline-flex items-center rounded-full border border-tok-teal/20 bg-tok-teal/10 px-2.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-tok-teal">
-                      You&apos;re In
-                    </span>
-                  </div>
-                )}
-                {!isOrganiser && crewStatus?.status === 'in' && !isCompleted && (
-                  <div className="flex items-center gap-3 pt-1">
-                    <p className="font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/40">
-                      Mark presence
+        {/* Content Grid */}
+        <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+          {/* Left: Ledger & Activity */}
+          <div className="order-2 lg:order-1">
+            {/* Presence / Quick Action for Crew */}
+            {!isOrganiser && crewStatus?.status === 'in' && !isCompleted && (
+              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
+                <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                  <div>
+                    <p className="font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-tok-teal">
+                      Your Attendance
                     </p>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        disabled={isUpdatingPresence}
-                        onClick={() => updatePresence(true)}
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[1.8px] transition-colors disabled:opacity-50 ${
-                          crewStatus.isPresent
-                            ? 'border-tok-teal bg-tok-teal text-[#F7E9B2]'
-                            : 'border-tok-teal/20 bg-transparent text-tok-teal hover:bg-tok-teal/10'
+                    <h3 className="mt-1 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
+                      Are you hitting this drop?
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={isUpdatingPresence}
+                      onClick={() => updatePresence(true)}
+                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${crewStatus?.isPresent
+                        ? 'bg-tok-teal text-white shadow-none'
+                        : 'bg-white text-tok-teal hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A]'
                         }`}
-                      >
-                        Marked In
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isUpdatingPresence}
-                        onClick={() => updatePresence(false)}
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[1.8px] transition-colors disabled:opacity-50 ${
-                          !crewStatus.isPresent
-                            ? 'border-red-500 bg-red-500 text-white'
-                            : 'border-red-200 bg-transparent text-red-500 hover:bg-red-50'
+                    >
+                      {crewStatus?.isPresent ? 'I am In' : 'Tap In'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isUpdatingPresence}
+                      onClick={() => updatePresence(false)}
+                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${!crewStatus?.isPresent
+                        ? 'bg-red-500 text-white shadow-none'
+                        : 'bg-white text-red-500 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A]'
                         }`}
-                      >
-                        Marked Out
-                      </button>
+                    >
+                      {!crewStatus?.isPresent ? 'I am Out' : 'Tap Out'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Pending Approvals */}
+            {isOrganiser && !isCompleted && pendingMembers.length > 0 && (
+              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-amber-400 p-1 shadow-[6px_6px_0px_#1C1C1A]">
+                <div className="bg-amber-400 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <IconClock size={16} strokeWidth={2.5} className="text-tok-black" />
+                      <h2 className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black">
+                        Join Requests ({pendingMembers.length})
+                      </h2>
                     </div>
                   </div>
-                )}
-                {!isOrganiser && crewStatus?.status === 'pending' && (
-                  <div className="flex items-center gap-2">
-                    <IconClock size={14} className="shrink-0 text-amber-700" />
-                    <span className="inline-flex items-center rounded-full border border-amber-400/30 bg-amber-100/80 px-2.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-amber-700">
-                      Awaiting Approval
-                    </span>
-                  </div>
-                )}
-                {!isOrganiser && crewStatus?.status === 'rejected' && (
-                  <div className="flex items-center gap-2">
-                    <IconBan size={14} className="shrink-0 text-red-600" />
-                    <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-red-600">
-                      Request Rejected
-                    </span>
-                  </div>
-                )}
-                {!isOrganiser && crewStatus?.status === 'removed' && (
-                  <div className="flex flex-col gap-2">
+                </div>
+                <div className="space-y-1">
+                  {pendingMembers.map((member) => (
+                    <div key={member.id} className="flex flex-col gap-4 bg-white p-6 sm:flex-row sm:items-center">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-amber-400 font-passion text-sm font-bold text-tok-black">
+                          {getLogInitials(member.user.firstName, member.user.lastName)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
+                            {member.user.firstName} {member.user.lastName}
+                          </p>
+                          <p className="font-inter text-xs font-medium text-tok-black/50">
+                            Requested {formatLogTime(member.joinedAt)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => rejectJoinRequest(member.userId)}
+                          disabled={(isRejecting && rejectingUserId === member.userId) || (isApproving && approvingUserId === member.userId)}
+                          className="h-10 flex-1 rounded-[4px] border-2 border-tok-black bg-white px-4 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-red-600 hover:bg-red-50 disabled:opacity-50 sm:flex-none"
+                        >
+                          Reject
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => approveJoinRequest(member.userId)}
+                          disabled={(isApproving && approvingUserId === member.userId) || (isRejecting && rejectingUserId === member.userId)}
+                          className="h-10 flex-1 rounded-[4px] border-2 border-tok-black bg-tok-teal px-4 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-white hover:bg-tok-teal/90 disabled:opacity-50 sm:flex-none"
+                        >
+                          {isApproving && approvingUserId === member.userId ? '...' : 'Approve'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Crew Roster */}
+            {isOrganiser && activeMembers.length > 0 && (
+              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]">
+                <div className="border-b-[3px] border-tok-black bg-tok-teal/5 px-6 py-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <IconUsers size={18} strokeWidth={2.5} className="text-tok-teal" />
+                      <h2 className="font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
+                        The Crew
+                      </h2>
+                    </div>
                     <div className="flex items-center gap-2">
-                      <IconBan size={14} className="shrink-0 text-red-700" />
-                      <span className="inline-flex items-center rounded-full border border-red-300 bg-red-100 px-2.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-red-700">
-                        Removed
+                      <span className="rounded-sm border-2 border-tok-black bg-emerald-500 px-2.5 py-0.5 font-passion text-[10px] font-bold uppercase tracking-wider text-white">
+                        {activeMembers.filter((m) => m.isPresent).length} In
+                      </span>
+                      <span className="rounded-sm border-2 border-tok-black bg-red-500 px-2.5 py-0.5 font-passion text-[10px] font-bold uppercase tracking-wider text-white">
+                        {activeMembers.filter((m) => !m.isPresent).length} Out
                       </span>
                     </div>
-                    {!isCompleted && (
-                      <Link
-                        href={`/drops/join/${drop.joinCode}`}
-                        className="inline-flex w-fit items-center gap-1.5 rounded-full border border-tok-teal/20 bg-tok-teal/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-tok-teal transition-colors hover:bg-tok-teal/15"
-                      >
-                        Re-join Drop
-                      </Link>
-                    )}
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Pending requests — organiser only, hidden once completed */}
-            {isOrganiser && !isCompleted && pendingMembers.length > 0 && (
-              <div className="rounded-[28px] border border-amber-400/30 bg-amber-50/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
-                <div className="flex items-center gap-2 px-6 pt-5 pb-4">
-                  <IconClock size={13} className="text-amber-700" />
-                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-amber-700/70">
-                    Pending requests
-                  </p>
-                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/30 font-passion text-[10px] font-bold text-amber-800">
-                    {pendingMembers.length}
-                  </span>
                 </div>
-                {pendingMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center gap-4 border-t border-amber-400/20 px-6 py-4"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400/20 font-passion text-[10px] font-extrabold tracking-[0.5px] text-amber-800">
-                      {getLogInitials(member.user.firstName, member.user.lastName)}
+                <div className="divide-y-2 divide-tok-black/5">
+                  {activeMembers.map((member) => (
+                    <div key={member.id} className="flex items-center gap-4 px-6 py-5 transition-colors hover:bg-tok-teal/2">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-teal font-passion text-sm font-bold text-[#F7E9B2]">
+                        {getLogInitials(member.user.firstName, member.user.lastName)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
+                          {member.user.firstName} {member.user.lastName}
+                        </p>
+                        <p className="font-inter text-xs text-tok-black/40">
+                          Joined {formatLogTime(member.joinedAt)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className={`font-passion text-sm font-bold uppercase tracking-widest ${member.isPresent ? 'text-emerald-600' : 'text-red-500'}`}>
+                          {member.isPresent ? 'PRESENT' : 'ABSENT'}
+                        </span>
+                        {!isCompleted && (
+                          <button
+                            type="button"
+                            onClick={() => removeCrewMember(member.userId)}
+                            disabled={isRemoving && removingUserId === member.userId}
+                            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-red-500 hover:bg-red-50 disabled:opacity-50"
+                            title="Remove from crew"
+                          >
+                            <IconUserX size={16} strokeWidth={2.5} />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-semibold text-[#2a2118]">
-                        {member.user.firstName} {member.user.lastName}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-[#2a2118]/40">
-                        Requested {formatLogTime(member.joinedAt)}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => rejectJoinRequest(member.userId)}
-                        disabled={(isRejecting && rejectingUserId === member.userId) || (isApproving && approvingUserId === member.userId)}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 font-passion text-[9px] font-bold uppercase tracking-[2px] text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
-                      >
-                        <IconUserX size={12} />
-                        {isRejecting && rejectingUserId === member.userId ? 'Rejecting…' : 'Reject'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => approveJoinRequest(member.userId)}
-                        disabled={(isApproving && approvingUserId === member.userId) || (isRejecting && rejectingUserId === member.userId)}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-tok-teal px-3.5 py-2 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90 disabled:opacity-50"
-                      >
-                        <IconUserCheck size={12} />
-                        {isApproving && approvingUserId === member.userId ? 'Approving…' : 'Approve'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Active crew members — organiser only */}
-            {isOrganiser && activeMembers.length > 0 && (
-              <div className="rounded-[28px] border border-tok-teal/20 bg-tok-teal/5 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
-                <div className="flex items-center gap-2 px-6 pt-5 pb-4">
-                  <IconUsers size={13} className="text-tok-teal" />
-                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-teal/70">
-                    Crew members
-                  </p>
-                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-tok-teal/15 font-passion text-[10px] font-bold text-tok-teal">
-                    {activeMembers.length}
-                  </span>
+            {/* Activity Ledger */}
+            <div className="rounded-[4px] border-[3px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]">
+              <div className="border-b-[3px] border-tok-black bg-tok-teal/8 px-6 py-5">
+                <div className="flex items-center gap-3">
+                  <IconActivity size={18} strokeWidth={2.5} className="text-tok-teal" />
+                  <h2 className="font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
+                    Drop Log
+                  </h2>
                 </div>
-                <div className="flex items-center gap-3 border-t border-tok-teal/10 px-6 py-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-tok-teal/25 bg-tok-teal/10 px-3 py-1 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-tok-teal">
-                    <span className="h-1.5 w-1.5 rounded-full bg-tok-teal" />
-                    {activeMembers.filter((m) => m.isPresent).length} In
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-red-600">
-                    <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
-                    {activeMembers.filter((m) => !m.isPresent).length} Out
-                  </span>
-                </div>
-                {activeMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center gap-4 border-t border-tok-teal/10 px-6 py-4"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-tok-teal/15 font-passion text-[10px] font-extrabold tracking-[0.5px] text-tok-teal">
-                      {getLogInitials(member.user.firstName, member.user.lastName)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-semibold text-[#2a2118]">
-                        {member.user.firstName} {member.user.lastName}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-[#2a2118]/40">
-                        Joined {formatLogTime(member.joinedAt)}
-                      </p>
-                    </div>
-                    <span
-                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 font-passion text-[9px] font-bold uppercase tracking-[1.8px] ${
-                        member.isPresent
-                          ? 'border-tok-teal/25 bg-tok-teal/10 text-tok-teal'
-                          : 'border-red-200 bg-red-50 text-red-500'
-                      }`}
-                    >
-                      {member.isPresent ? 'In' : 'Out'}
-                    </span>
-                    {!isCompleted && (
-                      <button
-                        type="button"
-                        onClick={() => removeCrewMember(member.userId)}
-                        disabled={isRemoving && removingUserId === member.userId}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 font-passion text-[9px] font-bold uppercase tracking-[2px] text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
-                      >
-                        <IconUserX size={12} />
-                        {isRemoving && removingUserId === member.userId ? 'Removing…' : 'Remove'}
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Activity log */}
-            <div className="overflow-hidden rounded-[24px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px]">
-              <div className="flex items-center gap-2 px-4 pb-4 pt-5 sm:px-6">
-                <IconActivity size={13} className="text-tok-teal" />
-                <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
-                  Activity
-                </p>
               </div>
 
               {!drop.activityLogs || drop.activityLogs.length === 0 ? (
-                <div className="border-t border-[#2a2118]/6 px-4 py-6 text-center sm:px-6">
-                  <p className="font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
-                    No activity yet
+                <div className="px-6 py-12 text-center">
+                  <p className="font-passion text-sm font-bold uppercase tracking-[3px] text-black/20">
+                    Quiet on the deck
                   </p>
                 </div>
               ) : (
-                drop.activityLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="flex items-start gap-3 border-t border-[#2a2118]/6 px-4 py-4 transition-colors hover:bg-[#2a2118]/1.5 sm:items-center sm:gap-4 sm:px-6"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-tok-teal/12 font-passion text-[10px] font-extrabold tracking-[0.5px] text-tok-teal">
-                      {getLogInitials(log.user.firstName, log.user.lastName)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] leading-[1.4] text-[#2a2118]/72">
-                        <strong className="font-semibold text-[#2a2118]">
-                          {log.user.firstName} {log.user.lastName}
-                        </strong>{' '}
-                        {{
-                          created: 'created this drop',
-                          joined: 'joined this drop',
-                          join_requested: 'requested to join this drop',
-                          join_request_approved: 'approved a join request',
-                          join_request_rejected: 'rejected a join request',
-                          left: 'left this drop',
-                          updated: 'updated this drop',
-                          member_removed: 'removed a crew member from this drop',
-                          marked_in: 'marked themselves in',
-                          marked_out: 'marked themselves out',
-                          marked_ongoing: 'marked this drop as ongoing',
-                          marked_completed: 'marked this drop as completed',
-                        }[log.action] ?? log.action.replace(/_/g, ' ')}
-                        {log.action === 'updated' && log.changedFields && Object.keys(log.changedFields).length > 0 && (
-                          <span className="text-[#2a2118]/40">
-                            {' '}
-                            ({Object.keys(log.changedFields).join(', ')})
+                <div className="divide-y divide-tok-black/5">
+                  {drop.activityLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="flex items-start gap-5 px-6 py-5 transition-colors hover:bg-tok-teal/1"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-teal/10 font-passion text-[10px] font-bold text-tok-teal">
+                        {getLogInitials(log.user.firstName, log.user.lastName)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-inter text-sm leading-relaxed text-tok-black/80">
+                          <span className="font-passion text-base font-bold uppercase tracking-tight text-tok-black">
+                            {log.user.firstName} {log.user.lastName}
                           </span>
-                        )}
-                      </p>
-                      <p className="mt-1 text-[11px] text-[#2a2118]/40">
-                        {formatLogTime(log.createdAt)}
-                      </p>
+                          {' '}
+                          <span className="font-medium">
+                            {{
+                              created: 'initiated the drop',
+                              joined: 'boarded the crew',
+                              join_requested: 'sent a join request',
+                              join_request_approved: 'cleared a join request',
+                              join_request_rejected: 'denied a join request',
+                              left: 'abandoned ship',
+                              updated: 'modified the plan',
+                              member_removed: 'ejected a crew member',
+                              marked_in: 'tapped IN',
+                              marked_out: 'tapped OUT',
+                              marked_ongoing: 'pushed the drop LIVE',
+                              marked_completed: 'closed the mission',
+                            }[log.action] ?? log.action.replace(/_/g, ' ')}
+                          </span>
+                          {log.action === 'updated' && log.changedFields && Object.keys(log.changedFields).length > 0 && (
+                            <span className="block mt-1 font-mono text-[10px] text-tok-black/40">
+                              FIELDS: {Object.keys(log.changedFields).join(', ').toUpperCase()}
+                            </span>
+                          )}
+                        </p>
+                        <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
+                          {formatLogTime(log.createdAt)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           </div>
 
-          {/* Right column — Share */}
-          <div className="order-1 rounded-[24px] border border-[#2a2118]/10 bg-white/70 p-4 shadow-[0_10px_28px_rgba(42,33,24,0.06)] sm:rounded-[28px] sm:p-6 lg:order-2 lg:self-start">
-            <p className="mb-4 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
-              Share
-            </p>
-
-            <div className="flex justify-center rounded-[20px] bg-[#F7E9B2]/60 p-5">
-              <QRCodeSVG value={shareUrl} size={160} bgColor="transparent" fgColor="#2a2118" level="M" />
-            </div>
-
-            <div className="mt-3 rounded-[18px] border border-[#2a2118]/10 bg-[#F7E9B2]/50 px-4 py-3">
-              <p className="font-passion text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
-                Join code
-              </p>
-              <div className="mt-1 flex items-center justify-between gap-3">
-                <p className="font-passion text-[22px] font-bold tracking-[0.18em] text-[#2a2118]">
-                  {drop.joinCode}
-                </p>
-                <CopyButton text={drop.joinCode} />
-              </div>
-            </div>
-
-            <div className="mt-2 rounded-[18px] border border-[#2a2118]/10 bg-[#F7E9B2]/50 px-4 py-3">
-              <p className="font-passion text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
-                Share link
-              </p>
-              <div className="mt-1.5 flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate font-inter text-[11px] text-[#2a2118]/46">
-                  {shareUrl}
-                </span>
-                <CopyButton text={shareUrl} />
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShareModalOpen(true)}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-[18px] bg-tok-teal py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90"
-            >
-              <IconShare2 size={13} />
-              Share drop
-            </button>
-          </div>
+          {/* Right: Digital Ticket Sidebar (Desktop Only) */}
+          <aside className="order-1 hidden lg:block lg:order-2 lg:self-start">
+            <DigitalTicket drop={drop} />
+          </aside>
         </div>
       </main>
 
@@ -693,9 +598,9 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#2a2118]/10 bg-white/80 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/56 transition-colors hover:text-[#2a2118]"
+      className="inline-flex shrink-0 items-center gap-2 rounded-sm border-2 border-tok-black bg-white px-3 py-1.5 font-passion text-[10px] font-bold uppercase tracking-[1px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
     >
-      {copied ? <IconCheckCheck size={12} /> : <IconCopy size={12} />}
+      {copied ? <IconCheckCheck size={14} strokeWidth={2.5} /> : <IconCopy size={14} strokeWidth={2.5} />}
       {copied ? 'Copied' : 'Copy'}
     </button>
   );

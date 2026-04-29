@@ -13,6 +13,7 @@ import {
   Clock as IconClock,
   LogIn as IconLogIn,
   UserPlus as IconUserPlus,
+  ArrowRight as IconArrowRight,
 } from 'lucide-react';
 import { useDropByJoinCode, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
@@ -66,24 +67,26 @@ function JoinCta({
   dbUser,
   joinCode,
 }: JoinCtaProps) {
+  const baseBtn = "inline-flex w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black px-6 py-4 font-passion text-[13px] font-bold uppercase tracking-[2px] transition-all hover:-translate-y-0.5 active:translate-y-0";
+
   if (!dbUser) {
     return (
-      <div className="text-center">
-        <p className="font-inter text-[11px] text-[#2a2118]/55">
-          Sign in to tap in to this drop.
+      <div className="space-y-3">
+        <p className="mb-4 text-center font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black/40">
+          SIGN IN TO JOIN THE CREW
         </p>
         <Link
           href={`/register?redirectTo=/drops/join/${joinCode}`}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90"
+          className={`${baseBtn} bg-tok-teal text-[#F7E9B2] shadow-[6px_6px_0px_#1C1C1A] hover:shadow-[8px_8px_0px_#1C1C1A]`}
         >
-          <IconUserPlus size={13} />
+          <IconUserPlus size={16} strokeWidth={2.5} />
           Sign up to Tap In
         </Link>
         <Link
           href={`/login?redirectTo=/drops/join/${joinCode}`}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
+          className={`${baseBtn} bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] hover:shadow-[6px_6px_0px_#1C1C1A]`}
         >
-          <IconLogIn size={13} />
+          <IconLogIn size={16} strokeWidth={2.5} />
           Log in
         </Link>
       </div>
@@ -93,15 +96,16 @@ function JoinCta({
   if (isOrganiser) {
     return (
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-tok-teal/10 px-4 py-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-tok-teal" />
-          <span className="font-inter text-[11px] font-medium text-tok-teal">You organised this drop</span>
+        <div className="mb-6 inline-flex items-center gap-2 rounded-sm border-2 border-tok-teal/20 bg-tok-teal/5 px-4 py-2">
+          <span className="h-2 w-2 rounded-full bg-tok-teal animate-pulse" />
+          <span className="font-passion text-[11px] font-bold uppercase tracking-[1px] text-tok-teal">YOU ORGANISED THIS DROP</span>
         </div>
         <button
           onClick={onViewDrop}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
+          className={`${baseBtn} bg-white text-tok-black shadow-[6px_6px_0px_#1C1C1A] hover:shadow-[8px_8px_0px_#1C1C1A]`}
         >
-          View Drop
+          View Dashboard
+          <IconArrowRight size={16} strokeWidth={2.5} />
         </button>
       </div>
     );
@@ -110,18 +114,16 @@ function JoinCta({
   if (crewStatus === 'in') {
     return (
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-tok-teal/10 px-4 py-2">
-          <IconCheckCircle size={13} className="text-tok-teal" />
-          <span className="font-inter text-[11px] font-medium text-tok-teal">You&apos;re In</span>
+        <div className="mb-6 inline-flex items-center gap-2 rounded-sm border-2 border-tok-teal/20 bg-tok-teal/5 px-4 py-2">
+          <IconCheckCircle size={14} className="text-tok-teal" strokeWidth={2.5} />
+          <span className="font-passion text-[11px] font-bold uppercase tracking-[1px] text-tok-teal">YOU&apos;RE LOCKED IN</span>
         </div>
-        <p className="mt-2 font-inter text-[10px] text-[#2a2118]/40">
-          You&apos;re locked in. Everyone knows where you stand.
-        </p>
         <button
           onClick={onViewDrop}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
+          className={`${baseBtn} bg-white text-tok-black shadow-[6px_6px_0px_#1C1C1A] hover:shadow-[8px_8px_0px_#1C1C1A]`}
         >
           View Drop
+          <IconArrowRight size={16} strokeWidth={2.5} />
         </button>
       </div>
     );
@@ -130,11 +132,11 @@ function JoinCta({
   if (crewStatus === 'pending') {
     return (
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-amber-100/80 px-4 py-2">
-          <IconClock size={13} className="text-amber-700" />
-          <span className="font-inter text-[11px] font-medium text-amber-700">Awaiting Approval</span>
+        <div className="mb-4 inline-flex items-center gap-2 rounded-sm border-2 border-amber-500/20 bg-amber-500/5 px-4 py-2">
+          <IconClock size={14} className="text-amber-600" strokeWidth={2.5} />
+          <span className="font-passion text-[11px] font-bold uppercase tracking-[1px] text-amber-700">Awaiting Approval</span>
         </div>
-        <p className="mt-3 font-inter text-[11px] text-[#2a2118]/44">
+        <p className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
           The organiser will review your request.
         </p>
       </div>
@@ -144,13 +146,10 @@ function JoinCta({
   if (crewStatus === 'rejected') {
     return (
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-red-100/80 px-4 py-2">
-          <IconLock size={13} className="text-red-700" />
-          <span className="font-inter text-[11px] font-medium text-red-700">Request Declined</span>
+        <div className="inline-flex items-center gap-2 rounded-sm border-2 border-red-500/20 bg-red-500/5 px-4 py-2">
+          <IconLock size={14} className="text-red-600" strokeWidth={2.5} />
+          <span className="font-passion text-[11px] font-bold uppercase tracking-[1px] text-red-700">Request Declined</span>
         </div>
-        <p className="mt-3 font-inter text-[11px] text-[#2a2118]/44">
-          The organiser has declined your request to join.
-        </p>
       </div>
     );
   }
@@ -164,14 +163,14 @@ function JoinCta({
     if (isAlreadyJoinedError) {
       return (
         <div className="text-center">
-          <p className="font-inter text-[12px] text-[#2a2118]/55">
+          <p className="mb-4 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black/40">
             You&apos;ve already joined this drop.
           </p>
           <button
             onClick={onViewDrop}
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#2a2118]/15 bg-transparent px-6 py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5"
+            className={`${baseBtn} bg-white text-tok-black shadow-[6px_6px_0px_#1C1C1A] hover:shadow-[8px_8px_0px_#1C1C1A]`}
           >
-            View Drop
+            Go to Dashboard
           </button>
         </div>
       );
@@ -182,28 +181,28 @@ function JoinCta({
         <button
           disabled={isJoining}
           onClick={() => { track('crew_tap_in_clicked'); joinMutation.mutate(); }}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`${baseBtn} bg-tok-teal text-[#F7E9B2] shadow-[8px_8px_0px_#1C1C1A] hover:shadow-[10px_10px_0px_#1C1C1A] disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0`}
         >
           {isJoining ? (
             <>
-              <span className="h-3 w-3 animate-spin rounded-full border-2 border-[#F7E9B2]/40 border-t-[#F7E9B2]" />
-              Joining…
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#F7E9B2]/40 border-t-[#F7E9B2]" />
+              Processing…
             </>
           ) : (
             <>
-              {isLocked ? <IconLock size={13} /> : <IconCheckCircle size={13} />}
-              Tap In
+              {isLocked ? <IconLock size={16} strokeWidth={2.5} /> : <IconCheckCircle size={16} strokeWidth={2.5} />}
+              Tap In to Crew
             </>
           )}
         </button>
         {isLocked && (
-          <p className="mt-2 text-center font-inter text-[10px] text-[#2a2118]/40">
-            Your request will be sent for approval
+          <p className="mt-4 text-center font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/30">
+            Request will be sent for approval
           </p>
         )}
         {joinError && !isAlreadyJoinedError && (
-          <p className="mt-2 text-center font-inter text-[11px] text-red-600/70">
-            Something went wrong. Please try again.
+          <p className="mt-3 text-center font-passion text-[11px] font-bold text-red-600/70">
+            FAILED TO JOIN. PLEASE RETRY.
           </p>
         )}
       </div>
@@ -232,25 +231,22 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   const isNotCrew =
     isCrewError && axios.isAxiosError(crewError) && crewError.response?.status === 404;
 
-  // Track when the invite page is first rendered with a valid drop
   React.useEffect(() => {
     if (drop?.id) track('crew_invite_viewed', { dropId: drop.id });
   }, [drop?.id]);
 
-  // Track when the crew member successfully taps In
   React.useEffect(() => {
     if (crewStatus?.status === 'in') track('crew_tapped_in', { dropId: drop?.id });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [crewStatus?.status]);
+  }, [crewStatus?.status, drop?.id]);
 
   if (!mounted || isDropLoading) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#EDECE8]">
+      <div className="flex min-h-screen flex-col bg-tok-cream">
         <TapokNavbar />
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
-            <Skeleton className="mx-auto h-1.5 w-20 rounded-full bg-[#2a2118]/15" />
-            <p className="mt-4 font-inter text-xs text-[#2a2118]/40">Looking up drop…</p>
+            <Skeleton className="mx-auto h-2 w-24 bg-tok-black/10" />
+            <p className="mt-6 font-passion text-xs font-bold uppercase tracking-[3px] text-tok-black/20">Establishing connection…</p>
           </div>
         </div>
       </div>
@@ -259,13 +255,14 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
 
   if (isDropError || !drop) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#EDECE8]">
+      <div className="flex min-h-screen flex-col bg-tok-cream">
         <TapokNavbar />
         <div className="flex flex-1 items-center justify-center px-4">
-          <div className="w-full max-w-sm rounded-2xl border border-[#2a2118]/8 bg-[#F7E9B2]/60 p-5 text-center sm:p-8">
-            <p className="font-inter text-sm text-[#2a2118]/60">Drop not found or the link has expired.</p>
-            <Link href="/" className="mt-4 inline-block font-inter text-xs text-[#2a2118]/40 underline">
-              Go home
+          <div className="w-full max-w-sm rounded-2xl border-[3px] border-tok-black bg-white p-8 text-center shadow-[12px_12px_0px_#1C1C1A]">
+            <p className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black">Drop Disconnected</p>
+            <p className="mt-2 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black/40">Link expired or invalid token.</p>
+            <Link href="/" className="mt-8 inline-block font-passion text-xs font-bold uppercase tracking-[2px] text-tok-teal underline underline-offset-4">
+              Return Home
             </Link>
           </div>
         </div>
@@ -275,10 +272,10 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#EDECE8]">
+      <div className="flex min-h-screen flex-col bg-tok-cream">
         <TapokNavbar />
         <div className="flex flex-1 items-center justify-center">
-          <Skeleton className="mx-auto h-1.5 w-20 rounded-full bg-[#2a2118]/15" />
+          <Skeleton className="mx-auto h-2 w-24 bg-tok-black/10" />
         </div>
       </div>
     );
@@ -287,74 +284,93 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   const organiserName = `${drop.organiser.firstName} ${drop.organiser.lastName}`;
 
   return (
-    <div className="min-h-screen bg-[#EDECE8] text-[#2a2118] selection:bg-tok-teal/15">
-      <div
-        className="pointer-events-none fixed inset-0 opacity-[0.08]"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(42,33,24,0.42) 1px, transparent 0)',
-          backgroundSize: '28px 28px',
-        }}
-      />
+    <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
       <TapokNavbar />
 
-      <main className="relative mx-auto max-w-md px-4 py-6 sm:py-12">
-        <div className="overflow-hidden rounded-[24px] border border-[#2a2118]/8 bg-[#F7E9B2]/70 shadow-[0_14px_40px_rgba(42,33,24,0.07)] sm:rounded-[28px]">
-          {/* Header */}
-          <div className="border-b border-[#2a2118]/8 bg-[#F7E9B2]/50 px-4 py-5 sm:px-6">
-            <div className="flex items-start gap-3 sm:items-center sm:gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-tok-teal font-passion text-[12px] font-bold tracking-widest text-[#F7E9B2] sm:h-12 sm:w-12 sm:text-[13px]">
+      <main className="mx-auto max-w-md px-4 py-8 sm:py-16">
+        <div className="overflow-hidden rounded-2xl border-[3px] border-tok-black bg-white shadow-[12px_12px_0px_#1C1C1A]">
+          {/* Header - Split Tone Teal */}
+          <div className="border-b-[3px] border-tok-black bg-tok-teal px-6 py-8 text-[#F7E9B2]">
+            <div className="flex flex-col gap-5">
+              <div className="flex h-16 w-16 items-center justify-center rounded-sm border-[3px] border-[#F7E9B2]/20 bg-[#F7E9B2]/10 font-passion text-2xl font-bold tracking-[0.1em] text-[#F7E9B2] shadow-[4px_4px_0px_rgba(0,0,0,0.2)]">
                 {getInitials(drop.name)}
               </div>
-              <div className="min-w-0">
-                <p className="font-inter text-[9px] uppercase tracking-[2px] text-[#2a2118]/44">
-                  {organiserName} made a drop — are you in?
+              <div>
+                <p className="font-passion text-[10px] font-bold uppercase tracking-[4px] text-[#F7E9B2]/40">
+                  {organiserName} IS DROPPING...
                 </p>
-                <h1 className="truncate font-passion text-[18px] font-bold uppercase tracking-[-0.03em] text-[#2a2118] sm:text-[20px]">
+                <h1 className="mt-1 font-passion text-4xl font-bold uppercase leading-none tracking-tighter">
                   {drop.name}
                 </h1>
               </div>
             </div>
           </div>
 
-          {/* Details */}
-          <div className="space-y-3 px-4 py-5 sm:px-6">
-            <div className="flex items-center gap-3">
-              <IconCalendar size={14} className="shrink-0 text-[#2a2118]/40" />
-              <span className="font-inter text-[12px] text-[#2a2118]/70">{formatDateTime(drop.scheduledAt)}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <IconMapPin size={14} className="shrink-0 text-[#2a2118]/40" />
-              <span className="min-w-0 wrap-break-word font-inter text-[12px] text-[#2a2118]/70">{drop.location}</span>
-            </div>
-            {drop.expectedHeadcount && (
-              <div className="flex items-center gap-3">
-                <IconUsers size={14} className="shrink-0 text-[#2a2118]/40" />
-                <span className="font-inter text-[12px] text-[#2a2118]/70">{drop.expectedHeadcount} expected</span>
+          {/* Details Body */}
+          <div className="space-y-6 p-6">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex items-center gap-4 rounded-sm border-2 border-tok-black/5 bg-tok-cream/20 p-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
+                  <IconCalendar size={18} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-black/30">SCHEDULED</p>
+                  <p className="font-passion text-[13px] font-bold uppercase tracking-wide">{formatDateTime(drop.scheduledAt)}</p>
+                </div>
               </div>
-            )}
-            <div className="pt-0.5">
-              <span className="font-inter text-[11px] text-[#2a2118]/44">by {organiserName}</span>
+
+              <div className="flex items-center gap-4 rounded-sm border-2 border-tok-black/5 bg-tok-cream/20 p-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
+                  <IconMapPin size={18} strokeWidth={2.5} />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-black/30">LOCATION</p>
+                  <p className="truncate font-passion text-[13px] font-bold uppercase tracking-wide">{drop.location}</p>
+                </div>
+              </div>
+
+              {drop.expectedHeadcount ? (
+                <div className="flex items-center gap-4 rounded-sm border-2 border-tok-black/5 bg-tok-cream/20 p-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
+                    <IconUsers size={18} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-black/30">CREW SIZE</p>
+                    <p className="font-passion text-[13px] font-bold uppercase tracking-wide">{drop.expectedHeadcount} EXPECTED</p>
+                  </div>
+                </div>
+              ) : null}
             </div>
+
             {drop.isLocked && (
-              <div className="flex items-center gap-2 rounded-lg bg-amber-50/80 px-3 py-2">
-                <IconLock size={12} className="shrink-0 text-amber-700" />
-                <span className="font-inter text-[11px] text-amber-700">This drop requires approval to join</span>
+              <div className="mt-4 flex items-center gap-3 rounded-sm border-[3px] border-tok-black bg-amber-400 p-4 shadow-[4px_4px_0px_#1C1C1A]">
+                <IconLock size={20} className="shrink-0" strokeWidth={2.5} />
+                <p className="font-passion text-[11px] font-bold uppercase leading-tight tracking-[1.5px]">
+                  SECURE DROP: ACCESS REQUIRES ORGANISER APPROVAL.
+                </p>
               </div>
             )}
+
+            {/* CTA Container */}
+            <div className="pt-4">
+              <JoinCta
+                isOrganiser={isOrganiser}
+                crewStatus={crewStatus?.status}
+                isNotCrew={isNotCrew}
+                joinMutation={joinMutation}
+                isLocked={drop.isLocked}
+                onViewDrop={() => router.push(`/drops/${drop.id}`)}
+                dbUser={dbUser}
+                joinCode={joinCode}
+              />
+            </div>
           </div>
 
-          {/* CTA */}
-          <div className="border-t border-[#2a2118]/8 px-4 py-5 sm:px-6">
-            <JoinCta
-              isOrganiser={isOrganiser}
-              crewStatus={crewStatus?.status}
-              isNotCrew={isNotCrew}
-              joinMutation={joinMutation}
-              isLocked={drop.isLocked}
-              onViewDrop={() => router.push(`/drops/${drop.id}`)}
-              dbUser={dbUser}
-              joinCode={joinCode}
-            />
+          {/* Footer Branding */}
+          <div className="bg-tok-black/5 px-6 py-4 text-center">
+            <p className="font-passion text-[10px] font-bold uppercase tracking-[4px] text-tok-black/20">
+              POWERED BY TapOK PROTOCOL v1.0
+            </p>
           </div>
         </div>
       </main>

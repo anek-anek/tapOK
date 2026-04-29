@@ -217,23 +217,23 @@ function DateTimePicker({
   };
 
   return (
-    <FieldGroup className="flex-row gap-2">
+    <FieldGroup className="flex flex-row items-end gap-2.5">
       <Field className="min-w-0 flex-1">
         <FieldLabel
           htmlFor={`${id}-date`}
-          className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+          className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
         >
           Date
         </FieldLabel>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger
             id={`${id}-date`}
-            className="flex h-auto w-full items-center justify-between rounded-[8px] border border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm font-normal text-[#2a2118] hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tok-teal/20"
+            className="flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none focus-visible:outline-none"
           >
-            {selectedDate ? format(selectedDate, 'MMM d, yyyy') : <span className="text-[#2a2118]/30">Pick date</span>}
-            <IconChevronDown size={13} className="text-[#2a2118]/36" />
+            {selectedDate ? format(selectedDate, 'MMM d, yyyy') : <span className="text-tok-black/15">Pick date</span>}
+            <IconChevronDown size={16} className="text-tok-black/40" strokeWidth={2.5} />
           </PopoverTrigger>
-          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+          <PopoverContent className="w-auto rounded-sm border-[3px] border-tok-black bg-white p-0 shadow-[6px_6px_0px_#1C1C1A]" align="start">
             <Calendar
               mode="single"
               selected={selectedDate}
@@ -249,7 +249,7 @@ function DateTimePicker({
       <Field className="w-24 shrink-0">
         <FieldLabel
           htmlFor={`${id}-time`}
-          className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+          className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
         >
           Time
         </FieldLabel>
@@ -260,24 +260,21 @@ function DateTimePicker({
           onChange={handleTimeInput}
           onBlur={handleTimeBlur}
           placeholder="h:mm"
-          className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/25 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
+          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
         />
       </Field>
 
       {/* AM/PM toggle */}
-      <Field className="w-16 shrink-0">
-        <FieldLabel className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
-          &nbsp;
-        </FieldLabel>
-        <div className="flex h-full items-stretch overflow-hidden rounded-[8px] border border-[#2a2118]/9 bg-white/75">
+      <Field className="w-20 shrink-0">
+        <div className="flex h-12 items-stretch overflow-hidden rounded-sm border-[3px] border-tok-black bg-white">
           {(['AM', 'PM'] as const).map((p) => (
             <button
               key={p}
               type="button"
               onClick={() => togglePeriod(p)}
-              className={`flex-1 font-passion text-[10px] font-bold tracking-[1px] transition-colors ${period === p
+              className={`flex-1 font-passion text-xs font-bold tracking-[1px] transition-all ${period === p
                 ? 'bg-tok-teal text-[#F7E9B2]'
-                : 'text-[#2a2118]/40 hover:text-[#2a2118]/70'
+                : 'text-tok-black/40 hover:bg-tok-black/5'
                 }`}
             >
               {p}
@@ -285,10 +282,6 @@ function DateTimePicker({
           ))}
         </div>
       </Field>
-
-      {error && (
-        <p className="col-span-2 font-passion text-[10px] text-red-500/80">{error}</p>
-      )}
     </FieldGroup>
   );
 }
@@ -373,39 +366,39 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
         });
 
         return (
-          <div className="grid grid-cols-1 sm:grid-cols-[240px_1fr]">
+          <div className="grid grid-cols-1 overflow-hidden rounded-2xl border-[3px] border-tok-black bg-white shadow-[10px_10px_0px_#1C1C1A] sm:grid-cols-[220px_1fr]">
             {/* Dark left panel — desktop only */}
-            <aside className="hidden sm:flex sm:flex-col sm:justify-between bg-tok-teal px-7 pt-8 pb-8">
+            <aside className="hidden flex-col justify-between bg-tok-teal px-6 py-8 sm:flex">
               <div>
-                <p className="font-passion text-[8px] font-bold tracking-[3px] uppercase text-[#F7E9B2]/50 mb-4">
-                  {isEdit ? 'Editing' : 'Creating'}
+                <p className="mb-3 font-passion text-[9px] font-bold uppercase tracking-[3.5px] text-[#F7E9B2]/50">
+                  {isEdit ? 'DROP UPDATE' : 'INITIALIZING DROP'}
                 </p>
                 <div
-                  className="font-passion tracking-[1.5px] text-[#F7E9B2] leading-tight mb-3"
-                  style={{ fontSize: 'clamp(22px,2.8vw,30px)' }}
+                  className="font-passion leading-tight tracking-[1.2px] text-[#F7E9B2]"
+                  style={{ fontSize: 'clamp(20px,2.5vw,28px)' }}
                 >
-                  {name || <span className="text-[#F7E9B2]/30">{isEdit ? drop?.name : 'New Drop'}</span>}
+                  {name || <span className="text-[#F7E9B2]/30">{isEdit ? drop?.name : 'Untitled.'}</span>}
                 </div>
               </div>
 
-              <div className="space-y-2.5 text-[11px] font-light text-[#F7E9B2]/50">
+              <div className="space-y-3 text-[11px] font-bold text-[#F7E9B2]/60">
                 {scheduledAt && (
-                  <div className="flex items-center gap-2">
-                    <IconCalendar size={10} className="opacity-70 shrink-0" />
-                    <span>{formatPreviewDate(scheduledAt)}</span>
+                  <div className="flex items-center gap-2.5">
+                    <IconCalendar size={12} className="text-amber-400" strokeWidth={2.5} />
+                    <span className="font-passion uppercase tracking-wider">{formatPreviewDate(scheduledAt)}</span>
                   </div>
                 )}
                 {location && (
-                  <div className="flex items-center gap-2">
-                    <IconMapPin size={10} className="opacity-70 shrink-0" />
-                    <span className="truncate">{location}</span>
+                  <div className="flex items-center gap-2.5">
+                    <IconMapPin size={12} className="text-amber-400" strokeWidth={2.5} />
+                    <span className="font-passion truncate uppercase tracking-wider">{location}</span>
                   </div>
                 )}
-                <div className="mt-5 pt-5 border-t border-[#F7E9B2]/10">
-                  <p className="font-passion text-[8px] font-bold tracking-[2.5px] uppercase text-[#F7E9B2]/35 mb-1.5">
-                    Join Code
+                <div className="mt-6 border-t-2 border-dashed border-[#F7E9B2]/10 pt-6">
+                  <p className="mb-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#F7E9B2]/40">
+                    JOIN TOKEN
                   </p>
-                  <p className="font-passion text-[15px] font-bold tracking-[5px] text-[#F7E9B2]/30">
+                  <p className="font-passion text-xl font-bold tracking-[5px] text-[#F7E9B2]">
                     {isEdit ? drop?.joinCode : '------'}
                   </p>
                 </div>
@@ -413,36 +406,30 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
             </aside>
 
             {/* Form panel */}
-            <div className="flex flex-col bg-[#F7E9B2] px-5 py-6 sm:px-7 sm:py-7">
-              <div className="mb-6 flex items-start justify-between">
-                <div>
-                  <p className="mb-1 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-teal">
-                    {isEdit ? 'Edit' : 'Create'}
+            <div className="flex flex-col bg-[#FFF4BD] px-6 py-7 sm:px-8 sm:py-8">
+              <div className="mb-6 flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <p className="mb-1 font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
+                    {isEdit ? 'SYSTEM: UPDATE' : 'SYSTEM: CREATE'}
                   </p>
-                  <div className="font-passion text-[32px] leading-none tracking-[2px] text-[#2a2118]">
-                    {isEdit ? 'Update Drop.' : 'New Drop.'}
-                  </div>
-                  <p className="mt-1.5 text-[12px] font-light text-[#2a2118]/44">
-                    {isEdit ? 'Update what needs changing.' : 'Fill in the details and drop it.'}
-                  </p>
+                  <h2 className="font-passion text-3xl font-bold leading-none tracking-tight text-tok-black">
+                    {isEdit ? 'EDIT DROP.' : 'NEW DROP.'}
+                  </h2>
                 </div>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="icon-sm"
                   onClick={close}
-                  className="mt-0.5 shrink-0 rounded-full border-[#2a2118]/12 bg-transparent text-[#2a2118]/36 hover:border-[#2a2118]/22 hover:bg-white/50 hover:text-[#2a2118]"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
                 >
-                  <IconX size={14} />
-                  <span className="sr-only">Close</span>
-                </Button>
+                  <IconX size={18} strokeWidth={2.5} />
+                </button>
               </div>
 
-              <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-4">
-                <div>
+              <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-5">
+                <div className="space-y-1.5">
                   <Label
                     htmlFor="drop-modal-name"
-                    className="mb-2 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                    className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
                   >
                     Drop Name
                   </Label>
@@ -456,19 +443,18 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                         type="text"
                         placeholder="e.g. Rooftop Drinks"
                         autoFocus
-                        aria-invalid={Boolean(errors.name)}
-                        className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-4 py-3 text-[15px] font-semibold text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
+                        className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     )}
                   />
                   {errors.name && (
-                    <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
+                    <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-500">
                       {errors.name.message}
                     </p>
                   )}
                 </div>
 
-                <div>
+                <div className="space-y-1.5">
                   <Controller
                     name="scheduledAt"
                     control={control}
@@ -483,10 +469,10 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1.5">
                   <Label
                     htmlFor="drop-modal-location"
-                    className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
+                    className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
                   >
                     Location
                   </Label>
@@ -499,33 +485,29 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                         id="drop-modal-location"
                         type="text"
                         placeholder="e.g. Sunset Beach"
-                        aria-invalid={Boolean(errors.location)}
-                        className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-3 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15"
+                        className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     )}
                   />
                   {errors.location && (
-                    <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
+                    <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-500">
                       {errors.location.message}
                     </p>
                   )}
                 </div>
 
-                <div>
-                  <Label
-                    htmlFor="drop-modal-headcount"
-                    className="mb-2 flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36"
-                  >
-                    Headcount
-                    <span className="font-normal normal-case tracking-normal text-[#2a2118]/22">
-                      — optional
-                    </span>
-                  </Label>
-                  <Controller
-                    name="expectedHeadcount"
-                    control={control}
-                    render={({ field }) => (
-                      <>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="drop-modal-headcount"
+                      className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
+                    >
+                      Headcount <span className="normal-case opacity-40 font-normal">— Optional</span>
+                    </Label>
+                    <Controller
+                      name="expectedHeadcount"
+                      control={control}
+                      render={({ field }) => (
                         <Input
                           {...field}
                           id="drop-modal-headcount"
@@ -533,91 +515,74 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                           min={1}
                           placeholder="e.g. 20"
                           onWheel={(e) => e.currentTarget.blur()}
-                          className="h-auto rounded-[8px] border-[#2a2118]/9 bg-white/75 px-4 py-3 text-sm text-[#2a2118] placeholder:text-[#2a2118]/20 focus-visible:border-tok-teal/45 focus-visible:ring-tok-teal/15 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
-                        {errors.expectedHeadcount && (
-                          <p className="mt-1.5 font-passion text-[10px] text-red-500/80">
-                            {errors.expectedHeadcount.message}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  />
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40">
+                      Security
+                    </Label>
+                    <Controller
+                      name="isLocked"
+                      control={control}
+                      render={({ field }) => (
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(!field.value)}
+                          className={`flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all ${
+                            field.value ? 'bg-amber-400 text-tok-black shadow-none translate-y-0' : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <IconLock size={14} strokeWidth={2.5} />
+                            <span className="font-passion font-bold uppercase tracking-wider text-sm">
+                              {field.value ? 'Locked' : 'Open'}
+                            </span>
+                          </div>
+                          <div
+                            className={`h-3.5 w-3.5 rounded-full border-2 border-tok-black ${
+                              field.value ? 'bg-tok-black' : 'bg-white'
+                            }`}
+                          />
+                        </button>
+                      )}
+                    />
+                  </div>
                 </div>
-                <Controller
-                  name="isLocked"
-                  control={control}
-                  render={({ field }) => (
-                    <button
-                      type="button"
-                      onClick={() => field.onChange(!field.value)}
-                      className={`flex w-full items-center justify-between rounded-[10px] border px-4 py-3 transition-colors ${field.value
-                        ? 'border-amber-400/40 bg-amber-50/80'
-                        : 'border-[#2a2118]/9 bg-white/75 hover:border-[#2a2118]/18'
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <IconLock
-                          size={13}
-                          className={field.value ? 'text-amber-700' : 'text-[#2a2118]/30'}
-                        />
-                        <div className="text-left">
-                          <p
-                            className={`font-passion text-[10px] font-bold uppercase tracking-[2px] ${field.value ? 'text-amber-800' : 'text-[#2a2118]/60'}`}
-                          >
-                            Lock Drop
-                          </p>
-                          <p
-                            className={`text-[11px] font-light leading-tight ${field.value ? 'text-amber-700/70' : 'text-[#2a2118]/36'}`}
-                          >
-                            New joiners will require approval
-                          </p>
-                        </div>
-                      </div>
-                      <div
-                        className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}
-                      >
-                        <span
-                          className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-all duration-200"
-                          style={{ transform: `translateX(${field.value ? '18px' : '2px'})` }}
-                        />
-                      </div>
-                    </button>
-                  )}
-                />
 
                 {serverError && (
-                  <Alert className="rounded-[6px] border-red-200/50 bg-red-50 px-4 py-3">
-                    <AlertDescription className="font-passion text-[11px] text-red-600">
-                      {serverError.message ||
-                        `Failed to ${isEdit ? 'update' : 'create'} drop. Please try again.`}
-                    </AlertDescription>
-                  </Alert>
+                  <div className="rounded-sm border-[3px] border-red-500 bg-red-50 p-3">
+                    <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-600">
+                      {serverError.message || `ERROR: Failed to ${isEdit ? 'update' : 'create'} drop.`}
+                    </p>
+                  </div>
                 )}
 
-                <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-                  <Button
+                <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                  <button
                     type="button"
-                    variant="ghost"
                     onClick={close}
-                    className="h-auto rounded-full px-4 py-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-[#2a2118]/30 hover:bg-transparent hover:text-[#2a2118]/55"
+                    className="h-11 rounded-sm border-[3px] border-tok-black bg-white px-6 font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
                   >
                     Cancel
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="submit"
                     disabled={isPending}
-                    className="h-[46px] w-full rounded-[8px] bg-tok-teal px-6 font-passion text-[17px] tracking-[4px] text-[#F7E9B2] hover:bg-tok-teal/85 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                    className="flex h-11 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal px-8 font-passion text-base font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
                   >
                     {isPending ? (
                       <>
-                        <span className="h-[12px] w-[12px] animate-spin rounded-full border-2 border-[#F7E9B2]/30 border-t-[#F7E9B2]" />
-                        {isEdit ? 'SAVING…' : 'DROPPING…'}
+                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#F7E9B2]/30 border-t-[#F7E9B2]" />
+                        <span className="text-sm">Processing...</span>
                       </>
                     ) : (
-                      isEdit ? 'SAVE CHANGES' : 'DROP IT'
+                      <span>{isEdit ? 'Save Drop' : 'Deploy Drop'}</span>
                     )}
-                  </Button>
+                  </button>
                 </div>
               </form>
             </div>

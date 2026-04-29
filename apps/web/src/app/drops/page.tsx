@@ -81,86 +81,75 @@ function HeroDropCard({
   const canEdit = drop.status !== 'completed';
 
   return (
-    <div className="relative overflow-hidden rounded-[20px] bg-tok-teal px-5 py-5 shadow-[0_12px_40px_rgba(0,102,102,0.28)] sm:px-6 sm:py-6">
-      {/* Top row */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {/* Avatar */}
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#F7E9B2]/20 font-passion text-[12px] font-bold tracking-[0.1em] text-[#F7E9B2]">
+    <div className="relative overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal px-6 py-6 shadow-[8px_8px_0px_#1C1C1A]">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border-2 border-[#F7E9B2]/20 bg-[#F7E9B2]/10 font-passion text-xl font-bold tracking-widest text-[#F7E9B2]">
             {getInitials(drop.name)}
           </div>
 
           <div>
-            {/* Eyebrow row */}
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#F7E9B2]/55">
+              <span className="inline-flex items-center gap-1.5 font-passion text-[10px] font-bold uppercase tracking-[3px] text-amber-400">
                 <span className="relative flex h-1.5 w-1.5 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
                 </span>
-                Next Up
+                Next Drop
               </span>
             </div>
-            {/* Drop name */}
-            <h2 className="mt-1 font-passion text-[clamp(18px,2.2vw,26px)] font-bold uppercase tracking-[-0.03em] text-[#F7E9B2]">
+            <h2 className="mt-1 font-passion text-3xl font-bold leading-none tracking-tight text-[#F7E9B2]">
               {drop.name}
             </h2>
-            {/* Role tag */}
-            <p className="mt-0.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#F7E9B2]/40">
-              {role}
+            <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[3px] text-[#F7E9B2]/40">
+              {role} • <span className="text-[#F7E9B2]/60">{drop.joinCode}</span>
             </p>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <button
-            type="button"
             onClick={() => onShare(drop)}
-            aria-label="Share drop"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F7E9B2]/10 text-[#F7E9B2]/60 transition-colors hover:bg-[#F7E9B2]/20 hover:text-[#F7E9B2]"
+            className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-[#F7E9B2]/20 bg-[#F7E9B2]/10 text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:bg-[#F7E9B2]/20 active:translate-y-0"
           >
-            <ClipboardCopy size={13} />
+            <ClipboardCopy size={16} strokeWidth={2.5} />
           </button>
           {canEdit && (
             <button
-              type="button"
               onClick={() => onEdit(drop)}
-              aria-label="Edit drop"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F7E9B2]/10 text-[#F7E9B2]/60 transition-colors hover:bg-[#F7E9B2]/20 hover:text-[#F7E9B2]"
+              className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-[#F7E9B2]/20 bg-[#F7E9B2]/10 text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:bg-[#F7E9B2]/20 active:translate-y-0"
             >
-              <Edit3 size={13} />
+              <Edit3 size={16} strokeWidth={2.5} />
             </button>
           )}
           <Link
             href={`/drops/${drop.id}`}
-            className="flex h-8 items-center gap-1.5 rounded-full bg-[#F7E9B2] px-4 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-teal transition-opacity hover:opacity-90"
+            className="flex h-10 items-center gap-2 rounded-sm border-2 border-tok-black bg-[#F7E9B2] px-5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
           >
-            Open
-            <ArrowRight size={12} />
+            Open Drop
+            <ArrowRight size={14} strokeWidth={2.5} />
           </Link>
         </div>
       </div>
 
-      {/* Meta row */}
-      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-[#F7E9B2]/60">
-        <span className="inline-flex items-center gap-1.5">
-          <CalendarDays size={12} className="text-[#F7E9B2]/40" />
-          {formatDateTime(drop.scheduledAt)}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <MapPin size={12} className="text-[#F7E9B2]/40" />
-          {drop.location}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Users size={12} className="text-[#F7E9B2]/40" />
-          {drop.organiser.firstName} {drop.organiser.lastName}
-        </span>
+      <div className="mt-8 grid grid-cols-1 gap-4 border-t-2 border-dashed border-[#F7E9B2]/10 pt-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex items-center gap-3">
+          <CalendarDays size={14} className="text-[#F7E9B2]/60" strokeWidth={2.5} />
+          <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-[#F7E9B2]/60">{formatDateTime(drop.scheduledAt)}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <MapPin size={14} className="text-[#F7E9B2]/60" strokeWidth={2.5} />
+          <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-[#F7E9B2]/60">{drop.location}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Users size={14} className="text-[#F7E9B2]/60" strokeWidth={2.5} />
+          <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-[#F7E9B2]/60">{drop.organiser.firstName} {drop.organiser.lastName}</span>
+        </div>
         {drop.expectedHeadcount ? (
-          <span className="inline-flex items-center gap-1.5">
-            <Ticket size={12} className="text-[#F7E9B2]/40" />
-            {drop.expectedHeadcount} expected
-          </span>
+          <div className="flex items-center gap-3">
+            <Ticket size={14} className="text-[#F7E9B2]/60" strokeWidth={2.5} />
+            <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-[#F7E9B2]/60">{drop.expectedHeadcount} CREW EXPECTED</span>
+          </div>
         ) : null}
       </div>
     </div>
@@ -186,77 +175,79 @@ function ListDropCard({
   return (
     <div
       className={cn(
-        'flex items-center gap-4 rounded-[16px] border px-4 py-3.5 transition-colors hover:bg-white/60',
+        'group flex flex-col gap-4 rounded-xl border-[3px] border-tok-black p-5 transition-all sm:flex-row sm:items-center',
         isCompleted
-          ? 'border-[#2a2118]/8 bg-white/30'
-          : 'border-[#2a2118]/10 bg-white/50',
+          ? 'bg-tok-black/5 opacity-70 grayscale'
+          : 'bg-white shadow-[4px_4px_0px_#1C1C1A] hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]',
       )}
     >
-      {/* Avatar */}
-      <div
-        className={cn(
-          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-passion text-[11px] font-bold tracking-[0.1em]',
-          isCompleted
-            ? 'bg-[#2a2118]/10 text-[#2a2118]/40'
-            : 'bg-tok-teal text-[#F7E9B2]',
-        )}
-      >
-        {getInitials(drop.name)}
-      </div>
-
-      {/* Info */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-passion text-[8.5px] font-bold uppercase tracking-[2px] text-[#2a2118]/25">
-            {role}
-          </span>
-        </div>
-        <p
+      <div className="flex items-center gap-4 flex-1">
+        <div
           className={cn(
-            'mt-0.5 truncate font-passion text-[15px] font-bold uppercase tracking-[-0.02em]',
-            isCompleted ? 'text-[#2a2118]/50' : 'text-[#2a2118]',
+            'flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black font-passion text-sm font-bold tracking-widest',
+            isCompleted
+              ? 'bg-tok-black/10 text-tok-black/40'
+              : 'bg-tok-teal text-[#F7E9B2]',
           )}
         >
-          {drop.name}
-        </p>
-        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#2a2118]/46">
-          <span className="inline-flex items-center gap-1">
-            <CalendarDays size={10} className="text-[#2a2118]/30" />
-            {formatDateTime(drop.scheduledAt)}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <MapPin size={10} className="text-[#2a2118]/30" />
-            <span className="truncate">{drop.location}</span>
-          </span>
+          {getInitials(drop.name)}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
+              {role}
+            </span>
+            {isCompleted && (
+              <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
+                • COMPLETED
+              </span>
+            )}
+          </div>
+          <p
+            className={cn(
+              'truncate font-passion text-xl font-bold uppercase tracking-tight',
+              isCompleted ? 'text-tok-black/50' : 'text-tok-black',
+            )}
+          >
+            {drop.name}
+          </p>
+          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-bold text-tok-black/40">
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays size={12} strokeWidth={2.5} />
+              <span className="font-passion uppercase tracking-wider">{formatDateTime(drop.scheduledAt)}</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin size={12} strokeWidth={2.5} />
+              <span className="font-passion truncate uppercase tracking-wider">{drop.location}</span>
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex shrink-0 items-center gap-1.5">
-        {canEdit && (
+      <div className="flex items-center gap-2 sm:shrink-0">
+        <div className="flex items-center gap-2">
+          {canEdit && (
+            <button
+              onClick={() => onEdit(drop)}
+              className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0"
+            >
+              <Edit3 size={14} strokeWidth={2.5} />
+            </button>
+          )}
           <button
-            type="button"
-            onClick={() => onEdit(drop)}
-            aria-label="Edit"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-[#2a2118]/36 transition-colors hover:bg-[#2a2118]/6 hover:text-[#2a2118]"
+            onClick={() => onShare(drop)}
+            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0"
           >
-            <Edit3 size={12} />
+            <ClipboardCopy size={14} strokeWidth={2.5} />
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => onShare(drop)}
-          aria-label="Share"
-          className="flex h-7 w-7 items-center justify-center rounded-full text-[#2a2118]/36 transition-colors hover:bg-[#2a2118]/6 hover:text-[#2a2118]"
-        >
-          <ClipboardCopy size={12} />
-        </button>
+        </div>
         <Link
           href={`/drops/${drop.id}`}
-          className="flex h-7 items-center gap-1 rounded-full border border-[#2a2118]/12 bg-[#F7E9B2] px-3 font-passion text-[9px] font-bold uppercase tracking-[1.8px] text-[#2a2118] transition-colors hover:bg-[#F7E9B2]/80"
+          className="flex h-9 items-center gap-2 rounded-sm border-2 border-tok-black bg-tok-teal px-4 font-passion text-[10px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
         >
-          Open
-          <ArrowRight size={10} />
+          View
+          <ArrowRight size={12} strokeWidth={2.5} />
         </Link>
       </div>
     </div>
@@ -275,56 +266,50 @@ function GateCard() {
   };
 
   return (
-    <div className="rounded-[24px] border border-[#2a2118]/10 bg-white/72 p-5 shadow-[0_14px_40px_rgba(42,33,24,0.06)] sm:rounded-[28px] sm:p-7">
-      <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
-        Authentication required
+    <div className="rounded-2xl border-[3px] border-tok-black bg-white p-7 shadow-[12px_12px_0px_#1C1C1A] sm:p-10">
+      <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+        SECURITY PROTOCOL
       </p>
-      <h2 className="mt-3 font-passion text-[clamp(28px,3.8vw,44px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
-        Sign in to manage or join a Drop.
+      <h2 className="mt-4 font-passion text-4xl font-bold uppercase leading-none tracking-tight text-tok-black">
+        Sign in to manage <br className="hidden sm:block" /> or join a Drop.
       </h2>
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <div className="mt-8 flex flex-col gap-4 sm:flex-row">
         <Link
           href="/login"
-          className={cn(
-            buttonVariants(),
-            'h-auto rounded-full bg-tok-teal px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-tok-teal/90 focus-visible:ring-tok-teal/25 focus-visible:ring-offset-white',
-          )}
+          className="flex h-12 items-center justify-center gap-3 rounded-sm border-[3px] border-tok-black bg-tok-teal px-8 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
         >
-          <LogIn size={14} />
+          <LogIn size={16} strokeWidth={2.5} />
           Log in
         </Link>
         <Link
           href="/register"
-          className={cn(
-            buttonVariants({ variant: 'outline' }),
-            'h-auto rounded-full border-[#2a2118]/10 bg-white/75 px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118] hover:border-[#2a2118]/18 hover:bg-white focus-visible:ring-tok-teal/25 focus-visible:ring-offset-white',
-          )}
+          className="flex h-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white px-8 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
         >
           Sign up
         </Link>
       </div>
-      <div className="mt-5 border-t border-[#2a2118]/8 pt-5">
-        <p className="font-passion text-[9px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/34">
+      <div className="mt-10 border-t-2 border-dashed border-tok-black/10 pt-10">
+        <p className="font-passion text-[10px] font-bold uppercase tracking-[3px] text-tok-black/40">
           Got a join code?
         </p>
-        <form onSubmit={handleGateJoin} className="mt-3 flex gap-2">
+        <form onSubmit={handleGateJoin} className="mt-4 flex gap-3">
           <Input
             value={gateCode}
             onChange={(e) => setGateCode(e.target.value.toUpperCase())}
-            placeholder="ENTER CODE"
+            placeholder="ENTER TOKEN"
             inputMode="text"
             autoCapitalize="characters"
             autoComplete="off"
             spellCheck={false}
-            className="h-10 min-w-0 flex-1 rounded-full border-[#2a2118]/10 bg-white/90 px-4 font-passion text-[11px] font-bold tracking-[2.2px] text-[#2a2118] placeholder:text-[#2a2118]/24 focus-visible:border-tok-teal/35 focus-visible:ring-tok-teal/20"
+            className="h-12 flex-1 rounded-sm border-[3px] border-tok-black bg-white px-5 font-passion text-base font-bold tracking-[2px] text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
-          <Button
+          <button
             type="submit"
             disabled={gateCode.trim().length < 4}
-            className="h-10 rounded-full bg-[#2a2118] px-4 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] hover:bg-[#2a2118]/90 disabled:opacity-50"
+            className="flex h-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
           >
-            Go
-          </Button>
+            GO
+          </button>
         </form>
       </div>
     </div>
@@ -488,46 +473,50 @@ export default function DropsPage() {
     <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
       <TapokNavbar />
 
-      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
         {/* Page header row */}
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="font-passion text-[clamp(28px,4vw,44px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
-            Drops
-          </h1>
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-6">
+          <div>
+            <p className="font-passion text-[11px] font-bold uppercase tracking-[4px] text-tok-teal">
+              COMMAND CENTER
+            </p>
+            <h1 className="mt-1 font-passion text-5xl font-bold uppercase tracking-tight text-tok-black">
+              Drops.
+            </h1>
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {/* Join code form */}
             <form
               onSubmit={handleJoin}
-              className="flex items-center overflow-hidden rounded-full border border-[#2a2118]/12 bg-white/70"
+              className="flex h-12 items-center rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
             >
               <Input
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="Join code"
+                placeholder="JOIN TOKEN"
                 inputMode="text"
                 autoCapitalize="characters"
                 autoComplete="off"
                 spellCheck={false}
-                className="h-9 w-28 border-0 bg-transparent px-3.5 font-passion text-[10px] font-bold tracking-[2px] text-[#2a2118] placeholder:text-[#2a2118]/30 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="h-full w-32 border-0 bg-transparent px-4 font-passion text-xs font-bold tracking-[2px] text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
               <button
                 type="submit"
                 disabled={joinCode.trim().length < 4}
-                className="h-9 border-l border-[#2a2118]/10 px-3.5 font-passion text-[10px] font-bold uppercase tracking-[2px] text-[#2a2118]/60 transition-colors hover:bg-[#2a2118]/5 hover:text-[#2a2118] disabled:opacity-40"
+                className="h-full border-l-[3px] border-tok-black bg-tok-teal px-5 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:bg-tok-teal/90 disabled:bg-tok-black/20 disabled:text-tok-black/40"
               >
-                Join
+                JOIN
               </button>
             </form>
 
-            <Button
-              type="button"
+            <button
               onClick={() => setCreateModalOpen(true)}
-              className="h-9 gap-1.5 rounded-full bg-tok-teal px-4 font-passion text-[10px] font-bold uppercase tracking-[2px] text-[#F7E9B2] hover:bg-tok-teal/90"
+              className="flex h-12 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-teal px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
             >
-              <Plus size={13} />
+              <Plus size={16} strokeWidth={2.5} />
               New Drop
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -566,25 +555,25 @@ export default function DropsPage() {
             )}
 
             {/* Tab bar */}
-            <div className="mt-4 flex items-center justify-between">
-              <div className="ml-auto flex gap-1.5">
+            <div className="mt-8 flex items-center justify-between">
+              <div className="ml-auto flex gap-2">
                 <button
                   type="button"
                   onClick={() => setActiveTab('upcoming')}
                   className={cn(
-                    'flex h-9 items-center gap-2 rounded-full px-4 font-passion text-[11px] font-bold uppercase tracking-[1.8px] transition-colors',
+                    'flex h-10 items-center gap-3 rounded-full border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
                     activeTab === 'upcoming'
-                      ? 'bg-[#2a2118] text-[#F7E9B2]'
-                      : 'bg-white/50 text-[#2a2118]/46 hover:bg-white/70 hover:text-[#2a2118]',
+                      ? 'bg-tok-black text-[#F7E9B2]'
+                      : 'bg-white text-tok-black hover:bg-tok-black/5',
                   )}
                 >
                   Upcoming
                   <span
                     className={cn(
-                      'flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold',
+                      'flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
                       activeTab === 'upcoming'
                         ? 'bg-white/20 text-[#F7E9B2]'
-                        : 'bg-[#2a2118]/8 text-[#2a2118]/50',
+                        : 'bg-tok-black/10 text-tok-black/40',
                     )}
                   >
                     {activeDrops.length}
@@ -595,19 +584,19 @@ export default function DropsPage() {
                   type="button"
                   onClick={() => setActiveTab('past')}
                   className={cn(
-                    'flex h-9 items-center gap-2 rounded-full px-4 font-passion text-[11px] font-bold uppercase tracking-[1.8px] transition-colors',
+                    'flex h-10 items-center gap-3 rounded-full border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
                     activeTab === 'past'
-                      ? 'bg-[#2a2118] text-[#F7E9B2]'
-                      : 'bg-white/50 text-[#2a2118]/46 hover:bg-white/70 hover:text-[#2a2118]',
+                      ? 'bg-tok-black text-[#F7E9B2]'
+                      : 'bg-white text-tok-black hover:bg-tok-black/5',
                   )}
                 >
                   Past
                   <span
                     className={cn(
-                      'flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold',
+                      'flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
                       activeTab === 'past'
                         ? 'bg-white/20 text-[#F7E9B2]'
-                        : 'bg-[#2a2118]/8 text-[#2a2118]/50',
+                        : 'bg-tok-black/10 text-tok-black/40',
                     )}
                   >
                     {completedDrops.length}
