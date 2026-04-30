@@ -124,7 +124,7 @@ function LeaveConfirmModal({
   return (
     <ModalShell onClose={!isPending ? onClose : () => { }}>
       {(close) => (
-        <div className="rounded-[4px] border-[3px] border-tok-black bg-[#FFF4BD] p-6 shadow-[8px_8px_0px_#1C1C1A]">
+        <div className="rounded-[4px] border-[3px] border-tok-black bg-tok-cream p-6 shadow-[8px_8px_0px_#1C1C1A]">
           <div className="mb-2 flex items-start justify-between gap-3">
             <p className="font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-red-600">
               Abandon Drop
@@ -172,7 +172,7 @@ function LeaveConfirmModal({
 
 function PageSkeleton() {
   return (
-    <div className="min-h-screen bg-[#FFF4BD] text-[#1C1C1A]">
+    <div className="min-h-screen bg-tok-cream text-[#1C1C1A]">
       <TapokNavbar />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10">
         <Skeleton className="mb-8 h-4 w-32 rounded-sm bg-black/5" />
@@ -272,7 +272,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
   if (isError || !drop) {
     return (
-      <div className="min-h-screen bg-[#FFF4BD] text-tok-black">
+      <div className="min-h-screen bg-tok-cream text-tok-black">
         <TapokNavbar />
         <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-10">
           <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-8 shadow-[8px_8px_0px_#1C1C1A] sm:p-12">
@@ -305,7 +305,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
 
   return (
-    <div className="min-h-screen bg-[#FFF4BD] font-inter text-[#1C1C1A] selection:bg-tok-teal/15">
+    <div className="min-h-screen bg-tok-cream font-inter text-[#1C1C1A] selection:bg-tok-teal/15">
       {/* Visual background flourishes */}
       <div className="pointer-events-none fixed inset-0 opacity-[0.03]"
         style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #000 1px, transparent 0)', backgroundSize: '24px 24px' }}
