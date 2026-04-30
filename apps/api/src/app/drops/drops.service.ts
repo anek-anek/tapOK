@@ -320,6 +320,16 @@ export class DropsService {
     });
   }
 
+  async findDropActivityLogs(
+    dropId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ data: DropActivityLog[]; total: number; page: number; totalPages: number }> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+    return this.dropsRepository.findPaginatedActivityLogs(dropId, page, limit);
+  }
+
   async findMyActivityLogs(firebaseUid: string): Promise<DropActivityLog[]> {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');

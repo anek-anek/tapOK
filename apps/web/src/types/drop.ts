@@ -71,6 +71,13 @@ export interface CrewMember {
   };
 }
 
+export interface ActivityLogsPage {
+  data: DropActivityLog[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 export interface CreateDropDto {
   name: string;
   scheduledAt: string;

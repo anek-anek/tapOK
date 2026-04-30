@@ -23,8 +23,10 @@ import {
   UserCheck as IconUserCheck,
   UserX as IconUserX,
   Ban as IconBan,
+  ChevronLeft as IconChevronLeft,
+  ChevronRight as IconChevronRight,
 } from 'lucide-react';
-import { useDrop, useMyCrewStatus, useDropCrew } from '@/hooks/queries/use-drops';
+import { useDrop, useMyCrewStatus, useDropCrew, useDropActivityLogs } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { DropModal } from '@/components/drop-modal';
@@ -204,11 +206,13 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  const [logPage, setLogPage] = useState(1);
   const { mutate: leaveDrop, isPending: isLeaving } = useLeaveDrop(id);
   const { mutate: updatePresence, isPending: isUpdatingPresence } = useUpdatePresence(id);
 
   const isOrganiserCheck = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
   const { data: crew } = useDropCrew(id, { enabled: isOrganiserCheck });
+  const { data: activityPage, isFetching: isLoadingLogs } = useDropActivityLogs(id, logPage);
   const { mutate: approveJoinRequest, isPending: isApproving, variables: approvingUserId } = useApproveJoinRequest(id);
   const { mutate: rejectJoinRequest, isPending: isRejecting, variables: rejectingUserId } = useRejectJoinRequest(id);
   const { mutate: removeCrewMember, isPending: isRemoving, variables: removingUserId } = useRemoveCrewMember(id);
@@ -493,65 +497,112 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             {/* Activity Ledger */}
             <div className="rounded-[4px] border-[3px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]">
               <div className="border-b-[3px] border-tok-black bg-tok-teal/8 px-6 py-5">
-                <div className="flex items-center gap-3">
-                  <IconActivity size={18} strokeWidth={2.5} className="text-tok-teal" />
-                  <h2 className="font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
-                    Drop Log
-                  </h2>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <IconActivity size={18} strokeWidth={2.5} className="text-tok-teal" />
+                    <h2 className="font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
+                      Drop Log
+                    </h2>
+                  </div>
+                  {activityPage && activityPage.total > 0 && (
+                    <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
+                      {activityPage.total} entries
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {!drop.activityLogs || drop.activityLogs.length === 0 ? (
+              {isLoadingLogs && !activityPage ? (
+                <div className="divide-y divide-tok-black/5">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-start gap-5 px-6 py-5">
+                      <Skeleton className="h-10 w-10 shrink-0 rounded-sm bg-black/5" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-48 rounded bg-black/5" />
+                        <Skeleton className="h-3 w-24 rounded bg-black/5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : !activityPage || activityPage.data.length === 0 ? (
                 <div className="px-6 py-12 text-center">
                   <p className="font-passion text-sm font-bold uppercase tracking-[3px] text-black/20">
                     Quiet on the deck
                   </p>
                 </div>
               ) : (
-                <div className="divide-y divide-tok-black/5">
-                  {drop.activityLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="flex items-start gap-5 px-6 py-5 transition-colors hover:bg-tok-teal/1"
-                    >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-teal/10 font-passion text-[10px] font-bold text-tok-teal">
-                        {getLogInitials(log.user.firstName, log.user.lastName)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-inter text-sm leading-relaxed text-tok-black/80">
-                          <span className="font-passion text-base font-bold uppercase tracking-tight text-tok-black">
-                            {log.user.firstName} {log.user.lastName}
-                          </span>
-                          {' '}
-                          <span className="font-medium">
-                            {{
-                              created: 'initiated the drop',
-                              joined: 'boarded the crew',
-                              join_requested: 'sent a join request',
-                              join_request_approved: 'cleared a join request',
-                              join_request_rejected: 'denied a join request',
-                              left: 'abandoned ship',
-                              updated: 'modified the plan',
-                              member_removed: 'ejected a crew member',
-                              marked_in: 'tapped IN',
-                              marked_out: 'tapped OUT',
-                              marked_ongoing: 'pushed the drop LIVE',
-                              marked_completed: 'closed the mission',
-                            }[log.action] ?? log.action.replace(/_/g, ' ')}
-                          </span>
-                          {log.action === 'updated' && log.changedFields && Object.keys(log.changedFields).length > 0 && (
-                            <span className="block mt-1 font-mono text-[10px] text-tok-black/40">
-                              FIELDS: {Object.keys(log.changedFields).join(', ').toUpperCase()}
+                <>
+                  <div className={`divide-y divide-tok-black/5 transition-opacity ${isLoadingLogs ? 'opacity-50' : 'opacity-100'}`}>
+                    {activityPage.data.map((log) => (
+                      <div
+                        key={log.id}
+                        className="flex items-start gap-5 px-6 py-5 transition-colors hover:bg-tok-teal/1"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-teal/10 font-passion text-[10px] font-bold text-tok-teal">
+                          {getLogInitials(log.user.firstName, log.user.lastName)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-inter text-sm leading-relaxed text-tok-black/80">
+                            <span className="font-passion text-base font-bold uppercase tracking-tight text-tok-black">
+                              {log.user.firstName} {log.user.lastName}
                             </span>
-                          )}
-                        </p>
-                        <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
-                          {formatLogTime(log.createdAt)}
-                        </p>
+                            {' '}
+                            <span className="font-medium">
+                              {{
+                                created: 'initiated the drop',
+                                joined: 'boarded the crew',
+                                join_requested: 'sent a join request',
+                                join_request_approved: 'cleared a join request',
+                                join_request_rejected: 'denied a join request',
+                                left: 'abandoned ship',
+                                updated: 'modified the plan',
+                                member_removed: 'ejected a crew member',
+                                marked_in: 'tapped IN',
+                                marked_out: 'tapped OUT',
+                                marked_ongoing: 'pushed the drop LIVE',
+                                marked_completed: 'closed the mission',
+                              }[log.action] ?? log.action.replace(/_/g, ' ')}
+                            </span>
+                            {log.action === 'updated' && log.changedFields && Object.keys(log.changedFields).length > 0 && (
+                              <span className="block mt-1 font-mono text-[10px] text-tok-black/40">
+                                FIELDS: {Object.keys(log.changedFields).join(', ').toUpperCase()}
+                              </span>
+                            )}
+                          </p>
+                          <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
+                            {formatLogTime(log.createdAt)}
+                          </p>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+
+                  {activityPage.totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t-[3px] border-tok-black px-6 py-4">
+                      <button
+                        type="button"
+                        onClick={() => setLogPage((p) => p - 1)}
+                        disabled={logPage === 1 || isLoadingLogs}
+                        className="flex items-center gap-1.5 rounded-[4px] border-2 border-tok-black bg-white px-3 py-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-30 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                      >
+                        <IconChevronLeft size={12} strokeWidth={2.5} />
+                        Prev
+                      </button>
+                      <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
+                        {logPage} / {activityPage.totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setLogPage((p) => p + 1)}
+                        disabled={logPage === activityPage.totalPages || isLoadingLogs}
+                        className="flex items-center gap-1.5 rounded-[4px] border-2 border-tok-black bg-white px-3 py-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-30 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                      >
+                        Next
+                        <IconChevronRight size={12} strokeWidth={2.5} />
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </div>
           </div>

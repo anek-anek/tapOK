@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Drop, CreateDropDto, UpdateDropDto, DropActivityLog, DropCrew, CrewMember } from '@/types/drop';
+import type { Drop, CreateDropDto, UpdateDropDto, DropActivityLog, DropCrew, CrewMember, ActivityLogsPage } from '@/types/drop';
 
 
 export const dropsService = {
@@ -57,5 +57,9 @@ export const dropsService = {
 
   updatePresence(dropId: string, isPresent: boolean): Promise<void> {
     return api.patch(`/drops/${dropId}/crew/me/presence`, { isPresent }).then(() => undefined);
+  },
+
+  getActivityLogs(dropId: string, page: number, limit = 6): Promise<ActivityLogsPage> {
+    return api.get<ActivityLogsPage>(`/drops/${dropId}/activity`, { params: { page, limit } }).then((r) => r.data);
   },
 };
