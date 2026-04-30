@@ -217,11 +217,11 @@ function DateTimePicker({
   };
 
   return (
-    <FieldGroup className="flex flex-row items-end gap-2.5">
-      <Field className="min-w-0 flex-1">
+    <FieldGroup className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-2.5">
+      <Field className="w-full sm:min-w-0 sm:flex-1">
         <FieldLabel
           htmlFor={`${id}-date`}
-          className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
+          className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
         >
           Date
         </FieldLabel>
@@ -245,43 +245,45 @@ function DateTimePicker({
         </Popover>
       </Field>
 
-      {/* 12-hour time input */}
-      <Field className="w-24 shrink-0">
-        <FieldLabel
-          htmlFor={`${id}-time`}
-          className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
-        >
-          Time
-        </FieldLabel>
-        <Input
-          type="text"
-          id={`${id}-time`}
-          value={draft}
-          onChange={handleTimeInput}
-          onBlur={handleTimeBlur}
-          placeholder="h:mm"
-          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
-        />
-      </Field>
+      <div className="flex items-end gap-2.5">
+        {/* 12-hour time input */}
+        <Field className="flex-1 sm:w-24 sm:flex-none">
+          <FieldLabel
+            htmlFor={`${id}-time`}
+            className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
+          >
+            Time
+          </FieldLabel>
+          <Input
+            type="text"
+            id={`${id}-time`}
+            value={draft}
+            onChange={handleTimeInput}
+            onBlur={handleTimeBlur}
+            placeholder="h:mm"
+            className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+          />
+        </Field>
 
-      {/* AM/PM toggle */}
-      <Field className="w-20 shrink-0">
-        <div className="flex h-12 items-stretch overflow-hidden rounded-sm border-[3px] border-tok-black bg-white">
-          {(['AM', 'PM'] as const).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => togglePeriod(p)}
-              className={`flex-1 font-passion text-xs font-bold tracking-[1px] transition-all ${period === p
-                ? 'bg-tok-teal text-[#F7E9B2]'
-                : 'text-tok-black/40 hover:bg-tok-black/5'
-                }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      </Field>
+        {/* AM/PM toggle */}
+        <Field className="w-20 shrink-0">
+          <div className="flex h-12 items-stretch overflow-hidden rounded-sm border-[3px] border-tok-black bg-white">
+            {(['AM', 'PM'] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => togglePeriod(p)}
+                className={`flex-1 font-passion text-xs font-bold tracking-[1px] transition-all ${period === p
+                  ? 'bg-tok-teal text-[#F7E9B2]'
+                  : 'text-tok-black/40 hover:bg-tok-black/5'
+                  }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </Field>
+      </div>
     </FieldGroup>
   );
 }
@@ -293,7 +295,10 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
   const updateDrop = useUpdateDrop(drop?.id ?? '');
   const pendingIdRef = useRef<string | null>(null);
 
+  const isBusyRef = useRef(false);
+
   const wrappedClose = useCallback(() => {
+    if (isBusyRef.current) return;
     onClose();
     if (pendingIdRef.current && !isEdit) {
       router.push(`/drops/${pendingIdRef.current}`);
@@ -304,7 +309,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
     control,
     handleSubmit,
     watch,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(isEdit ? editSchema : createSchema) as any,
@@ -323,47 +328,50 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
     'location',
   ]);
 
-  const isPending = createDrop.isPending || updateDrop.isPending;
+  const isBusy = createDrop.isPending || updateDrop.isPending || isSubmitting;
+  isBusyRef.current = isBusy;
   const serverError = createDrop.error || updateDrop.error;
+
+  const onSubmit = handleSubmit(async (values) => {
+    if (isBusy) return;
+    const scheduledAtIso = values.scheduledAt ? toIsoString(values.scheduledAt) : undefined;
+    const expectedHeadcount = normalizeExpectedHeadcount(values.expectedHeadcount);
+
+    if (isEdit && drop) {
+      const dto: Parameters<typeof updateDrop.mutateAsync>[0] = {};
+      if (values.name !== drop.name) dto.name = values.name;
+      if (scheduledAtIso && scheduledAtIso !== drop.scheduledAt) dto.scheduledAt = scheduledAtIso;
+      if (values.location !== drop.location) dto.location = values.location;
+      const updatedExpectedHeadcount = getUpdatedExpectedHeadcount(
+        values.expectedHeadcount,
+        drop.expectedHeadcount,
+      );
+      if (updatedExpectedHeadcount !== undefined && updatedExpectedHeadcount !== drop.expectedHeadcount) {
+        dto.expectedHeadcount = updatedExpectedHeadcount;
+      }
+      if (values.isLocked !== drop.isLocked) dto.isLocked = values.isLocked;
+
+      if (Object.keys(dto).length > 0) {
+        await updateDrop.mutateAsync(dto);
+      }
+      wrappedClose();
+    } else {
+      const dto = {
+        name: values.name,
+        scheduledAt: scheduledAtIso ?? toIsoString(values.scheduledAt),
+        location: values.location,
+        expectedHeadcount,
+        isLocked: values.isLocked ?? false,
+      };
+      const result = await createDrop.mutateAsync(dto);
+      pendingIdRef.current = result.id;
+      wrappedClose();
+    }
+  });
 
   return (
     <ModalShell onClose={wrappedClose}>
       {(close) => {
-        const onSubmit = handleSubmit(async (values) => {
-          const scheduledAtIso = values.scheduledAt ? toIsoString(values.scheduledAt) : undefined;
-          const expectedHeadcount = normalizeExpectedHeadcount(values.expectedHeadcount);
-
-          if (isEdit && drop) {
-            const dto: Parameters<typeof updateDrop.mutateAsync>[0] = {};
-            if (values.name !== drop.name) dto.name = values.name;
-            if (scheduledAtIso && scheduledAtIso !== drop.scheduledAt) dto.scheduledAt = scheduledAtIso;
-            if (values.location !== drop.location) dto.location = values.location;
-            const updatedExpectedHeadcount = getUpdatedExpectedHeadcount(
-              values.expectedHeadcount,
-              drop.expectedHeadcount,
-            );
-            if (updatedExpectedHeadcount !== undefined && updatedExpectedHeadcount !== drop.expectedHeadcount) {
-              dto.expectedHeadcount = updatedExpectedHeadcount;
-            }
-            if (values.isLocked !== drop.isLocked) dto.isLocked = values.isLocked;
-
-            if (Object.keys(dto).length > 0) {
-              await updateDrop.mutateAsync(dto);
-            }
-            close();
-          } else {
-            const dto = {
-              name: values.name,
-              scheduledAt: scheduledAtIso ?? toIsoString(values.scheduledAt),
-              location: values.location,
-              expectedHeadcount,
-              isLocked: values.isLocked ?? false,
-            };
-            const result = await createDrop.mutateAsync(dto);
-            pendingIdRef.current = result.id;
-            close();
-          }
-        });
 
         return (
           <div className="grid grid-cols-1 overflow-hidden rounded-2xl border-[3px] border-tok-black bg-white shadow-[10px_10px_0px_#1C1C1A] sm:grid-cols-[220px_1fr]">
@@ -409,17 +417,18 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
             <div className="flex flex-col bg-[#FFF4BD] px-6 py-7 sm:px-8 sm:py-8">
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <p className="mb-1 font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
+                  <p className="mb-1 font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-teal">
                     {isEdit ? 'SYSTEM: UPDATE' : 'SYSTEM: CREATE'}
                   </p>
-                  <h2 className="font-passion text-3xl font-bold leading-none tracking-tight text-tok-black">
+                  <h2 className="font-passion text-2xl font-bold leading-none tracking-tight text-tok-black sm:text-3xl">
                     {isEdit ? 'EDIT DROP.' : 'NEW DROP.'}
                   </h2>
                 </div>
                 <button
                   type="button"
                   onClick={close}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+                  disabled={isBusy}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40"
                 >
                   <IconX size={18} strokeWidth={2.5} />
                 </button>
@@ -429,7 +438,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="drop-modal-name"
-                    className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
+                    className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
                   >
                     Drop Name
                   </Label>
@@ -472,7 +481,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="drop-modal-location"
-                    className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
+                    className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
                   >
                     Location
                   </Label>
@@ -500,7 +509,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="drop-modal-headcount"
-                      className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40"
+                      className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
                     >
                       Headcount <span className="normal-case opacity-40 font-normal">— Optional</span>
                     </Label>
@@ -522,7 +531,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40">
+                    <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
                       Security
                     </Label>
                     <Controller
@@ -561,26 +570,27 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   </div>
                 )}
 
-                <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <div className="mt-2 flex items-center gap-3">
                   <button
                     type="button"
                     onClick={close}
-                    className="h-11 rounded-sm border-[3px] border-tok-black bg-white px-6 font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+                    disabled={isBusy}
+                    className="h-11 flex-1 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40 sm:flex-none sm:px-8"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={isPending}
-                    className="flex h-11 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal px-8 font-passion text-base font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
+                    disabled={isBusy}
+                    className="flex h-11 flex-1 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal px-4 font-passion text-sm font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50 sm:flex-none sm:px-10"
                   >
-                    {isPending ? (
+                    {isBusy ? (
                       <>
                         <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#F7E9B2]/30 border-t-[#F7E9B2]" />
-                        <span className="text-sm">Processing...</span>
+                        <span className="text-sm">...</span>
                       </>
                     ) : (
-                      <span>{isEdit ? 'Save Drop' : 'Deploy Drop'}</span>
+                      <span className="text-nowrap">{isEdit ? 'Save Drop' : 'Deploy Drop'}</span>
                     )}
                   </button>
                 </div>
