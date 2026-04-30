@@ -26,8 +26,6 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -42,10 +40,6 @@ function formatDateTime(iso: string) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
-}
-
-function sortUpcoming(a: Drop, b: Drop) {
-  return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
 }
 
 function sortRecent(a: Drop, b: Drop) {
@@ -214,7 +208,7 @@ function ListDropCard({
               </span>
             )}
             {!drop.isPublic && (
-              <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-red-500/60">
+              <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-tok-teal/40">
                 • PRIVATE
               </span>
             )}
@@ -422,9 +416,9 @@ export default function DropsPage() {
     isLoading,
     isError,
   } = useMyDrops({
-    enabled: Boolean(user) && !loading,
+    enabled: isReady && Boolean(user),
   });
-  const isHardLoading = isLoading && !drops.length;
+  const isHardLoading = isLoading && drops.length === 0;
   const [shareModalDrop, setShareModalDrop] = useState<Drop | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editDrop, setEditDrop] = useState<Drop | null>(null);
@@ -432,23 +426,25 @@ export default function DropsPage() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [isJoiningNavigation, setIsJoiningNavigation] = useState(false);
 
-  const sortedUpcoming = useMemo(() => [...drops].sort(sortUpcoming), [drops]);
-  const activeDrops = useMemo(
-    () =>
-      sortedUpcoming.filter(
-        (d) => d.status === 'active' || d.status === 'ongoing',
-      ),
-    [sortedUpcoming],
-  );
-  const completedDrops = useMemo(
-    () => [...drops].filter((d) => d.status === 'completed').sort(sortRecent),
-    [drops],
-  );
-  const focusDrop = activeDrops[0] ?? null;
-  const remainingActive = useMemo(
-    () => (focusDrop ? activeDrops.filter((d) => d.id !== focusDrop.id) : activeDrops),
-    [activeDrops, focusDrop],
-  );
+  const { activeDrops, completedDrops, focusDrop, remainingActive } = useMemo(() => {
+    // The backend already returns drops sorted by scheduledAt ASC
+    const active = drops.filter(
+      (d) => d.status === 'active' || d.status === 'ongoing'
+    );
+    const completed = drops
+      .filter((d) => d.status === 'completed')
+      .sort(sortRecent);
+    
+    const focus = active[0] ?? null;
+    const remaining = focus ? active.filter((d) => d.id !== focus.id) : active;
+
+    return {
+      activeDrops: active,
+      completedDrops: completed,
+      focusDrop: focus,
+      remainingActive: remaining,
+    };
+  }, [drops]);
 
   const handleShare = (drop: Drop) => setShareModalDrop(drop);
 
@@ -626,15 +622,10 @@ export default function DropsPage() {
             {/* Tab content */}
             <div className="mt-3 space-y-2">
               {activeTab === 'upcoming' ? (
-                drops.length === 0 ? (
-                  <EmptyTabState
-                    message="No drops yet"
-                    sub="Create the first plan. TapOK generates the link, QR, and join code the moment it goes live."
-                  />
-                ) : remainingActive.length === 0 && !focusDrop ? (
+                activeDrops.length === 0 ? (
                   <EmptyTabState
                     message="Nothing upcoming"
-                    sub="Create a new Drop and it will appear here as soon as it goes active."
+                    sub="Create a new Drop or join one with a code and it will appear here."
                   />
                 ) : remainingActive.length === 0 && focusDrop ? (
                   <p className="py-6 text-center font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">

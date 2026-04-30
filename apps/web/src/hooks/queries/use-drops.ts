@@ -24,6 +24,7 @@ export function useMyDrops(options?: { enabled?: boolean }) {
     queryFn: () => dropsService.getMyDrops(),
     enabled: (options?.enabled ?? true) && Boolean(uid),
     refetchInterval: 30_000,
+    staleTime: 30_000,
   });
 }
 
