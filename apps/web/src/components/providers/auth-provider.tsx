@@ -20,6 +20,10 @@ export interface DbUser {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  birthday?: string;
+  gender?: string;
+  phone?: string;
+  userHandle?: string;
 }
 
 interface AuthContextValue {

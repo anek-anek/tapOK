@@ -78,6 +78,9 @@ export class UsersService {
       avatar: token.picture,
       googleId: token.firebase.sign_in_provider === 'google.com' ? token.uid : undefined,
       isEmailVerified: token.email_verified ?? false,
+      gender: dto.gender,
+      birthday: dto.birthday ? new Date(dto.birthday) : undefined,
+      userHandle: dto.userHandle,
     });
 
     try {
@@ -99,7 +102,7 @@ export class UsersService {
       FROM drop_crew c1
       JOIN drop_crew c2 ON c1."dropId" = c2."dropId" AND c1."userId" != c2."userId"
       JOIN users u ON u.id = c2."userId"
-      WHERE c1."userId" = $1 AND c1.status = 'IN' AND c2.status = 'IN'
+      WHERE c1."userId" = $1 AND c1.status = 'in' AND c2.status = 'in'
       GROUP BY u.id, u."firstName", u."lastName", u.avatar, u."userHandle", u."createdAt"
       ORDER BY "frequencyCount" DESC
       LIMIT 5
