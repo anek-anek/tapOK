@@ -6,9 +6,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-tok-cream: #fff4bd;
-  --color-tok-cream-dim: #f5efb8;
-  --color-tok-black: #1c1c1a;
+  --color-tok-cream: #F7E9B2;
+  --color-tok-cream-dim: #f2e4ad;
+  --color-tok-black: #262624;
   --color-tok-teal: #006666;
   --color-tok-teal-mid: #0a8080;
   --color-tok-teal-pale: #c8e8e0;

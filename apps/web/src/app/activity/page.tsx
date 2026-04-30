@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { LogIn } from 'lucide-react';
+import { LogIn, ArrowRight, Activity as ActivityIcon } from 'lucide-react';
 import { useMounted } from '@/hooks/use-mounted';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { ActivePanel } from './_components/active-panel';
@@ -9,16 +9,17 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useMyActivity } from '@/hooks/queries/use-drops';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { DropActivityLog } from '@/types/drop';
+import { cn } from '@/lib/utils';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 type AvatarStyle = 'teal' | 'dark' | 'pale' | 'muted';
 
 const avatarCls: Record<AvatarStyle, string> = {
-  teal:  'bg-tok-teal text-[#F7E9B2]',
-  dark:  'bg-[#2a2118] text-[#F7E9B2]',
-  pale:  'bg-tok-teal/12 text-tok-teal',
-  muted: 'bg-[#2a2118]/10 text-[#2a2118]/46',
+  teal: 'bg-tok-teal text-tok-cream border-2 border-tok-black',
+  dark: 'bg-tok-black text-tok-cream border-2 border-tok-black',
+  pale: 'bg-tok-teal-pale text-tok-teal border-2 border-tok-black',
+  muted: 'bg-tok-muted-lt/20 text-tok-black border-2 border-tok-black',
 };
 
 function getInitials(firstName: string, lastName: string) {
@@ -34,12 +35,12 @@ function formatRelativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const diffMin = Math.round(diffMs / 60_000);
   if (!Number.isFinite(diffMin) || diffMin < 1) return 'Just now';
-  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffMin < 60) return `${diffMin}m ago`;
   const diffHrs = Math.round(diffMin / 60);
-  if (diffHrs < 24) return `${diffHrs} hrs ago`;
+  if (diffHrs < 24) return `${diffHrs}h ago`;
   const diffDays = Math.round(diffHrs / 24);
   if (diffDays === 1) return 'Yesterday';
-  return `${diffDays} days ago`;
+  return `${diffDays}d ago`;
 }
 
 function groupByDate(logs: DropActivityLog[]): { label: string; items: DropActivityLog[] }[] {
@@ -50,7 +51,7 @@ function groupByDate(logs: DropActivityLog[]): { label: string; items: DropActiv
 
   const groups: { label: string; items: DropActivityLog[] }[] = [
     { label: 'Just now', items: [] },
-    { label: 'Earlier today', items: [] },
+    { label: 'Today', items: [] },
     { label: 'Yesterday', items: [] },
     { label: 'Older', items: [] },
   ];
@@ -68,13 +69,16 @@ function groupByDate(logs: DropActivityLog[]): { label: string; items: DropActiv
     }
   }
 
+  groups[0]!.items = groups[0]!.items.slice(0, 4);
+  groups[1]!.items = groups[1]!.items.slice(0, 8);
+
   return groups.filter((g) => g.items.length > 0);
 }
 
 function describeAction(log: DropActivityLog, isYou: boolean): React.ReactNode {
   const name = isYou ? 'You' : `${log.user.firstName} ${log.user.lastName}`;
   const bold = (text: string) => (
-    <strong key="name" className="font-semibold text-[#2a2118]">{text}</strong>
+    <strong key="name" className="font-bold text-tok-black underline decoration-tok-teal/30 decoration-2 underline-offset-2">{text}</strong>
   );
 
   switch (log.action) {
@@ -106,18 +110,14 @@ function describeAction(log: DropActivityLog, isYou: boolean): React.ReactNode {
   }
 }
 
-type BadgeType = 'in' | 'out' | null;
-
-function getBadge(action: string): BadgeType {
-  if (action === 'joined') return 'in';
-  return null;
-}
-
 // ── components ────────────────────────────────────────────────────────────────
 
 function FeedAvatar({ initials, style }: { initials: string; style: AvatarStyle }) {
   return (
-    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-passion text-[11px] font-extrabold tracking-[0.5px] shrink-0 ${avatarCls[style]}`}>
+    <div className={cn(
+      "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-passion text-[11px] sm:text-[14px] font-black tracking-wider shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)]",
+      avatarCls[style]
+    )}>
       {initials}
     </div>
   );
@@ -125,63 +125,77 @@ function FeedAvatar({ initials, style }: { initials: string; style: AvatarStyle 
 
 function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; index: number; currentUserId?: string }) {
   const isYou = log.userId === currentUserId;
-  const badge = getBadge(log.action);
   const style = isYou ? 'dark' : pickAvatarStyle(index);
   const initials = isYou ? 'YOU' : getInitials(log.user.firstName, log.user.lastName);
 
   return (
-    <div className="flex items-center gap-4 px-6 py-4 border-t border-[#2a2118]/6 hover:bg-[#2a2118]/1.5 transition-colors cursor-pointer">
+    <div className="group relative flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b-2 border-tok-black/5 last:border-b-0 hover:bg-tok-teal/[0.03] transition-all duration-200">
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-tok-teal/80 opacity-0 group-hover:opacity-100 transition-opacity" />
+
       <FeedAvatar initials={initials} style={style} />
 
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] text-[#2a2118]/72 leading-[1.4]">
+        <p className="text-[14px] sm:text-[15px] text-tok-black/80 leading-snug">
           {describeAction(log, isYou)}
         </p>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="font-passion text-[9px] font-bold uppercase tracking-[1.5px] text-tok-teal bg-tok-teal/10 border border-tok-teal/15 px-2.5 py-1 rounded-full">
+        <div className="flex items-center gap-3 mt-2">
+          <Link
+            href={`/drops/${log.dropId}`}
+            className="font-passion text-[10px] font-bold uppercase tracking-widest text-tok-teal bg-tok-teal/5 border-2 border-tok-teal/20 px-3 py-1 rounded-sm hover:bg-tok-teal hover:text-tok-cream hover:border-tok-black transition-all"
+          >
             {log.drop?.name ?? 'Drop'}
-          </span>
-          <span className="text-[#2a2118]/28 text-[11px]">·</span>
-          <span className="text-[12px] text-[#2a2118]/40">{formatRelativeTime(log.createdAt)}</span>
+          </Link>
+          <span className="text-tok-black/20 text-[12px] font-black">/</span>
+          <span className="text-[12px] font-medium text-tok-black/40 tabular-nums">{formatRelativeTime(log.createdAt)}</span>
         </div>
       </div>
 
-      {badge === 'in' ? (
-        <span className="inline-flex items-center rounded-full border border-tok-teal/20 bg-tok-teal/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-teal shrink-0">
-          In
-        </span>
-      ) : badge === 'out' ? (
-        <span className="inline-flex items-center rounded-full border border-[#2a2118]/12 bg-[#2a2118]/6 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-[#2a2118]/46 shrink-0">
-          Out
-        </span>
-      ) : (
-        <div className="w-10 shrink-0" />
-      )}
+      <div className="hidden sm:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+        <Link
+          href={`/drops/${log.dropId}`}
+          className="p-2 rounded-full border-2 border-tok-black/80 hover:bg-tok-teal hover:text-tok-cream transition-colors"
+        >
+          <ArrowRight size={16} />
+        </Link>
+      </div>
     </div>
   );
 }
 
 function FeedItemSkeleton() {
   return (
-    <div className="flex items-center gap-4 px-6 py-4 border-t border-[#2a2118]/6">
-      <Skeleton className="h-10 w-10 rounded-full shrink-0 bg-[#2a2118]/10" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-3.5 w-3/5 rounded bg-[#2a2118]/10" />
+    <div className="flex items-center gap-4 px-6 py-5 border-b-2 border-tok-black/5 last:border-b-0">
+      <Skeleton className="h-12 w-12 rounded-full shrink-0 bg-tok-black/5 border-2 border-tok-black/5" />
+      <div className="flex-1 space-y-3">
+        <Skeleton className="h-4 w-3/5 rounded-sm bg-tok-black/5" />
         <div className="flex items-center gap-2">
-          <Skeleton className="h-5 w-20 rounded-full bg-[#2a2118]/8" />
-          <Skeleton className="h-3 w-16 rounded-full bg-[#2a2118]/6" />
+          <Skeleton className="h-6 w-24 rounded-sm bg-tok-black/5" />
+          <Skeleton className="h-4 w-16 rounded-sm bg-tok-black/5" />
         </div>
       </div>
-      <Skeleton className="h-7 w-10 rounded-full shrink-0 bg-[#2a2118]/6" />
+    </div>
+  );
+}
+
+function ListCardSkeleton() {
+  return (
+    <div className="flex items-center gap-4 rounded-[16px] border border-tok-black/5 bg-tok-white/40 px-4 py-3.5">
+      <Skeleton className="h-10 w-10 rounded-full bg-tok-black/5" />
+      <div className="flex-1 space-y-1.5">
+        <Skeleton className="h-2.5 w-16 rounded-full bg-tok-black/5" />
+        <Skeleton className="h-4 w-40 rounded bg-tok-black/5" />
+        <Skeleton className="h-2.5 w-52 rounded-full bg-tok-black/5" />
+      </div>
+      <Skeleton className="h-7 w-16 rounded-full bg-tok-black/5" />
     </div>
   );
 }
 
 function FeedSkeleton() {
   return (
-    <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
-      <div className="px-6 py-3">
-        <Skeleton className="h-2.5 w-16 rounded-full bg-[#2a2118]/10" />
+    <div className="bg-tok-white border-2 border-tok-black/10 shadow-sm overflow-hidden rounded-xl">
+      <div className="px-6 py-4 bg-tok-black/5 border-b-2 border-tok-black/5">
+        <Skeleton className="h-3 w-20 rounded-sm bg-tok-black/10" />
       </div>
       <FeedItemSkeleton />
       <FeedItemSkeleton />
@@ -202,81 +216,70 @@ function Feed({
   isError: boolean;
 }) {
   const grouped = groupByDate(logs);
-  const headerEventCount = logs.length;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
-            Activity
-          </p>
-          <h1 className="mt-2 font-passion text-[clamp(28px,3.8vw,48px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
-            What&apos;s Happening
-          </h1>
-          <p className="mt-2 text-[14px] leading-relaxed text-[#2a2118]/56">
-            {isLoading
-              ? 'Loading your activity…'
-              : `${headerEventCount} event${headerEventCount !== 1 ? 's' : ''} across your Drops.`}
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0 mt-2 rounded-full border border-tok-teal/20 bg-tok-teal/10 px-3 py-1.5 font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-teal">
-          <span className="h-1.5 w-1.5 rounded-full bg-tok-teal animate-pulse" />
-          Live
-        </div>
-      </div>
-
       {isLoading ? (
         <FeedSkeleton />
       ) : isError ? (
-        <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/72 p-6 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
-          <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
-            Something slipped
-          </p>
-          <h2 className="mt-3 font-passion text-[24px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
-            Could not load your activity.
+        <div className="bg-tok-white border-4 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.8)] rounded-xl p-6 sm:p-8">
+          <div className="w-16 h-16 bg-red-100 border-2 border-tok-black rounded-full flex items-center justify-center mb-6">
+            <span className="text-2xl">⚠️</span>
+          </div>
+          <h2 className="font-passion text-[32px] font-black uppercase tracking-tight text-tok-black leading-none">
+            Ledger Error
           </h2>
-          <p className="mt-3 text-[14px] leading-7 text-[#2a2118]/64">
-            Try refreshing the page. Your session may need a reset if this keeps happening.
+          <p className="mt-4 text-[16px] font-medium text-tok-black/60 leading-relaxed">
+            We couldn't retrieve the activity stream. This usually means the connection was interrupted.
           </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-8 px-8 py-4 bg-tok-teal text-tok-cream border-2 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all font-passion text-[16px] font-black uppercase tracking-widest"
+          >
+            Reconnect
+          </button>
         </div>
       ) : grouped.length === 0 ? (
-        <div className="rounded-[28px] border border-dashed border-[#2a2118]/14 bg-white/60 p-7 shadow-[0_14px_40px_rgba(42,33,24,0.04)]">
-          <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
-            No activity yet
-          </p>
-          <h2 className="mt-3 font-passion text-[22px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
-            Your log is empty
+        <div className="bg-tok-white border-4 border-dashed border-tok-black/20 p-12 text-center rounded-2xl">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-tok-cream-dim border-2 border-tok-black rounded-full mb-8">
+            <ActivityIcon size={32} className="text-tok-black/30" />
+          </div>
+          <h2 className="font-passion text-[32px] font-black uppercase tracking-tight text-tok-black">
+            Silence in the ranks
           </h2>
-          <p className="mt-3 max-w-lg text-[14px] leading-7 text-[#2a2118]/64">
-            Create a Drop or join one and your activity will appear here.
+          <p className="mt-4 text-[16px] font-medium text-tok-black/50 max-w-sm mx-auto leading-relaxed">
+            Your activity ledger is waiting for its first entry. Join a Drop or start one to see things moving.
           </p>
-          <div className="mt-5">
+          <div className="mt-10">
             <Link
               href="/drops"
-              className="inline-flex items-center gap-2 rounded-full bg-tok-teal px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-tok-teal text-tok-cream border-2 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all font-passion text-[16px] font-black uppercase tracking-widest"
             >
-              Go to Drops
+              Browse Drops
+              <ArrowRight size={18} />
             </Link>
           </div>
         </div>
       ) : (
-        <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.06)] overflow-hidden">
+        <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden">
           {grouped.map((group, gi) => (
-            <div key={group.label}>
-              <div className={`px-6 py-3 ${gi > 0 ? 'border-t border-[#2a2118]/8' : ''}`}>
-                <span className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/30">
+            <div key={group.label} className="relative">
+              <div className="px-6 py-3 bg-tok-black/90 border-b-2 border-tok-black/80 sticky top-0 z-10 flex justify-between items-center">
+                <span className="font-passion text-[12px] font-black uppercase tracking-[3px] text-tok-cream">
                   {group.label}
                 </span>
+                <span className="w-2 h-2 rounded-full bg-tok-teal" />
               </div>
-              {group.items.map((log, idx) => (
-                <FeedItemRow
-                  key={log.id}
-                  log={log}
-                  index={idx}
-                  currentUserId={currentUserId}
-                />
-              ))}
+              <div className="divide-y-2 divide-tok-black/5">
+                {group.items.map((log, idx) => (
+                  <FeedItemRow
+                    key={log.id}
+                    log={log}
+                    index={idx}
+                    currentUserId={currentUserId}
+                  />
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -287,26 +290,31 @@ function Feed({
 
 function GateCard() {
   return (
-    <div className="rounded-[28px] border border-[#2a2118]/10 bg-white/72 p-7 shadow-[0_14px_40px_rgba(42,33,24,0.06)]">
-      <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
-        Authentication required
-      </p>
-      <h2 className="mt-3 font-passion text-[clamp(28px,3.8vw,44px)] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
-        Sign in to see your activity.
+    <div className="bg-tok-white border-4 border-tok-black/80 p-6 sm:p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[16px_16px_0px_0px_rgba(0,0,0,0.8)] rounded-2xl animate-fade-up">
+      <div className="inline-flex items-center gap-2 px-3 py-1 bg-tok-teal border-2 border-tok-black rounded-sm mb-6">
+        <span className="font-passion text-[12px] font-bold uppercase tracking-widest text-tok-cream">
+          Restricted Access
+        </span>
+      </div>
+      <h2 className="font-passion text-[clamp(40px,10vw,80px)] font-black uppercase leading-[0.85] tracking-tighter text-tok-black">
+        Identify <br /> <span className="text-tok-teal">Yourself</span>
       </h2>
-      <div className="mt-6 flex flex-wrap gap-3">
+      <p className="mt-6 sm:mt-8 text-[16px] sm:text-[18px] font-medium text-tok-black/60 leading-relaxed max-w-md">
+        The activity ledger is reserved for verified crew members. Sign in to track your squad.
+      </p>
+      <div className="mt-10 flex flex-wrap gap-4">
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 rounded-full bg-tok-teal px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#F7E9B2] transition-colors hover:bg-tok-teal/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-tok-teal/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          className="inline-flex items-center gap-3 px-8 py-4 bg-tok-teal text-tok-cream border-2 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all font-passion text-[16px] font-black uppercase tracking-widest"
         >
-          <LogIn size={14} />
+          <LogIn size={20} />
           Log in
         </Link>
         <Link
           href="/register"
-          className="inline-flex items-center gap-2 rounded-full border border-[#2a2118]/10 bg-white/75 px-5 py-3 font-passion text-[10px] font-bold uppercase tracking-[2.2px] text-[#2a2118] transition-colors hover:border-[#2a2118]/18 hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-tok-teal/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          className="inline-flex items-center gap-3 px-8 py-4 bg-tok-cream text-tok-black border-2 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all font-passion text-[16px] font-black uppercase tracking-widest"
         >
-          Sign up
+          Join Crew
         </Link>
       </div>
     </div>
@@ -327,19 +335,21 @@ export default function ActivityPage() {
 
   if (!mounted || !isReady) {
     return (
-      <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
+      <div className="min-h-screen bg-tok-cream text-tok-black">
         <TapokNavbar />
-        <main className="relative mx-auto max-w-7xl px-6 py-8 lg:px-10 lg:py-10">
-          <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Skeleton className="h-2.5 w-16 rounded-full bg-tok-teal/20" />
-                <Skeleton className="h-10 w-64 rounded bg-[#2a2118]/10" />
-                <Skeleton className="h-4 w-52 rounded-full bg-[#2a2118]/8" />
+        <main className="relative mx-auto max-w-7xl px-6 py-12 lg:px-10">
+          <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
+            <div className="space-y-10">
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-32 rounded-sm bg-tok-black/5" />
+                <Skeleton className="h-20 w-full max-w-md rounded-sm bg-tok-black/5" />
+                <Skeleton className="h-6 w-64 rounded-sm bg-tok-black/5" />
               </div>
               <FeedSkeleton />
             </div>
-            <Skeleton className="h-64 rounded-[22px] bg-[#2a2118]/6" />
+            <div className="hidden lg:block">
+              <Skeleton className="h-[500px] rounded-xl border-4 border-tok-black/5 bg-tok-black/[0.02]" />
+            </div>
           </div>
         </main>
       </div>
@@ -348,10 +358,10 @@ export default function ActivityPage() {
 
   if (!loading && !user) {
     return (
-      <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
+      <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal selection:text-tok-cream">
         <TapokNavbar />
-        <main className="mx-auto flex min-h-[calc(100vh-88px)] max-w-5xl items-center px-6 py-10 lg:px-10">
-          <div className="w-full max-w-lg">
+        <main className="mx-auto flex min-h-[calc(100vh-88px)] max-w-7xl items-center px-6 py-12 lg:px-10">
+          <div className="w-full max-w-2xl">
             <GateCard />
           </div>
         </main>
@@ -360,26 +370,76 @@ export default function ActivityPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
+    <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal selection:text-tok-cream">
+      {/* Background patterns */}
       <div
-        className="pointer-events-none fixed inset-0 opacity-[0.12]"
+        className="pointer-events-none fixed inset-0 opacity-[0.03]"
         style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(42,33,24,0.42) 1px, transparent 0)',
-          backgroundSize: '28px 28px',
+          backgroundImage: 'radial-gradient(circle at 1px 1px, var(--color-tok-black) 1px, transparent 0)',
+          backgroundSize: '32px 32px',
         }}
       />
-      <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(circle_at_top_left,rgba(0,102,102,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(42,33,24,0.08),transparent_28%)]" />
+
 
       <TapokNavbar />
 
-      <main className="relative mx-auto max-w-7xl px-6 py-8 lg:px-10 lg:py-10">
-        <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
-          <Feed
-            currentUserId={dbUser?.id}
-            logs={activityLogs}
-            isLoading={isHardLoading}
-            isError={activityError}
-          />
+      <main className="relative mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10 animate-fade-up">
+          <div>
+            <h1 className="font-passion text-[clamp(56px,15vw,84px)] font-black uppercase leading-[0.8] tracking-tighter text-tok-black">
+              What's <span className="text-tok-teal">Happening</span>
+            </h1>
+            <p className="mt-3 sm:mt-4 text-[14px] sm:text-[16px] font-medium leading-relaxed text-tok-black/60 max-w-md">
+              {activityLoading && !activityLogs.length
+                ? 'Synchronizing ledger data...'
+                : `${activityLogs.length} update${activityLogs.length !== 1 ? 's' : ''} tracked across your current Drops.`}
+            </p>
+          </div>
+        </div>
+
+        {/* Live Feed Status Pill - Now at the top on mobile */}
+        <div className="flex items-center gap-3 mb-6 animate-fade-up [animation-delay:100ms] lg:hidden">
+          <div className="flex items-center gap-3 px-4 py-2 bg-tok-cream border-2 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] rounded-sm font-passion text-[14px] font-black uppercase tracking-wider text-tok-black">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tok-teal opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-tok-teal"></span>
+            </span>
+            Live Feed
+          </div>
+        </div>
+
+        <div className="grid gap-10 sm:gap-16 lg:grid-cols-[1fr_340px]">
+          <div className="animate-fade-up [animation-delay:200ms]">
+            {/* Desktop-only Live Feed header/pill */}
+            <div className="hidden lg:flex items-center justify-end mb-6">
+              <div className="flex items-center gap-3 px-4 py-2 bg-tok-cream border-2 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] rounded-sm font-passion text-[14px] font-black uppercase tracking-wider text-tok-black">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tok-teal opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-tok-teal"></span>
+                </span>
+                Live Feed
+              </div>
+            </div>
+
+            <Feed
+              currentUserId={dbUser?.id}
+              logs={activityLogs}
+              isLoading={isHardLoading}
+              isError={activityError}
+            />
+          </div>
+          <aside className="hidden lg:block animate-fade-up [animation-delay:300ms]">
+            <ActivePanel
+              activityLogs={activityLogs}
+              activityLoading={activityLoading}
+              currentUserId={dbUser?.id}
+            />
+          </aside>
+        </div>
+
+        {/* Mobile Active Panel - Now at the bottom */}
+        <div className="lg:hidden mt-12 animate-fade-up [animation-delay:400ms]">
           <ActivePanel
             activityLogs={activityLogs}
             activityLoading={activityLoading}
