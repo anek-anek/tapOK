@@ -32,7 +32,7 @@ export class OrganizationMember {
   role: OrgRole;
 
   @ApiProperty()
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   joinedAt: Date;
 
   @ManyToOne(() => Organization, (org) => org.members, { onDelete: 'CASCADE' })

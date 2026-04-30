@@ -25,7 +25,7 @@ export class Drop {
   name: string;
 
   @ApiProperty()
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamptz' })
   scheduledAt: Date;
 
   @ApiProperty()
@@ -68,10 +68,10 @@ export class Drop {
   crew: DropCrew[];
 
   @ApiProperty()
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
   @ApiProperty()
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

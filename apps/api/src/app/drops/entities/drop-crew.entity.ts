@@ -36,8 +36,9 @@ export class DropCrew {
   isPresent: boolean;
 
   @ApiProperty()
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   joinedAt: Date;
+
 
   @ManyToOne(() => Drop, (drop) => drop.crew, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'dropId' })

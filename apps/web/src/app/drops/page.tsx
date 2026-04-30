@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type FormEvent } from 'react';
+import { useMounted } from '@/hooks/use-mounted';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -177,7 +178,7 @@ function ListDropCard({
   return (
     <div
       className={cn(
-        'group flex flex-col gap-4 rounded-xl border-[3px] border-tok-black p-5 transition-all sm:flex-row sm:items-center',
+        'group flex flex-col gap-4 rounded-xl border-[3px] border-tok-black p-5 transition-all sm:flex-row sm:items-center mt-4',
         isCompleted
           ? 'bg-tok-black/5 opacity-70 grayscale'
           : 'bg-white shadow-[4px_4px_0px_#1C1C1A] hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]',
@@ -402,6 +403,7 @@ function PageSkeleton() {
 
 export default function DropsPage() {
   const router = useRouter();
+  const mounted = useMounted();
   const { user, dbUser, loading, isReady } = useAuth();
   const {
     data: drops = [],
@@ -446,7 +448,7 @@ export default function DropsPage() {
     router.push(`/drops/join/${code}`);
   };
 
-  if (!isReady) return <PageSkeleton />;
+  if (!mounted || !isReady) return <PageSkeleton />;
 
   if (!loading && !user) {
     return (
