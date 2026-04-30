@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { CalendarDays, MapPin } from 'lucide-react';
+import { CalendarDays, MapPin, TrendingUp, Users, Activity as ActivityIcon } from 'lucide-react';
 import { useMyDrops } from '@/hooks/queries/use-drops';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Drop, DropActivityLog } from '@/types/drop';
+import { cn } from '@/lib/utils';
 
 interface DropPreview {
   id: string;
@@ -24,10 +25,10 @@ interface FrequentPerson {
 }
 
 const AVATAR_COLORS = [
-  'bg-tok-teal text-[#F7E9B2]',
-  'bg-tok-teal/12 text-tok-teal',
-  'bg-[#2a2118]/10 text-[#2a2118]/56',
-  'bg-[#2a2118] text-[#F7E9B2]',
+  'bg-tok-teal text-tok-cream border-2 border-tok-black',
+  'bg-tok-teal-pale text-tok-teal border-2 border-tok-black',
+  'bg-tok-cream-dim text-tok-black border-2 border-tok-black',
+  'bg-tok-black text-tok-cream border-2 border-tok-black',
 ] as const;
 
 function avatarColor(index: number) {
@@ -64,16 +65,16 @@ function lastSeenSub(person: FrequentPerson): string {
   const diffDays = Math.round((Date.now() - new Date(person.lastSeen).getTime()) / 86_400_000);
   if (diffDays < 1) return 'Seen today';
   if (diffDays === 1) return 'Seen yesterday';
-  return `Seen ${diffDays} days ago`;
+  return `Seen ${diffDays}d ago`;
 }
 
 const STATUS_DOT: Record<'active' | 'ongoing', string> = {
-  active:  'bg-emerald-500',
+  active: 'bg-emerald-500',
   ongoing: 'bg-amber-500 animate-pulse',
 };
 
 const STATUS_LABEL: Record<'active' | 'ongoing', string> = {
-  active:  'Active',
+  active: 'Active',
   ongoing: 'Ongoing',
 };
 
@@ -91,25 +92,28 @@ function DropRow({ drop }: { drop: DropPreview }) {
   return (
     <Link
       href={`/drops/${drop.id}`}
-      className="flex items-start gap-3 px-5 py-3.5 border-t border-[#2a2118]/6 hover:bg-[#2a2118]/2 transition-colors"
+      className="group flex items-start gap-3 px-5 py-4 border-b-2 border-tok-black/5 last:border-b-0 hover:bg-tok-teal/[0.03] transition-colors"
     >
-      <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${STATUS_DOT[drop.status]}`} />
+      <div className={cn(
+        "mt-1 h-3 w-3 rounded-full shrink-0 border-2 border-tok-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]",
+        STATUS_DOT[drop.status]
+      )} />
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold text-[#2a2118] truncate">
+        <p className="text-[14px] font-bold text-tok-black group-hover:text-tok-teal transition-colors truncate">
           {drop.name}
         </p>
-        <div className="mt-1 flex flex-col gap-0.5 text-[11px] text-[#2a2118]/46">
-          <span className="flex items-center gap-1">
-            <CalendarDays size={10} className="opacity-60 shrink-0" />
+        <div className="mt-1.5 flex flex-col gap-1 text-[11px] font-medium text-tok-black/50">
+          <span className="flex items-center gap-2">
+            <CalendarDays size={12} className="shrink-0 text-tok-black/30" />
             {formatShortDate(drop.scheduledAt)}
           </span>
-          <span className="flex items-center gap-1">
-            <MapPin size={10} className="opacity-60 shrink-0" />
+          <span className="flex items-center gap-2">
+            <MapPin size={12} className="shrink-0 text-tok-black/30" />
             <span className="truncate">{drop.location}</span>
           </span>
         </div>
       </div>
-      <span className="font-passion text-[8px] font-bold uppercase tracking-[1px] text-tok-teal bg-tok-teal/10 border border-tok-teal/15 px-2 py-1 rounded-full shrink-0 mt-1">
+      <span className="font-passion text-[9px] font-black uppercase tracking-widest text-tok-teal bg-tok-teal/5 border-2 border-tok-teal/20 px-2 py-1 rounded-sm shrink-0 mt-0.5 group-hover:border-tok-black group-hover:bg-tok-teal group-hover:text-tok-cream transition-all">
         {STATUS_LABEL[drop.status]}
       </span>
     </Link>
@@ -118,11 +122,11 @@ function DropRow({ drop }: { drop: DropPreview }) {
 
 function DropSkeleton() {
   return (
-    <div className="flex items-start gap-3 px-5 py-3.5 border-t border-[#2a2118]/6">
-      <Skeleton className="mt-1.5 h-2 w-2 rounded-full shrink-0 bg-[#2a2118]/10" />
-      <div className="flex-1 space-y-1.5">
-        <Skeleton className="h-3 w-3/4 rounded bg-[#2a2118]/10" />
-        <Skeleton className="h-2.5 w-1/2 rounded bg-[#2a2118]/[0.07]" />
+    <div className="flex items-start gap-3 px-5 py-4 border-b-2 border-tok-black/5 last:border-b-0">
+      <Skeleton className="mt-1 h-3 w-3 rounded-full shrink-0 bg-tok-black/5 border-2 border-tok-black/5" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-3/4 rounded-sm bg-tok-black/5" />
+        <Skeleton className="h-3 w-1/2 rounded-sm bg-tok-black/[0.03]" />
       </div>
     </div>
   );
@@ -130,13 +134,13 @@ function DropSkeleton() {
 
 function PersonSkeleton() {
   return (
-    <div className="flex items-center gap-3 px-5 py-3 border-t border-[#2a2118]/6">
-      <Skeleton className="h-8 w-8 rounded-full shrink-0 bg-[#2a2118]/10" />
-      <div className="flex-1 space-y-1.5">
-        <Skeleton className="h-3 w-24 rounded bg-[#2a2118]/10" />
-        <Skeleton className="h-2.5 w-16 rounded-full bg-[#2a2118]/[0.07]" />
+    <div className="flex items-center gap-3 px-5 py-4 border-b-2 border-tok-black/5 last:border-b-0">
+      <Skeleton className="h-10 w-10 rounded-full shrink-0 bg-tok-black/5 border-2 border-tok-black/5" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-24 rounded-sm bg-tok-black/5" />
+        <Skeleton className="h-3 w-16 rounded-sm bg-tok-black/[0.03]" />
       </div>
-      <Skeleton className="h-5 w-5 rounded bg-[#2a2118]/8" />
+      <Skeleton className="h-6 w-6 rounded-sm bg-tok-black/5" />
     </div>
   );
 }
@@ -160,83 +164,103 @@ export function ActivePanel({
     status: d.status as 'active' | 'ongoing',
     scheduledAt: d.scheduledAt,
     location: d.location,
-  }));
+  })).slice(0, 2);
 
-  const frequentlySeen = currentUserId
+  const frequentlySeen = (currentUserId
     ? getFrequentlySeen(activityLogs, currentUserId)
-    : [];
+    : []).slice(0, 3);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-10">
       {/* Active Drops */}
-      <div className="rounded-[22px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.05)] overflow-hidden">
-        <div className="flex items-center justify-between px-5 pt-4 pb-3">
-          <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
-            Active Drops
-          </p>
+      <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 bg-tok-teal/3 border-b-2 border-tok-black/80">
+          <div className="flex items-center gap-2">
+            <TrendingUp size={14} className="text-tok-teal" />
+            <p className="font-passion text-[12px] font-black uppercase tracking-widest text-tok-black">
+              Active Drops
+            </p>
+          </div>
           <Link
             href="/drops"
-            className="font-passion text-[10px] font-bold tracking-[1px] text-tok-teal hover:underline"
+            className="font-passion text-[12px] font-black uppercase tracking-wider text-tok-teal hover:underline underline-offset-4"
           >
             See all
           </Link>
         </div>
 
-        {dropsLoading ? (
-          <>
-            <DropSkeleton />
-            <DropSkeleton />
-          </>
-        ) : activeDrops.length > 0 ? (
-          activeDrops.map((drop) => <DropRow key={drop.id} drop={drop} />)
-        ) : (
-          <p className="px-5 pb-4 text-[12px] text-[#2a2118]/40">
-            No active drops right now.
-          </p>
-        )}
+        <div className="divide-y-2 divide-tok-black/5">
+          {dropsLoading ? (
+            <>
+              <DropSkeleton />
+              <DropSkeleton />
+            </>
+          ) : activeDrops.length > 0 ? (
+            activeDrops.map((drop) => <DropRow key={drop.id} drop={drop} />)
+          ) : (
+            <div className="px-5 py-8 text-center bg-tok-black/[0.01]">
+              <p className="text-[13px] font-medium text-tok-black/40">
+                No active drops right now.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Frequently Seen */}
-      <div className="rounded-[22px] border border-[#2a2118]/10 bg-white/70 shadow-[0_10px_28px_rgba(42,33,24,0.05)] overflow-hidden">
-        <div className="px-5 pt-4 pb-3">
-          <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/36">
-            Frequently Seen
+      <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden mt-4">
+        <div className="flex items-center gap-2 px-5 pt-5 pb-4 bg-tok-black/90 border-b-2 border-tok-black/80">
+          <Users size={14} className="text-tok-teal" />
+          <p className="font-passion text-[12px] font-black uppercase tracking-widest text-tok-cream">
+            Top Crew
           </p>
         </div>
 
-        {activityLoading ? (
-          <>
-            <PersonSkeleton />
-            <PersonSkeleton />
-            <PersonSkeleton />
-          </>
-        ) : frequentlySeen.length > 0 ? (
-          frequentlySeen.map((person, i) => (
-            <div
-              key={person.userId}
-              className="flex items-center gap-3 px-5 py-3 border-t border-[#2a2118]/6"
-            >
+        <div className="divide-y-2 divide-tok-black/5">
+          {activityLoading ? (
+            <>
+              <PersonSkeleton />
+              <PersonSkeleton />
+              <PersonSkeleton />
+            </>
+          ) : frequentlySeen.length > 0 ? (
+            frequentlySeen.map((person, i) => (
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center font-passion text-[10px] font-extrabold shrink-0 ${avatarColor(i)}`}
+                key={person.userId}
+                className="flex items-center gap-4 px-5 py-4 hover:bg-tok-black/[0.02] transition-colors"
               >
-                {person.initials}
+                <div
+                  className={cn(
+                    "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-passion text-[10px] sm:text-[12px] font-black tracking-wider shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)]",
+                    avatarColor(i)
+                  )}
+                >
+                  {person.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-bold text-tok-black">
+                    {person.firstName} {person.lastName}
+                  </p>
+                  <p className="text-[11px] font-medium text-tok-black/40 mt-1">{lastSeenSub(person)}</p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="font-passion text-[24px] font-black text-tok-teal leading-none">
+                    {person.count}
+                  </span>
+                  <span className="font-passion text-[8px] font-black uppercase tracking-tighter text-tok-black/30">
+                    Events
+                  </span>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-[#2a2118]">
-                  {person.firstName} {person.lastName}
-                </p>
-                <p className="text-[11px] text-[#2a2118]/46 mt-0.5">{lastSeenSub(person)}</p>
-              </div>
-              <span className="font-passion text-[20px] font-bold text-tok-teal leading-none">
-                {person.count}
-              </span>
+            ))
+          ) : (
+            <div className="px-5 py-8 text-center bg-tok-black/1">
+              <p className="text-[13px] font-medium text-tok-black/40">
+                No squad activity yet.
+              </p>
             </div>
-          ))
-        ) : (
-          <p className="px-5 pb-4 text-[12px] text-[#2a2118]/40">
-            No one else has joined your drops yet.
-          </p>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

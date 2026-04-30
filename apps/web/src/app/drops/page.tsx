@@ -81,7 +81,7 @@ function HeroDropCard({
     <div className="relative overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal px-6 py-6 shadow-[8px_8px_0px_#1C1C1A]">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border-2 border-[#F7E9B2]/20 bg-[#F7E9B2]/10 font-passion text-xl font-bold tracking-widest text-[#F7E9B2]">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 font-passion text-xl font-bold tracking-widest text-tok-cream">
             {getInitials(drop.name)}
           </div>
 
@@ -95,17 +95,17 @@ function HeroDropCard({
                 Next Drop
               </span>
               {!drop.isPublic && (
-                <span className="inline-flex items-center gap-1.5 rounded-sm bg-tok-black/20 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-[#F7E9B2]">
+                <span className="inline-flex items-center gap-1.5 rounded-sm bg-tok-black/20 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-tok-cream">
                   <Lock size={10} strokeWidth={3} />
                   Private
                 </span>
               )}
             </div>
-            <h2 className="mt-1 font-passion text-3xl font-bold leading-none tracking-tight text-[#F7E9B2]">
+            <h2 className="mt-1 font-passion text-3xl font-bold leading-none tracking-tight text-tok-cream">
               {drop.name}
             </h2>
-            <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[3px] text-[#F7E9B2]/40">
-              {role} • <span className="text-[#F7E9B2]/60">{drop.joinCode}</span>
+            <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[3px] text-tok-cream/40">
+              {role} • <span className="text-tok-cream/60">{drop.joinCode}</span>
             </p>
           </div>
         </div>
@@ -113,21 +113,21 @@ function HeroDropCard({
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => onShare(drop)}
-            className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-[#F7E9B2]/20 bg-[#F7E9B2]/10 text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:bg-[#F7E9B2]/20 active:translate-y-0"
+            className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 text-tok-cream transition-all hover:-translate-y-0.5 hover:bg-tok-cream/20 active:translate-y-0"
           >
             <ClipboardCopy size={16} strokeWidth={2.5} />
           </button>
           {canEdit && (
             <button
               onClick={() => onEdit(drop)}
-              className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-[#F7E9B2]/20 bg-[#F7E9B2]/10 text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:bg-[#F7E9B2]/20 active:translate-y-0"
+              className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 text-tok-cream transition-all hover:-translate-y-0.5 hover:bg-tok-cream/20 active:translate-y-0"
             >
               <Edit3 size={16} strokeWidth={2.5} />
             </button>
           )}
           <Link
             href={`/drops/${drop.id}`}
-            className="flex h-10 items-center justify-center gap-2.5 rounded-sm border-2 border-tok-black bg-[#F7E9B2] px-5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+            className="flex h-10 items-center justify-center gap-2.5 rounded-sm border-2 border-tok-black bg-tok-cream px-5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
           >
             <span className="pt-0.5">Open Drop</span>
             <ArrowRight size={14} strokeWidth={2.5} />
@@ -135,23 +135,23 @@ function HeroDropCard({
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-4 border-t-2 border-dashed border-[#F7E9B2]/10 pt-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid grid-cols-1 gap-4 border-t-2 border-dashed border-tok-cream/10 pt-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex items-center gap-3">
-          <CalendarDays size={14} className="text-[#F7E9B2]/60" strokeWidth={2.5} />
-          <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-[#F7E9B2]/60">{formatDateTime(drop.scheduledAt)}</span>
+          <CalendarDays size={14} className="text-tok-cream/60" strokeWidth={2.5} />
+          <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream/60">{formatDateTime(drop.scheduledAt)}</span>
         </div>
         <div className="flex items-center gap-3">
-          <MapPin size={14} className="text-[#F7E9B2]/60" strokeWidth={2.5} />
-          <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-[#F7E9B2]/60">{drop.location}</span>
+          <MapPin size={14} className="text-tok-cream/60" strokeWidth={2.5} />
+          <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-tok-cream/60">{drop.location}</span>
         </div>
         <div className="flex items-center gap-3">
-          <Users size={14} className="text-[#F7E9B2]/60" strokeWidth={2.5} />
-          <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-[#F7E9B2]/60">{drop.organiser.firstName} {drop.organiser.lastName}</span>
+          <Users size={14} className="text-tok-cream/60" strokeWidth={2.5} />
+          <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-tok-cream/60">{drop.organiser.firstName} {drop.organiser.lastName}</span>
         </div>
         {drop.expectedHeadcount ? (
           <div className="flex items-center gap-3">
-            <Ticket size={14} className="text-[#F7E9B2]/60" strokeWidth={2.5} />
-            <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-[#F7E9B2]/60">{drop.expectedHeadcount} CREW EXPECTED</span>
+            <Ticket size={14} className="text-tok-cream/60" strokeWidth={2.5} />
+            <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream/60">{drop.expectedHeadcount} CREW EXPECTED</span>
           </div>
         ) : null}
       </div>
@@ -191,7 +191,7 @@ function ListDropCard({
             'flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black font-passion text-sm font-bold tracking-widest',
             isCompleted
               ? 'bg-tok-black/10 text-tok-black/40'
-              : 'bg-tok-teal text-[#F7E9B2]',
+              : 'bg-tok-teal text-tok-cream',
           )}
         >
           {getInitials(drop.name)}
@@ -253,7 +253,7 @@ function ListDropCard({
         </div>
         <Link
           href={`/drops/${drop.id}`}
-          className="flex h-9 items-center gap-2 rounded-sm border-2 border-tok-black bg-tok-teal px-4 font-passion text-[10px] font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+          className="flex h-9 items-center gap-2 rounded-sm border-2 border-tok-black bg-tok-teal px-4 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
         >
           View
           <ArrowRight size={12} strokeWidth={2.5} />
@@ -285,7 +285,7 @@ function GateCard() {
       <div className="mt-8 flex flex-col gap-4 sm:flex-row">
         <Link
           href="/login"
-          className="flex h-12 items-center justify-center gap-3 rounded-sm border-[3px] border-tok-black bg-tok-teal px-8 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+          className="flex h-12 items-center justify-center gap-3 rounded-sm border-[3px] border-tok-black bg-tok-teal px-8 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
         >
           <LogIn size={16} strokeWidth={2.5} />
           Log in
@@ -315,7 +315,7 @@ function GateCard() {
           <button
             type="submit"
             disabled={gateCode.trim().length < 4}
-            className="flex h-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
+            className="flex h-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
           >
             GO
           </button>
@@ -328,13 +328,13 @@ function GateCard() {
 function EmptyTabState({ message, sub }: { message: string; sub: string }) {
   return (
     <div className="flex flex-col items-center py-14 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-[#2a2118]/16 bg-white/50">
-        <CalendarDays size={22} className="text-[#2a2118]/28" />
+      <div className="flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-tok-black/16 bg-white/50">
+        <CalendarDays size={22} className="text-tok-black/28" />
       </div>
-      <p className="mt-4 font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/32">
+      <p className="mt-4 font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-tok-black/32">
         {message}
       </p>
-      <p className="mt-2 max-w-xs text-[12px] leading-6 text-[#2a2118]/46">{sub}</p>
+      <p className="mt-2 max-w-xs text-[12px] leading-6 text-tok-black/46">{sub}</p>
     </div>
   );
 }
@@ -365,38 +365,35 @@ function HeroCardSkeleton() {
 
 function ListCardSkeleton() {
   return (
-    <div className="flex items-center gap-4 rounded-[16px] border border-[#2a2118]/8 bg-white/40 px-4 py-3.5">
-      <Skeleton className="h-10 w-10 rounded-full bg-[#2a2118]/8" />
+    <div className="flex items-center gap-4 rounded-[16px] border border-tok-black/10 bg-white/40 px-4 py-3.5">
+      <Skeleton className="h-10 w-10 rounded-full bg-tok-black/8" />
       <div className="flex-1 space-y-1.5">
-        <Skeleton className="h-2.5 w-16 rounded-full bg-[#2a2118]/8" />
-        <Skeleton className="h-4 w-40 rounded bg-[#2a2118]/10" />
-        <Skeleton className="h-2.5 w-52 rounded-full bg-[#2a2118]/6" />
+        <Skeleton className="h-2.5 w-16 rounded-full bg-tok-black/8" />
+        <Skeleton className="h-4 w-40 rounded bg-tok-black/10" />
+        <Skeleton className="h-2.5 w-52 rounded-full bg-tok-black/6" />
       </div>
-      <Skeleton className="h-7 w-16 rounded-full bg-[#2a2118]/8" />
+      <Skeleton className="h-7 w-16 rounded-full bg-tok-black/8" />
     </div>
   );
 }
 
 function PageSkeleton() {
   return (
-    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
+    <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
       <TapokNavbar />
       <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-5 flex items-center justify-between gap-4">
-          <Skeleton className="h-10 w-28 rounded bg-[#2a2118]/10" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-9 w-32 rounded-full bg-[#2a2118]/8" />
-            <Skeleton className="h-9 w-16 rounded-full bg-[#2a2118]/10" />
-            <Skeleton className="h-9 w-32 rounded-full bg-tok-teal/20" />
-          </div>
+          <Skeleton className="h-9 w-32 rounded-full bg-tok-black/8" />
+          <Skeleton className="h-9 w-16 rounded-full bg-tok-black/10" />
+          <Skeleton className="h-9 w-32 rounded-full bg-tok-teal/20" />
         </div>
         <HeroCardSkeleton />
         <div className="mt-4 flex items-center justify-between">
           <div className="flex gap-2">
-            <Skeleton className="h-9 w-28 rounded-full bg-[#2a2118]/10" />
-            <Skeleton className="h-9 w-20 rounded-full bg-[#2a2118]/6" />
+            <Skeleton className="h-9 w-28 rounded-full bg-tok-black/10" />
+            <Skeleton className="h-9 w-20 rounded-full bg-tok-black/6" />
           </div>
-          <Skeleton className="h-3 w-32 rounded-full bg-[#2a2118]/8" />
+          <Skeleton className="h-3 w-32 rounded-full bg-tok-black/8" />
         </div>
         <div className="mt-4 space-y-2">
           <ListCardSkeleton />
@@ -434,7 +431,7 @@ export default function DropsPage() {
     const completed = drops
       .filter((d) => d.status === 'completed')
       .sort(sortRecent);
-    
+
     const focus = active[0] ?? null;
     const remaining = focus ? active.filter((d) => d.id !== focus.id) : active;
 
@@ -460,7 +457,7 @@ export default function DropsPage() {
 
   if (!loading && !user) {
     return (
-      <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
+      <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
         <TapokNavbar />
         <main className="mx-auto flex min-h-[calc(100vh-88px)] max-w-5xl items-center px-4 py-8 sm:px-6 lg:px-10">
           <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]">
@@ -468,10 +465,10 @@ export default function DropsPage() {
               <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
                 Drops
               </p>
-              <h1 className="mt-3 font-passion text-[clamp(32px,4.2vw,60px)] font-bold uppercase tracking-[-0.04em] text-[#2a2118]">
+              <h1 className="mt-3 font-passion text-[clamp(32px,4.2vw,60px)] font-bold uppercase tracking-[-0.04em] text-tok-black">
                 One Drop. One Crew.
               </h1>
-              <p className="mt-4 max-w-2xl text-[15px] leading-7 text-[#2a2118]/64">
+              <p className="mt-4 max-w-2xl text-[15px] leading-7 text-tok-black/64">
                 TapOk is where a plan becomes real. Sign in to create a Drop,
                 join a Crew, and keep the log in one place.
               </p>
@@ -484,7 +481,7 @@ export default function DropsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118] selection:bg-tok-teal/15">
+    <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
       <TapokNavbar />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
@@ -518,7 +515,7 @@ export default function DropsPage() {
               <button
                 type="submit"
                 disabled={joinCode.trim().length < 4 || isJoiningNavigation}
-                className="h-full border-l-[3px] border-tok-black bg-tok-teal px-5 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:bg-tok-teal/90 disabled:bg-tok-black/20 disabled:text-tok-black/40"
+                className="h-full border-l-[3px] border-tok-black bg-tok-teal px-5 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:bg-tok-teal/90 disabled:bg-tok-black/20 disabled:text-tok-black/40"
               >
                 {isJoiningNavigation ? '...' : 'JOIN'}
               </button>
@@ -526,7 +523,7 @@ export default function DropsPage() {
 
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-teal px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-teal px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto"
             >
               <Plus size={16} strokeWidth={2.5} />
               New Drop
@@ -544,14 +541,14 @@ export default function DropsPage() {
             </div>
           </>
         ) : isError ? (
-          <Alert className="rounded-[20px] border-[#2a2118]/10 bg-white/72 p-6 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
-            <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-[#2a2118]/34">
+          <Alert className="rounded-[20px] border-tok-black/10 bg-white/72 p-6 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
+            <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/34">
               Something slipped
             </p>
-            <AlertTitle className="mt-3 font-passion text-[24px] font-bold uppercase tracking-[-0.03em] text-[#2a2118]">
+            <AlertTitle className="mt-3 font-passion text-[24px] font-bold uppercase tracking-[-0.03em] text-tok-black">
               We could not load your Drops.
             </AlertTitle>
-            <AlertDescription className="mt-3 max-w-xl text-[14px] leading-7 text-[#2a2118]/64">
+            <AlertDescription className="mt-3 max-w-xl text-[14px] leading-7 text-tok-black/64">
               Try again in a moment. Your session may need a refresh if this
               keeps happening.
             </AlertDescription>
@@ -577,7 +574,7 @@ export default function DropsPage() {
                   className={cn(
                     'flex h-10 items-center gap-3 rounded-sm border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
                     activeTab === 'upcoming'
-                      ? 'bg-tok-black text-[#F7E9B2]'
+                      ? 'bg-tok-black text-tok-cream'
                       : 'bg-white text-tok-black hover:bg-tok-black/5',
                   )}
                 >
@@ -586,7 +583,7 @@ export default function DropsPage() {
                     className={cn(
                       'flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
                       activeTab === 'upcoming'
-                        ? 'bg-white/20 text-[#F7E9B2]'
+                        ? 'bg-white/20 text-tok-cream'
                         : 'bg-tok-black/10 text-tok-black/40',
                     )}
                   >
