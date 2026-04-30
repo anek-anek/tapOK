@@ -149,4 +149,19 @@ export class DropsRepository {
       .orderBy('log.createdAt', 'DESC')
       .getMany();
   }
+
+  async findPaginatedActivityLogs(
+    dropId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ data: DropActivityLog[]; total: number; page: number; totalPages: number }> {
+    const [data, total] = await this.logRepo.findAndCount({
+      where: { dropId },
+      relations: { user: true },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
 }

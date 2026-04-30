@@ -13,6 +13,7 @@ export const dropKeys = {
   crew: (id: string) => ['drops', id, 'crew'] as const,
   myActivity: (uid: string) => ['drops', 'activity', 'mine', uid] as const,
   myActivityPrefix: () => ['drops', 'activity', 'mine'] as const,
+  activityLogs: (id: string, page: number) => ['drops', id, 'activity', page] as const,
 };
 
 export function useMyDrops(options?: { enabled?: boolean }) {
@@ -64,6 +65,15 @@ export function useMyCrewStatus(dropId: string, options?: { enabled?: boolean })
       if (axios.isAxiosError(error) && error.response?.status === 404) return false;
       return failureCount < 2;
     },
+  });
+}
+
+export function useDropActivityLogs(dropId: string, page: number, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: dropKeys.activityLogs(dropId, page),
+    queryFn: () => dropsService.getActivityLogs(dropId, page),
+    enabled: (options?.enabled ?? true) && Boolean(dropId),
+    refetchInterval: 30_000,
   });
 }
 

@@ -6,9 +6,11 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -28,6 +30,7 @@ import { UpdateDropDto } from './dto/update-drop.dto';
 import { UpdatePresenceDto } from './dto/update-presence.dto';
 import { JoinDropResponseDto } from './dto/join-drop-response.dto';
 import { CrewMemberDto } from './dto/crew-member.dto';
+import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 
@@ -98,6 +101,19 @@ export class DropsController {
   @ApiResponse({ status: 404, description: 'Drop not found.' })
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Drop> {
     return this.dropsService.findOne(id);
+  }
+
+  @Get(':id/activity')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Get paginated activity logs for a drop' })
+  @ApiResponse({ status: 200, type: ActivityLogsPageDto })
+  @ApiResponse({ status: 404, description: 'Drop not found.' })
+  getActivityLogs(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('page', new ParseIntPipe({ optional: true })) page = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit = 6,
+  ): Promise<ActivityLogsPageDto> {
+    return this.dropsService.findDropActivityLogs(id, page, limit);
   }
 
   @Get(':id/crew/me')
