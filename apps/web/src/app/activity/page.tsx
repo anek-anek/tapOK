@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { LogIn } from 'lucide-react';
+import { useMounted } from '@/hooks/use-mounted';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { ActivePanel } from './_components/active-panel';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -315,6 +316,7 @@ function GateCard() {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function ActivityPage() {
+  const mounted = useMounted();
   const { user, dbUser, loading, isReady } = useAuth();
   const {
     data: activityLogs = [],
@@ -323,7 +325,7 @@ export default function ActivityPage() {
   } = useMyActivity({ enabled: Boolean(user) && !loading });
   const isHardLoading = activityLoading && !activityLogs.length;
 
-  if (!isReady) {
+  if (!mounted || !isReady) {
     return (
       <div className="min-h-screen bg-[#F7E9B2] text-[#2a2118]">
         <TapokNavbar />

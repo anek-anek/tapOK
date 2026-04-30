@@ -30,7 +30,8 @@ import { DropsModule } from './app/drops/drops.module';
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
         database: configService.get<string>('DB_DATABASE', 'postgres'),
         ssl: { rejectUnauthorized: false },
-        extra: { pgbouncer: true },
+        extra: { pgbouncer: true, timezone: 'UTC' },
+
         autoLoadEntities: true,
         synchronize: false,
       }),

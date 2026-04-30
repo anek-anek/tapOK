@@ -1,4 +1,6 @@
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
+process.env.TZ = 'UTC';
+
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';

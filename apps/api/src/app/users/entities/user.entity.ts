@@ -41,11 +41,11 @@ export class User {
   isEmailVerified: boolean;
 
   @ApiProperty({ required: false })
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   emailVerifiedAt?: Date;
 
   @ApiProperty({ required: false })
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   emailVerificationSentAt?: Date;
 
   @ApiProperty({ required: false })
@@ -61,11 +61,11 @@ export class User {
   isActive: boolean;
 
   @ApiProperty()
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
   @ApiProperty()
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
   @ApiProperty({ enum: GenderEnum, description: 'Gender of the user', required: false })
@@ -92,7 +92,7 @@ export class User {
   termsAccepted: boolean;
 
   @ApiProperty({ required: false, description: 'Timestamp when Terms & Conditions were accepted' })
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   termsAcceptedAt?: Date;
 
   @ApiProperty({ description: 'Whether the user has accepted the Privacy Policy' })
@@ -100,6 +100,6 @@ export class User {
   privacyPolicyAccepted: boolean;
 
   @ApiProperty({ required: false, description: 'Timestamp when Privacy Policy was accepted' })
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   privacyPolicyAcceptedAt?: Date;
 }

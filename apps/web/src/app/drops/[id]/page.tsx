@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useMounted } from '@/hooks/use-mounted';
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -199,6 +200,7 @@ function PageSkeleton() {
 
 export default function DropDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
+  const mounted = useMounted();
   const { dbUser, isReady } = useAuth();
   const { data: drop, isLoading, isError } = useDrop(id);
   const isHardLoading = isLoading && !drop;
@@ -220,7 +222,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const pendingMembers = crew?.filter((m) => m.status === 'pending') ?? [];
   const activeMembers = crew?.filter((m) => m.status === 'in') ?? [];
 
-  if (!isReady || isHardLoading) return <PageSkeleton />;
+  if (!mounted || !isReady || isHardLoading) return <PageSkeleton />;
 
   if (isError || !drop) {
     return (

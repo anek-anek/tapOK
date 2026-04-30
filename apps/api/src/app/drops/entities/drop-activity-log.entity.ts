@@ -42,6 +42,7 @@ export class DropActivityLog {
   changedFields?: Record<string, unknown>;
 
   @ApiProperty()
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
+
 }
