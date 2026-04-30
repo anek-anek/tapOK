@@ -111,7 +111,8 @@ export class DropsService {
   }
 
   async update(id: string, dto: UpdateDropDto, firebaseUid: string): Promise<Drop> {
-    const drop = await this.findOne(id);
+    const drop = await this.dropsRepository.findById(id);
+    if (!drop) throw new NotFoundException(`Drop ${id} not found`);
 
     if (drop.status === DropStatus.COMPLETED) {
       throw new BadRequestException('Completed drops cannot be edited');
@@ -153,7 +154,7 @@ export class DropsService {
       changedFields: action === 'updated' ? changedFields : undefined,
     });
 
-    return this.findOne(id);
+    return this.dropsRepository.findById(id) as Promise<Drop>;
   }
 
   async inviteToDrop(dropId: string, userId: string, firebaseUid: string): Promise<void> {
