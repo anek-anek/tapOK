@@ -617,7 +617,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
       {shareModalOpen && (
         <DropShareModal drop={drop} onClose={() => setShareModalOpen(false)} />
       )}
-      {editModalOpen && (
+      {canEdit && editModalOpen && (
         <DropModal drop={drop} onClose={() => setEditModalOpen(false)} />
       )}
       {leaveModalOpen && (
