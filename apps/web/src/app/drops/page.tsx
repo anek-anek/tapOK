@@ -78,7 +78,8 @@ function HeroDropCard({
   onEdit: (drop: Drop) => void;
 }) {
   const role = getRole(drop, viewerId);
-  const canEdit = drop.status !== 'completed';
+  const isOrganiser = !!viewerId && drop.organiserId === viewerId;
+  const canEdit = isOrganiser && drop.status !== 'completed';
 
   return (
     <div className="relative overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal px-6 py-6 shadow-[8px_8px_0px_#1C1C1A]">
@@ -101,7 +102,7 @@ function HeroDropCard({
             <h2 className="mt-1 font-passion text-3xl font-bold leading-none tracking-tight text-[#F7E9B2]">
               {drop.name}
             </h2>
-            <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[3px] text-[#F7E9B2]/40">
+            <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[3px] text-[#F7E9B2]/40">
               {role} • <span className="text-[#F7E9B2]/60">{drop.joinCode}</span>
             </p>
           </div>
@@ -124,9 +125,9 @@ function HeroDropCard({
           )}
           <Link
             href={`/drops/${drop.id}`}
-            className="flex h-10 items-center gap-2 rounded-sm border-2 border-tok-black bg-[#F7E9B2] px-5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+            className="flex h-10 items-center justify-center gap-2.5 rounded-sm border-2 border-tok-black bg-[#F7E9B2] px-5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
           >
-            Open Drop
+            <span className="pt-0.5">Open Drop</span>
             <ArrowRight size={14} strokeWidth={2.5} />
           </Link>
         </div>
@@ -169,7 +170,8 @@ function ListDropCard({
   onEdit: (drop: Drop) => void;
 }) {
   const role = getRole(drop, viewerId);
-  const canEdit = drop.status !== 'completed';
+  const isOrganiser = !!viewerId && drop.organiserId === viewerId;
+  const canEdit = isOrganiser && drop.status !== 'completed';
   const isCompleted = drop.status === 'completed';
 
   return (
@@ -195,11 +197,11 @@ function ListDropCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
+            <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-tok-black/30">
               {role}
             </span>
             {isCompleted && (
-              <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
+              <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-tok-black/40">
                 • COMPLETED
               </span>
             )}
@@ -414,6 +416,7 @@ export default function DropsPage() {
   const [editDrop, setEditDrop] = useState<Drop | null>(null);
   const [joinCode, setJoinCode] = useState('');
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [isJoiningNavigation, setIsJoiningNavigation] = useState(false);
 
   const sortedUpcoming = useMemo(() => [...drops].sort(sortUpcoming), [drops]);
   const activeDrops = useMemo(
@@ -438,7 +441,8 @@ export default function DropsPage() {
   const handleJoin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const code = joinCode.trim().toUpperCase();
-    if (code.length < 4) return;
+    if (code.length < 4 || isJoiningNavigation) return;
+    setIsJoiningNavigation(true);
     router.push(`/drops/join/${code}`);
   };
 
@@ -477,42 +481,42 @@ export default function DropsPage() {
         {/* Page header row */}
         <div className="mb-8 flex flex-wrap items-center justify-between gap-6">
           <div>
-            <p className="font-passion text-[11px] font-bold uppercase tracking-[4px] text-tok-teal">
+            <p className="font-passion text-[11px] font-bold uppercase tracking-[2px] sm:tracking-[4px] text-tok-teal">
               COMMAND CENTER
             </p>
-            <h1 className="mt-1 font-passion text-5xl font-bold uppercase tracking-tight text-tok-black">
+            <h1 className="mt-1 font-passion text-4xl font-bold uppercase tracking-tight text-tok-black sm:text-5xl">
               Drops.
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
             {/* Join code form */}
             <form
               onSubmit={handleJoin}
-              className="flex h-12 items-center rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+              className="flex h-12 w-full items-center rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto"
             >
               <Input
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="JOIN TOKEN"
+                placeholder="ACCESS CODE"
                 inputMode="text"
                 autoCapitalize="characters"
                 autoComplete="off"
                 spellCheck={false}
-                className="h-full w-32 border-0 bg-transparent px-4 font-passion text-xs font-bold tracking-[2px] text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="h-full flex-1 border-0 bg-transparent px-4 font-passion text-xs font-bold tracking-[2px] text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-32 sm:flex-none"
               />
               <button
                 type="submit"
-                disabled={joinCode.trim().length < 4}
+                disabled={joinCode.trim().length < 4 || isJoiningNavigation}
                 className="h-full border-l-[3px] border-tok-black bg-tok-teal px-5 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] transition-all hover:bg-tok-teal/90 disabled:bg-tok-black/20 disabled:text-tok-black/40"
               >
-                JOIN
+                {isJoiningNavigation ? '...' : 'JOIN'}
               </button>
             </form>
 
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="flex h-12 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-teal px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-teal px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto"
             >
               <Plus size={16} strokeWidth={2.5} />
               New Drop
