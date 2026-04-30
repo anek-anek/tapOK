@@ -561,7 +561,7 @@ export default function DropsPage() {
                   type="button"
                   onClick={() => setActiveTab('upcoming')}
                   className={cn(
-                    'flex h-10 items-center gap-3 rounded-full border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
+                    'flex h-10 items-center gap-3 rounded-sm border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
                     activeTab === 'upcoming'
                       ? 'bg-tok-black text-[#F7E9B2]'
                       : 'bg-white text-tok-black hover:bg-tok-black/5',
@@ -584,7 +584,7 @@ export default function DropsPage() {
                   type="button"
                   onClick={() => setActiveTab('past')}
                   className={cn(
-                    'flex h-10 items-center gap-3 rounded-full border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
+                    'flex h-10 items-center gap-3 rounded-sm border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
                     activeTab === 'past'
                       ? 'bg-tok-black text-[#F7E9B2]'
                       : 'bg-white text-tok-black hover:bg-tok-black/5',
