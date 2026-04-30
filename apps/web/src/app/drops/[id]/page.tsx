@@ -297,33 +297,33 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
 
-            <div className="flex shrink-0 flex-wrap items-center gap-3">
+            <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
               <button
                 type="button"
                 onClick={() => setShareModalOpen(true)}
-                className="group relative flex h-12 items-center gap-2.5 rounded-[4px] border-[3px] border-tok-black bg-white px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] lg:hidden"
+                className="group relative flex h-12 flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
               >
                 <IconShare2 size={16} strokeWidth={2.5} />
-                Share
+                <span className="pt-0.5">Share</span>
               </button>
               {canEdit && (
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(true)}
-                  className="group relative flex h-12 items-center gap-2.5 rounded-[4px] border-[3px] border-tok-black bg-[#F7E9B2] px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A]"
+                  className="group relative flex h-12 flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-[#F7E9B2] px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
                 >
                   <IconEdit size={16} strokeWidth={2.5} />
-                  Edit Drop
+                  <span className="pt-0.5 text-nowrap">Edit Drop</span>
                 </button>
               )}
               {canLeave && (
                 <button
                   type="button"
                   onClick={() => setLeaveModalOpen(true)}
-                  className="group relative flex h-12 items-center gap-2.5 rounded-[4px] border-[3px] border-tok-black bg-red-500 px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A]"
+                  className="group relative flex h-12 flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-red-500 px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
                 >
                   <IconLogOut size={16} strokeWidth={2.5} />
-                  Leave
+                  <span className="pt-0.5">Leave</span>
                 </button>
               )}
             </div>
@@ -353,25 +353,27 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      disabled={isUpdatingPresence}
+                      disabled={isUpdatingPresence || crewStatus?.isPresent === true}
                       onClick={() => updatePresence(true)}
-                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${crewStatus?.isPresent
-                        ? 'bg-tok-teal text-white shadow-none'
-                        : 'bg-white text-tok-teal hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A]'
-                        }`}
+                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${
+                        crewStatus?.isPresent
+                          ? 'bg-tok-teal text-white shadow-[3px_3px_0px_#1C1C1A]'
+                          : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
+                      }`}
                     >
-                      {crewStatus?.isPresent ? 'I am In' : 'Tap In'}
+                      {crewStatus?.isPresent ? 'I am In ✓' : 'Tap In'}
                     </button>
                     <button
                       type="button"
-                      disabled={isUpdatingPresence}
+                      disabled={isUpdatingPresence || crewStatus?.isPresent === false}
                       onClick={() => updatePresence(false)}
-                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${!crewStatus?.isPresent
-                        ? 'bg-red-500 text-white shadow-none'
-                        : 'bg-white text-red-500 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A]'
-                        }`}
+                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${
+                        !crewStatus?.isPresent
+                          ? 'bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A]'
+                          : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
+                      }`}
                     >
-                      {!crewStatus?.isPresent ? 'I am Out' : 'Tap Out'}
+                      {!crewStatus?.isPresent ? 'I am Out ✓' : 'Tap Out'}
                     </button>
                   </div>
                 </div>

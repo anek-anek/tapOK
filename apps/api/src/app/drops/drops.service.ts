@@ -18,6 +18,8 @@ import { UpdateDropDto } from './dto/update-drop.dto';
 
 @Injectable()
 export class DropsService {
+  private readonly _createInFlight = new Set<string>();
+
   constructor(
     private readonly dropsRepository: DropsRepository,
     private readonly usersService: UsersService,
@@ -28,29 +30,40 @@ export class DropsService {
     const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!organiser) throw new NotFoundException('Authenticated user not found in database');
 
-    const joinCode = await this.generateUniqueJoinCode();
-    const baseUrl = this.configService.get<string>('WEB_URL', 'http://localhost:4200');
-    const shareUrl = `${baseUrl}/drops/join/${joinCode}`;
+    // Prevent duplicate submissions racing in the same process window
+    const idempotencyKey = `${organiser.id}:${dto.name}:${dto.scheduledAt}`;
+    if (this._createInFlight.has(idempotencyKey)) {
+      throw new ConflictException('A drop with the same name and time is already being created');
+    }
+    this._createInFlight.add(idempotencyKey);
 
-    const drop = await this.dropsRepository.create({
-      name: dto.name,
-      scheduledAt: new Date(dto.scheduledAt),
-      location: dto.location,
-      expectedHeadcount: dto.expectedHeadcount,
-      isLocked: dto.isLocked ?? false,
-      status: DropStatus.ACTIVE,
-      joinCode,
-      shareUrl,
-      organiserId: organiser.id,
-    });
+    try {
+      const joinCode = await this.generateUniqueJoinCode();
+      const baseUrl = this.configService.get<string>('WEB_URL', 'http://localhost:4200');
+      const shareUrl = `${baseUrl}/drops/join/${joinCode}`;
 
-    await this.dropsRepository.writeLog({
-      dropId: drop.id,
-      userId: organiser.id,
-      action: 'created',
-    });
+      const drop = await this.dropsRepository.create({
+        name: dto.name,
+        scheduledAt: new Date(dto.scheduledAt),
+        location: dto.location,
+        expectedHeadcount: dto.expectedHeadcount,
+        isLocked: dto.isLocked ?? false,
+        status: DropStatus.ACTIVE,
+        joinCode,
+        shareUrl,
+        organiserId: organiser.id,
+      });
 
-    return this.dropsRepository.findById(drop.id) as Promise<Drop>;
+      await this.dropsRepository.writeLog({
+        dropId: drop.id,
+        userId: organiser.id,
+        action: 'created',
+      });
+
+      return this.dropsRepository.findById(drop.id) as Promise<Drop>;
+    } finally {
+      this._createInFlight.delete(idempotencyKey);
+    }
   }
 
   async findOne(id: string): Promise<Drop> {
@@ -60,9 +73,9 @@ export class DropsService {
   }
 
   async findMyDrops(firebaseUid: string): Promise<Drop[]> {
-    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
-    if (!organiser) throw new NotFoundException('Authenticated user not found in database');
-    return this.dropsRepository.findByOrganiserId(organiser.id);
+    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('Authenticated user not found in database');
+    return this.dropsRepository.findInvolvedDrops(user.id);
   }
 
   async findByJoinCode(joinCode: string): Promise<Drop> {
@@ -119,31 +132,41 @@ export class DropsService {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
 
-    const drop = await this.dropsRepository.findById(dropId);
-    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
-
-    if (drop.status === DropStatus.COMPLETED) {
-      throw new BadRequestException('Cannot join a completed drop');
+    const joinKey = `join:${dropId}:${user.id}`;
+    if (this._createInFlight.has(joinKey)) {
+      throw new ConflictException('You have already joined this drop');
     }
+    this._createInFlight.add(joinKey);
 
-    if (drop.organiserId === user.id) {
-      throw new ForbiddenException('Organiser cannot join their own drop');
+    try {
+      const drop = await this.dropsRepository.findById(dropId);
+      if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+      if (drop.status === DropStatus.COMPLETED) {
+        throw new BadRequestException('Cannot join a completed drop');
+      }
+
+      if (drop.organiserId === user.id) {
+        throw new ForbiddenException('Organiser cannot join their own drop');
+      }
+
+      const existing = await this.dropsRepository.findCrewMember(dropId, user.id);
+      if (existing) throw new ConflictException('You have already joined this drop');
+
+      const memberStatus = drop.isLocked ? DropCrewStatus.PENDING : DropCrewStatus.IN;
+      const isPresent = !drop.isLocked;
+      const crewMember = await this.dropsRepository.addCrewMember(dropId, user.id, memberStatus, isPresent);
+
+      await this.dropsRepository.writeLog({
+        dropId,
+        userId: user.id,
+        action: drop.isLocked ? 'join_requested' : 'joined',
+      });
+
+      return crewMember;
+    } finally {
+      this._createInFlight.delete(joinKey);
     }
-
-    const existing = await this.dropsRepository.findCrewMember(dropId, user.id);
-    if (existing) throw new ConflictException('You have already joined this drop');
-
-    const memberStatus = drop.isLocked ? DropCrewStatus.PENDING : DropCrewStatus.IN;
-    const isPresent = !drop.isLocked;
-    const crewMember = await this.dropsRepository.addCrewMember(dropId, user.id, memberStatus, isPresent);
-
-    await this.dropsRepository.writeLog({
-      dropId,
-      userId: user.id,
-      action: drop.isLocked ? 'join_requested' : 'joined',
-    });
-
-    return crewMember;
   }
 
   async leaveDrop(dropId: string, firebaseUid: string): Promise<void> {

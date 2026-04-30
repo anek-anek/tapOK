@@ -242,8 +242,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
 
         <button
           type="submit"
-          aria-disabled={isSubmitting || googleLoading}
-          onClick={(e) => { if (isSubmitting || googleLoading) e.preventDefault(); }}
+          disabled={isSubmitting || googleLoading}
           className="animate-fade-up-6 flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white active:scale-[0.98]"
           style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease', opacity: isSubmitting || googleLoading ? 0.6 : 1, cursor: isSubmitting || googleLoading ? 'not-allowed' : 'pointer' }}
           onMouseEnter={(e) => {
