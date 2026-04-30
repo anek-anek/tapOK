@@ -667,7 +667,7 @@ export default function DropsPage() {
       {createModalOpen && (
         <DropModal onClose={() => setCreateModalOpen(false)} />
       )}
-      {editDrop && (
+      {editDrop && editDrop.organiserId === dbUser?.id && (
         <DropModal drop={editDrop} onClose={() => setEditDrop(null)} />
       )}
     </div>
