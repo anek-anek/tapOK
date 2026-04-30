@@ -4,65 +4,58 @@ export class AddBirthdayAndGenderToUser1777572132382 implements MigrationInterfa
     name = 'AddBirthdayAndGenderToUser1777572132382'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "organizations" DROP COLUMN "createdAt"`);
-        await queryRunner.query(`ALTER TABLE "organizations" ADD "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "organizations" DROP COLUMN "updatedAt"`);
-        await queryRunner.query(`ALTER TABLE "organizations" ADD "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "organization_members" DROP COLUMN "joinedAt"`);
-        await queryRunner.query(`ALTER TABLE "organization_members" ADD "joinedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "emailVerifiedAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "emailVerifiedAt" TIMESTAMP WITH TIME ZONE`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "emailVerificationSentAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "emailVerificationSentAt" TIMESTAMP WITH TIME ZONE`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "createdAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "updatedAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "termsAcceptedAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "termsAcceptedAt" TIMESTAMP WITH TIME ZONE`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "privacyPolicyAcceptedAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "privacyPolicyAcceptedAt" TIMESTAMP WITH TIME ZONE`);
-        await queryRunner.query(`ALTER TABLE "drop_activity_logs" DROP COLUMN "createdAt"`);
-        await queryRunner.query(`ALTER TABLE "drop_activity_logs" ADD "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "drop_crew" DROP COLUMN "joinedAt"`);
-        await queryRunner.query(`ALTER TABLE "drop_crew" ADD "joinedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "drops" DROP COLUMN "scheduledAt"`);
-        await queryRunner.query(`ALTER TABLE "drops" ADD "scheduledAt" TIMESTAMP WITH TIME ZONE NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "drops" DROP COLUMN "createdAt"`);
-        await queryRunner.query(`ALTER TABLE "drops" ADD "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "drops" DROP COLUMN "updatedAt"`);
-        await queryRunner.query(`ALTER TABLE "drops" ADD "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()`);
+        // Add missing columns to users table
+        await queryRunner.query(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "gender" text`);
+        await queryRunner.query(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "birthday" date`);
+
+        // Convert existing columns to TIMESTAMPTZ safely (non-destructive)
+        // Organizations
+        await queryRunner.query(`ALTER TABLE "organizations" ALTER COLUMN "createdAt" TYPE timestamptz`);
+        await queryRunner.query(`ALTER TABLE "organizations" ALTER COLUMN "updatedAt" TYPE timestamptz`);
+
+        // Organization Members
+        await queryRunner.query(`ALTER TABLE "organization_members" ALTER COLUMN "joinedAt" TYPE timestamptz`);
+
+        // Users
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "emailVerifiedAt" TYPE timestamptz`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "emailVerificationSentAt" TYPE timestamptz`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "createdAt" TYPE timestamptz`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "updatedAt" TYPE timestamptz`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "termsAcceptedAt" TYPE timestamptz`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "privacyPolicyAcceptedAt" TYPE timestamptz`);
+
+        // Activity Logs
+        await queryRunner.query(`ALTER TABLE "drop_activity_logs" ALTER COLUMN "createdAt" TYPE timestamptz`);
+
+        // Drop Crew
+        await queryRunner.query(`ALTER TABLE "drop_crew" ALTER COLUMN "joinedAt" TYPE timestamptz`);
+
+        // Drops
+        await queryRunner.query(`ALTER TABLE "drops" ALTER COLUMN "scheduledAt" TYPE timestamptz`);
+        await queryRunner.query(`ALTER TABLE "drops" ALTER COLUMN "createdAt" TYPE timestamptz`);
+        await queryRunner.query(`ALTER TABLE "drops" ALTER COLUMN "updatedAt" TYPE timestamptz`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "drops" DROP COLUMN "updatedAt"`);
-        await queryRunner.query(`ALTER TABLE "drops" ADD "updatedAt" TIMESTAMP NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "drops" DROP COLUMN "createdAt"`);
-        await queryRunner.query(`ALTER TABLE "drops" ADD "createdAt" TIMESTAMP NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "drops" DROP COLUMN "scheduledAt"`);
-        await queryRunner.query(`ALTER TABLE "drops" ADD "scheduledAt" TIMESTAMP NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "drop_crew" DROP COLUMN "joinedAt"`);
-        await queryRunner.query(`ALTER TABLE "drop_crew" ADD "joinedAt" TIMESTAMP NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "drop_activity_logs" DROP COLUMN "createdAt"`);
-        await queryRunner.query(`ALTER TABLE "drop_activity_logs" ADD "createdAt" TIMESTAMP NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "privacyPolicyAcceptedAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "privacyPolicyAcceptedAt" TIMESTAMP`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "termsAcceptedAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "termsAcceptedAt" TIMESTAMP`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "updatedAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "updatedAt" TIMESTAMP NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "createdAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "createdAt" TIMESTAMP NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "emailVerificationSentAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "emailVerificationSentAt" TIMESTAMP`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "emailVerifiedAt"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "emailVerifiedAt" TIMESTAMP`);
-        await queryRunner.query(`ALTER TABLE "organization_members" DROP COLUMN "joinedAt"`);
-        await queryRunner.query(`ALTER TABLE "organization_members" ADD "joinedAt" TIMESTAMP NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "organizations" DROP COLUMN "updatedAt"`);
-        await queryRunner.query(`ALTER TABLE "organizations" ADD "updatedAt" TIMESTAMP NOT NULL DEFAULT now()`);
-        await queryRunner.query(`ALTER TABLE "organizations" DROP COLUMN "createdAt"`);
-        await queryRunner.query(`ALTER TABLE "organizations" ADD "createdAt" TIMESTAMP NOT NULL DEFAULT now()`);
+        // Revert columns to TIMESTAMP
+        await queryRunner.query(`ALTER TABLE "drops" ALTER COLUMN "updatedAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "drops" ALTER COLUMN "createdAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "drops" ALTER COLUMN "scheduledAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "drop_crew" ALTER COLUMN "joinedAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "drop_activity_logs" ALTER COLUMN "createdAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "privacyPolicyAcceptedAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "termsAcceptedAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "updatedAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "createdAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "emailVerificationSentAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "emailVerifiedAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "organization_members" ALTER COLUMN "joinedAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "organizations" ALTER COLUMN "updatedAt" TYPE timestamp`);
+        await queryRunner.query(`ALTER TABLE "organizations" ALTER COLUMN "createdAt" TYPE timestamp`);
+
+        // Remove added columns
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "birthday"`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "gender"`);
     }
 
 }
