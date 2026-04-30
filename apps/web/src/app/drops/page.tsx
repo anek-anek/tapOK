@@ -342,22 +342,26 @@ function EmptyTabState({ message, sub }: { message: string; sub: string }) {
 /** Skeleton for the hero card */
 function HeroCardSkeleton() {
   return (
-    <div className="rounded-[20px] bg-tok-teal/80 p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-11 w-11 rounded-full bg-white/20" />
-          <div>
-            <Skeleton className="h-2.5 w-24 rounded-full bg-white/20" />
-            <Skeleton className="mt-2 h-6 w-44 rounded bg-white/20" />
-            <Skeleton className="mt-1.5 h-2 w-12 rounded-full bg-white/15" />
+    <div className="relative overflow-hidden rounded-xl border-[3px] border-tok-black/10 bg-tok-teal/10 px-6 py-6 shadow-[8px_8px_0px_rgba(0,0,0,0.05)]">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-4">
+          <Skeleton className="h-14 w-14 shrink-0 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
+          <div className="space-y-3">
+            <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/10" />
+            <Skeleton className="h-8 w-48 rounded-sm bg-tok-black/5" />
+            <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/10" />
           </div>
         </div>
-        <Skeleton className="h-8 w-20 rounded-full bg-white/20" />
+        <div className="flex items-center gap-2.5">
+          <Skeleton className="h-10 w-10 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
+          <Skeleton className="h-10 w-32 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
+        </div>
       </div>
-      <div className="mt-4 flex gap-5">
-        <Skeleton className="h-3 w-32 rounded-full bg-white/15" />
-        <Skeleton className="h-3 w-24 rounded-full bg-white/15" />
-        <Skeleton className="h-3 w-28 rounded-full bg-white/15" />
+      <div className="mt-8 grid grid-cols-1 gap-4 border-t-2 border-dashed border-tok-black/5 pt-6 sm:grid-cols-2 lg:grid-cols-4">
+        <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/5" />
+        <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/5" />
+        <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/5" />
+        <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/5" />
       </div>
     </div>
   );
@@ -365,37 +369,43 @@ function HeroCardSkeleton() {
 
 function ListCardSkeleton() {
   return (
-    <div className="flex items-center gap-4 rounded-[16px] border border-tok-black/10 bg-white/40 px-4 py-3.5">
-      <Skeleton className="h-10 w-10 rounded-full bg-tok-black/8" />
-      <div className="flex-1 space-y-1.5">
-        <Skeleton className="h-2.5 w-16 rounded-full bg-tok-black/8" />
-        <Skeleton className="h-4 w-40 rounded bg-tok-black/10" />
-        <Skeleton className="h-2.5 w-52 rounded-full bg-tok-black/6" />
+    <div className="flex flex-col gap-4 rounded-xl border-[3px] border-tok-black/10 bg-white/40 p-5 mt-4">
+      <div className="flex items-center gap-4 flex-1">
+        <Skeleton className="h-12 w-12 shrink-0 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
+        <div className="flex-1 space-y-3">
+          <Skeleton className="h-2.5 w-16 rounded-sm bg-tok-black/10" />
+          <Skeleton className="h-6 w-40 rounded-sm bg-tok-black/5" />
+          <div className="flex gap-4">
+            <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/5" />
+            <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/5" />
+          </div>
+        </div>
       </div>
-      <Skeleton className="h-7 w-16 rounded-full bg-tok-black/8" />
+      <div className="flex items-center gap-2 sm:shrink-0 justify-end">
+        <Skeleton className="h-9 w-9 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
+        <Skeleton className="h-9 w-20 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
+      </div>
     </div>
   );
 }
 
 function PageSkeleton() {
   return (
-    <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
+    <div className="min-h-screen bg-tok-cream text-tok-black">
       <TapokNavbar />
-      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mb-5 flex items-center justify-between gap-4">
-          <Skeleton className="h-9 w-32 rounded-full bg-tok-black/8" />
-          <Skeleton className="h-9 w-16 rounded-full bg-tok-black/10" />
-          <Skeleton className="h-9 w-32 rounded-full bg-tok-teal/20" />
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-6">
+          <div className="space-y-3">
+            <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/10" />
+            <Skeleton className="h-12 w-48 rounded-sm bg-tok-black/5" />
+          </div>
+          <div className="flex gap-3">
+            <Skeleton className="h-12 w-40 rounded-sm bg-tok-black/5 border-[3px] border-tok-black/5" />
+            <Skeleton className="h-12 w-32 rounded-sm bg-tok-black/5 border-[3px] border-tok-black/5" />
+          </div>
         </div>
         <HeroCardSkeleton />
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex gap-2">
-            <Skeleton className="h-9 w-28 rounded-full bg-tok-black/10" />
-            <Skeleton className="h-9 w-20 rounded-full bg-tok-black/6" />
-          </div>
-          <Skeleton className="h-3 w-32 rounded-full bg-tok-black/8" />
-        </div>
-        <div className="mt-4 space-y-2">
+        <div className="mt-8 space-y-2">
           <ListCardSkeleton />
           <ListCardSkeleton />
         </div>
@@ -411,11 +421,15 @@ export default function DropsPage() {
   const {
     data: drops = [],
     isLoading,
+    isFetched,
     isError,
   } = useMyDrops({
     enabled: isReady && Boolean(user),
   });
-  const isHardLoading = isLoading && drops.length === 0;
+
+  // Use isFetched to prevent premature "empty" states during initial load
+  const isHardLoading = !isFetched || (isLoading && drops.length === 0);
+
   const [shareModalDrop, setShareModalDrop] = useState<Drop | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editDrop, setEditDrop] = useState<Drop | null>(null);
@@ -453,7 +467,7 @@ export default function DropsPage() {
     router.push(`/drops/join/${code}`);
   };
 
-  if (!mounted || !isReady) return <PageSkeleton />;
+  if (!mounted || !isReady || (loading && !dbUser)) return <PageSkeleton />;
 
   if (!loading && !user) {
     return (
@@ -532,7 +546,7 @@ export default function DropsPage() {
         </div>
 
         {/* Board */}
-        {loading || isHardLoading ? (
+        {isHardLoading ? (
           <>
             <HeroCardSkeleton />
             <div className="mt-4 space-y-2">
