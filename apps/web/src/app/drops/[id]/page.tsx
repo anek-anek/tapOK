@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useMounted } from '@/hooks/use-mounted';
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
@@ -243,6 +244,7 @@ function PageSkeleton() {
 
 export default function DropDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
+  const router = useRouter();
   const mounted = useMounted();
   const { dbUser, loading: authLoading, isReady } = useAuth();
   const { data: drop, isLoading, isFetched, isError } = useDrop(id);
@@ -313,15 +315,15 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
       <TapokNavbar />
 
-      <main className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10">
+      <main className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10 pb-24">
         {/* Back */}
-        <Link
-          href="/drops"
+        <button
+          onClick={() => router.back()}
           className="mb-8 inline-flex items-center gap-2 font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-[#1C1C1A]/40 transition-colors hover:text-[#1C1C1A]"
         >
           <IconArrowLeft size={14} strokeWidth={2.5} />
-          Back to Drops
-        </Link>
+          Go Back
+        </button>
 
         {/* Billboard Hero Section */}
         <section className="relative mb-10 overflow-hidden rounded-[4px] border-[3px] border-tok-black bg-tok-teal p-6 shadow-[8px_8px_0px_#1C1C1A] sm:p-10 lg:p-12">

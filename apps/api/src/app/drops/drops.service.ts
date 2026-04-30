@@ -12,7 +12,7 @@ import { DropsRepository } from './drops.repository';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
-import { DropCrewStatus, DropStatus } from '../../common';
+import { DropCategory, DropCrewStatus, DropStatus } from '../../common';
 import { CreateDropDto } from './dto/create-drop.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
 
@@ -50,6 +50,7 @@ export class DropsService {
         isLocked: dto.isLocked ?? false,
         isPublic: dto.isPublic ?? true,
         status: DropStatus.ACTIVE,
+        category: dto.category,
         joinCode,
         shareUrl,
         organiserId: organiser.id,
@@ -130,6 +131,7 @@ export class DropsService {
     if (dto.isLocked !== undefined) changedFields['isLocked'] = dto.isLocked;
     if (dto.isPublic !== undefined) changedFields['isPublic'] = dto.isPublic;
     if (dto.status !== undefined) changedFields['status'] = dto.status;
+    if (dto.category !== undefined) changedFields['category'] = dto.category;
 
     await this.dropsRepository.update(id, {
       ...(dto.name !== undefined && { name: dto.name }),
@@ -139,6 +141,7 @@ export class DropsService {
       ...(dto.isLocked !== undefined && { isLocked: dto.isLocked }),
       ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
       ...(dto.status !== undefined && { status: dto.status }),
+      ...(dto.category !== undefined && { category: dto.category }),
     });
 
     const statusActionMap: Partial<Record<DropStatus, string>> = {
@@ -404,6 +407,33 @@ export class DropsService {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
     return this.dropsRepository.findActivityFeedForUser(user.id);
+  }
+
+  async discover(firebaseUid?: string, page = 1, limit = 6, category?: DropCategory): Promise<{
+    featured: Drop | null;
+    recentChiefsDrops: Drop[];
+    allPublic: { data: Drop[]; total: number; page: number; totalPages: number };
+  }> {
+    const allPublicPaginated = await this.dropsRepository.findPublicDrops(page, limit, category);
+
+    let recentChiefsDrops: Drop[] = [];
+    if (firebaseUid) {
+      const user = await this.usersService.findByFirebaseUid(firebaseUid);
+      if (user) {
+        const chiefIds = await this.dropsRepository.findRecentJoinedChiefIds(user.id);
+        recentChiefsDrops = await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds);
+      }
+    }
+
+    // Featured drop: the very first upcoming public drop (independent of pagination/category filter)
+    const featuredResult = await this.dropsRepository.findPublicDrops(1, 1);
+    const featured = featuredResult.data[0] ?? null;
+
+    return {
+      featured,
+      recentChiefsDrops,
+      allPublic: allPublicPaginated,
+    };
   }
 
   private async generateUniqueJoinCode(): Promise<string> {

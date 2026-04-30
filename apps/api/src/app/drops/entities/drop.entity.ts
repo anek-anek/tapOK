@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { DropStatus } from '../../../common';
+import { DropCategory, DropStatus } from '../../../common';
 import { User } from '../../users/entities/user.entity';
 import { DropActivityLog } from './drop-activity-log.entity';
 import { DropCrew } from './drop-crew.entity';
@@ -39,6 +39,10 @@ export class Drop {
   @ApiProperty({ enum: DropStatus })
   @Column({ type: 'enum', enum: DropStatus, default: DropStatus.ACTIVE })
   status: DropStatus;
+
+  @ApiProperty({ enum: DropCategory, required: false })
+  @Column({ type: 'enum', enum: DropCategory, nullable: true })
+  category?: DropCategory;
 
   @ApiProperty()
   @Column({ unique: true })

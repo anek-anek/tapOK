@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThanOrEqual, Repository } from 'typeorm';
-import { DropCrewStatus, DropStatus } from '../../common';
+import { In, LessThanOrEqual, Repository } from 'typeorm';
+import { DropCategory, DropCrewStatus, DropStatus } from '../../common';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
@@ -77,7 +77,7 @@ export class DropsRepository {
 
   async update(
     id: string,
-    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic'>> & {
+    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic' | 'category'>> & {
       expectedHeadcount?: number | null;
     },
   ): Promise<void> {
@@ -172,6 +172,46 @@ export class DropsRepository {
       where: { dropId },
       relations: { user: true },
       order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  async findUpcomingDropsByChiefs(chiefIds: string[]): Promise<Drop[]> {
+    if (chiefIds.length === 0) return [];
+    return this.dropRepo.find({
+      where: {
+        organiserId: In(chiefIds),
+        status: In([DropStatus.ACTIVE, DropStatus.ONGOING]),
+        isPublic: true,
+      },
+      relations: { organiser: true },
+      order: { scheduledAt: 'ASC' },
+    });
+  }
+
+  async findRecentJoinedChiefIds(userId: string, limit: number = 3): Promise<string[]> {
+    const joined = await this.crewRepo.createQueryBuilder('crew')
+      .innerJoinAndSelect('crew.drop', 'drop')
+      .where('crew.userId = :userId', { userId })
+      .andWhere('crew.status = :status', { status: DropCrewStatus.IN })
+      .andWhere('drop.organiserId != :userId', { userId })
+      .orderBy('crew.joinedAt', 'DESC')
+      .limit(20)
+      .getMany();
+
+    return Array.from(new Set(joined.map((c) => c.drop.organiserId))).slice(0, limit);
+  }
+
+  async findPublicDrops(page: number = 1, limit: number = 6, category?: DropCategory): Promise<{ data: Drop[]; total: number; page: number; totalPages: number }> {
+    const [data, total] = await this.dropRepo.findAndCount({
+      where: {
+        isPublic: true,
+        ...(category && { category }),
+      },
+      relations: { organiser: true },
+      order: { scheduledAt: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
     });

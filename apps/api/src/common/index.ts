@@ -3,6 +3,7 @@ export * from './decorators/auth-user.decorator';
 export * from './filters/http-exception.filter';
 export * from './decorators/public.decorator';
 export * from './decorators/roles.decorator';
+export * from './enums/drop-category.enum';
 export * from './enums/drop-crew-status.enum';
 export * from './enums/drop-status.enum';
 export * from './enums/gender.enum';

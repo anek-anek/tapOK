@@ -7,7 +7,9 @@ import {
   IsOptional,
   IsString,
   Min,
+  IsEnum,
 } from 'class-validator';
+import { DropCategory } from '../../../common';
 
 export class CreateDropDto {
   @ApiProperty({ example: 'Beach Sunset Shoot' })
@@ -39,4 +41,9 @@ export class CreateDropDto {
   @IsOptional()
   @IsBoolean()
   isPublic?: boolean;
+
+  @ApiPropertyOptional({ enum: DropCategory, example: DropCategory.HANGOUT })
+  @IsOptional()
+  @IsEnum(DropCategory)
+  category?: DropCategory;
 }
