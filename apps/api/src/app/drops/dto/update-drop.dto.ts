@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
-import { DropStatus } from '../../../common';
+import { DropCategory, DropStatus } from '../../../common';
 
 export class UpdateDropDto {
   @ApiPropertyOptional({ example: 'Golden Hour Shoot' })
@@ -40,4 +40,9 @@ export class UpdateDropDto {
   @IsOptional()
   @IsEnum(DropStatus)
   status?: DropStatus;
+
+  @ApiPropertyOptional({ enum: DropCategory, example: DropCategory.HANGOUT })
+  @IsOptional()
+  @IsEnum(DropCategory)
+  category?: DropCategory;
 }

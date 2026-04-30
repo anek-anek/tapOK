@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/popover';
 import { ModalShell } from '@/components/modal-shell';
 import type { Drop } from '@/types/drop';
+import { cn } from '@/lib/utils';
 
 const expectedHeadcountSchema = z.coerce
   .number()
@@ -46,6 +47,7 @@ const dropFormSchema = z.object({
   expectedHeadcount: expectedHeadcountSchema,
   isLocked: z.boolean().optional(),
   isPublic: z.boolean().optional(),
+  category: z.enum(['hangout', 'party']).optional().nullable(),
 });
 
 const createSchema = dropFormSchema;
@@ -63,6 +65,7 @@ type FormValues = {
   expectedHeadcount: number | '' | undefined;
   isLocked?: boolean;
   isPublic?: boolean;
+  category?: 'hangout' | 'party';
 };
 
 const COMPLETE_TIME_PATTERN = /^\d{1,2}:\d{2}$/;
@@ -323,6 +326,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
       expectedHeadcount: drop?.expectedHeadcount ?? '',
       isLocked: drop?.isLocked ?? false,
       isPublic: drop?.isPublic ?? true,
+      category: drop?.category ?? undefined,
     },
   });
 
@@ -355,6 +359,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
       }
       if (values.isLocked !== drop.isLocked) dto.isLocked = values.isLocked;
       if (values.isPublic !== drop.isPublic) dto.isPublic = values.isPublic;
+      if (values.category !== drop.category) dto.category = values.category ?? undefined;
 
       if (Object.keys(dto).length > 0) {
         await updateDrop.mutateAsync(dto);
@@ -368,6 +373,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
         expectedHeadcount,
         isLocked: values.isLocked ?? false,
         isPublic: values.isPublic ?? true,
+        category: values.category ?? undefined,
       };
       const result = await createDrop.mutateAsync(dto);
       pendingIdRef.current = result.id;
@@ -535,6 +541,35 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   />
                 </div>
 
+                <div className="space-y-1.5">
+                  <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
+                    Category
+                  </Label>
+                  <Controller
+                    name="category"
+                    control={control}
+                    render={({ field }) => (
+                      <div className="flex gap-2">
+                        {(['hangout', 'party'] as const).map((cat) => (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => field.onChange(field.value === cat ? undefined : cat)}
+                            className={cn(
+                              'h-11 flex-1 rounded-sm border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[1.5px] transition-all',
+                              field.value === cat
+                                ? 'bg-tok-teal text-tok-cream shadow-none translate-y-0'
+                                : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
+                            )}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  />
+                </div>
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
@@ -547,9 +582,8 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                         <button
                           type="button"
                           onClick={() => field.onChange(!field.value)}
-                          className={`flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all ${
-                            field.value ? 'bg-amber-400 text-tok-black shadow-none translate-y-0' : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
-                          }`}
+                          className={`flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all ${field.value ? 'bg-amber-400 text-tok-black shadow-none translate-y-0' : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
+                            }`}
                         >
                           <div className="flex items-center gap-2.5">
                             <IconLock size={14} strokeWidth={2.5} />
@@ -558,9 +592,8 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                             </span>
                           </div>
                           <div
-                            className={`h-3.5 w-3.5 rounded-full border-2 border-tok-black ${
-                              field.value ? 'bg-tok-black' : 'bg-white'
-                            }`}
+                            className={`h-3.5 w-3.5 rounded-full border-2 border-tok-black ${field.value ? 'bg-tok-black' : 'bg-white'
+                              }`}
                           />
                         </button>
                       )}
@@ -578,9 +611,8 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                         <button
                           type="button"
                           onClick={() => field.onChange(!field.value)}
-                          className={`flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all ${
-                            !field.value ? 'bg-tok-black text-white shadow-none translate-y-0' : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
-                          }`}
+                          className={`flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all ${!field.value ? 'bg-tok-black text-white shadow-none translate-y-0' : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
+                            }`}
                         >
                           <div className="flex items-center gap-2.5">
                             {!field.value ? (
@@ -593,9 +625,8 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                             </span>
                           </div>
                           <div
-                            className={`h-3.5 w-3.5 rounded-full border-2 ${
-                              field.value ? 'bg-white border-tok-black' : 'bg-tok-teal border-white'
-                            }`}
+                            className={`h-3.5 w-3.5 rounded-full border-2 ${field.value ? 'bg-white border-tok-black' : 'bg-tok-teal border-white'
+                              }`}
                           />
                         </button>
                       )}

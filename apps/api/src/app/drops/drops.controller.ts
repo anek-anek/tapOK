@@ -22,7 +22,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { DecodedIdToken } from 'firebase-admin/auth';
-import { CronGuard, FirebaseAuthGuard, Public } from '../../common';
+import { CronGuard, DropCategory, FirebaseAuthGuard, Public } from '../../common';
 import { DropsService } from './drops.service';
 import { DropsCronService } from './drops-cron.service';
 import { CreateDropDto } from './dto/create-drop.dto';
@@ -55,6 +55,24 @@ export class DropsController {
   @ApiResponse({ status: 200, description: 'Transitions applied.' })
   runCronTransition(): Promise<{ toOngoing: number; toCompleted: number }> {
     return this.dropsCronService.transitionDropStatuses();
+  }
+
+  @Get('discover')
+  @Public()
+  @ApiOperation({ summary: 'Get drops for the discover page' })
+  @ApiResponse({ status: 200, description: 'Discovery data' })
+  discover(
+    @Req() request: RequestWithUser,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('category') category?: DropCategory,
+  ): Promise<any> {
+    return this.dropsService.discover(
+      request.user?.uid,
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 6,
+      category,
+    );
   }
 
   @Post()

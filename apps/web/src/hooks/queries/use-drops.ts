@@ -14,7 +14,17 @@ export const dropKeys = {
   myActivity: (uid: string) => ['drops', 'activity', 'mine', uid] as const,
   myActivityPrefix: () => ['drops', 'activity', 'mine'] as const,
   activityLogs: (id: string, page: number) => ['drops', id, 'activity', page] as const,
+  discover: (page: number, category?: string) => ['drops', 'discover', page, category] as const,
 };
+
+export function useDiscoverData(page = 1, category?: string) {
+  return useQuery({
+    queryKey: dropKeys.discover(page, category),
+    queryFn: () => dropsService.getDiscoverData(page, 6, category === 'all' ? undefined : category),
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+  });
+}
 
 export function useMyDrops(options?: { enabled?: boolean }) {
   const { user } = useAuth();

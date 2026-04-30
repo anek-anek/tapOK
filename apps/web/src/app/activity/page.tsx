@@ -69,10 +69,10 @@ function groupByDate(logs: DropActivityLog[]): { label: string; items: DropActiv
     }
   }
 
-  groups[0]!.items = groups[0]!.items.slice(0, 4);
-  groups[1]!.items = groups[1]!.items.slice(0, 8);
-
-  return groups.filter((g) => g.items.length > 0);
+  // Limit each group to 8 items
+  return groups
+    .map(g => ({ ...g, items: g.items.slice(0, 8) }))
+    .filter((g) => g.items.length > 0);
 }
 
 function describeAction(log: DropActivityLog, isYou: boolean): React.ReactNode {
@@ -129,7 +129,7 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
   const initials = isYou ? 'YOU' : getInitials(log.user.firstName, log.user.lastName);
 
   return (
-    <div className="group relative flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b-2 border-tok-black/5 last:border-b-0 hover:bg-tok-teal/[0.03] transition-all duration-200">
+    <div className="group relative flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b-2 border-tok-black/5 last:border-b-0 hover:bg-tok-teal/3 transition-all duration-200">
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-tok-teal/80 opacity-0 group-hover:opacity-100 transition-opacity" />
 
       <FeedAvatar initials={initials} style={style} />
@@ -388,45 +388,35 @@ export default function ActivityPage() {
 
 
       <TapokNavbar />
+      <div className="absolute top-[20%] right-0 opacity-[0.05] pointer-events-none select-none overflow-hidden">
+        <span className="font-passion text-[300px] font-black leading-none tracking-tighter text-tok-teal block translate-x-1/4">
+          LEDGER
+        </span>
+      </div>
 
-      <main className="relative mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10 animate-fade-up">
+      <main className="relative mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10 pb-24">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-16 animate-fade-up">
           <div>
-            <h1 className="font-passion text-[clamp(56px,15vw,84px)] font-black uppercase leading-[0.8] tracking-tighter text-tok-black">
-              What's <span className="text-tok-teal">Happening</span>
+            <h1 className="font-passion text-[clamp(56px,12vw,110px)] font-black uppercase leading-[0.8] tracking-tighter text-tok-black">
+              THE <span className="text-tok-teal">FEED.</span>
             </h1>
-            <p className="mt-3 sm:mt-4 text-[14px] sm:text-[16px] font-medium leading-relaxed text-tok-black/60 max-w-md">
-              {isHardLoading
-                ? 'Synchronizing ledger data...'
-                : `${activityLogs.length} update${activityLogs.length !== 1 ? 's' : ''} tracked across your current Drops.`}
+            <p className="mt-4 text-[15px] font-bold uppercase tracking-[2px] text-tok-black/40">
+              {isHardLoading ? 'SYNCING LEDGER...' : 'LATEST CREW UPDATES.'}
             </p>
           </div>
-        </div>
 
-        {/* Live Feed Status Pill - Now at the top on mobile */}
-        <div className="flex items-center gap-3 mb-6 animate-fade-up [animation-delay:100ms] lg:hidden">
-          <div className="flex items-center gap-3 px-4 py-2 bg-tok-cream border-2 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] rounded-sm font-passion text-[14px] font-black uppercase tracking-wider text-tok-black">
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-white border-[3px] border-tok-black shadow-[4px_4px_0px_#1C1C1A] rounded-sm font-passion text-[14px] font-black uppercase tracking-wider text-tok-black self-start sm:self-auto">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tok-teal opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-tok-teal"></span>
             </span>
-            Live Feed
+            Live Activity Stream
           </div>
         </div>
 
-        <div className="grid gap-10 sm:gap-16 lg:grid-cols-[1fr_340px]">
+        <div className="grid gap-12 lg:grid-cols-[1fr_340px]">
           <div className="animate-fade-up [animation-delay:200ms]">
-            {/* Desktop-only Live Feed header/pill */}
-            <div className="hidden lg:flex items-center justify-end mb-6">
-              <div className="flex items-center gap-3 px-4 py-2 bg-tok-cream border-2 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] rounded-sm font-passion text-[14px] font-black uppercase tracking-wider text-tok-black">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tok-teal opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-tok-teal"></span>
-                </span>
-                Live Feed
-              </div>
-            </div>
+
 
             <Feed
               currentUserId={dbUser?.id}

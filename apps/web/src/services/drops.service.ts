@@ -66,4 +66,12 @@ export const dropsService = {
   getActivityLogs(dropId: string, page: number, limit = 6): Promise<ActivityLogsPage> {
     return api.get<ActivityLogsPage>(`/drops/${dropId}/activity`, { params: { page, limit } }).then((r) => r.data);
   },
+  
+  getDiscoverData(page = 1, limit = 6, category?: string): Promise<{ 
+    featured: Drop | null; 
+    recentChiefsDrops: Drop[]; 
+    allPublic: { data: Drop[]; total: number; page: number; totalPages: number } 
+  }> {
+    return api.get('/drops/discover', { params: { page, limit, category } }).then((r) => r.data);
+  },
 };

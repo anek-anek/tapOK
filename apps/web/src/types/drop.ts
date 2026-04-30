@@ -1,4 +1,5 @@
 export type DropStatus = 'active' | 'ongoing' | 'completed';
+export type DropCategory = 'hangout' | 'party';
 
 export interface DropOrganiser {
   id: string;
@@ -39,6 +40,7 @@ export interface Drop {
   shareUrl: string;
   isLocked: boolean;
   isPublic: boolean;
+  category?: DropCategory;
   organiserId: string;
   organiser: DropOrganiser;
   activityLogs?: DropActivityLog[];
@@ -86,6 +88,7 @@ export interface CreateDropDto {
   expectedHeadcount?: number;
   isLocked?: boolean;
   isPublic?: boolean;
+  category?: DropCategory;
 }
 
 export interface UpdateDropDto {
@@ -96,4 +99,5 @@ export interface UpdateDropDto {
   isLocked?: boolean;
   isPublic?: boolean;
   status?: DropStatus;
+  category?: DropCategory;
 }
