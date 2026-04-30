@@ -86,12 +86,15 @@ export class DropsController {
   }
 
   @Get('join/:joinCode')
-  @Public()
-  @ApiOperation({ summary: 'Look up a drop by join code (public)' })
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Look up a drop by join code' })
   @ApiResponse({ status: 200, type: Drop })
   @ApiResponse({ status: 404, description: 'Drop not found.' })
-  findByJoinCode(@Param('joinCode') joinCode: string): Promise<Drop> {
-    return this.dropsService.findByJoinCode(joinCode);
+  findByJoinCode(
+    @Param('joinCode') joinCode: string,
+    @Req() request: RequestWithUser,
+  ): Promise<Drop> {
+    return this.dropsService.findByJoinCode(joinCode, request.user.uid);
   }
 
   @Get(':id')
@@ -99,8 +102,11 @@ export class DropsController {
   @ApiOperation({ summary: 'Get a drop by id' })
   @ApiResponse({ status: 200, type: Drop })
   @ApiResponse({ status: 404, description: 'Drop not found.' })
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Drop> {
-    return this.dropsService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<Drop> {
+    return this.dropsService.findOne(id, request.user.uid);
   }
 
   @Get(':id/activity')
@@ -157,6 +163,20 @@ export class DropsController {
     @Req() request: RequestWithUser,
   ): Promise<Drop> {
     return this.dropsService.update(id, dto, request.user.uid);
+  }
+
+  @Post(':id/invite/:userId')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Invite a user to a drop (organiser only)' })
+  @ApiResponse({ status: 201, description: 'User invited successfully.' })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  @ApiResponse({ status: 404, description: 'Drop not found.' })
+  inviteToDrop(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.inviteToDrop(id, userId, request.user.uid);
   }
 
   @Post(':id/join')

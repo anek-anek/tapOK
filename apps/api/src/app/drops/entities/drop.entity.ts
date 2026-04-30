@@ -48,6 +48,10 @@ export class Drop {
   @Column()
   shareUrl: string;
 
+  @ApiProperty({ default: true })
+  @Column({ default: true })
+  isPublic: boolean;
+
   @ApiProperty({ default: false })
   @Column({ default: false })
   isLocked: boolean;

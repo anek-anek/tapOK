@@ -12,6 +12,7 @@ import {
   LogIn,
   MapPin,
   Plus,
+  Lock,
   Ticket,
   Users,
 } from 'lucide-react';
@@ -99,6 +100,12 @@ function HeroDropCard({
                 </span>
                 Next Drop
               </span>
+              {!drop.isPublic && (
+                <span className="inline-flex items-center gap-1.5 rounded-sm bg-tok-black/20 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-[#F7E9B2]">
+                  <Lock size={10} strokeWidth={3} />
+                  Private
+                </span>
+              )}
             </div>
             <h2 className="mt-1 font-passion text-3xl font-bold leading-none tracking-tight text-[#F7E9B2]">
               {drop.name}
@@ -204,6 +211,11 @@ function ListDropCard({
             {isCompleted && (
               <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-tok-black/40">
                 • COMPLETED
+              </span>
+            )}
+            {!drop.isPublic && (
+              <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-red-500/60">
+                • PRIVATE
               </span>
             )}
           </div>

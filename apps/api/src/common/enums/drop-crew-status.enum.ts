@@ -3,4 +3,5 @@ export enum DropCrewStatus {
   PENDING = 'pending',
   REJECTED = 'rejected',
   REMOVED = 'removed',
+  INVITED = 'invited',
 }

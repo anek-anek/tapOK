@@ -48,6 +48,7 @@ export class DropsService {
         location: dto.location,
         expectedHeadcount: dto.expectedHeadcount,
         isLocked: dto.isLocked ?? false,
+        isPublic: dto.isPublic ?? true,
         status: DropStatus.ACTIVE,
         joinCode,
         shareUrl,
@@ -66,21 +67,46 @@ export class DropsService {
     }
   }
 
-  async findOne(id: string): Promise<Drop> {
+  async findOne(id: string, firebaseUid?: string): Promise<Drop> {
     const drop = await this.dropsRepository.findById(id);
     if (!drop) throw new NotFoundException(`Drop ${id} not found`);
+
+    if (!drop.isPublic && firebaseUid) {
+      const user = await this.usersService.findByFirebaseUid(firebaseUid);
+      if (user && drop.organiserId !== user.id) {
+        const crewMember = await this.dropsRepository.findCrewMember(id, user.id);
+        if (!crewMember) {
+          throw new NotFoundException(`Drop ${id} not found`);
+        }
+      }
+    } else if (!drop.isPublic && !firebaseUid) {
+      throw new NotFoundException(`Drop ${id} not found`);
+    }
+
     return drop;
   }
 
   async findMyDrops(firebaseUid: string): Promise<Drop[]> {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
-    return this.dropsRepository.findInvolvedDrops(user.id);
+    return this.dropsRepository.findFeed(user.id);
   }
 
-  async findByJoinCode(joinCode: string): Promise<Drop> {
+  async findByJoinCode(joinCode: string, firebaseUid?: string): Promise<Drop> {
     const drop = await this.dropsRepository.findByJoinCode(joinCode);
     if (!drop) throw new NotFoundException(`Drop with join code ${joinCode} not found`);
+
+    if (!drop.isPublic) {
+      if (!firebaseUid) throw new NotFoundException(`Drop with join code ${joinCode} not found`);
+      const user = await this.usersService.findByFirebaseUid(firebaseUid);
+      if (user && drop.organiserId !== user.id) {
+        const crewMember = await this.dropsRepository.findCrewMember(drop.id, user.id);
+        if (!crewMember) {
+          throw new NotFoundException(`Drop with join code ${joinCode} not found`);
+        }
+      }
+    }
+
     return drop;
   }
 
@@ -101,6 +127,7 @@ export class DropsService {
     if (dto.location !== undefined) changedFields['location'] = dto.location;
     if (dto.expectedHeadcount !== undefined) changedFields['expectedHeadcount'] = dto.expectedHeadcount;
     if (dto.isLocked !== undefined) changedFields['isLocked'] = dto.isLocked;
+    if (dto.isPublic !== undefined) changedFields['isPublic'] = dto.isPublic;
     if (dto.status !== undefined) changedFields['status'] = dto.status;
 
     await this.dropsRepository.update(id, {
@@ -109,6 +136,7 @@ export class DropsService {
       ...(dto.location !== undefined && { location: dto.location }),
       ...(dto.expectedHeadcount !== undefined && { expectedHeadcount: dto.expectedHeadcount }),
       ...(dto.isLocked !== undefined && { isLocked: dto.isLocked }),
+      ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
       ...(dto.status !== undefined && { status: dto.status }),
     });
 
@@ -126,6 +154,34 @@ export class DropsService {
     });
 
     return this.findOne(id);
+  }
+
+  async inviteToDrop(dropId: string, userId: string, firebaseUid: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== (await this.usersService.findByFirebaseUid(firebaseUid))?.id) {
+      throw new ForbiddenException('Only the organiser can invite people');
+    }
+
+    const existing = await this.dropsRepository.findCrewMember(dropId, userId);
+    if (existing) {
+      if (existing.status === DropCrewStatus.REMOVED || existing.status === DropCrewStatus.REJECTED) {
+        await this.dropsRepository.updateCrewStatus(dropId, userId, DropCrewStatus.INVITED, false);
+      } else {
+        // Already in or pending or invited
+        return;
+      }
+    } else {
+      await this.dropsRepository.addCrewMember(dropId, userId, DropCrewStatus.INVITED, false);
+    }
+
+    await this.dropsRepository.writeLog({
+      dropId,
+      userId: (await this.usersService.findByFirebaseUid(firebaseUid))!.id,
+      action: 'invited_member',
+      changedFields: { invitedUserId: userId },
+    });
   }
 
   async joinDrop(dropId: string, firebaseUid: string): Promise<DropCrew> {
@@ -151,11 +207,24 @@ export class DropsService {
       }
 
       const existing = await this.dropsRepository.findCrewMember(dropId, user.id);
-      if (existing) throw new ConflictException('You have already joined this drop');
+      if (existing && existing.status !== DropCrewStatus.INVITED) {
+        throw new ConflictException('You have already joined this drop');
+      }
+
+      if (!drop.isPublic && (!existing || existing.status !== DropCrewStatus.INVITED)) {
+        throw new ForbiddenException('This drop is private and you have not been invited');
+      }
 
       const memberStatus = drop.isLocked ? DropCrewStatus.PENDING : DropCrewStatus.IN;
       const isPresent = !drop.isLocked;
-      const crewMember = await this.dropsRepository.addCrewMember(dropId, user.id, memberStatus, isPresent);
+
+      let crewMember;
+      if (existing && existing.status === DropCrewStatus.INVITED) {
+        await this.dropsRepository.updateCrewStatus(dropId, user.id, memberStatus, isPresent);
+        crewMember = await this.dropsRepository.findCrewMember(dropId, user.id);
+      } else {
+        crewMember = await this.dropsRepository.addCrewMember(dropId, user.id, memberStatus, isPresent);
+      }
 
       await this.dropsRepository.writeLog({
         dropId,
