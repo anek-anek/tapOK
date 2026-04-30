@@ -175,23 +175,66 @@ function PageSkeleton() {
     <div className="min-h-screen bg-[#FFF4BD] text-[#1C1C1A]">
       <TapokNavbar />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10">
-        <Skeleton className="mb-8 h-4 w-24 rounded-full bg-black/5" />
-        <div className="mb-10 rounded-[4px] border-[3px] border-black bg-tok-teal/20 p-6 sm:p-10 lg:p-12 shadow-[8px_8px_0px_rgba(0,0,0,0.1)]">
-          <div className="space-y-4">
-            <Skeleton className="h-6 w-32 rounded-sm bg-black/10" />
-            <Skeleton className="h-16 w-3/4 rounded bg-black/10" />
-            <div className="flex gap-4">
-              <Skeleton className="h-4 w-40 rounded-full bg-black/10" />
-              <Skeleton className="h-4 w-40 rounded-full bg-black/10" />
+        <Skeleton className="mb-8 h-4 w-32 rounded-sm bg-black/5" />
+        
+        {/* Billboard Skeleton */}
+        <div className="mb-10 rounded-[4px] border-[3px] border-tok-black/10 bg-tok-teal/10 p-6 sm:p-10 lg:p-12 shadow-[8px_8px_0px_rgba(0,0,0,0.05)]">
+          <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+            <div className="flex-1 space-y-4">
+              <Skeleton className="h-6 w-32 rounded-sm bg-black/10" />
+              <Skeleton className="h-16 w-3/4 rounded-sm bg-black/5 sm:h-20" />
+              <div className="flex gap-6">
+                <Skeleton className="h-4 w-40 rounded-sm bg-black/10" />
+                <Skeleton className="h-4 w-40 rounded-sm bg-black/10" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Skeleton className="h-12 w-32 rounded-sm bg-black/5 border-[3px] border-black/5" />
+              <Skeleton className="h-12 w-32 rounded-sm bg-black/5 border-[3px] border-black/5" />
             </div>
           </div>
         </div>
+
+        {/* Content Grid Skeleton */}
         <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-          <div className="space-y-8">
-            <Skeleton className="h-64 rounded-[4px] border-[3px] border-black/10 bg-white/50" />
-            <Skeleton className="h-96 rounded-[4px] border-[3px] border-black/10 bg-white/50" />
+          <div className="space-y-10">
+            {/* Presence Placeholder */}
+            <div className="rounded-[4px] border-[3px] border-tok-black/5 bg-white p-6 shadow-[6px_6px_0px_rgba(0,0,0,0.03)]">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-32 rounded-sm bg-black/10" />
+                  <Skeleton className="h-6 w-56 rounded-sm bg-black/5" />
+                </div>
+                <div className="flex gap-3">
+                  <Skeleton className="h-12 w-28 rounded-sm bg-black/5 border-[3px] border-black/5" />
+                  <Skeleton className="h-12 w-28 rounded-sm bg-black/5 border-[3px] border-black/5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Log Placeholder */}
+            <div className="rounded-[4px] border-[3px] border-tok-black/10 bg-white shadow-[6px_6px_0px_rgba(0,0,0,0.05)]">
+              <div className="border-b-[3px] border-black/5 bg-black/5 px-6 py-5">
+                <Skeleton className="h-6 w-40 rounded-sm bg-black/10" />
+              </div>
+              <div className="divide-y divide-black/5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-start gap-5 px-6 py-5">
+                    <Skeleton className="h-10 w-10 shrink-0 rounded-sm bg-black/5 border-2 border-black/5" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-2/3 rounded-sm bg-black/5" />
+                      <Skeleton className="h-2 w-24 rounded-sm bg-black/10" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <Skeleton className="h-[500px] rounded-[4px] border-[3px] border-black/10 bg-white/50" />
+
+          {/* Sidebar Placeholder */}
+          <div className="hidden lg:block space-y-6">
+            <Skeleton className="h-[520px] rounded-[4px] border-[3px] border-tok-black/10 bg-white/40 shadow-[6px_6px_0px_rgba(0,0,0,0.05)]" />
+          </div>
         </div>
       </main>
     </div>
@@ -201,9 +244,12 @@ function PageSkeleton() {
 export default function DropDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
   const mounted = useMounted();
-  const { dbUser, isReady } = useAuth();
-  const { data: drop, isLoading, isError } = useDrop(id);
-  const isHardLoading = isLoading && !drop;
+  const { dbUser, loading: authLoading, isReady } = useAuth();
+  const { data: drop, isLoading, isFetched, isError } = useDrop(id);
+  
+  // Robust loading state using isFetched
+  const isHardLoading = !isFetched || (isLoading && !drop);
+  
   const { data: crewStatus } = useMyCrewStatus(id, { enabled: Boolean(dbUser) });
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -222,7 +268,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const pendingMembers = crew?.filter((m) => m.status === 'pending') ?? [];
   const activeMembers = crew?.filter((m) => m.status === 'in') ?? [];
 
-  if (!mounted || !isReady || isHardLoading) return <PageSkeleton />;
+  if (!mounted || !isReady || (authLoading && !dbUser) || isHardLoading) return <PageSkeleton />;
 
   if (isError || !drop) {
     return (
@@ -518,10 +564,10 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 <div className="divide-y divide-tok-black/5">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="flex items-start gap-5 px-6 py-5">
-                      <Skeleton className="h-10 w-10 shrink-0 rounded-sm bg-black/5" />
+                      <Skeleton className="h-10 w-10 shrink-0 rounded-sm bg-black/5 border-2 border-black/5" />
                       <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-48 rounded bg-black/5" />
-                        <Skeleton className="h-3 w-24 rounded bg-black/5" />
+                        <Skeleton className="h-4 w-2/3 rounded-sm bg-black/5" />
+                        <Skeleton className="h-2 w-24 rounded-sm bg-black/10" />
                       </div>
                     </div>
                   ))}

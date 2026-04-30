@@ -92,7 +92,7 @@ function DropRow({ drop }: { drop: DropPreview }) {
   return (
     <Link
       href={`/drops/${drop.id}`}
-      className="group flex items-start gap-3 px-5 py-4 border-b-2 border-tok-black/5 last:border-b-0 hover:bg-tok-teal/[0.03] transition-colors"
+      className="group flex items-start gap-3 px-5 py-4 border-b-2 border-tok-black/5 last:border-b-0 hover:bg-tok-teal/3 transition-colors"
     >
       <div className={cn(
         "mt-1 h-3 w-3 rounded-full shrink-0 border-2 border-tok-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]",
@@ -124,23 +124,30 @@ function DropSkeleton() {
   return (
     <div className="flex items-start gap-3 px-5 py-4 border-b-2 border-tok-black/5 last:border-b-0">
       <Skeleton className="mt-1 h-3 w-3 rounded-full shrink-0 bg-tok-black/5 border-2 border-tok-black/5" />
-      <div className="flex-1 space-y-2">
+      <div className="flex-1 min-w-0 space-y-2">
         <Skeleton className="h-4 w-3/4 rounded-sm bg-tok-black/5" />
-        <Skeleton className="h-3 w-1/2 rounded-sm bg-tok-black/[0.03]" />
+        <div className="space-y-1.5">
+          <Skeleton className="h-3 w-1/2 rounded-sm bg-tok-black/3" />
+          <Skeleton className="h-3 w-1/3 rounded-sm bg-tok-black/3" />
+        </div>
       </div>
+      <Skeleton className="h-4 w-12 rounded-sm bg-tok-black/5 shrink-0 mt-0.5" />
     </div>
   );
 }
 
 function PersonSkeleton() {
   return (
-    <div className="flex items-center gap-3 px-5 py-4 border-b-2 border-tok-black/5 last:border-b-0">
-      <Skeleton className="h-10 w-10 rounded-full shrink-0 bg-tok-black/5 border-2 border-tok-black/5" />
-      <div className="flex-1 space-y-2">
+    <div className="flex items-center gap-4 px-5 py-4 border-b-2 border-tok-black/5 last:border-b-0">
+      <Skeleton className="h-8 w-8 sm:h-10 sm:w-10 rounded-full shrink-0 bg-tok-black/5 border-2 border-tok-black/10 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]" />
+      <div className="flex-1 min-w-0 space-y-2">
         <Skeleton className="h-4 w-24 rounded-sm bg-tok-black/5" />
-        <Skeleton className="h-3 w-16 rounded-sm bg-tok-black/[0.03]" />
+        <Skeleton className="h-3 w-16 rounded-sm bg-tok-black/3" />
       </div>
-      <Skeleton className="h-6 w-6 rounded-sm bg-tok-black/5" />
+      <div className="flex flex-col items-center gap-1 shrink-0">
+        <Skeleton className="h-7 w-6 rounded-sm bg-tok-black/5" />
+        <Skeleton className="h-2 w-8 rounded-sm bg-tok-black/3" />
+      </div>
     </div>
   );
 }
@@ -154,7 +161,7 @@ export function ActivePanel({
   activityLoading: boolean;
   currentUserId?: string;
 }) {
-  const { data: apiDrops, isLoading: dropsLoading } = useMyDrops();
+  const { data: apiDrops, isLoading: dropsLoading, isFetched: dropsFetched } = useMyDrops();
 
   const activeDrops: DropPreview[] = (
     apiDrops?.filter((d) => d.status === 'active' || d.status === 'ongoing') ?? []
@@ -169,6 +176,8 @@ export function ActivePanel({
   const frequentlySeen = (currentUserId
     ? getFrequentlySeen(activityLogs, currentUserId)
     : []).slice(0, 3);
+
+  const showDropsSkeleton = !dropsFetched || (dropsLoading && activeDrops.length === 0);
 
   return (
     <div className="space-y-10">
@@ -190,7 +199,7 @@ export function ActivePanel({
         </div>
 
         <div className="divide-y-2 divide-tok-black/5">
-          {dropsLoading ? (
+          {showDropsSkeleton ? (
             <>
               <DropSkeleton />
               <DropSkeleton />
@@ -198,7 +207,7 @@ export function ActivePanel({
           ) : activeDrops.length > 0 ? (
             activeDrops.map((drop) => <DropRow key={drop.id} drop={drop} />)
           ) : (
-            <div className="px-5 py-8 text-center bg-tok-black/[0.01]">
+            <div className="px-5 py-8 text-center bg-tok-black/1">
               <p className="text-[13px] font-medium text-tok-black/40">
                 No active drops right now.
               </p>
@@ -227,7 +236,7 @@ export function ActivePanel({
             frequentlySeen.map((person, i) => (
               <div
                 key={person.userId}
-                className="flex items-center gap-4 px-5 py-4 hover:bg-tok-black/[0.02] transition-colors"
+                className="flex items-center gap-4 px-5 py-4 hover:bg-tok-black/2 transition-colors"
               >
                 <div
                   className={cn(

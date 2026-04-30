@@ -164,14 +164,17 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
 
 function FeedItemSkeleton() {
   return (
-    <div className="flex items-center gap-4 px-6 py-5 border-b-2 border-tok-black/5 last:border-b-0">
-      <Skeleton className="h-12 w-12 rounded-full shrink-0 bg-tok-black/5 border-2 border-tok-black/5" />
-      <div className="flex-1 space-y-3">
-        <Skeleton className="h-4 w-3/5 rounded-sm bg-tok-black/5" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-6 w-24 rounded-sm bg-tok-black/5" />
-          <Skeleton className="h-4 w-16 rounded-sm bg-tok-black/5" />
+    <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b-2 border-tok-black/5 last:border-b-0">
+      <Skeleton className="w-8 h-8 sm:w-12 sm:h-12 rounded-full shrink-0 bg-tok-black/5 border-2 border-tok-black/10 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <Skeleton className="h-4 w-3/4 rounded-sm bg-tok-black/5" />
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-5 w-20 rounded-sm bg-tok-black/5" />
+          <Skeleton className="h-3 w-12 rounded-sm bg-tok-black/5" />
         </div>
+      </div>
+      <div className="hidden sm:block">
+        <Skeleton className="h-8 w-8 rounded-full bg-tok-black/5 border-2 border-tok-black/10" />
       </div>
     </div>
   );
@@ -193,9 +196,9 @@ function ListCardSkeleton() {
 
 function FeedSkeleton() {
   return (
-    <div className="bg-tok-white border-2 border-tok-black/10 shadow-sm overflow-hidden rounded-xl">
-      <div className="px-6 py-4 bg-tok-black/5 border-b-2 border-tok-black/5">
-        <Skeleton className="h-3 w-20 rounded-sm bg-tok-black/10" />
+    <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden">
+      <div className="px-6 py-3 bg-tok-black/5 border-b-2 border-tok-black/10">
+        <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/10" />
       </div>
       <FeedItemSkeleton />
       <FeedItemSkeleton />
@@ -330,25 +333,28 @@ export default function ActivityPage() {
     data: activityLogs = [],
     isLoading: activityLoading,
     isError: activityError,
+    isFetched: activityFetched,
   } = useMyActivity({ enabled: Boolean(user) && !loading });
-  const isHardLoading = activityLoading && !activityLogs.length;
 
-  if (!mounted || !isReady) {
+  // Show skeleton if we're fetching the first batch of data or if the query hasn't run yet
+  const isHardLoading = !activityFetched || (activityLoading && !activityLogs.length);
+
+  if (!mounted || !isReady || (loading && !dbUser)) {
     return (
       <div className="min-h-screen bg-tok-cream text-tok-black">
         <TapokNavbar />
-        <main className="relative mx-auto max-w-7xl px-6 py-12 lg:px-10">
-          <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
+        <main className="relative mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10">
+          <div className="grid gap-10 sm:gap-16 lg:grid-cols-[1fr_340px]">
             <div className="space-y-10">
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-32 rounded-sm bg-tok-black/5" />
-                <Skeleton className="h-20 w-full max-w-md rounded-sm bg-tok-black/5" />
-                <Skeleton className="h-6 w-64 rounded-sm bg-tok-black/5" />
+              <div className="space-y-6">
+                <Skeleton className="h-24 sm:h-32 w-3/4 rounded-sm bg-tok-black/5" />
+                <Skeleton className="h-6 w-1/2 rounded-sm bg-tok-black/5" />
               </div>
               <FeedSkeleton />
             </div>
-            <div className="hidden lg:block">
-              <Skeleton className="h-[500px] rounded-xl border-4 border-tok-black/5 bg-tok-black/[0.02]" />
+            <div className="hidden lg:block space-y-10">
+              <Skeleton className="h-[250px] rounded-xl border-4 border-tok-black/5 bg-tok-white/40 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]" />
+              <Skeleton className="h-[300px] rounded-xl border-4 border-tok-black/5 bg-tok-white/40 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]" />
             </div>
           </div>
         </main>
@@ -391,7 +397,7 @@ export default function ActivityPage() {
               What's <span className="text-tok-teal">Happening</span>
             </h1>
             <p className="mt-3 sm:mt-4 text-[14px] sm:text-[16px] font-medium leading-relaxed text-tok-black/60 max-w-md">
-              {activityLoading && !activityLogs.length
+              {isHardLoading
                 ? 'Synchronizing ledger data...'
                 : `${activityLogs.length} update${activityLogs.length !== 1 ? 's' : ''} tracked across your current Drops.`}
             </p>
@@ -432,7 +438,7 @@ export default function ActivityPage() {
           <aside className="hidden lg:block animate-fade-up [animation-delay:300ms]">
             <ActivePanel
               activityLogs={activityLogs}
-              activityLoading={activityLoading}
+              activityLoading={isHardLoading}
               currentUserId={dbUser?.id}
             />
           </aside>
@@ -442,7 +448,7 @@ export default function ActivityPage() {
         <div className="lg:hidden mt-12 animate-fade-up [animation-delay:400ms]">
           <ActivePanel
             activityLogs={activityLogs}
-            activityLoading={activityLoading}
+            activityLoading={isHardLoading}
             currentUserId={dbUser?.id}
           />
         </div>
