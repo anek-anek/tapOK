@@ -33,6 +33,19 @@ export class DropsRepository {
     });
   }
 
+  findInvolvedDrops(userId: string): Promise<Drop[]> {
+    return this.dropRepo.createQueryBuilder('drop')
+      .leftJoinAndSelect('drop.organiser', 'organiser')
+      .leftJoin('drop.crew', 'crew')
+      .where('drop.organiserId = :userId', { userId })
+      .orWhere('crew.userId = :userId AND crew.status IN (:...statuses)', {
+        userId,
+        statuses: [DropCrewStatus.IN, DropCrewStatus.PENDING]
+      })
+      .orderBy('drop.scheduledAt', 'ASC')
+      .getMany();
+  }
+
   findByJoinCode(joinCode: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
       where: { joinCode },
