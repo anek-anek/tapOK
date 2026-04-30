@@ -46,6 +46,59 @@ export class DropsRepository {
       .getMany();
   }
 
+  async findFeed(userId: string): Promise<Drop[]> {
+    // Find all user IDs the user has partied with (past crews)
+    // 1. Organisers of drops the user has joined
+    // 2. People who joined drops the user has organised
+    // 3. People who were in the same crew as the user
+    const partiedWithSubquery = this.crewRepo.createQueryBuilder('crew')
+      .select('DISTINCT other_crew.userId', 'userId')
+      .innerJoin('drop_crew', 'other_crew', 'crew.dropId = other_crew.dropId')
+      .where('crew.userId = :userId', { userId });
+
+    const organisedWithSubquery = this.dropRepo.createQueryBuilder('drop')
+      .select('DISTINCT crew.userId', 'userId')
+      .innerJoin('drop_crew', 'crew', 'drop.id = crew.dropId')
+      .where('drop.organiserId = :userId', { userId });
+
+    const organiserOfDropsJoinedSubquery = this.dropRepo.createQueryBuilder('drop')
+      .select('DISTINCT drop.organiserId', 'userId')
+      .innerJoin('drop_crew', 'crew', 'drop.id = crew.dropId')
+      .where('crew.userId = :userId', { userId });
+
+    // Combine these into one set of IDs
+    // Actually, it's easier to use a single complex query for the feed
+    
+    return this.dropRepo.createQueryBuilder('drop')
+      .leftJoinAndSelect('drop.organiser', 'organiser')
+      .leftJoin('drop.crew', 'crew', 'drop.id = crew.dropId AND crew.userId = :userId', { userId })
+      .where('drop.organiserId = :userId', { userId }) // Organiser
+      .orWhere('crew.userId = :userId AND crew.status IN (:...statuses)', { // Joined/Pending
+        userId,
+        statuses: [DropCrewStatus.IN, DropCrewStatus.PENDING]
+      })
+      .orWhere(qb => {
+        const subQuery = qb.subQuery()
+          .select('DISTINCT d.organiserId')
+          .from(Drop, 'd')
+          .innerJoin('drop_crew', 'c', 'd.id = c.dropId')
+          .where('c.userId = :userId')
+          .getQuery();
+        return 'drop.isPublic = true AND drop.organiserId IN ' + subQuery;
+      })
+      .orWhere(qb => {
+        const subQuery = qb.subQuery()
+          .select('DISTINCT c2.userId')
+          .from('drop_crew', 'c1')
+          .innerJoin('drop_crew', 'c2', 'c1.dropId = c2.dropId')
+          .where('c1.userId = :userId')
+          .getQuery();
+        return 'drop.isPublic = true AND drop.organiserId IN ' + subQuery;
+      })
+      .orderBy('drop.scheduledAt', 'ASC')
+      .getMany();
+  }
+
   findByJoinCode(joinCode: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
       where: { joinCode },
@@ -64,7 +117,7 @@ export class DropsRepository {
 
   async update(
     id: string,
-    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked'>> & {
+    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic'>> & {
       expectedHeadcount?: number | null;
     },
   ): Promise<void> {

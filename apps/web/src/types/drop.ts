@@ -38,6 +38,7 @@ export interface Drop {
   joinCode: string;
   shareUrl: string;
   isLocked: boolean;
+  isPublic: boolean;
   organiserId: string;
   organiser: DropOrganiser;
   activityLogs?: DropActivityLog[];
@@ -45,7 +46,7 @@ export interface Drop {
   updatedAt: string;
 }
 
-export type DropCrewStatus = 'in' | 'pending' | 'rejected' | 'removed';
+export type DropCrewStatus = 'in' | 'pending' | 'rejected' | 'removed' | 'invited';
 
 export interface DropCrew {
   id: string;
@@ -84,6 +85,7 @@ export interface CreateDropDto {
   location: string;
   expectedHeadcount?: number;
   isLocked?: boolean;
+  isPublic?: boolean;
 }
 
 export interface UpdateDropDto {
@@ -92,5 +94,6 @@ export interface UpdateDropDto {
   location?: string;
   expectedHeadcount?: number | null;
   isLocked?: boolean;
+  isPublic?: boolean;
   status?: DropStatus;
 }

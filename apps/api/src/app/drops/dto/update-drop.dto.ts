@@ -31,6 +31,11 @@ export class UpdateDropDto {
   @IsBoolean()
   isLocked?: boolean;
 
+  @ApiPropertyOptional({ description: 'Set visibility to public or private' })
+  @IsOptional()
+  @IsBoolean()
+  isPublic?: boolean;
+
   @ApiPropertyOptional({ enum: DropStatus, description: 'Manually override the drop status' })
   @IsOptional()
   @IsEnum(DropStatus)

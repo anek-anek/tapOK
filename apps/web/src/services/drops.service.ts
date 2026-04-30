@@ -27,6 +27,10 @@ export const dropsService = {
     return api.post<DropCrew>(`/drops/${id}/join`).then((r) => r.data);
   },
 
+  inviteToDrop(id: string, userId: string): Promise<void> {
+    return api.post(`/drops/${id}/invite/${userId}`).then(() => undefined);
+  },
+
   getMyCrewStatus(id: string): Promise<DropCrew> {
     return api.get<DropCrew>(`/drops/${id}/crew/me`).then((r) => r.data);
   },

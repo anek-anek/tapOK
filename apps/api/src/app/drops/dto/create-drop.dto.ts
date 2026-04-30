@@ -34,4 +34,9 @@ export class CreateDropDto {
   @IsOptional()
   @IsBoolean()
   isLocked?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  isPublic?: boolean;
 }

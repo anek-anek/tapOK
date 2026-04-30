@@ -11,6 +11,7 @@ import {
   Calendar as IconCalendar,
   MapPin as IconMapPin,
   Lock as IconLock,
+  Users as IconUsers,
   ChevronDown as IconChevronDown,
 } from 'lucide-react';
 import {
@@ -44,6 +45,7 @@ const dropFormSchema = z.object({
   location: z.string().min(1, 'Location is required'),
   expectedHeadcount: expectedHeadcountSchema,
   isLocked: z.boolean().optional(),
+  isPublic: z.boolean().optional(),
 });
 
 const createSchema = dropFormSchema;
@@ -60,6 +62,7 @@ type FormValues = {
   location: string;
   expectedHeadcount: number | '' | undefined;
   isLocked?: boolean;
+  isPublic?: boolean;
 };
 
 const COMPLETE_TIME_PATTERN = /^\d{1,2}:\d{2}$/;
@@ -319,6 +322,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
       location: drop?.location ?? '',
       expectedHeadcount: drop?.expectedHeadcount ?? '',
       isLocked: drop?.isLocked ?? false,
+      isPublic: drop?.isPublic ?? true,
     },
   });
 
@@ -350,6 +354,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
         dto.expectedHeadcount = updatedExpectedHeadcount;
       }
       if (values.isLocked !== drop.isLocked) dto.isLocked = values.isLocked;
+      if (values.isPublic !== drop.isPublic) dto.isPublic = values.isPublic;
 
       if (Object.keys(dto).length > 0) {
         await updateDrop.mutateAsync(dto);
@@ -362,6 +367,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
         location: values.location,
         expectedHeadcount,
         isLocked: values.isLocked ?? false,
+        isPublic: values.isPublic ?? true,
       };
       const result = await createDrop.mutateAsync(dto);
       pendingIdRef.current = result.id;
@@ -505,31 +511,31 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   )}
                 </div>
 
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="drop-modal-headcount"
-                      className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
-                    >
-                      Headcount <span className="normal-case opacity-40 font-normal">— Optional</span>
-                    </Label>
-                    <Controller
-                      name="expectedHeadcount"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="drop-modal-headcount"
-                          type="number"
-                          min={1}
-                          placeholder="e.g. 20"
-                          onWheel={(e) => e.currentTarget.blur()}
-                          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
-                      )}
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="drop-modal-headcount"
+                    className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
+                  >
+                    Headcount <span className="normal-case opacity-40 font-normal">— Optional</span>
+                  </Label>
+                  <Controller
+                    name="expectedHeadcount"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="drop-modal-headcount"
+                        type="number"
+                        min={1}
+                        placeholder="e.g. 20"
+                        onWheel={(e) => e.currentTarget.blur()}
+                        className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      />
+                    )}
+                  />
+                </div>
 
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
                       Security
@@ -554,6 +560,41 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                           <div
                             className={`h-3.5 w-3.5 rounded-full border-2 border-tok-black ${
                               field.value ? 'bg-tok-black' : 'bg-white'
+                            }`}
+                          />
+                        </button>
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
+                      Visibility
+                    </Label>
+                    <Controller
+                      name="isPublic"
+                      control={control}
+                      render={({ field }) => (
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(!field.value)}
+                          className={`flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all ${
+                            !field.value ? 'bg-tok-black text-white shadow-none translate-y-0' : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            {!field.value ? (
+                              <IconLock size={14} strokeWidth={2.5} />
+                            ) : (
+                              <IconUsers size={14} strokeWidth={2.5} />
+                            )}
+                            <span className="font-passion font-bold uppercase tracking-wider text-sm">
+                              {field.value ? 'Public' : 'Private'}
+                            </span>
+                          </div>
+                          <div
+                            className={`h-3.5 w-3.5 rounded-full border-2 ${
+                              field.value ? 'bg-white border-tok-black' : 'bg-tok-teal border-white'
                             }`}
                           />
                         </button>
