@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength, IsDateString } from 'class-validator';
+import { GenderEnum } from '../../../common';
 
 export class SyncUserDto {
   @ApiPropertyOptional({ example: 'John', maxLength: 100 })
@@ -13,4 +14,18 @@ export class SyncUserDto {
   @IsString()
   @MaxLength(100)
   lastName?: string;
+  @ApiPropertyOptional({ enum: GenderEnum })
+  @IsOptional()
+  @IsEnum(GenderEnum)
+  gender?: GenderEnum;
+
+  @ApiPropertyOptional({ example: '1990-01-01' })
+  @IsOptional()
+  @IsDateString()
+  birthday?: string;
+
+  @ApiPropertyOptional({ example: 'jane_doe' })
+  @IsOptional()
+  @IsString()
+  userHandle?: string;
 }

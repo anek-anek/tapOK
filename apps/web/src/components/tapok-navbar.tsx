@@ -174,9 +174,17 @@ export function TapokNavbar() {
                   <button
                     onClick={() => setOpen((v) => !v)}
                     aria-label={`${dbUser.firstName} ${dbUser.lastName} — account menu`}
-                    className={`${passionOne.className} inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/15 bg-white text-[11px] uppercase tracking-[1.5px] text-black transition-colors hover:border-black/30 hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-tok-teal/30`}
+                    className={`${passionOne.className} inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-tok-black bg-white text-[11px] uppercase tracking-[1.5px] text-tok-black shadow-[3px_3px_0px_0px_#262624] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#262624] focus-visible:outline-hidden active:translate-y-0 active:shadow-none`}
                   >
-                    {initials}
+                    {dbUser.avatar ? (
+                      <img
+                        src={dbUser.avatar}
+                        alt={`${dbUser.firstName} ${dbUser.lastName}`}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      initials
+                    )}
                   </button>
 
                   <AnimatePresence>
@@ -186,33 +194,35 @@ export function TapokNavbar() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         transition={{ duration: 0.15, ease: [0.34, 1.56, 0.64, 1] }}
-                        className="absolute right-0 top-[calc(100%+8px)] z-30 min-w-[190px] overflow-hidden rounded-2xl border border-black/10 bg-tok-cream shadow-[0_12px_32px_rgba(0,0,0,0.12)]"
+                        className="absolute right-0 top-[calc(100%+12px)] z-30 min-w-[220px] overflow-hidden border-2 border-tok-black bg-tok-cream shadow-[6px_6px_0px_0px_#262624]"
                       >
-                        <div className="border-b border-black/8 px-4 py-3">
-                          <p className={`${passionOne.className} text-[12px] uppercase tracking-[1.5px] text-black`}>
+                        <div className="border-b-2 border-tok-black bg-tok-teal/5 px-5 py-4">
+                          <p className={`${passionOne.className} text-sm uppercase tracking-[2px] text-tok-black`}>
                             {dbUser.firstName} {dbUser.lastName}
                           </p>
-                          <p className="mt-0.5 font-inter text-[11px] text-black/45 lowercase">
+                          <p className="mt-0.5 font-inter text-[10px] font-bold text-tok-black/40 lowercase">
                             {dbUser.email}
                           </p>
                         </div>
 
-                        <Link
-                          href="/profile"
-                          onClick={() => setOpen(false)}
-                          className={`${passionOne.className} flex items-center gap-3 px-4 py-3 text-[11px] uppercase tracking-[1.5px] text-black/70 transition-colors hover:bg-black/5 hover:text-black`}
-                        >
-                          <IconUser size={13} />
-                          Profile
-                        </Link>
+                        <div className="p-1.5">
+                          <Link
+                            href="/profile"
+                            onClick={() => setOpen(false)}
+                            className={`${passionOne.className} flex items-center gap-3 px-3.5 py-2.5 text-[11px] uppercase tracking-[1.5px] text-tok-black transition-all hover:bg-tok-teal hover:text-tok-cream`}
+                          >
+                            <IconUser size={14} strokeWidth={2.5} />
+                            Profile
+                          </Link>
 
-                        <button
-                          onClick={handleLogout}
-                          className={`${passionOne.className} flex w-full items-center gap-3 border-t border-black/8 px-4 py-3 text-[11px] uppercase tracking-[1.5px] text-black/70 transition-colors hover:bg-black/5 hover:text-black`}
-                        >
-                          <LogOut size={13} />
-                          Log out
-                        </button>
+                          <button
+                            onClick={handleLogout}
+                            className={`${passionOne.className} mt-1 flex w-full items-center gap-3 border-t-2 border-tok-black/5 px-3.5 py-2.5 text-[11px] uppercase tracking-[1.5px] text-tok-black transition-all hover:bg-red-500 hover:text-white`}
+                          >
+                            <LogOut size={14} strokeWidth={2.5} />
+                            Log out
+                          </button>
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -288,8 +298,16 @@ export function TapokNavbar() {
               ) : (
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-4 rounded-2xl border border-black/10 bg-white/50 p-4">
-                    <div className={`${passionOne.className} flex h-12 w-12 items-center justify-center rounded-full bg-white border border-black/10 text-sm tracking-wider`}>
-                      {initials}
+                    <div className={`${passionOne.className} flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white border-2 border-tok-black text-sm tracking-wider shadow-[2px_2px_0px_0px_#262624]`}>
+                      {dbUser.avatar ? (
+                        <img
+                          src={dbUser.avatar}
+                          alt={`${dbUser.firstName} ${dbUser.lastName}`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        initials
+                      )}
                     </div>
                     <div className="flex flex-col">
                       <span className={`${passionOne.className} text-lg uppercase tracking-wide`}>

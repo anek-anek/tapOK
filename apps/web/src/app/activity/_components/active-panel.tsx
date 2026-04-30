@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { CalendarDays, MapPin, TrendingUp, Users, Activity as ActivityIcon } from 'lucide-react';
 import { useMyDrops } from '@/hooks/queries/use-drops';
+import { useFrequentCrew } from '@/hooks/queries/use-users';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Drop, DropActivityLog } from '@/types/drop';
 import { cn } from '@/lib/utils';
@@ -15,57 +16,8 @@ interface DropPreview {
   location: string;
 }
 
-interface FrequentPerson {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  initials: string;
-  count: number;
-  lastSeen: string;
-}
-
-const AVATAR_COLORS = [
-  'bg-tok-teal text-tok-cream border-2 border-tok-black',
-  'bg-tok-teal-pale text-tok-teal border-2 border-tok-black',
-  'bg-tok-cream-dim text-tok-black border-2 border-tok-black',
-  'bg-tok-black text-tok-cream border-2 border-tok-black',
-] as const;
-
-function avatarColor(index: number) {
-  return AVATAR_COLORS[index % AVATAR_COLORS.length]!;
-}
-
-function getFrequentlySeen(logs: DropActivityLog[], currentUserId: string): FrequentPerson[] {
-  const counts = new Map<string, FrequentPerson>();
-
-  for (const log of logs) {
-    if (log.userId === currentUserId) continue;
-    const existing = counts.get(log.userId);
-    if (existing) {
-      existing.count += 1;
-      if (log.createdAt > existing.lastSeen) existing.lastSeen = log.createdAt;
-    } else {
-      counts.set(log.userId, {
-        userId: log.userId,
-        firstName: log.user.firstName,
-        lastName: log.user.lastName,
-        initials: `${log.user.firstName[0] ?? ''}${log.user.lastName[0] ?? ''}`.toUpperCase(),
-        count: 1,
-        lastSeen: log.createdAt,
-      });
-    }
-  }
-
-  return [...counts.values()]
-    .sort((a, b) => b.count - a.count || b.lastSeen.localeCompare(a.lastSeen))
-    .slice(0, 5);
-}
-
-function lastSeenSub(person: FrequentPerson): string {
-  const diffDays = Math.round((Date.now() - new Date(person.lastSeen).getTime()) / 86_400_000);
-  if (diffDays < 1) return 'Seen today';
-  if (diffDays === 1) return 'Seen yesterday';
-  return `Seen ${diffDays}d ago`;
+function getInitials(firstName?: string, lastName?: string): string {
+  return `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase() || '?';
 }
 
 const STATUS_DOT: Record<'active' | 'ongoing', string> = {
@@ -173,9 +125,7 @@ export function ActivePanel({
     location: d.location,
   })).slice(0, 2);
 
-  const frequentlySeen = (currentUserId
-    ? getFrequentlySeen(activityLogs, currentUserId)
-    : []).slice(0, 3);
+  const { data: frequentlySeen = [], isLoading: crewLoading } = useFrequentCrew();
 
   const showDropsSkeleton = !dropsFetched || (dropsLoading && activeDrops.length === 0);
 
@@ -216,8 +166,7 @@ export function ActivePanel({
         </div>
       </div>
 
-      {/* Frequently Seen */}
-      <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden mt-4">
+      <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_#262624] rounded-xl overflow-hidden mt-4">
         <div className="flex items-center gap-2 px-5 pt-5 pb-4 bg-tok-black/90 border-b-2 border-tok-black/80">
           <Users size={14} className="text-tok-teal" />
           <p className="font-passion text-[12px] font-black uppercase tracking-widest text-tok-cream">
@@ -226,45 +175,52 @@ export function ActivePanel({
         </div>
 
         <div className="divide-y-2 divide-tok-black/5">
-          {activityLoading ? (
+          {crewLoading ? (
             <>
               <PersonSkeleton />
               <PersonSkeleton />
               <PersonSkeleton />
             </>
           ) : frequentlySeen.length > 0 ? (
-            frequentlySeen.map((person, i) => (
+            frequentlySeen.map((member) => (
               <div
-                key={person.userId}
-                className="flex items-center gap-4 px-5 py-4 hover:bg-tok-black/2 transition-colors"
+                key={member.id}
+                className="flex items-center gap-4 px-5 py-4 hover:bg-tok-teal/5 transition-all group"
               >
-                <div
-                  className={cn(
-                    "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-passion text-[10px] sm:text-[12px] font-black tracking-wider shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)]",
-                    avatarColor(i)
-                  )}
-                >
-                  {person.initials}
+                <div className="relative">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden border-2 border-tok-black bg-tok-teal-pale font-passion text-xs font-bold text-tok-teal shadow-[2px_2px_0px_0px_#262624] transition-transform group-hover:-translate-y-0.5">
+                    {member.avatar ? (
+                      <img
+                        src={member.avatar}
+                        alt={member.firstName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      getInitials(member.firstName, member.lastName)
+                    )}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-bold text-tok-black">
-                    {person.firstName} {person.lastName}
+                  <p className="truncate font-passion text-[15px] leading-none text-tok-black uppercase">
+                    {member.firstName} {member.lastName}
                   </p>
-                  <p className="text-[11px] font-medium text-tok-black/40 mt-1">{lastSeenSub(person)}</p>
+                  {member.userHandle && (
+                    <p className="mt-1 font-inter text-[10px] font-bold text-tok-black/30">@{member.userHandle}</p>
+                  )}
                 </div>
-                <div className="flex flex-col items-center">
-                  <span className="font-passion text-[24px] font-black text-tok-teal leading-none">
-                    {person.count}
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="font-passion text-[20px] font-black text-tok-teal leading-none">
+                    {member.frequencyCount}
                   </span>
-                  <span className="font-passion text-[8px] font-black uppercase tracking-tighter text-tok-black/30">
-                    Events
+                  <span className="font-passion text-[7px] font-black uppercase tracking-tighter text-tok-black/20">
+                    X
                   </span>
                 </div>
               </div>
             ))
           ) : (
             <div className="px-5 py-8 text-center bg-tok-black/1">
-              <p className="text-[13px] font-medium text-tok-black/40">
+              <p className="text-[13px] font-medium text-tok-black/40 italic">
                 No squad activity yet.
               </p>
             </div>

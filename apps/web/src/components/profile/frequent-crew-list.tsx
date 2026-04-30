@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useFrequentCrew } from '@/hooks/queries/use-users';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -13,54 +12,60 @@ export function FrequentCrewList() {
 
   if (isLoading) {
     return (
-      <div className="mt-6 space-y-4">
-        <Skeleton className="h-16 w-full rounded-2xl bg-[#2a2118]/8" />
-        <Skeleton className="h-16 w-full rounded-2xl bg-[#2a2118]/8" />
+      <div className="mt-8 space-y-4">
+        <Skeleton className="h-10 w-40 rounded-none bg-tok-black/5" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Skeleton className="h-24 w-full rounded-none border-2 border-tok-black bg-tok-white shadow-[4px_4px_0px_0px_#262624]" />
+          <Skeleton className="h-24 w-full rounded-none border-2 border-tok-black bg-tok-white shadow-[4px_4px_0px_0px_#262624]" />
+        </div>
       </div>
     );
   }
 
   if (!crew || crew.length === 0) {
-    return null; // Or return a message like "No frequent crew yet."
+    return null;
   }
 
   return (
     <div className="mt-8">
-      <h2 className="mb-4 font-inter text-[10px] tracking-widest text-[#2a2118]/40 uppercase">
+      <h2 className="mb-6 font-passion text-3xl uppercase tracking-tight text-tok-black">
         Frequently Seen Crew
       </h2>
-      <div className="flex flex-col gap-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {crew.map((member) => (
-          <Link
+          <div
             key={member.id}
-            href={`/profile/${member.id}`}
-            className="group flex items-center gap-4 rounded-2xl border border-[#2a2118]/10 bg-[#FAF4DC] p-4 transition-colors hover:border-[#2a2118]/30 hover:bg-[#F0E9C8]"
+            className="relative border-2 border-tok-black bg-tok-white p-4 shadow-[4px_4px_0px_0px_#262624]"
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/20 bg-[#2a2118] font-inter text-sm font-bold text-[#F0E9C8]">
-              {member.avatar ? (
-                <img
-                  src={member.avatar}
-                  alt={member.firstName}
-                  className="h-full w-full rounded-full object-cover"
-                />
-              ) : (
-                getInitials(member.firstName, member.lastName)
-              )}
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden border-2 border-tok-black bg-tok-teal-pale font-passion text-xl font-bold text-tok-teal shadow-[2px_2px_0px_0px_#262624]">
+                {member.avatar ? (
+                  <img
+                    src={member.avatar}
+                    alt={member.firstName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  getInitials(member.firstName, member.lastName)
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-passion text-lg leading-none text-tok-black uppercase">
+                  {member.firstName} {member.lastName}
+                </p>
+                {member.userHandle && (
+                  <p className="mt-1 font-inter text-xs font-bold text-tok-black/40">@{member.userHandle}</p>
+                )}
+              </div>
+              <div className="text-right">
+                <div className="border-2 border-tok-black bg-tok-cream px-2 py-1">
+                  <span className="font-passion text-sm text-tok-black">
+                    {member.frequencyCount}X
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="font-inter text-sm font-bold text-[#2a2118] uppercase transition-colors group-hover:text-[#1A5C52]">
-                {member.firstName} {member.lastName}
-              </p>
-              {member.userHandle && (
-                <p className="font-inter text-xs text-[#2a2118]/50">@{member.userHandle}</p>
-              )}
-            </div>
-            <div className="text-right">
-              <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-[#1A5C52]/10 px-2.5 font-inter text-xs font-bold text-[#1A5C52]">
-                {member.frequencyCount} {member.frequencyCount === 1 ? 'drop' : 'drops'}
-              </span>
-            </div>
-          </Link>
+          </div>
         ))}
       </div>
     </div>

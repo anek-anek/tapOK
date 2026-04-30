@@ -26,6 +26,9 @@ export class UserProfileDto {
   @ApiPropertyOptional({ enum: GenderEnum })
   gender?: GenderEnum;
 
+  @ApiPropertyOptional({ example: '1990-01-01' })
+  birthday?: Date;
+
   @ApiPropertyOptional()
   userHandle?: string;
 
