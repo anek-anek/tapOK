@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Join the Crew',
+  title: 'Join the Crew — TapOK',
   description: 'Create your TapOK account and start orchestrating your own drops.',
 };
 

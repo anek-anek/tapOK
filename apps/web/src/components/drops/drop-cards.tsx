@@ -240,24 +240,6 @@ export function HeroDropCard({
             <Share size={18} strokeWidth={3} />
           </button>
         )}
-        {canEdit && onEdit && (
-          <button
-            onClick={handleEdit}
-            className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream/90 active:translate-y-0 active:shadow-none"
-            title="Edit Drop"
-          >
-            <Edit3 size={18} strokeWidth={3} />
-          </button>
-        )}
-        {canDelete && (
-          <button
-            onClick={handleDelete}
-            className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-red-500 shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-red-50 active:translate-y-0 active:shadow-none"
-            title="Delete Drop"
-          >
-            <Trash2 size={18} strokeWidth={3} />
-          </button>
-        )}
       </div>
     </div>
   );
