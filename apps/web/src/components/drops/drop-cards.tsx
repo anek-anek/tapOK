@@ -58,112 +58,164 @@ export function HeroDropCard({
   const isOrganiser = !!viewerId && drop.organiserId === viewerId;
   const canEdit = isOrganiser && drop.status !== 'completed' && onEdit;
 
-  return (
-    <div className="relative overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal px-6 py-6 shadow-[8px_8px_0px_#1C1C1A]">
-      {drop.coverPhoto && (
-        <div className="pointer-events-none absolute inset-0 z-0">
-          <img src={drop.coverPhoto} alt="" className="h-full w-full object-cover opacity-50" />
-          <div className="absolute inset-0 bg-tok-teal/40" />
-          <div className="absolute inset-0 bg-linear-to-r from-tok-teal via-tok-teal/80 to-transparent" />
-        </div>
-      )}
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onShare?.(drop);
+  };
 
-      <div className="relative z-10">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 font-passion text-xl font-bold tracking-widest text-tok-cream">
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onEdit?.(drop);
+  };
+
+  return (
+    <div className="group relative">
+      <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal shadow-[8px_8px_0px_#1C1C1A] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[12px_12px_0px_#1C1C1A] md:flex-row">
+
+        {/* Visual Section */}
+        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px]">
+          {drop.coverPhoto ? (
+            <img 
+              src={drop.coverPhoto} 
+              alt={drop.name} 
+              className="absolute inset-0 h-full w-full object-cover" 
+            />
+
+          ) : (
+            <div className="absolute inset-0 flex h-full w-full items-center justify-center bg-tok-black/10 font-passion text-5xl font-bold tracking-widest text-tok-cream/10">
               {getInitials(drop.name)}
             </div>
+          )}
+          
+          {/* Status Badge overlay */}
+          <div className="absolute bottom-3 left-3 flex flex-col gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-sm bg-amber-400 px-2 py-1 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A]">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tok-black opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-tok-black" />
+              </span>
+              {drop.status === 'ongoing' ? 'Ongoing' : 'Next Drop'}
+            </span>
+          </div>
+        </div>
 
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 font-passion text-[10px] font-bold uppercase tracking-[3px] text-amber-400">
-                  <span className="relative flex h-1.5 w-1.5 shrink-0">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
-                  </span>
-                  {drop.status === 'ongoing' ? 'Ongoing Now' : 'Next Drop'}
+        {/* Content Section */}
+        <div className="relative flex flex-1 flex-col p-5 md:p-6">
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-amber-400/80">
+                {role} • <span className="text-tok-cream">{drop.joinCode}</span>
+              </span>
+              {drop.category && (
+                <span className="rounded-sm bg-tok-black/20 px-1.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-amber-400 border border-amber-400/30">
+                  {drop.category}
                 </span>
-                {!drop.isPublic && (
-                  <span className="inline-flex items-center gap-1.5 rounded-sm bg-tok-black/20 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-tok-cream">
-                    <Lock size={10} strokeWidth={3} />
-                    Private
-                  </span>
-                )}
-                {drop.category && (
-                  <span className="inline-flex items-center gap-1.5 rounded-sm bg-tok-black/20 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-amber-400 border border-amber-400/30">
-                    {drop.category}
-                  </span>
+              )}
+            </div>
+            
+            <h2 className="font-passion text-2xl font-bold leading-tight tracking-tight text-tok-cream md:text-3xl">
+              {drop.name}
+            </h2>
+          </div>
+
+          {drop.overview && (
+            <p className="font-inter text-xs leading-relaxed text-tok-cream/70 line-clamp-2 max-w-lg mb-4">
+              {drop.overview}
+            </p>
+          )}
+
+          {/* Crew Section */}
+          {drop.crew && drop.crew.length > 0 && (
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex items-center">
+                {drop.crew.slice(0, 4).map((member, i) => (
+                  <div 
+                    key={member.id} 
+                    className={cn(
+                      "relative h-8 w-8 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden",
+                      i > 0 && "-ml-4"
+                    )}
+                  >
+                    {member.user.avatar ? (
+                      <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center font-passion text-[10px] text-tok-teal">
+                        {member.user.firstName[0]}{member.user.lastName[0]}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {drop.crew.length > 4 && (
+                  <div className="relative -ml-4 flex h-8 w-8 items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion text-[10px] font-bold text-tok-black">
+                    +{drop.crew.length - 4}
+                  </div>
                 )}
               </div>
-              <h2 className="mt-1 font-passion text-3xl font-bold leading-none tracking-tight text-tok-cream">
-                {drop.name}
-              </h2>
-              <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[3px] text-tok-cream/80">
-                {role} • <span className="text-tok-cream">{drop.joinCode}</span>
-              </p>
-              {drop.overview && (
-                <p className="mt-3 font-inter text-xs leading-relaxed text-tok-cream/90 line-clamp-2 max-w-xl">
-                  {drop.overview}
-                </p>
-              )}
+
+
+              <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-cream/60">
+                {drop.crew.length} in the crew
+              </span>
+            </div>
+          )}
+
+          {/* Footer Grid */}
+          <div className="mt-auto grid grid-cols-1 gap-3 border-t border-dashed border-tok-cream/20 pt-4 sm:grid-cols-2">
+            <div className="flex items-center gap-2.5">
+              <CalendarDays size={14} className="text-tok-cream/60" strokeWidth={2.5} />
+              <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-cream">{formatDateTime(drop.scheduledAt)}</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <MapPin size={14} className="text-tok-cream/60" strokeWidth={2.5} />
+              <span className="font-passion truncate text-[10px] font-bold uppercase tracking-wider text-tok-cream">{drop.location}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <SparkButton drop={drop} variant="hero" />
-            {onShare && (
-              <button
-                onClick={() => onShare(drop)}
-                className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 text-tok-cream transition-all hover:-translate-y-0.5 hover:bg-tok-cream/20 active:translate-y-0"
-              >
-                <ClipboardCopy size={16} strokeWidth={2.5} />
-              </button>
-            )}
-            {canEdit && (
-              <button
-                onClick={() => onEdit(drop)}
-                className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 text-tok-cream transition-all hover:-translate-y-0.5 hover:bg-tok-cream/20 active:translate-y-0"
-              >
-                <Edit3 size={16} strokeWidth={2.5} />
-              </button>
-            )}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
               href={`/drops/${drop.id}`}
-              className="flex h-10 items-center justify-center gap-2.5 rounded-sm border-2 border-tok-black bg-tok-cream px-5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+              className="flex h-10 items-center justify-center gap-2.5 rounded-sm border-2 border-tok-black bg-tok-cream px-6 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-teal transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
             >
-              <span className="pt-0.5">Open Drop</span>
+              Open Drop
               <ArrowRight size={14} strokeWidth={2.5} />
             </Link>
           </div>
         </div>
+      </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-4 border-t-2 border-dashed border-tok-cream/30 pt-6 lg:grid-cols-4">
-          <div className="flex items-center gap-3">
-            <CalendarDays size={14} className="text-tok-cream" strokeWidth={2.5} />
-            <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream">{formatDateTime(drop.scheduledAt)}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <MapPin size={14} className="text-tok-cream" strokeWidth={2.5} />
-            <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-tok-cream">{drop.location}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Users size={14} className="text-tok-cream" strokeWidth={2.5} />
-            <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-tok-cream">{drop.organiser.firstName} {drop.organiser.lastName}</span>
-          </div>
-          {drop.expectedHeadcount ? (
-            <div className="flex items-center gap-3">
-              <Ticket size={14} className="text-tok-cream" strokeWidth={2.5} />
-              <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream">{drop.expectedHeadcount} CREW EXPECTED</span>
-            </div>
-          ) : null}
-        </div>
+      {/* Absolute Quick Actions */}
+      <div className="absolute right-3 top-3 z-20 flex flex-col gap-2 transition-all duration-300 group-hover:-translate-x-1 group-hover:-translate-y-1">
+        <SparkButton drop={drop} variant="hero" className="shadow-[3px_3px_0px_#1C1C1A]" />
+      </div>
+
+      <div className="absolute left-4 top-4 z-20 flex gap-2 transition-all duration-300 group-hover:-translate-x-1 group-hover:-translate-y-1">
+        {onShare && (
+          <button
+            onClick={handleShare}
+            className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream/90 active:translate-y-0 active:shadow-none"
+            title="Share Drop"
+          >
+            <ClipboardCopy size={18} strokeWidth={3} />
+          </button>
+        )}
+        {canEdit && (
+          <button
+            onClick={handleEdit}
+            className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream/90 active:translate-y-0 active:shadow-none"
+            title="Edit Drop"
+          >
+            <Edit3 size={18} strokeWidth={3} />
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
 /** Compact list card for the UPCOMING/PAST tabs */
+
 export function ListDropCard({
   drop,
   viewerId,
@@ -180,189 +232,238 @@ export function ListDropCard({
   const canEdit = isOrganiser && drop.status !== 'completed' && onEdit;
   const isCompleted = drop.status === 'completed';
 
-  return (
-    <div
-      className={cn(
-        'group flex flex-col gap-4 rounded-xl border-[3px] border-tok-black p-5 transition-all sm:flex-row sm:items-center mt-4',
-        isCompleted
-          ? 'bg-tok-black/5 opacity-70 grayscale'
-          : 'bg-white shadow-[4px_4px_0px_#1C1C1A] hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]',
-      )}
-    >
-      <div className="flex items-start gap-4 flex-1">
-        <div
-          className={cn(
-            'flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black font-passion text-sm font-bold tracking-widest',
-            isCompleted
-              ? 'bg-tok-black/10 text-tok-black/40'
-              : 'bg-tok-teal text-tok-cream',
-          )}
-        >
-          {getInitials(drop.name)}
-        </div>
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onShare?.(drop);
+  };
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-tok-black/30">
-              {role}
-            </span>
-            {isCompleted && (
-              <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-tok-black/40">
-                • COMPLETED
-              </span>
-            )}
-            {drop.status === 'ongoing' && (
-              <span className="flex items-center gap-1 font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-amber-500">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" />
-                </span>
-                • Ongoing
-              </span>
-            )}
-            {!drop.isPublic && (
-              <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-tok-teal/40">
-                • PRIVATE
-              </span>
-            )}
-            {drop.category && (
-              <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-tok-teal/40">
-                • {drop.category}
-              </span>
-            )}
-          </div>
-          <p
-            className={cn(
-              'truncate font-passion text-xl font-bold uppercase tracking-tight',
-              isCompleted ? 'text-tok-black/50' : 'text-tok-black',
-            )}
-          >
-            {drop.name}
-          </p>
-          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-bold text-tok-black/40">
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays size={12} strokeWidth={2.5} />
-              <span className="font-passion uppercase tracking-wider">{formatDateTime(drop.scheduledAt)}</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin size={12} strokeWidth={2.5} />
-              <span className="font-passion truncate uppercase tracking-wider">{drop.location}</span>
-            </span>
-          </div>
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onEdit?.(drop);
+  };
+
+  return (
+    <div className="group relative mt-4">
+      <Link
+        href={`/drops/${drop.id}`}
+        className={cn(
+          'flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black transition-all sm:flex-row',
+          isCompleted
+            ? 'bg-tok-black/5 opacity-70 grayscale'
+            : 'bg-white shadow-[4px_4px_0px_#1C1C1A] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]',
+        )}
+      >
+        {/* Visual Element */}
+        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
+          {drop.coverPhoto ? (
+            <img
+              src={drop.coverPhoto}
+              alt={drop.name}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex h-full w-full items-center justify-center bg-tok-teal/10 font-passion text-2xl font-bold tracking-widest text-tok-teal/30">
+              {getInitials(drop.name)}
+            </div>
+          )}
+
           
-          {/* Crew Avatars */}
-          {drop.crew && drop.crew.length > 0 && (
-            <div className="mt-3 flex items-center gap-1">
-              <div className="flex -space-x-2 overflow-hidden">
-                {drop.crew.slice(0, 5).map((member) => (
-                  <div 
-                    key={member.id} 
-                    className="inline-block h-6 w-6 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden"
-                    title={`${member.user.firstName} ${member.user.lastName}`}
-                  >
-                    {member.user.avatar ? (
-                      <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center font-passion text-[8px] text-tok-teal">
-                        {member.user.firstName[0]}{member.user.lastName[0]}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {drop.crew.length > 5 && (
-                <span className="font-passion text-[10px] font-bold text-tok-black/40 ml-1">
-                  +{drop.crew.length - 5} MORE
-                </span>
-              )}
+          {/* Status Badge overlay */}
+          {drop.status === 'ongoing' && (
+            <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-sm bg-amber-400 px-1.5 py-0.5 font-passion text-[8px] font-bold uppercase tracking-wider text-tok-black border-2 border-tok-black shadow-[1.5px_1.5px_0px_#1C1C1A]">
+              <span className="relative flex h-1 w-1">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tok-black opacity-75" />
+                <span className="relative inline-flex h-1 w-1 rounded-full bg-tok-black" />
+              </span>
+              Live
             </div>
           )}
         </div>
+
+        {/* Content Area */}
+        <div className="relative flex flex-1 flex-col p-4">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className="font-passion text-[9px] font-bold uppercase tracking-[1px] text-tok-black/40">
+              {role}
+            </span>
+            {drop.category && (
+              <span className="rounded-sm bg-tok-teal-pale px-1.5 py-0.5 font-passion text-[8px] font-bold uppercase tracking-wider text-tok-teal border border-tok-teal/20">
+                {drop.category}
+              </span>
+            )}
+            {!drop.isPublic && (
+              <span className="inline-flex items-center gap-1 rounded-sm bg-tok-black/5 px-1.5 py-0.5 font-passion text-[8px] font-bold uppercase tracking-wider text-tok-black/40">
+                <Lock size={8} strokeWidth={3} />
+                Private
+              </span>
+            )}
+          </div>
+
+          <h3 className="font-passion text-xl font-bold leading-tight text-tok-black group-hover:text-tok-teal transition-colors pr-10 sm:pr-0 mb-2">
+            {drop.name}
+          </h3>
+
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-bold text-tok-black/40 mb-3">
+            <span className="inline-flex items-center gap-1">
+              <CalendarDays size={12} className="text-tok-teal" strokeWidth={2.5} />
+              <span className="font-passion uppercase tracking-wider">{formatDateTime(drop.scheduledAt)}</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <MapPin size={12} className="text-tok-teal" strokeWidth={2.5} />
+              <span className="font-passion truncate uppercase tracking-wider max-w-[150px]">{drop.location}</span>
+            </span>
+          </div>
+
+          {drop.overview && (
+            <p className="font-inter text-[11px] leading-relaxed text-tok-black/60 line-clamp-2 mb-4">
+              {drop.overview}
+            </p>
+          )}
+
+          {/* Crew Section */}
+          <div className="mt-auto flex items-center gap-2">
+            <div className="flex items-center">
+              {drop.crew && drop.crew.length > 0 ? (
+                <>
+                  {drop.crew.slice(0, 3).map((member, i) => (
+                    <div 
+                      key={member.id} 
+                      className={cn(
+                        "relative h-6 w-6 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden",
+                        i > 0 && "-ml-3"
+                      )}
+                      title={`${member.user.firstName} ${member.user.lastName}`}
+                    >
+                      {member.user.avatar ? (
+                        <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center font-passion text-[8px] text-tok-teal">
+                          {member.user.firstName[0]}{member.user.lastName[0]}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {drop.crew.length > 3 && (
+                    <div className="relative -ml-3 flex h-6 w-6 items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion text-[8px] font-bold text-tok-black">
+                      +{drop.crew.length - 3}
+                    </div>
+                  )}
+                </>
+              ) : (
+
+
+                <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-tok-black border-dashed bg-tok-black/5 text-tok-black/20">
+                  <Users size={10} strokeWidth={2.5} />
+                </div>
+              )}
+            </div>
+            <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/30">
+              {drop.crew && drop.crew.length > 0 ? 'In the crew' : 'Be the first'}
+            </span>
+          </div>
+        </div>
+      </Link>
+
+
+      {/* Quick Action Buttons */}
+      <div className="absolute right-4 top-4 z-20 flex flex-col gap-2 transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5">
+        <SparkButton drop={drop} className="bg-white" />
       </div>
 
-      <div className="flex items-center justify-end gap-2 sm:shrink-0">
-        <SparkButton drop={drop} />
-        <div className="flex items-center gap-2">
-          {canEdit && (
-            <button
-              onClick={() => onEdit(drop)}
-              className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0"
-            >
-              <Edit3 size={14} strokeWidth={2.5} />
-            </button>
-          )}
-          {onShare && !isCompleted && (
-            <button
-              onClick={() => onShare(drop)}
-              className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0"
-            >
-              <ClipboardCopy size={14} strokeWidth={2.5} />
-            </button>
-          )}
-        </div>
-        <Link
-          href={`/drops/${drop.id}`}
-          className="flex h-9 items-center gap-2 rounded-sm border-2 border-tok-black bg-tok-teal px-4 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
-        >
-          View
-          <ArrowRight size={12} strokeWidth={2.5} />
-        </Link>
+      <div className="absolute left-4 top-4 z-20 flex gap-2 transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5">
+
+        {onShare && !isCompleted && (
+          <button
+            onClick={handleShare}
+            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
+            title="Share Drop"
+          >
+            <ClipboardCopy size={16} strokeWidth={2.5} />
+          </button>
+        )}
+        {canEdit && (
+          <button
+            onClick={handleEdit}
+            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
+            title="Edit Drop"
+          >
+            <Edit3 size={16} strokeWidth={2.5} />
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
 export function HeroCardSkeleton() {
+
   return (
-    <div className="relative overflow-hidden rounded-xl border-[3px] border-tok-black/10 bg-tok-teal/10 px-6 py-6 shadow-[8px_8px_0px_rgba(0,0,0,0.05)]">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <Skeleton className="h-14 w-14 shrink-0 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
-          <div className="space-y-3 flex-1">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-3.5 w-20 rounded-sm bg-tok-black/10" />
-              <Skeleton className="h-3.5 w-14 rounded-sm bg-tok-black/10 opacity-50" />
-            </div>
-            <Skeleton className="h-9 w-3/4 max-w-[320px] rounded-sm bg-tok-black/5" />
-            <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/10" />
+    <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black/10 bg-tok-teal/5 md:flex-row">
+      <Skeleton className="aspect-video w-full shrink-0 border-b-[3px] border-tok-black/5 md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px]" />
+      <div className="flex-1 p-5 space-y-4 md:p-6">
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/10" />
+          <Skeleton className="h-10 w-3/4 max-w-[300px] rounded-sm bg-tok-black/5" />
+        </div>
+        <div className="space-y-1.5">
+          <Skeleton className="h-2.5 w-full rounded-sm bg-tok-black/5" />
+          <Skeleton className="h-2.5 w-2/3 rounded-sm bg-tok-black/5" />
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center">
+            <Skeleton className="h-8 w-8 rounded-full border-2 border-tok-black/5 bg-tok-black/5" />
+            <Skeleton className="-ml-4 h-8 w-8 rounded-full border-2 border-tok-black/5 bg-tok-black/5" />
+            <Skeleton className="-ml-4 h-8 w-8 rounded-full border-2 border-tok-black/5 bg-tok-black/5" />
           </div>
+          <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/10" />
         </div>
-        <div className="flex items-center gap-2.5">
-          <Skeleton className="h-10 w-10 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
-          <Skeleton className="h-10 w-32 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
+
+
+
+        <div className="pt-4 grid grid-cols-1 gap-3 border-t border-dashed border-tok-black/5 sm:grid-cols-2">
+          <Skeleton className="h-8 w-full rounded-sm bg-tok-black/5" />
+          <Skeleton className="h-8 w-full rounded-sm bg-tok-black/5" />
         </div>
-      </div>
-      <div className="mt-8 grid grid-cols-1 gap-4 border-t-2 border-dashed border-tok-black/5 pt-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/5" />
-        <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/5" />
-        <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/5" />
-        <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/5" />
+        <Skeleton className="h-10 w-40 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
       </div>
     </div>
   );
 }
 
 export function ListCardSkeleton() {
+
   return (
-    <div className="flex flex-col gap-4 rounded-xl border-[3px] border-tok-black/10 bg-white/40 p-5 mt-4">
-      <div className="flex items-center gap-4 flex-1">
-        <Skeleton className="h-12 w-12 shrink-0 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
-        <div className="flex-1 space-y-3">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-2.5 w-12 rounded-sm bg-tok-black/10" />
-            <Skeleton className="h-2.5 w-16 rounded-sm bg-tok-black/10 opacity-50" />
-          </div>
-          <Skeleton className="h-7 w-3/4 max-w-[240px] rounded-sm bg-tok-black/5" />
-          <div className="flex gap-4">
-            <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/10 opacity-50" />
-            <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/10 opacity-50" />
-          </div>
+    <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black/10 bg-white/40 mt-4 sm:flex-row">
+      <Skeleton className="aspect-video w-full shrink-0 border-b-[3px] border-tok-black/5 sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]" />
+      <div className="flex-1 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-2.5 w-12 rounded-sm bg-tok-black/10" />
+          <Skeleton className="h-2.5 w-16 rounded-sm bg-tok-black/10 opacity-50" />
         </div>
-      </div>
-      <div className="flex items-center gap-2 sm:shrink-0 justify-end">
-        <Skeleton className="h-9 w-9 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
-        <Skeleton className="h-9 w-20 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
+        <Skeleton className="h-6 w-3/4 max-w-[240px] rounded-sm bg-tok-black/5" />
+        <div className="flex gap-3">
+          <Skeleton className="h-3 w-20 rounded-sm bg-tok-black/10 opacity-50" />
+          <Skeleton className="h-3 w-20 rounded-sm bg-tok-black/10 opacity-50" />
+        </div>
+        <div className="space-y-1.5">
+          <Skeleton className="h-2.5 w-full rounded-sm bg-tok-black/5" />
+          <Skeleton className="h-2.5 w-4/5 rounded-sm bg-tok-black/5" />
+        </div>
+        <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center">
+            <Skeleton className="h-6 w-6 rounded-full border-2 border-tok-black/5 bg-tok-black/5" />
+            <Skeleton className="-ml-3 h-6 w-6 rounded-full border-2 border-tok-black/5 bg-tok-black/5" />
+          </div>
+          <Skeleton className="h-2.5 w-16 rounded-sm bg-tok-black/10 opacity-50" />
+        </div>
+
+
+
       </div>
     </div>
   );
 }
+
+
