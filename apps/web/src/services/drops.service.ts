@@ -86,4 +86,20 @@ export const dropsService = {
   deleteCoverPhoto(id: string): Promise<void> {
     return api.delete(`/drops/${id}/cover-photo`).then(() => undefined);
   },
+
+  getPhotos(dropId: string): Promise<any[]> {
+    return api.get<any[]>(`/drops/${dropId}/photos`).then((r) => r.data);
+  },
+
+  uploadPhoto(dropId: string, base64: string): Promise<any> {
+    return api.post<any>(`/drops/${dropId}/photos`, { base64 }).then((r) => r.data);
+  },
+
+  featurePhoto(dropId: string, photoId: string): Promise<any> {
+    return api.patch<any>(`/drops/${dropId}/photos/${photoId}/feature`).then((r) => r.data);
+  },
+
+  deletePhoto(dropId: string, photoId: string): Promise<void> {
+    return api.delete(`/drops/${dropId}/photos/${photoId}`).then(() => undefined);
+  },
 };

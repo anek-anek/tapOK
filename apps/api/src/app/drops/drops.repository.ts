@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, Not, Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DropCategory, DropCrewStatus, DropStatus } from '../../common';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
+
+import { DropPhoto } from './entities/drop-photo.entity';
 
 @Injectable()
 export class DropsRepository {
@@ -15,6 +18,8 @@ export class DropsRepository {
     private readonly logRepo: Repository<DropActivityLog>,
     @InjectRepository(DropCrew)
     private readonly crewRepo: Repository<DropCrew>,
+    @InjectRepository(DropPhoto)
+    private readonly photoRepo: Repository<DropPhoto>,
   ) {}
 
   findById(id: string): Promise<Drop | null> {
@@ -238,5 +243,41 @@ export class DropsRepository {
     });
 
     return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  findPhotos(dropId: string): Promise<DropPhoto[]> {
+    return this.photoRepo.find({
+      where: { dropId },
+      relations: { user: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  findPhotoById(id: string): Promise<DropPhoto | null> {
+    return this.photoRepo.findOne({
+      where: { id },
+      relations: { user: true },
+    });
+  }
+
+  countPhotosByUser(dropId: string, userId: string): Promise<number> {
+    return this.photoRepo.countBy({ dropId, userId });
+  }
+
+  countTotalPhotos(dropId: string): Promise<number> {
+    return this.photoRepo.countBy({ dropId });
+  }
+
+  async addPhoto(data: Partial<DropPhoto>): Promise<DropPhoto> {
+    const photo = this.photoRepo.create(data);
+    return this.photoRepo.save(photo);
+  }
+
+  async updatePhoto(id: string, data: QueryDeepPartialEntity<DropPhoto>): Promise<void> {
+    await this.photoRepo.update(id, data);
+  }
+
+  async deletePhoto(id: string): Promise<void> {
+    await this.photoRepo.delete(id);
   }
 }

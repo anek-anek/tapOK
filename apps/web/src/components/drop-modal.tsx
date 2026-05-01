@@ -22,6 +22,9 @@ import {
   useUploadCoverPhoto,
   useDeleteCoverPhoto,
 } from '@/hooks/mutations/use-drop-mutations';
+import { useAuth } from '@/components/providers/auth-provider';
+import { useMyCrewStatus } from '@/hooks/queries/use-drops';
+import { PhotoRoll } from '@/components/drops/PhotoRoll';
 import { ALLOWED_COVER_PHOTO_TYPES, MAX_COVER_PHOTO_SIZE } from '@/lib/supabase-storage';
 import { dropsService } from '@/services/drops.service';
 import { toast } from 'react-hot-toast';
@@ -308,6 +311,8 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
   const updateDrop = useUpdateDrop(drop?.id ?? '');
   const uploadCoverPhoto = useUploadCoverPhoto(drop?.id ?? '');
   const deleteCoverPhoto = useDeleteCoverPhoto(drop?.id ?? '');
+  const { dbUser } = useAuth();
+  const { data: myCrew } = useMyCrewStatus(drop?.id ?? '', { enabled: isEdit });
   const pendingIdRef = useRef<string | null>(null);
 
   const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
@@ -827,6 +832,17 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                     </button>
                   </div>
                 </form>
+
+                {isEdit && drop && (
+                  <div className="mt-10 border-t-2 border-dashed border-tok-black/10 pt-8">
+                    <PhotoRoll 
+                      drop={drop} 
+                      userId={dbUser?.id}
+                      isOrganiser={drop.organiserId === dbUser?.id}
+                      isCrewMember={myCrew?.status === 'in'}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>

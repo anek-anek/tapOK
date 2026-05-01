@@ -4,7 +4,7 @@ import { StorageClient } from '@supabase/storage-js';
 
 @Injectable()
 export class SupabaseStorageService {
-  private readonly storage: StorageClient;
+  public readonly storage: StorageClient;
 
   constructor(private readonly config: ConfigService) {
     const url = config.getOrThrow<string>('SUPABASE_URL');

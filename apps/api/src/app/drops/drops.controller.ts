@@ -39,6 +39,7 @@ import { CrewMemberDto } from './dto/crew-member.dto';
 import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
+import { DropPhoto } from './entities/drop-photo.entity';
 
 interface RequestWithUser extends Request {
   user: DecodedIdToken;
@@ -328,5 +329,51 @@ export class DropsController {
     @Req() request: RequestWithUser,
   ): Promise<void> {
     return this.dropsService.deleteCoverPhoto(id, request.user.uid);
+  }
+
+  @Post(':id/photos')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Upload a photo to the drop roll (crew members only)' })
+  @ApiResponse({ status: 201, type: DropPhoto })
+  uploadPhoto(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('base64') base64: string,
+    @Req() request: RequestWithUser,
+  ): Promise<DropPhoto> {
+    if (!base64) throw new BadRequestException('Base64 content is required');
+    return this.dropsService.uploadPhoto(id, request.user.uid, base64);
+  }
+
+  @Get(':id/photos')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Get all photos for a drop' })
+  @ApiResponse({ status: 200, type: [DropPhoto] })
+  getPhotos(@Param('id', ParseUUIDPipe) id: string): Promise<DropPhoto[]> {
+    return this.dropsService.getPhotos(id);
+  }
+
+  @Patch(':id/photos/:photoId/feature')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Feature a photo from the roll (organiser only)' })
+  @ApiResponse({ status: 200, type: DropPhoto })
+  featurePhoto(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('photoId', ParseUUIDPipe) photoId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<DropPhoto> {
+    return this.dropsService.featurePhoto(id, photoId, request.user.uid);
+  }
+
+  @Delete(':id/photos/:photoId')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a photo from the roll (owner or organiser only)' })
+  @ApiResponse({ status: 204, description: 'Photo deleted.' })
+  deletePhoto(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('photoId', ParseUUIDPipe) photoId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.deletePhoto(id, photoId, request.user.uid);
   }
 }

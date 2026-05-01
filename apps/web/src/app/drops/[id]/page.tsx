@@ -34,6 +34,7 @@ import { TapokNavbar } from '@/components/tapok-navbar';
 import { DropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
 import { DigitalTicket } from '@/components/drops/DigitalTicket';
+import { PhotoRoll } from '@/components/drops/PhotoRoll';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence } from '@/hooks/mutations/use-drop-mutations';
@@ -410,7 +411,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                   CODE: {drop.joinCode}
                 </span>
               </div>
-              <h1 className="font-passion text-[clamp(36px,6vw,72px)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-[#F7E9B2]">
+              <h1 className="break-words font-passion text-[clamp(32px,6vw,72px)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-[#F7E9B2]">
                 {drop.name}
               </h1>
               <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
@@ -425,12 +426,12 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
 
-            <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
               {!isCompleted && (
                 <button
                   type="button"
                   onClick={() => setShareModalOpen(true)}
-                  className="group relative flex h-12 flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
+                  className="group relative flex h-12 min-w-[100px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
                 >
                   <IconShare2 size={16} strokeWidth={2.5} />
                   <span className="pt-0.5">Share</span>
@@ -440,7 +441,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(true)}
-                  className="group relative flex h-12 flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-[#F7E9B2] px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
+                  className="group relative flex h-12 min-w-[120px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-[#F7E9B2] px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
                 >
                   <IconEdit size={16} strokeWidth={2.5} />
                   <span className="pt-0.5 text-nowrap">Edit Drop</span>
@@ -450,7 +451,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 <button
                   type="button"
                   onClick={() => setLeaveModalOpen(true)}
-                  className="group relative flex h-12 flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-red-500 px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
+                  className="group relative flex h-12 min-w-[100px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-red-500 px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
                 >
                   <IconLogOut size={16} strokeWidth={2.5} />
                   <span className="pt-0.5">Leave</span>
@@ -467,7 +468,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         {/* Content Grid */}
         <div className={`grid gap-8 ${!isCompleted ? 'lg:grid-cols-[1fr_360px]' : ''}`}>
           {/* Left: Ledger & Activity */}
-          <div className="order-2 lg:order-1">
+          <div className="order-2 min-w-0 lg:order-1">
             {/* Drop Overview */}
             {drop.overview && (
               <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
@@ -492,12 +493,12 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                       Are you hitting this drop?
                     </h3>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
                     <button
                       type="button"
                       disabled={isUpdatingPresence || crewStatus?.isPresent === true}
                       onClick={() => handleUpdatePresence(true)}
-                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${crewStatus?.isPresent
+                      className={`h-12 w-full min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all sm:w-auto ${crewStatus?.isPresent
                           ? 'bg-tok-teal text-white shadow-[3px_3px_0px_#1C1C1A]'
                           : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
                         }`}
@@ -508,7 +509,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                       type="button"
                       disabled={isUpdatingPresence || crewStatus?.isPresent === false}
                       onClick={() => handleUpdatePresence(false)}
-                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${!crewStatus?.isPresent
+                      className={`h-12 w-full min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all sm:w-auto ${!crewStatus?.isPresent
                           ? 'bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A]'
                           : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
                         }`}
@@ -573,6 +574,16 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             )}
 
+            {/* Photo Roll */}
+            <div className="mb-10">
+              <PhotoRoll 
+                drop={drop} 
+                userId={dbUser?.id}
+                isOrganiser={isOrganiser}
+                isCrewMember={crewStatus?.status === 'in'}
+              />
+            </div>
+
             {/* Crew Roster */}
             {isOrganiser && activeMembers.length > 0 && (
               <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]">
@@ -601,7 +612,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         {getLogInitials(member.user.firstName, member.user.lastName)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
+                        <p className="truncate font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:text-xl">
                           {member.user.firstName} {member.user.lastName}
                         </p>
                         <p className="font-inter text-xs text-tok-black/40">
@@ -631,8 +642,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             )}
 
             {/* Activity Ledger */}
-            <div className="rounded-[4px] border-[3px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]">
-              <div className="border-b-[3px] border-tok-black bg-tok-teal/8 px-6 py-5">
+            <div className="rounded-[4px] border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] sm:shadow-[6px_6px_0px_#1C1C1A]">
+              <div className="border-b-[3px] border-tok-black bg-tok-teal/8 px-4 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <IconActivity size={18} strokeWidth={2.5} className="text-tok-teal" />
@@ -672,14 +683,14 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     {activityPage.data.map((log) => (
                       <div
                         key={log.id}
-                        className="flex items-start gap-5 px-6 py-5 transition-colors hover:bg-tok-teal/1"
+                        className="flex items-start gap-5 px-4 py-5 transition-colors hover:bg-tok-teal/1 sm:px-6"
                       >
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-teal/10 font-passion text-[10px] font-bold text-tok-teal">
                           {getLogInitials(log.user.firstName, log.user.lastName)}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-inter text-sm leading-relaxed text-tok-black/80">
-                            <span className="font-passion text-base font-bold uppercase tracking-tight text-tok-black">
+                            <span className="truncate font-passion text-sm font-bold uppercase tracking-tight text-tok-black sm:text-base">
                               {log.user.firstName} {log.user.lastName}
                             </span>
                             {' '}
@@ -714,7 +725,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                   </div>
 
                   {activityPage.totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t-[3px] border-tok-black px-6 py-4">
+                    <div className="flex items-center justify-between border-t-[3px] border-tok-black px-4 py-4 sm:px-6">
                       <button
                         type="button"
                         onClick={() => setLogPage((p) => p - 1)}
