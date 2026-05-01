@@ -13,7 +13,7 @@ import { DropsCronService } from './drops-cron.service';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
-import { DropCategory, DropCrewStatus, DropStatus } from '../../common';
+import { DropCategory, DropCrewStatus, DropStatus, SupabaseStorageService } from '../../common';
 import { CreateDropDto } from './dto/create-drop.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
 
@@ -26,6 +26,7 @@ export class DropsService {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly dropsCronService: DropsCronService,
+    private readonly storageService: SupabaseStorageService,
   ) {}
 
   async create(dto: CreateDropDto, firebaseUid: string): Promise<Drop> {
@@ -443,6 +444,35 @@ export class DropsService {
       recentChiefsDrops,
       allPublic: allPublicPaginated,
     };
+  }
+
+  async uploadCoverPhoto(id: string, firebaseUid: string, buffer: Buffer, mimeType: string): Promise<Drop> {
+    const drop = await this.dropsRepository.findById(id);
+    if (!drop) throw new NotFoundException(`Drop ${id} not found`);
+
+    if (drop.organiser.firebaseUid !== firebaseUid) {
+      throw new ForbiddenException('Only the organiser can update the cover photo');
+    }
+
+    const publicUrl = await this.storageService.uploadDropCover(id, buffer, mimeType);
+
+    await this.dropsRepository.update(id, { coverPhoto: publicUrl });
+    await this.dropsRepository.writeLog({ dropId: id, userId: drop.organiserId, action: 'updated', changedFields: { coverPhoto: publicUrl } });
+
+    return this.dropsRepository.findById(id) as Promise<Drop>;
+  }
+
+  async deleteCoverPhoto(id: string, firebaseUid: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(id);
+    if (!drop) throw new NotFoundException(`Drop ${id} not found`);
+
+    if (drop.organiser.firebaseUid !== firebaseUid) {
+      throw new ForbiddenException('Only the organiser can delete the cover photo');
+    }
+
+    await this.storageService.deleteDropCover(id);
+    await this.dropsRepository.update(id, { coverPhoto: null });
+    await this.dropsRepository.writeLog({ dropId: id, userId: drop.organiserId, action: 'updated', changedFields: { coverPhoto: null } });
   }
 
   private async generateUniqueJoinCode(): Promise<string> {

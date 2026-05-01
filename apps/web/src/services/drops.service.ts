@@ -67,11 +67,23 @@ export const dropsService = {
     return api.get<ActivityLogsPage>(`/drops/${dropId}/activity`, { params: { page, limit } }).then((r) => r.data);
   },
   
-  getDiscoverData(page = 1, limit = 6, category?: string): Promise<{ 
-    featured: Drop | null; 
-    recentChiefsDrops: Drop[]; 
-    allPublic: { data: Drop[]; total: number; page: number; totalPages: number } 
+  getDiscoverData(page = 1, limit = 6, category?: string): Promise<{
+    featured: Drop | null;
+    recentChiefsDrops: Drop[];
+    allPublic: { data: Drop[]; total: number; page: number; totalPages: number }
   }> {
     return api.get('/drops/discover', { params: { page, limit, category } }).then((r) => r.data);
+  },
+
+  uploadCoverPhoto(id: string, file: File): Promise<Drop> {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<Drop>(`/drops/${id}/cover-photo`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data);
+  },
+
+  deleteCoverPhoto(id: string): Promise<void> {
+    return api.delete(`/drops/${id}/cover-photo`).then(() => undefined);
   },
 };

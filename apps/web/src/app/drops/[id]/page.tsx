@@ -395,7 +395,13 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
         {/* Billboard Hero Section */}
         <section className="relative mb-10 overflow-hidden rounded-[4px] border-[3px] border-tok-black bg-tok-teal p-6 shadow-[8px_8px_0px_#1C1C1A] sm:p-10 lg:p-12">
-          {/* Subtle noise/texture overlay would go here if needed */}
+          {drop.coverPhoto && (
+            <div className="pointer-events-none absolute inset-0 z-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={drop.coverPhoto} alt="" className="h-full w-full object-cover opacity-25" />
+              <div className="absolute inset-0 bg-linear-to-r from-tok-teal via-tok-teal/80 to-transparent" />
+            </div>
+          )}
           <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
             <div className="flex-1">
               <div className="mb-4 flex items-center gap-3">
@@ -453,7 +459,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
           {/* Big decorative background initials */}
-          <div className="pointer-events-none absolute -bottom-10 -right-4 font-passion text-[180px] font-bold leading-none text-[#F7E9B2]/5 opacity-20 select-none">
+          <div className="pointer-events-none absolute -bottom-10 -right-4 z-0 font-passion text-[180px] font-bold leading-none text-[#F7E9B2]/5 opacity-20 select-none">
             {getInitials(drop.name)}
           </div>
         </section>
