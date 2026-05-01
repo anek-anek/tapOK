@@ -17,7 +17,7 @@ export function DropShareModal({ drop, onClose }: DropShareModalProps) {
   return (
     <ModalShell onClose={onClose}>
       {(close) => (
-        <div className="relative w-full max-w-sm mx-auto p-4 rounded-2xl border-[3px] border-tok-black bg-white shadow-[10px_10px_0px_#1C1C1A]">
+        <div className="relative w-full max-w-sm mx-auto p-4 rounded-2xl border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
           {/* Close button - Top Right */}
           <button
             onClick={close}
