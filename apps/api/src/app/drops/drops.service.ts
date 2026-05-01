@@ -785,7 +785,7 @@ export class DropsService {
     }
 
     const mimeType = mimeMatch[1];
-    if (!['image/jpeg', 'image/jpg', 'image/png'].includes(mimeType)) {
+    if (!mimeType || !['image/jpeg', 'image/jpg', 'image/png'].includes(mimeType)) {
       throw new BadRequestException('Invalid image format: Only JPG and PNG are allowed');
     }
 
