@@ -16,6 +16,7 @@ import { DropCrew } from './entities/drop-crew.entity';
 import { DropPhoto } from './entities/drop-photo.entity';
 import { DropCategory, DropCrewStatus, DropStatus, SupabaseStorageService } from '../../common';
 import { CreateDropDto } from './dto/create-drop.dto';
+import { DropPhotoPublicDto } from './dto/drop-photo-public.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
 
 @Injectable()
@@ -80,8 +81,8 @@ export class DropsService {
     if (!drop.isPublic && firebaseUid) {
       const user = await this.usersService.findByFirebaseUid(firebaseUid);
       if (user && drop.organiserId !== user.id) {
-        const crewMember = await this.dropsRepository.findCrewMember(id, user.id);
-        if (!crewMember) {
+        const activeCrew = await this.dropsRepository.findActiveInCrewMember(id, user.id);
+        if (!activeCrew) {
           throw new NotFoundException(`Drop ${id} not found`);
         }
       }
@@ -109,8 +110,8 @@ export class DropsService {
       if (!firebaseUid) throw new NotFoundException(`Drop with join code ${joinCode} not found`);
       const user = await this.usersService.findByFirebaseUid(firebaseUid);
       if (user && drop.organiserId !== user.id) {
-        const crewMember = await this.dropsRepository.findCrewMember(drop.id, user.id);
-        if (!crewMember) {
+        const activeCrew = await this.dropsRepository.findActiveInCrewMember(drop.id, user.id);
+        if (!activeCrew) {
           throw new NotFoundException(`Drop with join code ${joinCode} not found`);
         }
       }
@@ -405,11 +406,11 @@ export class DropsService {
 
   async findDropActivityLogs(
     dropId: string,
+    firebaseUid: string,
     page: number,
     limit: number,
   ): Promise<{ data: DropActivityLog[]; total: number; page: number; totalPages: number }> {
-    const drop = await this.dropsRepository.findById(dropId);
-    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+    await this.findOne(dropId, firebaseUid);
     return this.dropsRepository.findPaginatedActivityLogs(dropId, page, limit);
   }
 
@@ -517,8 +518,31 @@ export class DropsService {
     return photo;
   }
 
-  async getPhotos(dropId: string): Promise<DropPhoto[]> {
-    return this.dropsRepository.findPhotos(dropId);
+  async getPhotos(dropId: string, firebaseUid: string): Promise<DropPhotoPublicDto[]> {
+    await this.findOne(dropId, firebaseUid);
+    const photos = await this.dropsRepository.findPhotos(dropId);
+    return photos.map((p) => this.toPhotoPublicDto(p));
+  }
+
+  private toPhotoPublicDto(photo: DropPhoto): DropPhotoPublicDto {
+    const user = photo.user;
+    const hasUrl = photo.url !== null && photo.url !== undefined && photo.url !== '';
+    return {
+      id: photo.id,
+      dropId: photo.dropId,
+      userId: photo.userId,
+      url: photo.url ?? undefined,
+      base64: hasUrl ? undefined : (photo.base64 ?? undefined),
+      isFeatured: photo.isFeatured,
+      createdAt: photo.createdAt,
+      updatedAt: photo.updatedAt,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatar: user.avatar,
+      },
+    };
   }
 
   async featurePhoto(dropId: string, photoId: string, firebaseUid: string): Promise<DropPhoto> {

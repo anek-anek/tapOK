@@ -36,6 +36,7 @@ import { UpdateDropDto } from './dto/update-drop.dto';
 import { UpdatePresenceDto } from './dto/update-presence.dto';
 import { JoinDropResponseDto } from './dto/join-drop-response.dto';
 import { CrewMemberDto } from './dto/crew-member.dto';
+import { DropPhotoPublicDto } from './dto/drop-photo-public.dto';
 import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
@@ -138,13 +139,14 @@ export class DropsController {
   @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Get paginated activity logs for a drop' })
   @ApiResponse({ status: 200, type: ActivityLogsPageDto })
-  @ApiResponse({ status: 404, description: 'Drop not found.' })
+  @ApiResponse({ status: 404, description: 'Drop not found or no access.' })
   getActivityLogs(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit = 6,
+    @Req() request: RequestWithUser,
   ): Promise<ActivityLogsPageDto> {
-    return this.dropsService.findDropActivityLogs(id, page, limit);
+    return this.dropsService.findDropActivityLogs(id, request.user.uid, page, limit);
   }
 
   @Get(':id/crew/me')
@@ -346,10 +348,14 @@ export class DropsController {
 
   @Get(':id/photos')
   @UseGuards(FirebaseAuthGuard)
-  @ApiOperation({ summary: 'Get all photos for a drop' })
-  @ApiResponse({ status: 200, type: [DropPhoto] })
-  getPhotos(@Param('id', ParseUUIDPipe) id: string): Promise<DropPhoto[]> {
-    return this.dropsService.getPhotos(id);
+  @ApiOperation({ summary: 'Get all photos for a drop (visible drops only)' })
+  @ApiResponse({ status: 200, type: [DropPhotoPublicDto] })
+  @ApiResponse({ status: 404, description: 'Drop not found or no access.' })
+  getPhotos(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<DropPhotoPublicDto[]> {
+    return this.dropsService.getPhotos(id, request.user.uid);
   }
 
   @Patch(':id/photos/:photoId/feature')

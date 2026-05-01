@@ -99,7 +99,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List all organizations */
+        /** List organizations you belong to (platform admins: all organizations) */
         get: operations["OrganizationsController_findAll"];
         put?: never;
         /** Create an organization (caller becomes owner) */
@@ -134,7 +134,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get an organization by id */
+        /** Get an organization by id (members only; platform admins: any) */
         get: operations["OrganizationsController_findOne"];
         put?: never;
         post?: never;
@@ -153,7 +153,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List members of an organization */
+        /** List members (organization members only; platform admins: any org) */
         get: operations["OrganizationsController_findMembers"];
         put?: never;
         /** Add a member to an organization (owner/admin only) */
@@ -193,6 +193,23 @@ export interface paths {
         put?: never;
         /** Vercel Cron: transition drop statuses (requires CRON_SECRET) */
         post: operations["DropsController_runCronTransition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/discover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get drops for the discover page */
+        get: operations["DropsController_discover"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -257,7 +274,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Look up a drop by join code (public) */
+        /** Look up a drop by join code */
         get: operations["DropsController_findByJoinCode"];
         put?: never;
         post?: never;
@@ -283,6 +300,23 @@ export interface paths {
         head?: never;
         /** Edit a drop (organiser only, active/ongoing status) */
         patch: operations["DropsController_update"];
+        trace?: never;
+    };
+    "/drops/{id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get paginated activity logs for a drop */
+        get: operations["DropsController_getActivityLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/drops/{id}/crew/me": {
@@ -318,6 +352,23 @@ export interface paths {
         head?: never;
         /** Mark yourself in or out for a drop (active crew members only) */
         patch: operations["DropsController_updatePresence"];
+        trace?: never;
+    };
+    "/drops/{id}/invite/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Invite a user to a drop (organiser only) */
+        post: operations["DropsController_inviteToDrop"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/drops/{id}/join": {
@@ -405,6 +456,94 @@ export interface paths {
         patch: operations["DropsController_removeCrewMember"];
         trace?: never;
     };
+    "/drops/{id}/cover-photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload or replace the drop cover photo (organiser only, max 5 MB, JPG/PNG) */
+        post: operations["DropsController_uploadCoverPhoto"];
+        /** Delete the drop cover photo (organiser only) */
+        delete: operations["DropsController_deleteCoverPhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all photos for a drop (visible drops only) */
+        get: operations["DropsController_getPhotos"];
+        put?: never;
+        /** Upload a photo to the drop roll (crew members only) */
+        post: operations["DropsController_uploadPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/photos/{photoId}/feature": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Feature a photo from the roll (organiser only) */
+        patch: operations["DropsController_featurePhoto"];
+        trace?: never;
+    };
+    "/drops/{id}/photos/{photoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a photo from the roll (owner or organiser only) */
+        delete: operations["DropsController_deletePhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/spark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Spark a drop (hype) */
+        post: operations["DropsController_sparkDrop"];
+        /** Unspark a drop */
+        delete: operations["DropsController_unsparkDrop"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -463,6 +602,11 @@ export interface components {
             phone?: string;
             /** @enum {string} */
             gender?: "male" | "female" | "other";
+            /**
+             * Format: date-time
+             * @example 1990-01-01
+             */
+            birthday?: string;
             userHandle?: string;
             isEmailVerified: boolean;
             isActive: boolean;
@@ -488,6 +632,12 @@ export interface components {
             firstName?: string;
             /** @example Doe */
             lastName?: string;
+            /** @enum {string} */
+            gender?: "male" | "female" | "other";
+            /** @example 1990-01-01 */
+            birthday?: string;
+            /** @example jane_doe */
+            userHandle?: string;
         };
         CreateUserDto: {
             /** @example user@example.com */
@@ -518,21 +668,12 @@ export interface components {
             phone?: string;
         };
         UpdateUserDto: {
-            /** @example user@example.com */
-            email?: string;
             /** @example Jane */
             firstName?: string;
             /** @example Doe */
             lastName?: string;
-            /** @example firebase-uid-123 */
-            firebaseUid?: string;
             /** @example https://example.com/avatar.jpg */
             avatar?: string;
-            /**
-             * @default participant
-             * @enum {string}
-             */
-            role: "admin" | "photographer" | "participant";
             /** @enum {string} */
             gender?: "male" | "female" | "other";
             /**
@@ -598,8 +739,24 @@ export interface components {
             location: string;
             /** @example 20 */
             expectedHeadcount?: number;
+            /** @example This is a fun beach shoot */
+            overview?: string;
             /** @example false */
             isLocked?: boolean;
+            /** @example true */
+            isPublic?: boolean;
+            /**
+             * @example hangout
+             * @enum {string}
+             */
+            category?: "hangout" | "party";
+        };
+        DropSpark: {
+            id: string;
+            dropId: string;
+            userId: string;
+            /** Format: date-time */
+            createdAt: string;
         };
         Drop: {
             id: string;
@@ -608,14 +765,21 @@ export interface components {
             scheduledAt: string;
             location: string;
             expectedHeadcount?: number | null;
+            overview?: Record<string, never> | null;
+            coverPhoto?: Record<string, never> | null;
             /** @enum {string} */
             status: "active" | "ongoing" | "completed";
+            /** @enum {string} */
+            category?: "hangout" | "party";
             joinCode: string;
             shareUrl: string;
+            /** @default true */
+            isPublic: boolean;
             /** @default false */
             isLocked: boolean;
             organiserId: string;
             organiser: components["schemas"]["User"];
+            sparks: components["schemas"]["DropSpark"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -631,12 +795,18 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        ActivityLogsPageDto: {
+            data: components["schemas"]["DropActivityLog"][];
+            total: number;
+            page: number;
+            totalPages: number;
+        };
         JoinDropResponseDto: {
             id: string;
             dropId: string;
             userId: string;
             /** @enum {string} */
-            status: "in" | "pending" | "rejected" | "removed";
+            status: "in" | "pending" | "rejected" | "removed" | "invited";
             /** @default false */
             isPresent: boolean;
             /** Format: date-time */
@@ -655,13 +825,22 @@ export interface components {
             location?: string;
             /** @example 20 */
             expectedHeadcount?: number | null;
+            /** @example Updated overview */
+            overview?: string;
             /** @description Lock the drop so new joiners require approval */
             isLocked?: boolean;
+            /** @description Set visibility to public or private */
+            isPublic?: boolean;
             /**
              * @description Manually override the drop status
              * @enum {string}
              */
             status?: "active" | "ongoing" | "completed";
+            /**
+             * @example hangout
+             * @enum {string}
+             */
+            category?: "hangout" | "party";
         };
         CrewMemberUserDto: {
             id: string;
@@ -674,11 +853,39 @@ export interface components {
             dropId: string;
             userId: string;
             /** @enum {string} */
-            status: "in" | "pending" | "rejected" | "removed";
+            status: "in" | "pending" | "rejected" | "removed" | "invited";
             /** @default false */
             isPresent: boolean;
             /** Format: date-time */
             joinedAt: string;
+            user: components["schemas"]["CrewMemberUserDto"];
+        };
+        DropPhoto: {
+            id: string;
+            dropId: string;
+            userId: string;
+            url?: Record<string, never> | null;
+            base64?: Record<string, never> | null;
+            /** @default false */
+            isFeatured: boolean;
+            user: components["schemas"]["User"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        DropPhotoPublicDto: {
+            id: string;
+            dropId: string;
+            userId: string;
+            url?: Record<string, never> | null;
+            /** @description Embedded image data only until the photo is featured and stored at url. */
+            base64?: Record<string, never> | null;
+            isFeatured: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
             user: components["schemas"]["CrewMemberUserDto"];
         };
     };
@@ -994,7 +1201,7 @@ export interface operations {
                     "application/json": components["schemas"]["Organization"];
                 };
             };
-            /** @description Organization not found. */
+            /** @description Organization not found or no access. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1080,6 +1287,13 @@ export interface operations {
                     "application/json": components["schemas"]["OrganizationMember"][];
                 };
             };
+            /** @description Organization not found or no access. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     OrganizationsController_addMember: {
@@ -1164,6 +1378,28 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Transitions applied. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_discover: {
+        parameters: {
+            query: {
+                page: number;
+                limit: number;
+                category: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Discovery data */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1335,6 +1571,34 @@ export interface operations {
             };
         };
     };
+    DropsController_getActivityLogs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityLogsPageDto"];
+                };
+            };
+            /** @description Drop not found or no access. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     DropsController_getMyCrewStatus: {
         parameters: {
             query?: never;
@@ -1427,6 +1691,41 @@ export interface operations {
                 content?: never;
             };
             /** @description Not a crew member of this drop. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_inviteToDrop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User invited successfully. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop not found. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1638,6 +1937,221 @@ export interface operations {
             };
             /** @description Drop or crew member not found. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_uploadCoverPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Drop"];
+                };
+            };
+            /** @description No file provided or unsupported format. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the organiser can update the cover photo. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_deleteCoverPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cover photo deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the organiser can delete the cover photo. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_getPhotos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DropPhotoPublicDto"][];
+                };
+            };
+            /** @description Drop not found or no access. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_uploadPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DropPhoto"];
+                };
+            };
+        };
+    };
+    DropsController_featurePhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                photoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DropPhoto"];
+                };
+            };
+        };
+    };
+    DropsController_deletePhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                photoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Photo deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_sparkDrop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dropped sparked. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_unsparkDrop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dropped unsparked. */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };

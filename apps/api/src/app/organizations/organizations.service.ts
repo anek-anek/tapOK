@@ -16,19 +16,18 @@ import { AddMemberDto } from './dto/add-member.dto';
 export class OrganizationsService {
   constructor(private readonly repo: OrganizationsRepository) {}
 
-  findAll(): Promise<Organization[]> {
-    return this.repo.findAll();
+  findAllForCaller(userId: string, isPlatformAdmin: boolean): Promise<Organization[]> {
+    if (isPlatformAdmin) return this.repo.findAll();
+    return this.repo.findOrganizationsForUser(userId);
   }
 
-  async findOne(id: string): Promise<Organization> {
+  async findOne(id: string, requesterDbUserId: string, isPlatformAdmin: boolean): Promise<Organization> {
     const org = await this.repo.findById(id);
     if (!org) throw new NotFoundException(`Organization ${id} not found`);
-    return org;
-  }
-
-  async findOneWithMembers(id: string): Promise<Organization> {
-    const org = await this.repo.findByIdWithMembers(id);
-    if (!org) throw new NotFoundException(`Organization ${id} not found`);
+    if (!isPlatformAdmin) {
+      const member = await this.repo.findMember(id, requesterDbUserId);
+      if (!member) throw new NotFoundException(`Organization ${id} not found`);
+    }
     return org;
   }
 
@@ -50,7 +49,17 @@ export class OrganizationsService {
     await this.repo.remove(id);
   }
 
-  findMembers(orgId: string): Promise<OrganizationMember[]> {
+  async findMembers(
+    orgId: string,
+    requesterDbUserId: string,
+    isPlatformAdmin: boolean,
+  ): Promise<OrganizationMember[]> {
+    const org = await this.repo.findById(orgId);
+    if (!org) throw new NotFoundException(`Organization ${orgId} not found`);
+    if (!isPlatformAdmin) {
+      const member = await this.repo.findMember(orgId, requesterDbUserId);
+      if (!member) throw new NotFoundException(`Organization ${orgId} not found`);
+    }
     return this.repo.findMembersByOrg(orgId);
   }
 

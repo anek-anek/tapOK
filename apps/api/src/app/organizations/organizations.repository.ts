@@ -20,15 +20,18 @@ export class OrganizationsRepository {
     return this.orgRepo.find();
   }
 
-  findById(id: string): Promise<Organization | null> {
-    return this.orgRepo.findOneBy({ id });
+  findOrganizationsForUser(userId: string): Promise<Organization[]> {
+    return this.memberRepo
+      .find({
+        where: { userId },
+        relations: { organization: true },
+        order: { joinedAt: 'ASC' },
+      })
+      .then((rows) => rows.map((r) => r.organization));
   }
 
-  findByIdWithMembers(id: string): Promise<Organization | null> {
-    return this.orgRepo.findOne({
-      where: { id },
-      relations: ['members', 'members.user'],
-    });
+  findById(id: string): Promise<Organization | null> {
+    return this.orgRepo.findOneBy({ id });
   }
 
   create(dto: CreateOrganizationDto): Promise<Organization> {

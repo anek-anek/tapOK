@@ -21,7 +21,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { DecodedIdToken } from 'firebase-admin/auth';
-import { FirebaseAuthGuard, OrgRole } from '../../common';
+import { FirebaseAuthGuard, OrgRole, UserRole } from '../../common';
 import { UsersService } from '../users/users.service';
 import { OrganizationsService } from './organizations.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -51,10 +51,14 @@ export class OrganizationsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all organizations' })
+  @ApiOperation({
+    summary: 'List organizations you belong to (platform admins: all organizations)',
+  })
   @ApiResponse({ status: 200, type: [Organization] })
-  findAll(): Promise<Organization[]> {
-    return this.orgsService.findAll();
+  async findAll(@Req() req: RequestWithUser): Promise<Organization[]> {
+    const dbUserId = await this.resolveDbUserId(req.user.uid);
+    const isPlatformAdmin = req.user.role === UserRole.ADMIN;
+    return this.orgsService.findAllForCaller(dbUserId, isPlatformAdmin);
   }
 
   @Get('me')
@@ -66,18 +70,29 @@ export class OrganizationsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get an organization by id' })
+  @ApiOperation({ summary: 'Get an organization by id (members only; platform admins: any)' })
   @ApiResponse({ status: 200, type: Organization })
-  @ApiResponse({ status: 404, description: 'Organization not found.' })
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Organization> {
-    return this.orgsService.findOne(id);
+  @ApiResponse({ status: 404, description: 'Organization not found or no access.' })
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: RequestWithUser,
+  ): Promise<Organization> {
+    const dbUserId = await this.resolveDbUserId(req.user.uid);
+    const isPlatformAdmin = req.user.role === UserRole.ADMIN;
+    return this.orgsService.findOne(id, dbUserId, isPlatformAdmin);
   }
 
   @Get(':id/members')
-  @ApiOperation({ summary: 'List members of an organization' })
+  @ApiOperation({ summary: 'List members (organization members only; platform admins: any org)' })
   @ApiResponse({ status: 200, type: [OrganizationMember] })
-  findMembers(@Param('id', ParseUUIDPipe) id: string): Promise<OrganizationMember[]> {
-    return this.orgsService.findMembers(id);
+  @ApiResponse({ status: 404, description: 'Organization not found or no access.' })
+  async findMembers(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: RequestWithUser,
+  ): Promise<OrganizationMember[]> {
+    const dbUserId = await this.resolveDbUserId(req.user.uid);
+    const isPlatformAdmin = req.user.role === UserRole.ADMIN;
+    return this.orgsService.findMembers(id, dbUserId, isPlatformAdmin);
   }
 
   @Post()
