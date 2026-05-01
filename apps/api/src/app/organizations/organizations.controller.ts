@@ -29,6 +29,7 @@ import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { Organization } from './entities/organization.entity';
 import { OrganizationMember } from './entities/organization-member.entity';
+import { OrganizationMemberPublicDto } from './dto/organization-member-public.dto';
 
 interface RequestWithUser extends Request {
   user: DecodedIdToken;
@@ -84,12 +85,12 @@ export class OrganizationsController {
 
   @Get(':id/members')
   @ApiOperation({ summary: 'List members (organization members only; platform admins: any org)' })
-  @ApiResponse({ status: 200, type: [OrganizationMember] })
+  @ApiResponse({ status: 200, type: [OrganizationMemberPublicDto] })
   @ApiResponse({ status: 404, description: 'Organization not found or no access.' })
   async findMembers(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req: RequestWithUser,
-  ): Promise<OrganizationMember[]> {
+  ): Promise<OrganizationMemberPublicDto[]> {
     const dbUserId = await this.resolveDbUserId(req.user.uid);
     const isPlatformAdmin = req.user.role === UserRole.ADMIN;
     return this.orgsService.findMembers(id, dbUserId, isPlatformAdmin);

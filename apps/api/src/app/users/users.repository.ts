@@ -24,6 +24,10 @@ export class UsersRepository {
     return this.repo.findOneBy({ firebaseUid });
   }
 
+  findByEmail(email: string): Promise<User | null> {
+    return this.repo.findOneBy({ email });
+  }
+
   create(dto: CreateUserDto): Promise<User> {
     const user = this.repo.create(dto);
     return this.repo.save(user);
@@ -33,9 +37,11 @@ export class UsersRepository {
     firebaseUid: string,
     data: Partial<User>,
   ): Promise<User> {
-    const existing =
-      await this.findByFirebaseUid(firebaseUid) ??
-      (data.email ? await this.repo.findOneBy({ email: data.email }) : null);
+    let existing = await this.findByFirebaseUid(firebaseUid);
+
+    if (!existing && data.email && data.isEmailVerified) {
+      existing = await this.repo.findOneBy({ email: data.email });
+    }
 
     if (existing) {
       await this.repo.update(existing.id, { ...data, firebaseUid });

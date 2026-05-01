@@ -625,6 +625,9 @@ export class DropsService {
       throw new BadRequestException('This drop has reached its photo limit');
     }
 
+    // Validate image format and size
+    this.validateImageBase64(base64);
+
     const photo = await this.dropsRepository.addPhoto({
       dropId,
       userId: user.id,
@@ -708,7 +711,7 @@ export class DropsService {
 
       await this.dropsRepository.updatePhoto(photoId, {
         url: publicUrl,
-        base64: null, // Clear base64 to save DB space once moved to storage
+        base64: null,
         isFeatured: true,
       });
 
@@ -759,11 +762,10 @@ export class DropsService {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('User not found');
 
-    const drop = await this.dropsRepository.findById(dropId);
-    if (!drop) throw new NotFoundException('Drop not found');
+    await this.findOne(dropId, firebaseUid);
 
     const existing = await this.dropsRepository.findSpark(dropId, user.id);
-    if (existing) return; // Already sparked
+    if (existing) return;
 
     await this.dropsRepository.addSpark(dropId, user.id);
   }
@@ -772,7 +774,30 @@ export class DropsService {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('User not found');
 
+    await this.findOne(dropId, firebaseUid);
     await this.dropsRepository.removeSpark(dropId, user.id);
+  }
+
+  private validateImageBase64(base64: string): void {
+    const mimeMatch = base64.match(/^data:([^;]+);base64,/);
+    if (!mimeMatch) {
+      throw new BadRequestException('Invalid image format: Missing data URI prefix');
+    }
+
+    const mimeType = mimeMatch[1];
+    if (!mimeType || !['image/jpeg', 'image/jpg', 'image/png'].includes(mimeType)) {
+      throw new BadRequestException('Invalid image format: Only JPG and PNG are allowed');
+    }
+
+    const base64Data = base64.split(',')[1];
+    if (!base64Data) {
+      throw new BadRequestException('Invalid image data');
+    }
+
+    const sizeBytes = Buffer.from(base64Data, 'base64').length;
+    if (sizeBytes > 5 * 1024 * 1024) {
+      throw new BadRequestException('Image size exceeds 5MB limit');
+    }
   }
 
   private async generateUniqueJoinCode(): Promise<string> {
