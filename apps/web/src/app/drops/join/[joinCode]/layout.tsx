@@ -11,8 +11,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const apiUrl = getApiUrl();
     const res = await fetch(`${apiUrl}/drops/join/${joinCode}`, { next: { revalidate: 60 } });
-    
-    if (!res.ok) {
+
+    if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
       return {};
     }
 

@@ -13,9 +13,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // and to benefit from Next.js fetch caching.
     const apiUrl = getApiUrl();
     const res = await fetch(`${apiUrl}/drops/${id}`, { next: { revalidate: 60 } });
-    
-    if (!res.ok) {
-      return {}; // Fallback to root metadata
+
+    if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+      return {};
     }
 
     const drop = await res.json();
