@@ -303,7 +303,15 @@ function DateTimePicker({
   );
 }
 
-export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void }) {
+export function DropModal({
+  drop,
+  onClose,
+  onSuccess,
+}: {
+  drop?: Drop;
+  onClose: () => void;
+  onSuccess?: (drop: Drop) => void;
+}) {
   const isEdit = !!drop;
   const router = useRouter();
   const createDrop = useCreateDrop();
@@ -438,6 +446,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
         }
 
         toast.success('DROP UPDATED SUCCESSFULLY');
+        if (onSuccess) onSuccess({ ...drop, ...dto } as Drop);
         wrappedClose(true);
       } else {
         const dto = {
@@ -452,9 +461,10 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
           idempotencyKey: idempotencyKeyRef.current,
         };
 
+        let result: Drop;
         let createdId: string;
         try {
-          const result = await createDrop.mutateAsync(dto);
+          result = await createDrop.mutateAsync(dto);
           createdId = result.id;
           pendingIdRef.current = createdId;
         } catch (err: any) {
@@ -473,6 +483,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
         }
 
         toast.success('DROP DEPLOYED SUCCESSFULLY');
+        if (onSuccess) onSuccess(result);
         wrappedClose(true);
       }
     } finally {
