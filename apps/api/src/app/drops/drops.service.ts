@@ -422,23 +422,21 @@ export class DropsService {
     recentChiefsDrops: Drop[];
     allPublic: { data: Drop[]; total: number; page: number; totalPages: number };
   }> {
-    // Trigger lazy status transitions for discovery too
     await this.dropsCronService.transitionDropStatuses();
 
-    const allPublicPaginated = await this.dropsRepository.findPublicDrops(page, limit, category);
+    const featuredResult = await this.dropsRepository.findPublicDrops(1, 1);
+    const featured = featuredResult.data[0] ?? null;
+    const excludeIds = featured ? [featured.id] : [];
+    const allPublicPaginated = await this.dropsRepository.findPublicDrops(page, limit, category, excludeIds);
 
     let recentChiefsDrops: Drop[] = [];
     if (firebaseUid) {
       const user = await this.usersService.findByFirebaseUid(firebaseUid);
       if (user) {
         const chiefIds = await this.dropsRepository.findRecentJoinedChiefIds(user.id);
-        recentChiefsDrops = await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds);
+        recentChiefsDrops = await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, category);
       }
     }
-
-    // Featured drop: the very first upcoming public drop (independent of pagination/category filter)
-    const featuredResult = await this.dropsRepository.findPublicDrops(1, 1);
-    const featured = featuredResult.data[0] ?? null;
 
     return {
       featured,

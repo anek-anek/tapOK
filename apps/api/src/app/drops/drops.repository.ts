@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThanOrEqual, Repository } from 'typeorm';
+import { In, LessThanOrEqual, Not, Repository } from 'typeorm';
 import { DropCategory, DropCrewStatus, DropStatus } from '../../common';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
@@ -178,14 +178,18 @@ export class DropsRepository {
     return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  async findUpcomingDropsByChiefs(chiefIds: string[]): Promise<Drop[]> {
+  async findUpcomingDropsByChiefs(chiefIds: string[], category?: DropCategory): Promise<Drop[]> {
     if (chiefIds.length === 0) return [];
+    const where: any = {
+      organiserId: In(chiefIds),
+      status: In([DropStatus.ACTIVE, DropStatus.ONGOING]),
+      isPublic: true,
+    };
+    if (category) {
+      where.category = category;
+    }
     return this.dropRepo.find({
-      where: {
-        organiserId: In(chiefIds),
-        status: In([DropStatus.ACTIVE, DropStatus.ONGOING]),
-        isPublic: true,
-      },
+      where,
       relations: { organiser: true },
       order: { scheduledAt: 'ASC' },
     });
@@ -204,18 +208,33 @@ export class DropsRepository {
     return Array.from(new Set(joined.map((c) => c.drop.organiserId))).slice(0, limit);
   }
 
-  async findPublicDrops(page: number = 1, limit: number = 6, category?: DropCategory): Promise<{ data: Drop[]; total: number; page: number; totalPages: number }> {
+  async findPublicDrops(
+    page: number = 1,
+    limit: number = 6,
+    category?: DropCategory,
+    excludeIds: string[] = []
+  ): Promise<{ data: Drop[]; total: number; page: number; totalPages: number }> {
+    const where: any = {
+      isPublic: true,
+      status: In([DropStatus.ACTIVE, DropStatus.ONGOING]),
+    };
+
+    if (category) {
+      where.category = category;
+    }
+
+    if (excludeIds.length > 0) {
+      where.id = Not(In(excludeIds));
+    }
+
     const [data, total] = await this.dropRepo.findAndCount({
-      where: {
-        isPublic: true,
-        status: In([DropStatus.ACTIVE, DropStatus.ONGOING]),
-        ...(category && { category }),
-      },
+      where,
       relations: { organiser: true },
       order: { scheduledAt: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
     });
+
     return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 }

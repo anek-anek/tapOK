@@ -143,7 +143,7 @@ export default function DiscoverPage() {
         </div>
 
         <div className="space-y-4">
-          {allPublic.data.length === 0 ? (
+          {allPublic.data.length === 0 && recentChiefsDrops.length === 0 ? (
             <div className="py-20 text-center">
               <p className="font-passion text-xl uppercase text-tok-black/40">No drops found in this category</p>
             </div>
