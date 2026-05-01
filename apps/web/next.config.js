@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ['http://localhost:3000'],
+  allowedDevOrigins: ['http://localhost:3000', 'https://tapok.app', 'http://tapok.app'],
   productionBrowserSourceMaps: false,
   async headers() {
     return [

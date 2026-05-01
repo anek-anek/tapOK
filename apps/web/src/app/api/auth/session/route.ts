@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiUrl } from '@/lib/config';
 
 const SESSION_COOKIE = '__session';
 const PROFILE_COOKIE = 'user_profile';
@@ -11,8 +12,6 @@ interface Profile {
   avatar?: string;
 }
 
-
-
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const idToken: string | undefined = body?.idToken;
@@ -20,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+  const apiUrl = getApiUrl();
   const check = await fetch(`${apiUrl}/users/me`, {
     headers: { Authorization: `Bearer ${idToken}` },
   });
