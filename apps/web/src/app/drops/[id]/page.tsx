@@ -38,6 +38,7 @@ import { PhotoRoll } from '@/components/drops/PhotoRoll';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence } from '@/hooks/mutations/use-drop-mutations';
+import { SparkButton } from '@/components/drops/spark-button';
 import { toast } from 'react-hot-toast';
 import type { DropStatus } from '@/types/drop';
 
@@ -427,6 +428,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
+              <SparkButton drop={drop} variant="hero" />
               {!isCompleted && (
                 <button
                   type="button"

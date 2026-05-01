@@ -11,9 +11,10 @@ import { DropsCronService } from './drops-cron.service';
 import { SupabaseStorageService } from '../../common';
 
 import { DropPhoto } from './entities/drop-photo.entity';
+import { DropSpark } from './entities/drop-spark.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Drop, DropActivityLog, DropCrew, DropPhoto]), UsersModule],
+  imports: [TypeOrmModule.forFeature([Drop, DropActivityLog, DropCrew, DropPhoto, DropSpark]), UsersModule],
   providers: [DropsRepository, DropsService, DropsCronService, SupabaseStorageService],
   controllers: [DropsController],
   exports: [DropsService],

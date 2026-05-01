@@ -102,4 +102,12 @@ export const dropsService = {
   deletePhoto(dropId: string, photoId: string): Promise<void> {
     return api.delete(`/drops/${dropId}/photos/${photoId}`).then(() => undefined);
   },
+  
+  spark(id: string): Promise<void> {
+    return api.post(`/drops/${id}/spark`).then(() => undefined);
+  },
+
+  unspark(id: string): Promise<void> {
+    return api.delete(`/drops/${id}/spark`).then(() => undefined);
+  },
 };

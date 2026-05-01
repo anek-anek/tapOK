@@ -14,6 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { Drop } from '@/types/drop';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SparkButton } from './spark-button';
 
 export function formatDateTime(iso: string) {
   const date = new Date(iso);
@@ -110,6 +111,7 @@ export function HeroDropCard({
           </div>
 
           <div className="flex items-center gap-2.5">
+            <SparkButton drop={drop} variant="hero" />
             {onShare && (
               <button
                 onClick={() => onShare(drop)}
@@ -279,6 +281,7 @@ export function ListDropCard({
       </div>
 
       <div className="flex items-center justify-end gap-2 sm:shrink-0">
+        <SparkButton drop={drop} />
         <div className="flex items-center gap-2">
           {canEdit && (
             <button
