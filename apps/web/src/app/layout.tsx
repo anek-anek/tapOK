@@ -23,8 +23,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'TapOK — Find Events. Join People. Make Memories.',
-  description: 'Discover and book amazing events happening near you. Connect. Participate. Enjoy.',
+  title: {
+    default: 'TapOK — Orchestrate Your Mission',
+    template: '%s | TapOK',
+  },
+  description: 'TapOk is where a plan becomes real. Orchestrate drops, board your crew, and keep the log in one place.',
 };
 
 function readInitialDbUser() {
