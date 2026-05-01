@@ -8,13 +8,20 @@ import {
   Edit3,
   Lock,
   MapPin,
-  Ticket,
   Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Drop } from '@/types/drop';
+import type { CrewMember, Drop, DropCardModel } from '@/types/drop';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SparkButton } from './spark-button';
+
+export function crewFor(drop: DropCardModel): CrewMember[] | undefined {
+  return 'crew' in drop ? drop.crew : undefined;
+}
+
+function isShareableDrop(drop: DropCardModel): drop is Drop {
+  return typeof (drop as Drop).joinCode === 'string' && typeof (drop as Drop).shareUrl === 'string';
+}
 
 export function formatDateTime(iso: string) {
   const date = new Date(iso);
@@ -38,7 +45,7 @@ export function getInitials(name: string) {
   );
 }
 
-export function getRole(drop: Drop, userId?: string | null) {
+export function getRole(drop: DropCardModel, userId?: string | null) {
   return userId && drop.organiserId === userId ? 'Chief' : 'Crew';
 }
 
@@ -49,25 +56,26 @@ export function HeroDropCard({
   onShare,
   onEdit,
 }: {
-  drop: Drop;
+  drop: DropCardModel;
   viewerId?: string | null;
   onShare?: (drop: Drop) => void;
   onEdit?: (drop: Drop) => void;
 }) {
   const role = getRole(drop, viewerId);
+  const crew = crewFor(drop);
   const isOrganiser = !!viewerId && drop.organiserId === viewerId;
-  const canEdit = isOrganiser && drop.status !== 'completed' && onEdit;
+  const canEdit = isOrganiser && drop.status !== 'completed' && onEdit && isShareableDrop(drop);
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onShare?.(drop);
+    if (isShareableDrop(drop)) onShare?.(drop);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onEdit?.(drop);
+    if (isShareableDrop(drop)) onEdit?.(drop);
   };
 
   return (
@@ -106,7 +114,13 @@ export function HeroDropCard({
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-2">
               <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-amber-400/80">
-                {role} • <span className="text-tok-cream">{drop.joinCode}</span>
+                {role}
+                {'joinCode' in drop && drop.joinCode ? (
+                  <>
+                    {' • '}
+                    <span className="text-tok-cream">{drop.joinCode}</span>
+                  </>
+                ) : null}
               </span>
               {drop.category && (
                 <span className="rounded-sm bg-tok-black/20 px-1.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-amber-400 border border-amber-400/30">
@@ -127,10 +141,10 @@ export function HeroDropCard({
           )}
 
           {/* Crew Section */}
-          {drop.crew && drop.crew.length > 0 && (
+          {crew && crew.length > 0 && (
             <div className="mb-6 flex items-center gap-3">
               <div className="flex items-center">
-                {drop.crew.slice(0, 4).map((member, i) => (
+                {crew.slice(0, 4).map((member, i) => (
                   <div 
                     key={member.id} 
                     className={cn(
@@ -147,16 +161,16 @@ export function HeroDropCard({
                     )}
                   </div>
                 ))}
-                {drop.crew.length > 4 && (
+                {crew.length > 4 && (
                   <div className="relative -ml-4 flex h-8 w-8 items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion text-[10px] font-bold text-tok-black">
-                    +{drop.crew.length - 4}
+                    +{crew.length - 4}
                   </div>
                 )}
               </div>
 
 
               <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-cream/60">
-                {drop.crew.length} in the crew
+                {crew.length} in the crew
               </span>
             </div>
           )}
@@ -191,7 +205,7 @@ export function HeroDropCard({
       </div>
 
       <div className="absolute left-4 top-4 z-20 flex gap-2 transition-all duration-300 group-hover:-translate-x-1 group-hover:-translate-y-1">
-        {onShare && (
+        {onShare && isShareableDrop(drop) && (
           <button
             onClick={handleShare}
             className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream/90 active:translate-y-0 active:shadow-none"
@@ -222,26 +236,27 @@ export function ListDropCard({
   onShare,
   onEdit,
 }: {
-  drop: Drop;
+  drop: DropCardModel;
   viewerId?: string | null;
   onShare?: (drop: Drop) => void;
   onEdit?: (drop: Drop) => void;
 }) {
   const role = getRole(drop, viewerId);
+  const crew = crewFor(drop);
   const isOrganiser = !!viewerId && drop.organiserId === viewerId;
-  const canEdit = isOrganiser && drop.status !== 'completed' && onEdit;
+  const canEdit = isOrganiser && drop.status !== 'completed' && onEdit && isShareableDrop(drop);
   const isCompleted = drop.status === 'completed';
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onShare?.(drop);
+    if (isShareableDrop(drop)) onShare?.(drop);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onEdit?.(drop);
+    if (isShareableDrop(drop)) onEdit?.(drop);
   };
 
   return (
@@ -325,9 +340,9 @@ export function ListDropCard({
           {/* Crew Section */}
           <div className="mt-auto flex items-center gap-2">
             <div className="flex items-center">
-              {drop.crew && drop.crew.length > 0 ? (
+              {crew && crew.length > 0 ? (
                 <>
-                  {drop.crew.slice(0, 3).map((member, i) => (
+                  {crew.slice(0, 3).map((member, i) => (
                     <div 
                       key={member.id} 
                       className={cn(
@@ -345,9 +360,9 @@ export function ListDropCard({
                       )}
                     </div>
                   ))}
-                  {drop.crew.length > 3 && (
+                  {crew.length > 3 && (
                     <div className="relative -ml-3 flex h-6 w-6 items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion text-[8px] font-bold text-tok-black">
-                      +{drop.crew.length - 3}
+                      +{crew.length - 3}
                     </div>
                   )}
                 </>
@@ -360,7 +375,7 @@ export function ListDropCard({
               )}
             </div>
             <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/30">
-              {drop.crew && drop.crew.length > 0 ? 'In the crew' : 'Be the first'}
+              {crew && crew.length > 0 ? 'In the crew' : 'Be the first'}
             </span>
           </div>
         </div>
@@ -374,7 +389,7 @@ export function ListDropCard({
 
       <div className="absolute left-4 top-4 z-20 flex gap-2 transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5">
 
-        {onShare && !isCompleted && (
+        {onShare && !isCompleted && isShareableDrop(drop) && (
           <button
             onClick={handleShare}
             className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"

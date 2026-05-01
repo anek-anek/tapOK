@@ -16,6 +16,8 @@ import { DropCrew } from './entities/drop-crew.entity';
 import { DropPhoto } from './entities/drop-photo.entity';
 import { DropCategory, DropCrewStatus, DropStatus, SupabaseStorageService } from '../../common';
 import { CreateDropDto } from './dto/create-drop.dto';
+import { DiscoverDropsResponseDto } from './dto/discover-drops-response.dto';
+import { DropDiscoverSummaryDto } from './dto/drop-discover-summary.dto';
 import { DropPhotoPublicDto } from './dto/drop-photo-public.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
 
@@ -30,6 +32,41 @@ export class DropsService {
     private readonly dropsCronService: DropsCronService,
     private readonly storageService: SupabaseStorageService,
   ) {}
+
+  private mapRowToDiscoverSummary(
+    row: Drop & { sparkCount?: number },
+    viewerSparkedDropIds?: Set<string>,
+  ): DropDiscoverSummaryDto {
+    const organiser = row.organiser;
+    const summary: DropDiscoverSummaryDto = {
+      id: row.id,
+      name: row.name,
+      scheduledAt: row.scheduledAt,
+      location: row.location,
+      expectedHeadcount: row.expectedHeadcount ?? null,
+      overview: row.overview ?? null,
+      coverPhoto: row.coverPhoto ?? null,
+      status: row.status,
+      category: row.category ?? null,
+      isPublic: row.isPublic,
+      isLocked: row.isLocked,
+      organiserId: row.organiserId,
+      organiser: {
+        id: organiser.id,
+        firstName: organiser.firstName,
+        lastName: organiser.lastName,
+        avatar: organiser.avatar ?? null,
+        userHandle: organiser.userHandle ?? null,
+      },
+      sparkCount: row.sparkCount ?? 0,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
+    if (viewerSparkedDropIds !== undefined) {
+      summary.sparkedByViewer = viewerSparkedDropIds.has(row.id);
+    }
+    return summary;
+  }
 
   async create(dto: CreateDropDto, firebaseUid: string): Promise<Drop> {
     const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
@@ -420,31 +457,49 @@ export class DropsService {
     return this.dropsRepository.findActivityFeedForUser(user.id);
   }
 
-  async discover(firebaseUid?: string, page = 1, limit = 6, category?: DropCategory): Promise<{
-    featured: Drop | null;
-    recentChiefsDrops: Drop[];
-    allPublic: { data: Drop[]; total: number; page: number; totalPages: number };
-  }> {
+  async discover(firebaseUid?: string, page = 1, limit = 6, category?: DropCategory): Promise<DiscoverDropsResponseDto> {
     await this.dropsCronService.transitionDropStatuses();
 
     const featuredResult = await this.dropsRepository.findPublicDrops(1, 1);
-    const featured = featuredResult.data[0] ?? null;
-    const excludeIds = featured ? [featured.id] : [];
+    const featuredRow = featuredResult.data[0] ?? null;
+    const excludeIds = featuredRow ? [featuredRow.id] : [];
     const allPublicPaginated = await this.dropsRepository.findPublicDrops(page, limit, category, excludeIds);
 
-    let recentChiefsDrops: Drop[] = [];
+    let recentChiefsRows: Drop[] = [];
+    let dbUserId: string | undefined;
     if (firebaseUid) {
       const user = await this.usersService.findByFirebaseUid(firebaseUid);
       if (user) {
+        dbUserId = user.id;
         const chiefIds = await this.dropsRepository.findRecentJoinedChiefIds(user.id);
-        recentChiefsDrops = await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, category);
+        recentChiefsRows = await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, category);
       }
     }
 
+    const ids = new Set<string>();
+    if (featuredRow) ids.add(featuredRow.id);
+    for (const r of recentChiefsRows) ids.add(r.id);
+    for (const r of allPublicPaginated.data) ids.add(r.id);
+    const dropIdList = [...ids];
+
+    let viewerSparkedDropIds: Set<string> | undefined;
+    if (dbUserId !== undefined && dropIdList.length > 0) {
+      const sparked = await this.dropsRepository.findDropIdsSparkedByUser(dbUserId, dropIdList);
+      viewerSparkedDropIds = new Set(sparked);
+    }
+
+    const map = (row: Drop & { sparkCount?: number }) =>
+      this.mapRowToDiscoverSummary(row, viewerSparkedDropIds);
+
     return {
-      featured,
-      recentChiefsDrops,
-      allPublic: allPublicPaginated,
+      featured: featuredRow ? map(featuredRow as Drop & { sparkCount?: number }) : null,
+      recentChiefsDrops: recentChiefsRows.map((r) => map(r as Drop & { sparkCount?: number })),
+      allPublic: {
+        data: allPublicPaginated.data.map((r) => map(r as Drop & { sparkCount?: number })),
+        total: allPublicPaginated.total,
+        page: allPublicPaginated.page,
+        totalPages: allPublicPaginated.totalPages,
+      },
     };
   }
 

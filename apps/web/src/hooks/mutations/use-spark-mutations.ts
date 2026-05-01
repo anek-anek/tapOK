@@ -27,7 +27,17 @@ export function useSparkDrop(dropId: string, userId: string | undefined) {
         }
 
         if (old.featured !== undefined || old.allPublic !== undefined) {
-          const update = (d: any) => d?.id === dropId ? { ...d, sparks: updateSparks(d.sparks) } : d;
+          const update = (d: any) => {
+            if (!d || d.id !== dropId) return d;
+            if ('sparkCount' in d && typeof d.sparkCount === 'number') {
+              return {
+                ...d,
+                sparkCount: d.sparkCount + 1,
+                sparkedByViewer: true,
+              };
+            }
+            return { ...d, sparks: updateSparks(d.sparks) };
+          };
           return {
             ...old,
             featured: update(old.featured),
@@ -88,7 +98,17 @@ export function useUnsparkDrop(dropId: string, userId: string | undefined) {
 
         // 3. Discover Data Object
         if (old.featured !== undefined || old.allPublic !== undefined) {
-          const update = (d: any) => d?.id === dropId ? { ...d, sparks: filterSparks(d.sparks) } : d;
+          const update = (d: any) => {
+            if (!d || d.id !== dropId) return d;
+            if ('sparkCount' in d && typeof d.sparkCount === 'number') {
+              return {
+                ...d,
+                sparkCount: Math.max(0, d.sparkCount - 1),
+                sparkedByViewer: false,
+              };
+            }
+            return { ...d, sparks: filterSparks(d.sparks) };
+          };
           return {
             ...old,
             featured: update(old.featured),

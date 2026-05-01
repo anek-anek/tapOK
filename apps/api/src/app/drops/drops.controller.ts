@@ -37,6 +37,7 @@ import { UpdatePresenceDto } from './dto/update-presence.dto';
 import { JoinDropResponseDto } from './dto/join-drop-response.dto';
 import { CrewMemberDto } from './dto/crew-member.dto';
 import { DropPhotoPublicDto } from './dto/drop-photo-public.dto';
+import { DiscoverDropsResponseDto } from './dto/discover-drops-response.dto';
 import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
@@ -67,14 +68,14 @@ export class DropsController {
 
   @Get('discover')
   @Public()
-  @ApiOperation({ summary: 'Get drops for the discover page' })
-  @ApiResponse({ status: 200, description: 'Discovery data' })
+  @ApiOperation({ summary: 'Get drops for the discover page (public-safe fields only)' })
+  @ApiResponse({ status: 200, description: 'Discovery data', type: DiscoverDropsResponseDto })
   discover(
     @Req() request: RequestWithUser,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('category') category?: DropCategory,
-  ): Promise<any> {
+  ): Promise<DiscoverDropsResponseDto> {
     return this.dropsService.discover(
       request.user?.uid,
       page ? Number(page) : 1,

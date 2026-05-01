@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Drop, CreateDropDto, UpdateDropDto, DropActivityLog, DropCrew, CrewMember, ActivityLogsPage } from '@/types/drop';
+import type { Drop, CreateDropDto, UpdateDropDto, DropActivityLog, DropCrew, CrewMember, ActivityLogsPage, DiscoverDropsPayload } from '@/types/drop';
 
 
 export const dropsService = {
@@ -67,11 +67,7 @@ export const dropsService = {
     return api.get<ActivityLogsPage>(`/drops/${dropId}/activity`, { params: { page, limit } }).then((r) => r.data);
   },
   
-  getDiscoverData(page = 1, limit = 6, category?: string): Promise<{
-    featured: Drop | null;
-    recentChiefsDrops: Drop[];
-    allPublic: { data: Drop[]; total: number; page: number; totalPages: number }
-  }> {
+  getDiscoverData(page = 1, limit = 6, category?: string): Promise<DiscoverDropsPayload> {
     return api.get('/drops/discover', { params: { page, limit, category } }).then((r) => r.data);
   },
 

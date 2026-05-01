@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThanOrEqual, Not, Repository } from 'typeorm';
+import { In, LessThanOrEqual, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DropCategory, DropCrewStatus, DropStatus } from '../../common';
 import { Drop } from './entities/drop.entity';
@@ -9,6 +9,25 @@ import { DropCrew } from './entities/drop-crew.entity';
 
 import { DropPhoto } from './entities/drop-photo.entity';
 import { DropSpark } from './entities/drop-spark.entity';
+
+const PUBLIC_DISCOVER_DROP_SELECT: (keyof Drop)[] = [
+  'id',
+  'name',
+  'scheduledAt',
+  'location',
+  'expectedHeadcount',
+  'overview',
+  'coverPhoto',
+  'status',
+  'category',
+  'isPublic',
+  'isLocked',
+  'organiserId',
+  'createdAt',
+  'updatedAt',
+];
+
+const PUBLIC_DISCOVER_ORGANISER_PREFIX = 'organiser';
 
 @Injectable()
 export class DropsRepository {
@@ -194,21 +213,44 @@ export class DropsRepository {
     return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 
+  private buildPublicDiscoverQueryBuilder() {
+    const qb = this.dropRepo
+      .createQueryBuilder('drop')
+      .select(PUBLIC_DISCOVER_DROP_SELECT.map((col) => `drop.${String(col)}`))
+      .leftJoin('drop.organiser', PUBLIC_DISCOVER_ORGANISER_PREFIX)
+      .addSelect([
+        `${PUBLIC_DISCOVER_ORGANISER_PREFIX}.id`,
+        `${PUBLIC_DISCOVER_ORGANISER_PREFIX}.firstName`,
+        `${PUBLIC_DISCOVER_ORGANISER_PREFIX}.lastName`,
+        `${PUBLIC_DISCOVER_ORGANISER_PREFIX}.avatar`,
+        `${PUBLIC_DISCOVER_ORGANISER_PREFIX}.userHandle`,
+      ])
+      .loadRelationCountAndMap('drop.sparkCount', 'drop.sparks');
+    return qb;
+  }
+
+  async findDropIdsSparkedByUser(userId: string, dropIds: string[]): Promise<string[]> {
+    if (dropIds.length === 0) return [];
+    const rows = await this.sparkRepo.find({
+      where: { userId, dropId: In(dropIds) },
+      select: { dropId: true },
+    });
+    return [...new Set(rows.map((r) => r.dropId))];
+  }
+
   async findUpcomingDropsByChiefs(chiefIds: string[], category?: DropCategory): Promise<Drop[]> {
     if (chiefIds.length === 0) return [];
-    const where: any = {
-      organiserId: In(chiefIds),
-      status: In([DropStatus.ACTIVE, DropStatus.ONGOING]),
-      isPublic: true,
-    };
+    const qb = this.buildPublicDiscoverQueryBuilder()
+      .where('drop.organiserId IN (:...chiefIds)', { chiefIds })
+      .andWhere('drop.isPublic = :isPublic', { isPublic: true })
+      .andWhere('drop.status IN (:...statuses)', {
+        statuses: [DropStatus.ACTIVE, DropStatus.ONGOING],
+      });
     if (category) {
-      where.category = category;
+      qb.andWhere('drop.category = :category', { category });
     }
-    return this.dropRepo.find({
-      where,
-      relations: { organiser: true, sparks: true },
-      order: { scheduledAt: 'ASC' },
-    });
+    qb.orderBy('drop.scheduledAt', 'ASC');
+    return qb.getMany();
   }
 
   async findRecentJoinedChiefIds(userId: string, limit: number = 3): Promise<string[]> {
@@ -230,28 +272,36 @@ export class DropsRepository {
     category?: DropCategory,
     excludeIds: string[] = []
   ): Promise<{ data: Drop[]; total: number; page: number; totalPages: number }> {
-    const where: any = {
-      isPublic: true,
-      status: In([DropStatus.ACTIVE, DropStatus.ONGOING]),
-    };
-
+    const countQb = this.dropRepo
+      .createQueryBuilder('drop')
+      .where('drop.isPublic = :isPublic', { isPublic: true })
+      .andWhere('drop.status IN (:...statuses)', {
+        statuses: [DropStatus.ACTIVE, DropStatus.ONGOING],
+      });
     if (category) {
-      where.category = category;
+      countQb.andWhere('drop.category = :category', { category });
     }
-
     if (excludeIds.length > 0) {
-      where.id = Not(In(excludeIds));
+      countQb.andWhere('drop.id NOT IN (:...excludeIds)', { excludeIds });
     }
+    const total = await countQb.getCount();
 
-    const [data, total] = await this.dropRepo.findAndCount({
-      where,
-      relations: { organiser: true, sparks: true },
-      order: { scheduledAt: 'ASC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const qb = this.buildPublicDiscoverQueryBuilder()
+      .where('drop.isPublic = :isPublic', { isPublic: true })
+      .andWhere('drop.status IN (:...statuses)', {
+        statuses: [DropStatus.ACTIVE, DropStatus.ONGOING],
+      });
+    if (category) {
+      qb.andWhere('drop.category = :category', { category });
+    }
+    if (excludeIds.length > 0) {
+      qb.andWhere('drop.id NOT IN (:...excludeIds)', { excludeIds });
+    }
+    qb.orderBy('drop.scheduledAt', 'ASC').skip((page - 1) * limit).take(limit);
 
-    return { data, total, page, totalPages: Math.ceil(total / limit) };
+    const data = await qb.getMany();
+
+    return { data, total, page, totalPages: Math.ceil(total / limit) || 0 };
   }
 
   findPhotos(dropId: string): Promise<DropPhoto[]> {
