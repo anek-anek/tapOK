@@ -2,11 +2,11 @@ import { Metadata } from 'next';
 import { getApiUrl } from '@/lib/config';
 
 type Props = {
-  params: { joinCode: string };
+  params: Promise<{ joinCode: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { joinCode } = params;
+  const { joinCode } = await params;
 
   try {
     const apiUrl = getApiUrl();
