@@ -2,7 +2,7 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import axios from 'axios';
 import { dropsService } from '@/services/drops.service';
 import { useAuth } from '@/components/providers/auth-provider';
-import type { CrewMember } from '@/types/drop';
+import type { CrewMember, DiscoverDropsPayload } from '@/types/drop';
 
 export const dropKeys = {
   mine: (uid: string) => ['drops', 'mine', uid] as const,
@@ -17,7 +17,7 @@ export const dropKeys = {
   discover: (page: number, category?: string) => ['drops', 'discover', page, category] as const,
 };
 
-export function useDiscoverData(page = 1, category?: string) {
+export function useDiscoverData(page = 1, category?: string): UseQueryResult<DiscoverDropsPayload> {
   return useQuery({
     queryKey: dropKeys.discover(page, category),
     queryFn: () => dropsService.getDiscoverData(page, 6, category === 'all' ? undefined : category),

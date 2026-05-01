@@ -22,9 +22,6 @@ import {
   useUploadCoverPhoto,
   useDeleteCoverPhoto,
 } from '@/hooks/mutations/use-drop-mutations';
-import { useAuth } from '@/components/providers/auth-provider';
-import { useMyCrewStatus } from '@/hooks/queries/use-drops';
-import { PhotoRoll } from '@/components/drops/PhotoRoll';
 import { ALLOWED_COVER_PHOTO_TYPES, MAX_COVER_PHOTO_SIZE } from '@/lib/supabase-storage';
 import { dropsService } from '@/services/drops.service';
 import { toast } from 'react-hot-toast';
@@ -233,7 +230,7 @@ function DateTimePicker({
   };
 
   return (
-    <FieldGroup className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-2.5">
+    <FieldGroup className="grid min-w-0 gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,186px)] sm:items-end sm:gap-2.5">
       <Field className="w-full sm:min-w-0 sm:flex-1">
         <FieldLabel
           htmlFor={`${id}-date`}
@@ -261,9 +258,9 @@ function DateTimePicker({
         </Popover>
       </Field>
 
-      <div className="flex items-end gap-2.5">
+      <div className="flex min-w-0 items-end gap-2">
         {/* 12-hour time input */}
-        <Field className="flex-1 sm:w-24 sm:flex-none">
+        <Field className="min-w-0 flex-1 sm:w-[94px] sm:flex-none">
           <FieldLabel
             htmlFor={`${id}-time`}
             className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
@@ -283,14 +280,14 @@ function DateTimePicker({
 
         {/* AM/PM toggle */}
         <Field className="w-20 shrink-0">
-          <div className="flex h-12 items-stretch overflow-hidden rounded-sm border-[3px] border-tok-black bg-white">
+          <div className="flex h-12 min-w-0 items-stretch overflow-hidden rounded-sm border-[3px] border-tok-black bg-white">
             {(['AM', 'PM'] as const).map((p) => (
               <button
                 key={p}
                 type="button"
                 onClick={() => togglePeriod(p)}
                 className={`flex-1 font-passion text-xs font-bold tracking-[1px] transition-all ${period === p
-                  ? 'bg-tok-teal text-[#F7E9B2]'
+                  ? 'bg-tok-teal text-tok-cream'
                   : 'text-tok-black/40 hover:bg-tok-black/5'
                   }`}
               >
@@ -311,8 +308,6 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
   const updateDrop = useUpdateDrop(drop?.id ?? '');
   const uploadCoverPhoto = useUploadCoverPhoto(drop?.id ?? '');
   const deleteCoverPhoto = useDeleteCoverPhoto(drop?.id ?? '');
-  const { dbUser } = useAuth();
-  const { data: myCrew } = useMyCrewStatus(drop?.id ?? '', { enabled: isEdit });
   const pendingIdRef = useRef<string | null>(null);
 
   const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
@@ -477,10 +472,10 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
     <ModalShell onClose={wrappedClose}>
       {(close) => {
         return (
-          <div className="flex max-h-[inherit] flex-col overflow-hidden rounded-2xl border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
-            <div className="grid grid-cols-1 overflow-y-auto sm:grid-cols-[220px_1fr]">
+          <div className="flex max-h-[inherit] min-w-0 flex-col overflow-hidden rounded-2xl border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
+            <div className="grid min-w-0 grid-cols-1 overflow-y-auto overflow-x-hidden sm:grid-cols-[minmax(160px,220px)_minmax(0,1fr)]">
               {/* Left panel — Header on mobile, sidebar on desktop */}
-              <aside className="group relative flex flex-col justify-between overflow-hidden bg-tok-teal px-6 py-6 min-h-[140px] sm:min-h-0 sm:py-8 sm:flex">
+              <aside className="group relative flex min-w-0 flex-col justify-between overflow-hidden bg-tok-teal px-6 py-6 min-h-[140px] sm:min-h-0 sm:py-8 sm:flex">
                 {/* Cover photo background */}
                 {coverPreview && (
                   <div className="pointer-events-none absolute inset-0">
@@ -558,7 +553,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                       <span className="font-passion truncate uppercase tracking-wider">{location}</span>
                     </div>
                   )}
-                  <div className="mt-6 border-t-2 border-dashed border-[#F7E9B2]/10 pt-6">
+                  <div className="mt-6 border-t-2 border-dashed border-tok-cream/10 pt-6">
                     <p className="mb-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-cream/40">
                       JOIN TOKEN
                     </p>
@@ -567,7 +562,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                     </p>
                   </div>
                   {overview && (
-                    <div className="mt-6 border-t-2 border-dashed border-[#F7E9B2]/10 pt-4">
+                    <div className="mt-6 border-t-2 border-dashed border-tok-cream/10 pt-4">
                       <p className="mb-1.5 font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-cream/40">
                         OVERVIEW
                       </p>
@@ -580,7 +575,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
               </aside>
 
               {/* Form panel */}
-              <div className="flex flex-col bg-tok-cream px-6 py-7 sm:px-8 sm:py-8">
+              <div className="flex min-w-0 flex-col overflow-x-hidden bg-tok-cream px-6 py-7 sm:px-8 sm:py-8">
                 <div className="mb-6 flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <h2 className="font-passion text-2xl font-bold leading-none tracking-tight text-tok-black sm:text-3xl">
@@ -597,7 +592,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   </button>
                 </div>
 
-                <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-4">
+                <form onSubmit={onSubmit} className="flex min-w-0 flex-1 flex-col gap-4">
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="drop-modal-name"
@@ -807,19 +802,19 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                     </div>
                   </div>
 
-                  <div className="mt-2 flex items-center gap-3">
+                  <div className="mt-2 flex min-w-0 items-center gap-3">
                     <button
                       type="button"
                       onClick={close}
                       disabled={isBusy}
-                      className="h-11 flex-1 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40 sm:flex-none sm:px-8"
+                      className="h-14 min-h-14 flex-1 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-sm font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40 sm:h-11 sm:min-h-11 sm:flex-none sm:px-8 sm:text-xs"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isBusy}
-                      className="flex h-11 flex-1 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal px-4 font-passion text-sm font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50 sm:flex-none sm:px-10"
+                      className="flex h-14 min-h-14 flex-1 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal px-4 font-passion text-base font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50 sm:h-11 sm:min-h-11 sm:flex-none sm:px-10 sm:text-sm"
                     >
                       {isBusy ? (
                         <>
@@ -833,16 +828,6 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   </div>
                 </form>
 
-                {isEdit && drop && (
-                  <div className="mt-10 border-t-2 border-dashed border-tok-black/10 pt-8">
-                    <PhotoRoll 
-                      drop={drop} 
-                      userId={dbUser?.id}
-                      isOrganiser={drop.organiserId === dbUser?.id}
-                      isCrewMember={myCrew?.status === 'in'}
-                    />
-                  </div>
-                )}
               </div>
             </div>
           </div>

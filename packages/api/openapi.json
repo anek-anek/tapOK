@@ -714,7 +714,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Discovery data"
+            "description": "Discovery data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoverDropsResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -722,7 +729,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get drops for the discover page",
+        "summary": "Get drops for the discover page (public-safe fields only)",
         "tags": [
           "drops"
         ]
@@ -2175,6 +2182,175 @@
         },
         "required": [
           "userId"
+        ]
+      },
+      "DropOrganiserPublicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "object",
+            "nullable": true
+          },
+          "userHandle": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "DropDiscoverSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scheduledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "expectedHeadcount": {
+            "type": "number",
+            "nullable": true
+          },
+          "overview": {
+            "type": "object",
+            "nullable": true
+          },
+          "coverPhoto": {
+            "type": "object",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ongoing",
+              "completed"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "hangout",
+              "party"
+            ],
+            "nullable": true
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "isLocked": {
+            "type": "boolean"
+          },
+          "organiserId": {
+            "type": "string"
+          },
+          "organiser": {
+            "$ref": "#/components/schemas/DropOrganiserPublicDto"
+          },
+          "sparkCount": {
+            "type": "number",
+            "description": "Total spark count (no user identifiers)."
+          },
+          "sparkedByViewer": {
+            "type": "boolean",
+            "description": "Included when the request is authenticated: whether this user has sparked the drop."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "scheduledAt",
+          "location",
+          "status",
+          "isPublic",
+          "isLocked",
+          "organiserId",
+          "organiser",
+          "sparkCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "DiscoverDropsPaginatedDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DropDiscoverSummaryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "totalPages"
+        ]
+      },
+      "DiscoverDropsResponseDto": {
+        "type": "object",
+        "properties": {
+          "featured": {
+            "nullable": true,
+            "description": "Featured drop when available.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DropDiscoverSummaryDto"
+              }
+            ]
+          },
+          "recentChiefsDrops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DropDiscoverSummaryDto"
+            }
+          },
+          "allPublic": {
+            "$ref": "#/components/schemas/DiscoverDropsPaginatedDto"
+          }
+        },
+        "required": [
+          "recentChiefsDrops",
+          "allPublic"
         ]
       },
       "CreateDropDto": {

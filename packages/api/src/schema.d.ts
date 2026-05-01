@@ -206,7 +206,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get drops for the discover page */
+        /** Get drops for the discover page (public-safe fields only) */
         get: operations["DropsController_discover"];
         put?: never;
         post?: never;
@@ -729,6 +729,51 @@ export interface components {
              * @enum {string}
              */
             role: "owner" | "admin" | "member";
+        };
+        DropOrganiserPublicDto: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            avatar?: Record<string, never> | null;
+            userHandle?: Record<string, never> | null;
+        };
+        DropDiscoverSummaryDto: {
+            id: string;
+            name: string;
+            /** Format: date-time */
+            scheduledAt: string;
+            location: string;
+            expectedHeadcount?: number | null;
+            overview?: Record<string, never> | null;
+            coverPhoto?: Record<string, never> | null;
+            /** @enum {string} */
+            status: "active" | "ongoing" | "completed";
+            /** @enum {string|null} */
+            category?: "hangout" | "party" | null;
+            isPublic: boolean;
+            isLocked: boolean;
+            organiserId: string;
+            organiser: components["schemas"]["DropOrganiserPublicDto"];
+            /** @description Total spark count (no user identifiers). */
+            sparkCount: number;
+            /** @description Included when the request is authenticated: whether this user has sparked the drop. */
+            sparkedByViewer?: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        DiscoverDropsPaginatedDto: {
+            data: components["schemas"]["DropDiscoverSummaryDto"][];
+            total: number;
+            page: number;
+            totalPages: number;
+        };
+        DiscoverDropsResponseDto: {
+            /** @description Featured drop when available. */
+            featured?: components["schemas"]["DropDiscoverSummaryDto"] | null;
+            recentChiefsDrops: components["schemas"]["DropDiscoverSummaryDto"][];
+            allPublic: components["schemas"]["DiscoverDropsPaginatedDto"];
         };
         CreateDropDto: {
             /** @example Beach Sunset Shoot */
@@ -1404,7 +1449,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["DiscoverDropsResponseDto"];
+                };
             };
         };
     };

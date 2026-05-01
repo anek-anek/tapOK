@@ -10,6 +10,45 @@ export interface DropOrganiser {
   firebaseUid?: string;
 }
 
+export interface DropDiscoverOrganiser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatar?: string | null;
+  userHandle?: string | null;
+}
+
+export interface DropDiscoverSummary {
+  id: string;
+  name: string;
+  scheduledAt: string;
+  location: string;
+  expectedHeadcount?: number | null;
+  overview?: string | null;
+  coverPhoto?: string | null;
+  status: DropStatus;
+  category?: DropCategory | null;
+  isLocked: boolean;
+  isPublic: boolean;
+  organiserId: string;
+  organiser: DropDiscoverOrganiser;
+  sparkCount: number;
+  sparkedByViewer?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DiscoverDropsPayload {
+  featured: DropDiscoverSummary | null;
+  recentChiefsDrops: DropDiscoverSummary[];
+  allPublic: {
+    data: DropDiscoverSummary[];
+    total: number;
+    page: number;
+    totalPages: number;
+  };
+}
+
 export interface DropActivityLog {
   id: string;
   dropId: string;
@@ -51,6 +90,8 @@ export interface Drop {
   createdAt: string;
   updatedAt: string;
 }
+
+export type DropCardModel = Drop | DropDiscoverSummary;
 
 export interface DropSpark {
   id: string;

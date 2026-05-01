@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useSparkDrop, useUnsparkDrop } from '@/hooks/mutations/use-spark-mutations';
 import { cn } from '@/lib/utils';
-import type { Drop } from '@/types/drop';
+import type { Drop, DropCardModel } from '@/types/drop';
 
 /** Component for the flying spark particles */
 function SparkParticles({ count = 8 }: { count?: number }) {
@@ -48,15 +48,18 @@ export function SparkButton({
   className,
   variant = 'default',
 }: {
-  drop: Drop;
+  drop: DropCardModel;
   className?: string;
   variant?: 'default' | 'hero' | 'compact';
 }) {
   const { dbUser } = useAuth();
   
-  // Real-time spark tracking
-  const isSparked = drop.sparks?.some((s) => s.userId === dbUser?.id) ?? false;
-  const sparkCount = drop.sparks?.length ?? 0;
+  const isSparked =
+    'sparkedByViewer' in drop && drop.sparkedByViewer !== undefined
+      ? drop.sparkedByViewer
+      : (drop as Drop).sparks?.some((s) => s.userId === dbUser?.id) ?? false;
+  const sparkCount =
+    'sparkCount' in drop ? drop.sparkCount : ((drop as Drop).sparks?.length ?? 0);
 
   // Local optimistic state for zero-latency feedback
   const [localSparked, setLocalSparked] = useState(isSparked);
