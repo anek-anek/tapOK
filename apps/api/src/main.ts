@@ -53,6 +53,9 @@ async function bootstrap() {
     if (!origins.includes('https://tapok.app')) {
       origins.push('https://tapok.app');
     }
+    if (!origins.includes('https://www.tapok.app')) {
+      origins.push('https://www.tapok.app');
+    }
   }
 
   app.enableCors({ origin: origins, credentials: true });
