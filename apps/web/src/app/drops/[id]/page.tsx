@@ -48,16 +48,16 @@ import { cn } from '@/lib/utils';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
   active: {
-    label: 'Live Now',
-    tone: 'bg-emerald-500 text-white border-black',
-    dot: 'bg-white',
-    pulse: true,
-  },
-  ongoing: {
-    label: 'Ongoing',
+    label: 'Upcoming',
     tone: 'bg-amber-400 text-black border-black',
     dot: 'bg-black',
     pulse: false,
+  },
+  ongoing: {
+    label: 'Ongoing',
+    tone: 'bg-emerald-500 text-white border-black',
+    dot: 'bg-white',
+    pulse: true,
   },
   completed: {
     label: 'Finished',
@@ -67,8 +67,11 @@ const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string
   },
 };
 
-function StatusPill({ status }: { status: DropStatus }) {
-  const meta = STATUS_META[status];
+function StatusPill({ status, scheduledAt }: { status: DropStatus; scheduledAt: string }) {
+  const isActuallyLive = status === 'ongoing' || (status === 'active' && new Date() >= new Date(scheduledAt));
+  const effectiveStatus = isActuallyLive ? 'ongoing' : status;
+  const meta = STATUS_META[effectiveStatus];
+
   return (
     <span className={`inline-flex items-center gap-2 rounded-sm border-2 px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-[1.5px] shadow-[2px_2px_0px_#1C1C1A] ${meta.tone}`}>
       {meta.pulse ? (
@@ -573,7 +576,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
           <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
             <div className="flex-1">
               <div className="mb-4 flex items-center gap-3">
-                <StatusPill status={drop.status} />
+                <StatusPill status={drop.status} scheduledAt={drop.scheduledAt} />
                 <span className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-cream/40">
                   CODE: {drop.joinCode}
                 </span>
