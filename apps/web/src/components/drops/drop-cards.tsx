@@ -4,11 +4,11 @@ import Link from 'next/link';
 import {
   ArrowRight,
   CalendarDays,
-  ClipboardCopy,
   Edit3,
   Lock,
   MapPin,
   Users,
+  Share,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CrewMember, Drop, DropCardModel } from '@/types/drop';
@@ -212,7 +212,7 @@ export function HeroDropCard({
             className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream/90 active:translate-y-0 active:shadow-none"
             title="Share Drop"
           >
-            <ClipboardCopy size={18} strokeWidth={3} />
+            <Share size={18} strokeWidth={3} />
           </button>
         )}
         {canEdit && (
@@ -396,7 +396,7 @@ export function ListDropCard({
             className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
             title="Share Drop"
           >
-            <ClipboardCopy size={16} strokeWidth={2.5} />
+            <Share size={16} strokeWidth={2.5} />
           </button>
         )}
         {canEdit && (
