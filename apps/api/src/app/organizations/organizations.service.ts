@@ -11,6 +11,7 @@ import { OrganizationsRepository } from './organizations.repository';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { AddMemberDto } from './dto/add-member.dto';
+import { OrganizationMemberPublicDto } from './dto/organization-member-public.dto';
 
 @Injectable()
 export class OrganizationsService {
@@ -53,14 +54,32 @@ export class OrganizationsService {
     orgId: string,
     requesterDbUserId: string,
     isPlatformAdmin: boolean,
-  ): Promise<OrganizationMember[]> {
+  ): Promise<OrganizationMemberPublicDto[]> {
     const org = await this.repo.findById(orgId);
     if (!org) throw new NotFoundException(`Organization ${orgId} not found`);
     if (!isPlatformAdmin) {
       const member = await this.repo.findMember(orgId, requesterDbUserId);
       if (!member) throw new NotFoundException(`Organization ${orgId} not found`);
     }
-    return this.repo.findMembersByOrg(orgId);
+    const members = await this.repo.findMembersByOrg(orgId);
+    return members.map((m) => this.toPublicMemberDto(m));
+  }
+
+  private toPublicMemberDto(member: OrganizationMember): OrganizationMemberPublicDto {
+    return {
+      id: member.id,
+      organizationId: member.organizationId,
+      userId: member.userId,
+      role: member.role,
+      joinedAt: member.joinedAt,
+      user: {
+        id: member.user.id,
+        firstName: member.user.firstName,
+        lastName: member.user.lastName,
+        avatar: member.user.avatar,
+        userHandle: member.user.userHandle,
+      },
+    };
   }
 
   findOrgsForUser(userId: string): Promise<OrganizationMember[]> {
@@ -68,7 +87,11 @@ export class OrganizationsService {
   }
 
   async addMember(orgId: string, dto: AddMemberDto, requesterId: string): Promise<OrganizationMember> {
-    await this.assertRole(orgId, requesterId, [OrgRole.OWNER, OrgRole.ADMIN]);
+    const requester = await this.assertRole(orgId, requesterId, [OrgRole.OWNER, OrgRole.ADMIN]);
+
+    if (dto.role === OrgRole.OWNER && requester.role !== OrgRole.OWNER) {
+      throw new ForbiddenException('Only owners can assign the owner role');
+    }
 
     const existing = await this.repo.findMember(orgId, dto.userId);
     if (existing) throw new ConflictException('User is already a member of this organization');
@@ -77,9 +100,15 @@ export class OrganizationsService {
   }
 
   async updateMemberRole(orgId: string, userId: string, role: OrgRole, requesterId: string): Promise<void> {
-    await this.assertRole(orgId, requesterId, [OrgRole.OWNER, OrgRole.ADMIN]);
-    const member = await this.repo.findMember(orgId, userId);
-    if (!member) throw new NotFoundException('Member not found');
+    const requester = await this.assertRole(orgId, requesterId, [OrgRole.OWNER, OrgRole.ADMIN]);
+    
+    const targetMember = await this.repo.findMember(orgId, userId);
+    if (!targetMember) throw new NotFoundException('Member not found');
+
+    if ((role === OrgRole.OWNER || targetMember.role === OrgRole.OWNER) && requester.role !== OrgRole.OWNER) {
+      throw new ForbiddenException('Only owners can promote to owner or demote an owner');
+    }
+
     await this.repo.updateMemberRole(orgId, userId, role);
   }
 
@@ -96,11 +125,12 @@ export class OrganizationsService {
     await this.repo.removeMember(orgId, userId);
   }
 
-  async assertRole(orgId: string, userId: string, roles: OrgRole[]): Promise<void> {
+  async assertRole(orgId: string, userId: string, roles: OrgRole[]): Promise<OrganizationMember> {
     const member = await this.repo.findMember(orgId, userId);
     if (!member || !roles.includes(member.role)) {
       throw new ForbiddenException('Insufficient organization permissions');
     }
+    return member;
   }
 
   async isMember(orgId: string, userId: string): Promise<boolean> {

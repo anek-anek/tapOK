@@ -9,6 +9,7 @@ import { SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { FrequentCrewDto } from './dto/frequent-crew.dto';
+import { UserRole } from '../../common';
 
 @Injectable()
 export class UsersService {
@@ -68,16 +69,40 @@ export class UsersService {
   }
 
   async syncFromFirebase(token: DecodedIdToken, dto: SyncUserDto = {}): Promise<User> {
+    const firebaseUid = token.uid;
+    const email = token.email ?? '';
+    const isEmailVerified = token.email_verified ?? false;
+
+    // Security check: prevent claiming existing accounts with unverified emails
+    const existingByUid = await this.usersRepository.findByFirebaseUid(firebaseUid);
+    if (!existingByUid && email) {
+      const existingByEmail = await this.usersRepository.findByEmail(email);
+      if (existingByEmail) {
+        if (!isEmailVerified) {
+          throw new ForbiddenException(
+            'An account with this email already exists. Please verify your email in Firebase to link your account.',
+          );
+        }
+
+        // For privileged accounts, prevent auto-linking if not already linked
+        if (existingByEmail.role === UserRole.ADMIN && !existingByEmail.firebaseUid) {
+          throw new ForbiddenException(
+            'This is a privileged account. Please contact a platform administrator to link your Firebase account.',
+          );
+        }
+      }
+    }
+
     const [tokenFirst = '', ...rest] = (token.name ?? '').split(' ');
     const tokenLast = rest.join(' ');
 
-    const user = await this.usersRepository.upsertByFirebaseUid(token.uid, {
-      email: token.email ?? '',
+    const user = await this.usersRepository.upsertByFirebaseUid(firebaseUid, {
+      email,
       firstName: dto.firstName ?? tokenFirst,
       lastName: dto.lastName ?? tokenLast,
       avatar: token.picture,
-      googleId: token.firebase.sign_in_provider === 'google.com' ? token.uid : undefined,
-      isEmailVerified: token.email_verified ?? false,
+      googleId: token.firebase.sign_in_provider === 'google.com' ? firebaseUid : undefined,
+      isEmailVerified,
       gender: dto.gender,
       birthday: dto.birthday ? new Date(dto.birthday) : undefined,
       userHandle: dto.userHandle,

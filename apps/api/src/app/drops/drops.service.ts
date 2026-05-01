@@ -625,6 +625,9 @@ export class DropsService {
       throw new BadRequestException('This drop has reached its photo limit');
     }
 
+    // Validate image format and size
+    this.validateImageBase64(base64);
+
     const photo = await this.dropsRepository.addPhoto({
       dropId,
       userId: user.id,
@@ -773,6 +776,28 @@ export class DropsService {
 
     await this.findOne(dropId, firebaseUid);
     await this.dropsRepository.removeSpark(dropId, user.id);
+  }
+
+  private validateImageBase64(base64: string): void {
+    const mimeMatch = base64.match(/^data:([^;]+);base64,/);
+    if (!mimeMatch) {
+      throw new BadRequestException('Invalid image format: Missing data URI prefix');
+    }
+
+    const mimeType = mimeMatch[1];
+    if (!['image/jpeg', 'image/jpg', 'image/png'].includes(mimeType)) {
+      throw new BadRequestException('Invalid image format: Only JPG and PNG are allowed');
+    }
+
+    const base64Data = base64.split(',')[1];
+    if (!base64Data) {
+      throw new BadRequestException('Invalid image data');
+    }
+
+    const sizeBytes = Buffer.from(base64Data, 'base64').length;
+    if (sizeBytes > 5 * 1024 * 1024) {
+      throw new BadRequestException('Image size exceeds 5MB limit');
+    }
   }
 
   private async generateUniqueJoinCode(): Promise<string> {
