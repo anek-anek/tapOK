@@ -118,3 +118,37 @@ export function useDeleteCoverPhoto(dropId: string): UseMutationResult<void, Err
     },
   });
 }
+
+export function useUploadPhoto(dropId: string): UseMutationResult<any, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (base64: string) => dropsService.uploadPhoto(dropId, base64),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['drops', dropId, 'photos'] });
+    },
+  });
+}
+
+export function useFeaturePhoto(dropId: string): UseMutationResult<any, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (photoId: string) => dropsService.featurePhoto(dropId, photoId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['drops', dropId, 'photos'] });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+export function useDeletePhoto(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (photoId: string) => dropsService.deletePhoto(dropId, photoId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['drops', dropId, 'photos'] });
+    },
+  });
+}

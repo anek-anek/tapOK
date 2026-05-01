@@ -106,3 +106,20 @@ export interface UpdateDropDto {
   category?: DropCategory;
   overview?: string;
 }
+
+export interface DropPhoto {
+  id: string;
+  dropId: string;
+  userId: string;
+  url?: string | null;
+  base64?: string | null;
+  isFeatured: boolean;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
