@@ -2,11 +2,11 @@ import { Metadata } from 'next';
 import { getApiUrl } from '@/lib/config';
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = params;
+  const { id } = await params;
 
   try {
     // We use a direct fetch here to avoid axios issues in server components if any,
