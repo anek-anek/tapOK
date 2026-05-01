@@ -154,7 +154,8 @@ export class DropsService {
 
     try {
       const joinCode = await this.generateUniqueJoinCode();
-      const baseUrl = this.configService.get<string>('WEB_URL', 'http://localhost:4200');
+      const webUrlEnv = this.configService.get<string>('WEB_URL', 'http://localhost:4200');
+      const baseUrl = webUrlEnv.split(',')[0]?.trim() || 'http://localhost:4200';
       const shareUrl = `${baseUrl}/drops/join/${joinCode}`;
 
       const drop = await this.dropsRepository.create({

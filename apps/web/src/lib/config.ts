@@ -1,0 +1,29 @@
+/**
+ * Utility to handle base URLs from environment variables.
+ * Supports comma-separated lists, returning the first one as the primary.
+ */
+export function getBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  
+  if (!envUrl) {
+    // Fallback for Vercel preview environments
+    if (process.env.VERCEL_URL) {
+      return `https://${process.env.VERCEL_URL}`;
+    }
+    return 'https://tapok.app';
+  }
+
+  // Handle multiple URLs (comma separated)
+  const urls = envUrl.split(',').map(u => u.trim()).filter(Boolean);
+  return urls[0] || 'https://tapok.app';
+}
+
+export function getApiUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!envUrl) return 'http://localhost:3000';
+  const urls = envUrl.split(',').map(u => u.trim()).filter(Boolean);
+  return urls[0] || 'http://localhost:3000';
+}
+
+export const PRIMARY_DOMAIN = getBaseUrl();
+export const API_URL = getApiUrl();

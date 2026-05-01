@@ -47,7 +47,15 @@ async function bootstrap() {
   );
 
   const webOrigin = process.env.WEB_ORIGIN ?? 'http://localhost:4200';
-  app.enableCors({ origin: webOrigin, credentials: true });
+  const origins = webOrigin.split(',').map((o) => o.trim());
+  
+  if (process.env.NODE_ENV === 'production') {
+    if (!origins.includes('https://tapok.app')) {
+      origins.push('https://tapok.app');
+    }
+  }
+
+  app.enableCors({ origin: origins, credentials: true });
 
   if (process.env.NODE_ENV !== 'production') {
     const document = buildOpenApiDocument(app);

@@ -22,7 +22,10 @@ const inter = Inter({
   weight: ['400', '500', '600'],
 });
 
+import { getBaseUrl } from '@/lib/config';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(getBaseUrl()),
   title: {
     default: 'TapOK — Orchestrate Your Mission',
     template: '%s | TapOK',
@@ -32,6 +35,29 @@ export const metadata: Metadata = {
     icon: '/tapok.png',
     shortcut: '/tapok.png',
     apple: '/tapok.png',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://tapok.app',
+    siteName: 'TapOK',
+    title: 'TapOK — Orchestrate Your Mission',
+    description: 'TapOk is where a plan becomes real. Orchestrate drops, board your crew, and keep the log in one place.',
+    images: [
+      {
+        url: '/tapok.png',
+        width: 1200,
+        height: 630,
+        alt: 'TapOK Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TapOK — Orchestrate Your Mission',
+    description: 'TapOk is where a plan becomes real. Orchestrate drops, board your crew, and keep the log in one place.',
+    images: ['/tapok.png'],
+    creator: '@tapok_app',
   },
 };
 
