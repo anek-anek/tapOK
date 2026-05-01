@@ -270,7 +270,7 @@ export default function DropsPage() {
 
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-teal px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto"
+              className="flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-sm border-[3px] border-tok-black bg-tok-teal px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto"
             >
               <Plus size={16} strokeWidth={2.5} />
               New Drop

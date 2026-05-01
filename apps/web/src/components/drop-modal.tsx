@@ -253,6 +253,8 @@ function DateTimePicker({
               captionLayout="dropdown"
               defaultMonth={selectedDate}
               onSelect={handleDateSelect}
+              startMonth={new Date()}
+              endMonth={new Date(new Date().getFullYear() + 10, 11)}
             />
           </PopoverContent>
         </Popover>
