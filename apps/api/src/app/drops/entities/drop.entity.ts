@@ -68,7 +68,11 @@ export class Drop {
   @ApiProperty({ default: false })
   @Column({ default: false })
   isLocked: boolean;
-
+  
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'text', nullable: true, unique: true })
+  idempotencyKey?: string | null;
+  
   @ApiProperty()
   @Column()
   organiserId: string;

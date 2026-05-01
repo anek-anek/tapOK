@@ -135,12 +135,21 @@ export class DropsService {
     const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!organiser) throw new NotFoundException('Authenticated user not found in database');
 
-    // Prevent duplicate submissions racing in the same process window
-    const idempotencyKey = `${organiser.id}:${dto.name}:${dto.scheduledAt}`;
-    if (this._createInFlight.has(idempotencyKey)) {
-      throw new ConflictException('A drop with the same name and time is already being created');
+    // 1. If idempotencyKey is provided, check if we've already created this drop
+    if (dto.idempotencyKey) {
+      const existing = await this.dropsRepository.findByIdempotencyKey(dto.idempotencyKey);
+      if (existing) {
+        // Return the existing drop to fulfill the idempotency contract
+        return existing;
+      }
     }
-    this._createInFlight.add(idempotencyKey);
+
+    // 2. Prevent duplicate submissions racing in the same process window (short-term guard)
+    const inFlightKey = dto.idempotencyKey || `${organiser.id}:${dto.name}:${dto.scheduledAt}`;
+    if (this._createInFlight.has(inFlightKey)) {
+      throw new ConflictException('This drop is already being created');
+    }
+    this._createInFlight.add(inFlightKey);
 
     try {
       const joinCode = await this.generateUniqueJoinCode();
@@ -160,6 +169,7 @@ export class DropsService {
         joinCode,
         shareUrl,
         organiserId: organiser.id,
+        idempotencyKey: dto.idempotencyKey,
       });
 
       await this.dropsRepository.writeLog({
@@ -170,7 +180,7 @@ export class DropsService {
 
       return this.dropsRepository.findById(drop.id) as Promise<Drop>;
     } finally {
-      this._createInFlight.delete(idempotencyKey);
+      this._createInFlight.delete(inFlightKey);
     }
   }
 
