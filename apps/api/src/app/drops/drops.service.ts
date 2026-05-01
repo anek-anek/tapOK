@@ -394,7 +394,10 @@ export class DropsService {
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
     if (drop.organiserId !== user.id) {
-      throw new ForbiddenException('Only the organiser can view the crew list');
+      const activeCrew = await this.dropsRepository.findActiveInCrewMember(dropId, user.id);
+      if (!activeCrew) {
+        throw new ForbiddenException('Only the organiser or crew members can view the crew list');
+      }
     }
 
     return this.dropsRepository.findCrewMembers(dropId);

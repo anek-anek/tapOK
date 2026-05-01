@@ -112,13 +112,17 @@ function describeAction(log: DropActivityLog, isYou: boolean): React.ReactNode {
 
 // ── components ────────────────────────────────────────────────────────────────
 
-function FeedAvatar({ initials, style }: { initials: string; style: AvatarStyle }) {
+function FeedAvatar({ initials, style, avatar }: { initials: string; style: AvatarStyle; avatar?: string }) {
   return (
     <div className={cn(
-      "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-passion text-[11px] sm:text-[14px] font-black tracking-wider shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)]",
+      "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-passion text-[11px] sm:text-[14px] font-black tracking-wider shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] overflow-hidden",
       avatarCls[style]
     )}>
-      {initials}
+      {avatar ? (
+        <img src={avatar} alt="" className="h-full w-full object-cover" />
+      ) : (
+        initials
+      )}
     </div>
   );
 }
@@ -132,7 +136,7 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
     <div className="group relative flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b-2 border-tok-black/5 last:border-b-0 hover:bg-tok-teal/3 transition-all duration-200">
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-tok-teal/80 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-      <FeedAvatar initials={initials} style={style} />
+      <FeedAvatar initials={initials} style={style} avatar={log.user.avatar} />
 
       <div className="flex-1 min-w-0">
         <p className="text-[14px] sm:text-[15px] text-tok-black/80 leading-snug">
