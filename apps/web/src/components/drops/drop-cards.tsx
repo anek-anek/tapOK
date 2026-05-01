@@ -9,6 +9,7 @@ import {
   MapPin,
   Users,
   Share,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CrewMember, Drop, DropCardModel } from '@/types/drop';
@@ -61,11 +62,13 @@ export function HeroDropCard({
   viewerId?: string | null;
   onShare?: (drop: Drop) => void;
   onEdit?: (drop: Drop) => void;
+  onDelete?: (drop: Drop) => void;
 }) {
   const role = getRole(drop, viewerId);
   const crew = crewFor(drop);
   const isOrganiser = !!viewerId && drop.organiserId === viewerId;
-  const canEdit = isOrganiser && drop.status !== 'completed' && onEdit && isShareableDrop(drop);
+  const canEdit = isOrganiser && drop.status !== 'completed' && isShareableDrop(drop);
+  const canDelete = isOrganiser && onDelete && isShareableDrop(drop);
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,6 +80,12 @@ export function HeroDropCard({
     e.preventDefault();
     e.stopPropagation();
     if (isShareableDrop(drop)) onEdit?.(drop);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isShareableDrop(drop)) onDelete?.(drop);
   };
 
   return (
@@ -215,13 +224,22 @@ export function HeroDropCard({
             <Share size={18} strokeWidth={3} />
           </button>
         )}
-        {canEdit && (
+        {canEdit && onEdit && (
           <button
             onClick={handleEdit}
             className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream/90 active:translate-y-0 active:shadow-none"
             title="Edit Drop"
           >
             <Edit3 size={18} strokeWidth={3} />
+          </button>
+        )}
+        {canDelete && (
+          <button
+            onClick={handleDelete}
+            className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-red-500 shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-red-50 active:translate-y-0 active:shadow-none"
+            title="Delete Drop"
+          >
+            <Trash2 size={18} strokeWidth={3} />
           </button>
         )}
       </div>
@@ -241,11 +259,13 @@ export function ListDropCard({
   viewerId?: string | null;
   onShare?: (drop: Drop) => void;
   onEdit?: (drop: Drop) => void;
+  onDelete?: (drop: Drop) => void;
 }) {
   const role = getRole(drop, viewerId);
   const crew = crewFor(drop);
   const isOrganiser = !!viewerId && drop.organiserId === viewerId;
-  const canEdit = isOrganiser && drop.status !== 'completed' && onEdit && isShareableDrop(drop);
+  const canEdit = isOrganiser && drop.status !== 'completed' && isShareableDrop(drop);
+  const canDelete = isOrganiser && onDelete && isShareableDrop(drop);
   const isCompleted = drop.status === 'completed';
 
   const handleShare = (e: React.MouseEvent) => {
@@ -258,6 +278,12 @@ export function ListDropCard({
     e.preventDefault();
     e.stopPropagation();
     if (isShareableDrop(drop)) onEdit?.(drop);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isShareableDrop(drop)) onDelete?.(drop);
   };
 
   return (
@@ -399,13 +425,22 @@ export function ListDropCard({
             <Share size={16} strokeWidth={2.5} />
           </button>
         )}
-        {canEdit && (
+        {canEdit && onEdit && (
           <button
             onClick={handleEdit}
             className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
             title="Edit Drop"
           >
             <Edit3 size={16} strokeWidth={2.5} />
+          </button>
+        )}
+        {canDelete && (
+          <button
+            onClick={handleDelete}
+            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-red-500 shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-red-50 active:translate-y-0 active:shadow-none"
+            title="Delete Drop"
+          >
+            <Trash2 size={16} strokeWidth={2.5} />
           </button>
         )}
       </div>

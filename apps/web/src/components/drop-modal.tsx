@@ -483,7 +483,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
     <ModalShell onClose={wrappedClose}>
       {(close) => {
         return (
-          <div className="flex max-h-[inherit] min-w-0 flex-col overflow-hidden rounded-2xl border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
+          <div className="flex max-h-[inherit] min-w-0 flex-col overflow-hidden rounded-sm border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
             <div className="grid min-w-0 grid-cols-1 overflow-y-auto overflow-x-hidden sm:grid-cols-[minmax(160px,220px)_minmax(0,1fr)]">
               {/* Left panel — Header on mobile, sidebar on desktop */}
               <aside className="group relative flex min-w-0 flex-col justify-between overflow-hidden bg-tok-teal px-6 py-6 min-h-[140px] sm:min-h-0 sm:py-8 sm:flex">

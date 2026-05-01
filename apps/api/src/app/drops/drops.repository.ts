@@ -397,4 +397,8 @@ export class DropsRepository {
   async countSparks(dropId: string): Promise<number> {
     return this.sparkRepo.countBy({ dropId });
   }
+
+  async delete(id: string): Promise<void> {
+    await this.dropRepo.delete(id);
+  }
 }

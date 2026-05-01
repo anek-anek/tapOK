@@ -14,6 +14,7 @@ import {
   CheckCheck as IconCheckCheck,
   Share2 as IconShare2,
   Edit3 as IconEdit,
+  Trash2 as IconTrash,
   Activity as IconActivity,
   X as IconX,
   Ticket as IconTicket,
@@ -34,6 +35,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { DropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
+import { DeleteDropModal } from '@/components/drops/DeleteDropModal';
 import { DigitalTicket } from '@/components/drops/DigitalTicket';
 import { PhotoRoll } from '@/components/drops/PhotoRoll';
 import { ModalShell } from '@/components/modal-shell';
@@ -382,6 +384,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [removeModalOpen, setRemoveModalOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{ userId: string; name: string } | null>(null);
   const [logPage, setLogPage] = useState(1);
@@ -657,14 +660,24 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
               )}
               {canEdit && (
-                <button
-                  type="button"
-                  onClick={() => setEditModalOpen(true)}
-                  className="group relative flex h-12 min-w-[120px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-[#F7E9B2] px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
-                >
-                  <IconEdit size={16} strokeWidth={2.5} />
-                  <span className="pt-0.5 text-nowrap">Edit Drop</span>
-                </button>
+                <div className="flex gap-2 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditModalOpen(true)}
+                    className="group relative flex h-12 min-w-[120px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-[#F7E9B2] px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
+                  >
+                    <IconEdit size={16} strokeWidth={2.5} />
+                    <span className="pt-0.5 text-nowrap">Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteModalOpen(true)}
+                    className="group relative flex h-12 w-12 items-center justify-center rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-red-500 transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none"
+                    title="Delete Drop"
+                  >
+                    <IconTrash size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -1004,6 +1017,15 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
       )}
       {canEdit && editModalOpen && (
         <DropModal drop={drop} onClose={() => setEditModalOpen(false)} />
+      )}
+      {canEdit && deleteModalOpen && (
+        <DeleteDropModal
+          drop={drop}
+          onClose={(deleted) => {
+            setDeleteModalOpen(false);
+            if (deleted) router.push('/drops');
+          }}
+        />
       )}
       {leaveModalOpen && (
         <LeaveConfirmModal

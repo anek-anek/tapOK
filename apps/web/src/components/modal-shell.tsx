@@ -37,8 +37,11 @@ export function ModalShell({
     // Calculate scrollbar width to prevent layout shift
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
+    const originalHtmlScrollbarGutter = document.documentElement.style.scrollbarGutter;
+    
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.scrollbarGutter = 'initial';
     
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
@@ -51,13 +54,14 @@ export function ModalShell({
       if (otherModals.length <= 1) {
         document.body.style.overflow = originalBodyOverflow;
         document.documentElement.style.overflow = originalHtmlOverflow;
+        document.documentElement.style.scrollbarGutter = originalHtmlScrollbarGutter;
         document.body.style.paddingRight = originalPaddingRight;
       }
     };
   }, [triggerClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div
         className="fixed inset-0 bg-[#2a2118]/50 backdrop-blur-[3px]"
         style={{
@@ -68,11 +72,11 @@ export function ModalShell({
         onClick={triggerClose}
       />
       <div
-        className="absolute inset-x-0 bottom-0 z-10 max-h-[92dvh] overflow-x-hidden sm:relative sm:inset-x-auto sm:bottom-auto sm:w-[min(720px,calc(100vw-3rem))] sm:max-h-[90vh] sm:overflow-visible"
+        className="relative z-10 max-h-[92dvh] w-full max-w-[min(720px,calc(100vw-2rem))] overflow-visible sm:max-h-[90vh]"
         style={{
           animation: closing
-            ? `tapok-slideDown ${CLOSE_DURATION}ms cubic-bezier(0.4,0,1,1) forwards`
-            : 'tapok-slideUp 280ms cubic-bezier(0.34,1.4,0.64,1)',
+            ? `tapok-slideDown ${CLOSE_DURATION}ms cubic-bezier(0.4, 0, 1, 1) forwards`
+            : 'tapok-slideUp 220ms cubic-bezier(0.19, 1, 0.22, 1)',
         }}
       >
         {typeof children === 'function' ? children(triggerClose) : children}
@@ -80,8 +84,14 @@ export function ModalShell({
       <style>{`
         @keyframes tapok-fadeIn  { from { opacity: 0 } to { opacity: 1 } }
         @keyframes tapok-fadeOut { from { opacity: 1 } to { opacity: 0 } }
-        @keyframes tapok-slideUp   { from { opacity: 0; transform: translateY(28px) scale(0.96) } to { opacity: 1; transform: translateY(0) scale(1) } }
-        @keyframes tapok-slideDown { from { opacity: 1; transform: translateY(0)    scale(1)    } to { opacity: 0; transform: translateY(22px) scale(0.97) } }
+        @keyframes tapok-slideUp   { 
+          0% { opacity: 0; transform: scale(0.95) translate(8px, 8px); }
+          100% { opacity: 1; transform: scale(1) translate(0, 0); }
+        }
+        @keyframes tapok-slideDown { 
+          from { opacity: 1; transform: scale(1) translate(0, 0); } 
+          to { opacity: 0; transform: scale(0.95) translate(8px, 8px); } 
+        }
       `}</style>
     </div>
   );

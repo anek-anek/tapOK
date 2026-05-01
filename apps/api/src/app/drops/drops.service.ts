@@ -286,6 +286,26 @@ export class DropsService {
     return this.dropsRepository.findById(id) as Promise<Drop>;
   }
 
+  async delete(id: string, firebaseUid: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(id);
+    if (!drop) throw new NotFoundException(`Drop ${id} not found`);
+
+    if (drop.organiser.firebaseUid !== firebaseUid) {
+      throw new ForbiddenException('Only the organiser can delete this drop');
+    }
+
+    // Clean up cover photo if exists
+    if (drop.coverPhoto) {
+      try {
+        await this.storageService.deleteDropCover(id);
+      } catch (err) {
+        console.error('Failed to delete cover photo from storage during drop deletion', err);
+      }
+    }
+
+    await this.dropsRepository.delete(id);
+  }
+
   async inviteToDrop(dropId: string, userId: string, firebaseUid: string): Promise<void> {
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);

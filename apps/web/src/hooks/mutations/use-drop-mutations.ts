@@ -45,6 +45,17 @@ export function useUpdateDrop(id: string): UseMutationResult<Drop, Error, Update
   });
 }
 
+export function useDeleteDrop(): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => dropsService.delete(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.minePrefix() });
+    },
+  });
+}
+
 export function useJoinDrop(dropId: string): UseMutationResult<DropCrew, Error, void> {
   const queryClient = useQueryClient();
 
