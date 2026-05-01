@@ -26,6 +26,11 @@ export class UpdateDropDto {
   @Min(1)
   expectedHeadcount?: number | null;
 
+  @ApiPropertyOptional({ example: 'Updated overview' })
+  @IsOptional()
+  @IsString()
+  overview?: string;
+
   @ApiPropertyOptional({ description: 'Lock the drop so new joiners require approval' })
   @IsOptional()
   @IsBoolean()

@@ -36,6 +36,10 @@ export class Drop {
   @Column({ type: 'integer', nullable: true })
   expectedHeadcount?: number | null;
 
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'text', nullable: true })
+  overview?: string | null;
+
   @ApiProperty({ enum: DropStatus })
   @Column({ type: 'enum', enum: DropStatus, default: DropStatus.ACTIVE })
   status: DropStatus;

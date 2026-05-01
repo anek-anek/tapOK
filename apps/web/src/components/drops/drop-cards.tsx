@@ -92,6 +92,11 @@ export function HeroDropCard({
             <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[3px] text-tok-cream/40">
               {role} • <span className="text-tok-cream/60">{drop.joinCode}</span>
             </p>
+            {drop.overview && (
+              <p className="mt-3 font-inter text-xs leading-relaxed text-tok-cream/60 line-clamp-2 max-w-xl">
+                {drop.overview}
+              </p>
+            )}
           </div>
         </div>
 

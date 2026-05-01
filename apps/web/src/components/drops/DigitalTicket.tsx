@@ -91,7 +91,7 @@ export function DigitalTicket({ drop, className = '', footer }: DigitalTicketPro
 
       {/* Bottom decorative notches like a real ticket */}
       <div className="absolute bottom-0 left-1/2 flex -translate-x-1/2 gap-4">
-        <div className="h-4 w-6 rounded-t-full border-t-2 border-l-2 border-r-2 border-tok-black bg-[#FFF4BD]" />
+        <div className="h-4 w-6 rounded-t-full border-t-2 border-l-2 border-r-2 border-tok-black bg-tok-cream" />
       </div>
     </div>
   );
