@@ -202,9 +202,18 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
 
                   {/* Attribution Overlay */}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-tok-black/80 to-transparent p-2 pt-6">
-                    <p className="truncate font-passion text-[9px] font-bold uppercase tracking-wider text-white">
-                      {photo.user?.firstName} {photo.user?.lastName}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 font-passion text-[6px] font-bold text-white">
+                        {photo.user?.avatar ? (
+                          <img src={photo.user.avatar} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          (photo.user?.firstName?.[0] || '') + (photo.user?.lastName?.[0] || '')
+                        )}
+                      </div>
+                      <p className="truncate font-passion text-[9px] font-bold uppercase tracking-wider text-white">
+                        {photo.user?.firstName} {photo.user?.lastName}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Featured Badge */}
@@ -291,9 +300,18 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
                       {isTop && (
                         <>
                           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-tok-black/80 to-transparent p-3 pt-8">
-                            <p className="font-passion text-[11px] font-bold uppercase tracking-wider text-white">
-                              {photo.user?.firstName} {photo.user?.lastName}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 font-passion text-[8px] font-bold text-white">
+                                {photo.user?.avatar ? (
+                                  <img src={photo.user.avatar} alt="" className="h-full w-full object-cover" />
+                                ) : (
+                                  (photo.user?.firstName?.[0] || '') + (photo.user?.lastName?.[0] || '')
+                                )}
+                              </div>
+                              <p className="font-passion text-[11px] font-bold uppercase tracking-wider text-white">
+                                {photo.user?.firstName} {photo.user?.lastName}
+                              </p>
+                            </div>
                           </div>
                           {photo.isFeatured && (
                             <div className="absolute left-3 top-3 rounded-full bg-tok-yellow p-1.5 shadow-[3px_3px_0px_#1C1C1A] border-2 border-tok-black">
@@ -399,13 +417,22 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
 
                 <div className="border-t-[4px] border-tok-black bg-tok-yellow p-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40">
-                        Captured By
-                      </p>
-                      <h4 className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
-                        {selectedPhoto.user.firstName} {selectedPhoto.user.lastName}
-                      </h4>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-white font-passion text-xs font-bold text-tok-black">
+                        {selectedPhoto.user.avatar ? (
+                          <img src={selectedPhoto.user.avatar} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          (selectedPhoto.user.firstName?.[0] || '') + (selectedPhoto.user.lastName?.[0] || '')
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40">
+                          Captured By
+                        </p>
+                        <h4 className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
+                          {selectedPhoto.user.firstName} {selectedPhoto.user.lastName}
+                        </h4>
+                      </div>
                     </div>
                     {selectedPhoto.isFeatured && (
                       <div className="flex items-center gap-2 rounded-sm border-2 border-tok-black bg-white px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black shadow-[3px_3px_0px_#1C1C1A]">

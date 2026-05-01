@@ -391,7 +391,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
   const isOrganiserCheck = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
   const canViewActivityLogs = isOrganiserCheck || crewStatus?.status === 'in';
-  const { data: crew } = useDropCrew(id, { enabled: isOrganiserCheck });
+  const { data: crew } = useDropCrew(id, { enabled: isOrganiserCheck || crewStatus?.status === 'in' });
   const { data: activityPage, isFetching: isLoadingLogs } = useDropActivityLogs(id, logPage, {
     enabled: canViewActivityLogs,
   });
@@ -488,7 +488,15 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   };
 
   const pendingMembers = crew?.filter((m) => m.status === 'pending') ?? [];
-  const activeMembers = crew?.filter((m) => m.status === 'in') ?? [];
+  const activeMembers = React.useMemo(() => {
+    if (!crew || !drop) return [];
+    const members = crew.filter((m) => m.status === 'in');
+    return [...members].sort((a, b) => {
+      if (a.userId === drop.organiserId) return -1;
+      if (b.userId === drop.organiserId) return 1;
+      return 0;
+    });
+  }, [crew, drop]);
 
   if (!mounted || !isReady || (authLoading && !dbUser) || isHardLoading) return <PageSkeleton />;
 
@@ -739,8 +747,12 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                   {pendingMembers.map((member) => (
                     <div key={member.id} className="flex flex-col gap-4 bg-white p-6 sm:flex-row sm:items-center">
                       <div className="flex items-center gap-4 flex-1">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-amber-400 font-passion text-sm font-bold text-tok-black">
-                          {getLogInitials(member.user.firstName, member.user.lastName)}
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-amber-400 font-passion text-sm font-bold text-tok-black">
+                          {member.user.avatar ? (
+                            <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            getLogInitials(member.user.firstName, member.user.lastName)
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
@@ -786,7 +798,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {/* Crew Roster */}
-            {isOrganiser && activeMembers.length > 0 && (
+            {(isOrganiser || crewStatus?.status === 'in') && activeMembers.length > 0 && (
               <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]">
                 <div className="border-b-[3px] border-tok-black bg-tok-teal/5 px-6 py-5">
                   <div className="flex items-center justify-between">
@@ -809,13 +821,24 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 <div className="divide-y-2 divide-tok-black/5">
                   {activeMembers.map((member) => (
                     <div key={member.id} className="flex items-center gap-4 px-6 py-5 transition-colors hover:bg-tok-teal/2">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-teal font-passion text-sm font-bold text-[#F7E9B2]">
-                        {getLogInitials(member.user.firstName, member.user.lastName)}
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal font-passion text-sm font-bold text-[#F7E9B2]">
+                        {member.user.avatar ? (
+                          <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          getLogInitials(member.user.firstName, member.user.lastName)
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:text-xl">
-                          {member.user.firstName} {member.user.lastName}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="truncate font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:text-xl">
+                            {member.user.firstName} {member.user.lastName}
+                          </p>
+                          {member.userId === drop.organiserId && (
+                            <span className="inline-flex items-center rounded-sm bg-tok-black px-2 py-0.5 font-passion text-[9px] font-bold tracking-[1.5px] text-tok-yellow">
+                              CHIEF
+                            </span>
+                          )}
+                        </div>
                         <p className="font-inter text-xs text-tok-black/40">
                           Joined {formatLogTime(member.joinedAt)}
                         </p>
@@ -827,7 +850,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         )}>
                           {member.isPresent ? 'TAPPED IN' : 'TAPPED OUT'}
                         </span>
-                        {!isCompleted && (
+                        {!isCompleted && isOrganiser && (
                           <button
                             type="button"
                             onClick={() => {
@@ -893,8 +916,12 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                           key={log.id}
                           className="flex items-start gap-5 px-4 py-5 transition-colors hover:bg-tok-teal/1 sm:px-6"
                         >
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-teal/10 font-passion text-[10px] font-bold text-tok-teal">
-                            {getLogInitials(log.user.firstName, log.user.lastName)}
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal/10 font-passion text-[10px] font-bold text-tok-teal">
+                            {log.user.avatar ? (
+                              <img src={log.user.avatar} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              getLogInitials(log.user.firstName, log.user.lastName)
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="font-inter text-sm leading-relaxed text-tok-black/80">
