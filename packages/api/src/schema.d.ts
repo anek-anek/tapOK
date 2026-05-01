@@ -840,8 +840,27 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        CrewMemberUserDto: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            avatar?: string;
+        };
+        DropActivityLogPublicDto: {
+            id: string;
+            dropId: string;
+            userId: string;
+            user: components["schemas"]["CrewMemberUserDto"];
+            action: string;
+            /** @description Whitelisted changed field names only; values are always true. */
+            changedFields?: {
+                [key: string]: boolean;
+            };
+            /** Format: date-time */
+            createdAt: string;
+        };
         ActivityLogsPageDto: {
-            data: components["schemas"]["DropActivityLog"][];
+            data: components["schemas"]["DropActivityLogPublicDto"][];
             total: number;
             page: number;
             totalPages: number;
@@ -886,12 +905,6 @@ export interface components {
              * @enum {string}
              */
             category?: "hangout" | "party";
-        };
-        CrewMemberUserDto: {
-            id: string;
-            firstName: string;
-            lastName: string;
-            avatar?: string;
         };
         CrewMemberDto: {
             id: string;

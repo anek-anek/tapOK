@@ -47,8 +47,7 @@ export class DropsRepository {
   findById(id: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
       where: { id },
-      relations: { organiser: true, activityLogs: { user: true }, sparks: true },
-      order: { activityLogs: { createdAt: 'DESC' } },
+      relations: { organiser: true, sparks: true },
     });
   }
 
@@ -206,6 +205,20 @@ export class DropsRepository {
     const [data, total] = await this.logRepo.findAndCount({
       where: { dropId },
       relations: { user: true },
+      select: {
+        id: true,
+        dropId: true,
+        userId: true,
+        action: true,
+        changedFields: true,
+        createdAt: true,
+        user: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatar: true,
+        },
+      },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
