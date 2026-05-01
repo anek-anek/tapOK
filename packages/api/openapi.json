@@ -315,7 +315,7 @@
             "bearer": []
           }
         ],
-        "summary": "List all organizations",
+        "summary": "List organizations you belong to (platform admins: all organizations)",
         "tags": [
           "organizations"
         ]
@@ -411,7 +411,7 @@
             }
           },
           "404": {
-            "description": "Organization not found."
+            "description": "Organization not found or no access."
           }
         },
         "security": [
@@ -419,7 +419,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get an organization by id",
+        "summary": "Get an organization by id (members only; platform admins: any)",
         "tags": [
           "organizations"
         ]
@@ -528,6 +528,9 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Organization not found or no access."
           }
         },
         "security": [
@@ -535,7 +538,7 @@
             "bearer": []
           }
         ],
-        "summary": "List members of an organization",
+        "summary": "List members (organization members only; platform admins: any org)",
         "tags": [
           "organizations"
         ]
@@ -680,6 +683,51 @@
         ]
       }
     },
+    "/drops/discover": {
+      "get": {
+        "operationId": "DropsController_discover",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "category",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Discovery data"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get drops for the discover page",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
     "/drops": {
       "post": {
         "operationId": "DropsController_create",
@@ -810,7 +858,7 @@
             "bearer": []
           }
         ],
-        "summary": "Look up a drop by join code (public)",
+        "summary": "Look up a drop by join code",
         "tags": [
           "drops"
         ]
@@ -903,6 +951,45 @@
           }
         ],
         "summary": "Edit a drop (organiser only, active/ongoing status)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/activity": {
+      "get": {
+        "operationId": "DropsController_getActivityLogs",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityLogsPageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Drop not found or no access."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated activity logs for a drop",
         "tags": [
           "drops"
         ]
@@ -1020,6 +1107,49 @@
           }
         ],
         "summary": "Mark yourself in or out for a drop (active crew members only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/invite/{userId}": {
+      "post": {
+        "operationId": "DropsController_inviteToDrop",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "User invited successfully."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Drop not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite a user to a drop (organiser only)",
         "tags": [
           "drops"
         ]
@@ -1255,6 +1385,313 @@
           "drops"
         ]
       }
+    },
+    "/drops/{id}/cover-photo": {
+      "post": {
+        "operationId": "DropsController_uploadCoverPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Drop"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No file provided or unsupported format."
+          },
+          "403": {
+            "description": "Only the organiser can update the cover photo."
+          },
+          "404": {
+            "description": "Drop not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload or replace the drop cover photo (organiser only, max 5 MB, JPG/PNG)",
+        "tags": [
+          "drops"
+        ]
+      },
+      "delete": {
+        "operationId": "DropsController_deleteCoverPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Cover photo deleted."
+          },
+          "403": {
+            "description": "Only the organiser can delete the cover photo."
+          },
+          "404": {
+            "description": "Drop not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete the drop cover photo (organiser only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/photos": {
+      "post": {
+        "operationId": "DropsController_uploadPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DropPhoto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload a photo to the drop roll (crew members only)",
+        "tags": [
+          "drops"
+        ]
+      },
+      "get": {
+        "operationId": "DropsController_getPhotos",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DropPhotoPublicDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Drop not found or no access."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all photos for a drop (visible drops only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/photos/{photoId}/feature": {
+      "patch": {
+        "operationId": "DropsController_featurePhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DropPhoto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Feature a photo from the roll (organiser only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/photos/{photoId}": {
+      "delete": {
+        "operationId": "DropsController_deletePhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Photo deleted."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a photo from the roll (owner or organiser only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/spark": {
+      "post": {
+        "operationId": "DropsController_sparkDrop",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Dropped sparked."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Spark a drop (hype)",
+        "tags": [
+          "drops"
+        ]
+      },
+      "delete": {
+        "operationId": "DropsController_unsparkDrop",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Dropped unsparked."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unspark a drop",
+        "tags": [
+          "drops"
+        ]
+      }
     }
   },
   "info": {
@@ -1412,6 +1849,11 @@
               "other"
             ]
           },
+          "birthday": {
+            "format": "date-time",
+            "type": "string",
+            "example": "1990-01-01"
+          },
           "userHandle": {
             "type": "string"
           },
@@ -1493,6 +1935,22 @@
             "type": "string",
             "example": "Doe",
             "maxLength": 100
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female",
+              "other"
+            ]
+          },
+          "birthday": {
+            "type": "string",
+            "example": "1990-01-01"
+          },
+          "userHandle": {
+            "type": "string",
+            "example": "jane_doe"
           }
         }
       },
@@ -1559,10 +2017,6 @@
       "UpdateUserDto": {
         "type": "object",
         "properties": {
-          "email": {
-            "type": "string",
-            "example": "user@example.com"
-          },
           "firstName": {
             "type": "string",
             "example": "Jane"
@@ -1571,22 +2025,9 @@
             "type": "string",
             "example": "Doe"
           },
-          "firebaseUid": {
-            "type": "string",
-            "example": "firebase-uid-123"
-          },
           "avatar": {
             "type": "string",
             "example": "https://example.com/avatar.jpg"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "photographer",
-              "participant"
-            ],
-            "default": "participant"
           },
           "gender": {
             "type": "string",
@@ -1755,15 +2196,55 @@
             "type": "number",
             "example": 20
           },
+          "overview": {
+            "type": "string",
+            "example": "This is a fun beach shoot"
+          },
           "isLocked": {
             "type": "boolean",
             "example": false
+          },
+          "isPublic": {
+            "type": "boolean",
+            "example": true
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "hangout",
+              "party"
+            ],
+            "example": "hangout"
           }
         },
         "required": [
           "name",
           "scheduledAt",
           "location"
+        ]
+      },
+      "DropSpark": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "dropId",
+          "userId",
+          "createdAt"
         ]
       },
       "Drop": {
@@ -1786,6 +2267,14 @@
             "type": "number",
             "nullable": true
           },
+          "overview": {
+            "type": "object",
+            "nullable": true
+          },
+          "coverPhoto": {
+            "type": "object",
+            "nullable": true
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -1794,11 +2283,22 @@
               "completed"
             ]
           },
+          "category": {
+            "type": "string",
+            "enum": [
+              "hangout",
+              "party"
+            ]
+          },
           "joinCode": {
             "type": "string"
           },
           "shareUrl": {
             "type": "string"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "default": true
           },
           "isLocked": {
             "type": "boolean",
@@ -1809,6 +2309,12 @@
           },
           "organiser": {
             "$ref": "#/components/schemas/User"
+          },
+          "sparks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DropSpark"
+            }
           },
           "createdAt": {
             "format": "date-time",
@@ -1827,9 +2333,11 @@
           "status",
           "joinCode",
           "shareUrl",
+          "isPublic",
           "isLocked",
           "organiserId",
           "organiser",
+          "sparks",
           "createdAt",
           "updatedAt"
         ]
@@ -1869,6 +2377,32 @@
           "createdAt"
         ]
       },
+      "ActivityLogsPageDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DropActivityLog"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "totalPages"
+        ]
+      },
       "JoinDropResponseDto": {
         "type": "object",
         "properties": {
@@ -1887,7 +2421,8 @@
               "in",
               "pending",
               "rejected",
-              "removed"
+              "removed",
+              "invited"
             ]
           },
           "isPresent": {
@@ -1940,9 +2475,17 @@
             "example": 20,
             "nullable": true
           },
+          "overview": {
+            "type": "string",
+            "example": "Updated overview"
+          },
           "isLocked": {
             "type": "boolean",
             "description": "Lock the drop so new joiners require approval"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "description": "Set visibility to public or private"
           },
           "status": {
             "type": "string",
@@ -1952,6 +2495,14 @@
               "completed"
             ],
             "description": "Manually override the drop status"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "hangout",
+              "party"
+            ],
+            "example": "hangout"
           }
         }
       },
@@ -1995,7 +2546,8 @@
               "in",
               "pending",
               "rejected",
-              "removed"
+              "removed",
+              "invited"
             ]
           },
           "isPresent": {
@@ -2017,6 +2569,98 @@
           "status",
           "isPresent",
           "joinedAt",
+          "user"
+        ]
+      },
+      "DropPhoto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "object",
+            "nullable": true
+          },
+          "base64": {
+            "type": "object",
+            "nullable": true
+          },
+          "isFeatured": {
+            "type": "boolean",
+            "default": false
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "dropId",
+          "userId",
+          "isFeatured",
+          "user",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "DropPhotoPublicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "object",
+            "nullable": true
+          },
+          "base64": {
+            "type": "object",
+            "nullable": true,
+            "description": "Embedded image data only until the photo is featured and stored at url."
+          },
+          "isFeatured": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/CrewMemberUserDto"
+          }
+        },
+        "required": [
+          "id",
+          "dropId",
+          "userId",
+          "isFeatured",
+          "createdAt",
+          "updatedAt",
           "user"
         ]
       }

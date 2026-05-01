@@ -51,4 +51,7 @@ export interface CreateUserDto {
   phone?: string;
 }
 
-export type UpdateUserDto = Partial<CreateUserDto>;
+/** Matches PATCH /users/:id — excludes email, firebaseUid, role. */
+export type UpdateUserDto = Partial<
+  Pick<CreateUserDto, 'firstName' | 'lastName' | 'avatar' | 'gender' | 'birthday' | 'userHandle' | 'phone'>
+>;

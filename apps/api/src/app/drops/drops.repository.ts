@@ -104,6 +104,11 @@ export class DropsRepository {
     return this.crewRepo.findOneBy({ dropId, userId });
   }
 
+  /** Crew admitted to participate (visibility for private drops, etc.). */
+  findActiveInCrewMember(dropId: string, userId: string): Promise<DropCrew | null> {
+    return this.crewRepo.findOneBy({ dropId, userId, status: DropCrewStatus.IN });
+  }
+
   findCrewMembers(dropId: string): Promise<DropCrew[]> {
     return this.crewRepo.find({
       where: { dropId },
@@ -252,8 +257,24 @@ export class DropsRepository {
   findPhotos(dropId: string): Promise<DropPhoto[]> {
     return this.photoRepo.find({
       where: { dropId },
-      relations: { user: true },
       order: { createdAt: 'DESC' },
+      relations: { user: true },
+      select: {
+        id: true,
+        dropId: true,
+        userId: true,
+        url: true,
+        base64: true,
+        isFeatured: true,
+        createdAt: true,
+        updatedAt: true,
+        user: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatar: true,
+        },
+      },
     });
   }
 
