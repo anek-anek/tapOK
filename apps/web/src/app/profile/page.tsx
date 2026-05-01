@@ -10,6 +10,7 @@ import { useMounted } from '@/hooks/use-mounted';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { toast } from 'react-hot-toast';
 import {
   Popover,
   PopoverContent,
@@ -124,7 +125,15 @@ export default function ProfilePage() {
     if (form.avatar !== (profile.avatar ?? '')) dto.avatar = form.avatar || undefined;
 
     updateUser.mutate(dto, {
-      onSuccess: () => setEditing(false),
+      onSuccess: () => {
+        setEditing(false);
+        toast.success('PROFILE UPDATED SUCCESSFULLY');
+      },
+      onError: (err: any) => {
+        const rawMsg = err.response?.data?.message || 'FAILED TO UPDATE PROFILE';
+        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+        toast.error(String(msg).toUpperCase());
+      }
     });
   }
 
@@ -486,11 +495,6 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          {updateUser.isError && (
-            <div className="border-2 border-red-600 bg-red-50 p-4 font-inter text-xs font-bold text-red-600 shadow-[4px_4px_0px_0px_#dc2626]">
-              CRITICAL ERROR: FAILED TO UPDATE PROFILE DATA. PLEASE RETRY.
-            </div>
-          )}
         </div>
       </main>
     </div>

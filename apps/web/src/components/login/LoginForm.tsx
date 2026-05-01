@@ -12,6 +12,7 @@ import { loginSchema, type LoginFormValues } from '@/lib/validations/auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { finalizeSession } from '@/lib/auth/finalize-session';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
+import { toast } from 'react-hot-toast';
 
 const GENERIC_AUTH_ERROR = 'Incorrect email or password.';
 
@@ -62,16 +63,18 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       const finalized = await finalizeSession(result.user, { sync: false });
 
       if (!finalized.ok) {
-        setServerError(finalized.message);
+        const msg = Array.isArray(finalized.message) ? finalized.message[0] : finalized.message;
+        toast.error(String(msg).toUpperCase());
         return;
       }
 
+      toast.success('WELCOME BACK');
       setSession(result.user, finalized.dbUser);
       router.replace(redirectTo);
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
       if (code === 'auth/popup-closed-by-user') return;
-      setServerError(getFirebaseError(code));
+      toast.error(String(getFirebaseError(code)).toUpperCase());
     } finally {
       setGoogleLoading(false);
     }
@@ -84,19 +87,20 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       const finalized = await finalizeSession(user, { sync: false });
 
       if (!finalized.ok) {
-        setServerError(
-          finalized.reason === 'no_account'
-            ? 'No TapOK account found for this email. Please sign up first.'
-            : finalized.message,
-        );
+        const msg = finalized.reason === 'no_account'
+          ? 'No TapOK account found for this email. Please sign up first.'
+          : finalized.message;
+        const displayMsg = Array.isArray(msg) ? msg[0] : msg;
+        toast.error(String(displayMsg).toUpperCase());
         return;
       }
 
+      toast.success('WELCOME BACK');
       setSession(user, finalized.dbUser);
       router.replace(redirectTo);
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
-      setServerError(getFirebaseError(code));
+      toast.error(String(getFirebaseError(code)).toUpperCase());
     }
   };
 
@@ -230,15 +234,6 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           </Link>
         </div>
 
-        {serverError && (
-          <div
-            ref={errorRef}
-            className="border-2 border-red-600 bg-red-50 px-4 py-3"
-            style={{ boxShadow: '3px 3px 0 #dc2626' }}
-          >
-            <p className="font-inter text-xs text-red-700">{serverError}</p>
-          </div>
-        )}
 
         <button
           type="submit"

@@ -12,6 +12,7 @@ import { signUpSchema, type SignUpFormValues } from '@/lib/validations/auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { finalizeSession } from '@/lib/auth/finalize-session';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
+import { toast } from 'react-hot-toast';
 
 const FIREBASE_ERRORS: Record<string, string> = {
   'auth/email-already-in-use': 'An account with this email already exists.',
@@ -69,10 +70,12 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       const finalized = await finalizeSession(result.user, { sync: true });
 
       if (!finalized.ok) {
-        setServerError(finalized.message);
+        const msg = Array.isArray(finalized.message) ? finalized.message[0] : finalized.message;
+        toast.error(String(msg).toUpperCase());
         return;
       }
 
+      toast.success('WELCOME TO TAPOK');
       setSession(result.user, finalized.dbUser);
 
       const isCrewJoin = redirectTo.startsWith('/drops/join/');
@@ -84,7 +87,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
       if (code !== 'auth/popup-closed-by-user') {
-        setServerError(getFirebaseError(code));
+        toast.error(String(getFirebaseError(code)).toUpperCase());
       }
     } finally {
       setGoogleLoading(false);
@@ -101,10 +104,12 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       });
 
       if (!finalized.ok) {
-        setServerError(finalized.message);
+        const msg = Array.isArray(finalized.message) ? finalized.message[0] : finalized.message;
+        toast.error(String(msg).toUpperCase());
         return;
       }
 
+      toast.success('ACCOUNT CREATED');
       setSession(user, finalized.dbUser);
 
       const isCrewJoin = redirectTo.startsWith('/drops/join/');
@@ -115,7 +120,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       }
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
-      setServerError(getFirebaseError(code));
+      toast.error(String(getFirebaseError(code)).toUpperCase());
     }
   };
 
@@ -288,15 +293,6 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
           </div>
         </AuthFormField>
 
-        {serverError && (
-          <div
-            ref={errorRef}
-            className="border-2 border-red-600 bg-red-50 px-4 py-3"
-            style={{ boxShadow: '3px 3px 0 #dc2626' }}
-          >
-            <p className="font-inter text-xs text-red-700">{serverError}</p>
-          </div>
-        )}
 
         <button
           type="submit"

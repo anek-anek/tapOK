@@ -18,8 +18,7 @@ import {
   useCreateDrop,
   useUpdateDrop,
 } from '@/hooks/mutations/use-drop-mutations';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { toast } from 'react-hot-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -362,7 +361,14 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
       if (values.category !== drop.category) dto.category = values.category ?? undefined;
 
       if (Object.keys(dto).length > 0) {
-        await updateDrop.mutateAsync(dto);
+        try {
+          await updateDrop.mutateAsync(dto);
+          toast.success('DROP UPDATED SUCCESSFULLY');
+        } catch (err: any) {
+          const rawMsg = err.response?.data?.message || 'FAILED TO UPDATE DROP';
+          const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+          toast.error(String(msg).toUpperCase());
+        }
       }
       wrappedClose();
     } else {
@@ -375,9 +381,16 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
         isPublic: values.isPublic ?? true,
         category: values.category ?? undefined,
       };
-      const result = await createDrop.mutateAsync(dto);
-      pendingIdRef.current = result.id;
-      wrappedClose();
+      try {
+        const result = await createDrop.mutateAsync(dto);
+        pendingIdRef.current = result.id;
+        toast.success('DROP DEPLOYED SUCCESSFULLY');
+        wrappedClose();
+      } catch (err: any) {
+        const rawMsg = err.response?.data?.message || 'FAILED TO DEPLOY DROP';
+        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+        toast.error(String(msg).toUpperCase());
+      }
     }
   });
 
@@ -633,14 +646,6 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                     />
                   </div>
                 </div>
-
-                {serverError && (
-                  <div className="rounded-sm border-[3px] border-red-500 bg-red-50 p-3">
-                    <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-600">
-                      {serverError.message || `ERROR: Failed to ${isEdit ? 'update' : 'create'} drop.`}
-                    </p>
-                  </div>
-                )}
 
                 <div className="mt-2 flex items-center gap-3">
                   <button
