@@ -167,6 +167,7 @@
   }
   html {
     @apply font-sans;
+    scrollbar-gutter: stable;
   }
 }
 
@@ -201,7 +202,7 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--color-tok-cream);
+    background: transparent;
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -377,7 +378,7 @@
 */
 
 :root {
-  --background: oklch(1 0 0);
+  --background: #F7E9B2; /* tok-cream */
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
