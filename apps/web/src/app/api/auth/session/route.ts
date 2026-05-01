@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const SESSION_COOKIE = '__session';
 const PROFILE_COOKIE = 'user_profile';
-const MAX_AGE = 3600;
+const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 interface Profile {
   firstName: string;
