@@ -25,6 +25,7 @@ export class DropSpark {
   dropId: string;
 
   @ApiProperty()
+  @Index('idx_drop_sparks_user_id')
   @Column()
   userId: string;
 

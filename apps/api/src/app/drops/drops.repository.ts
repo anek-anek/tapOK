@@ -83,9 +83,10 @@ export class DropsRepository {
     return this.dropRepo.createQueryBuilder('drop')
       .leftJoinAndSelect('drop.organiser', 'organiser')
       .leftJoin('drop.crew', 'crew_me', 'crew_me.userId = :userId', { userId })
-      .leftJoinAndSelect('drop.crew', 'crew')
-      .leftJoinAndSelect('crew.user', 'user')
-      .leftJoinAndSelect('drop.sparks', 'sparks')
+      .addSelect(['crew_me.id', 'crew_me.status', 'crew_me.isPresent'])
+      .loadRelationCountAndMap('drop.crewCount', 'drop.crew', 'crew', qb =>
+        qb.where('crew.status = :s', { s: DropCrewStatus.IN }))
+      .loadRelationCountAndMap('drop.sparkCount', 'drop.sparks')
       .where('drop.organiserId = :userId', { userId })
       .orWhere('crew_me.userId = :userId AND crew_me.status = :accepted', {
         userId,
@@ -98,7 +99,7 @@ export class DropsRepository {
   findByJoinCode(joinCode: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
       where: { joinCode },
-      relations: { organiser: true, sparks: true },
+      relations: { organiser: true },
     });
   }
 
@@ -193,15 +194,35 @@ export class DropsRepository {
     await this.logRepo.save(logs);
   }
 
-  findActivityFeedForUser(userId: string): Promise<DropActivityLog[]> {
-    return this.logRepo
-      .createQueryBuilder('log')
-      .innerJoinAndSelect('log.drop', 'drop')
-      .innerJoinAndSelect('log.user', 'user')
-      .where('log.userId = :userId', { userId })
-      .orWhere('drop.organiserId = :userId', { userId })
-      .orderBy('log.createdAt', 'DESC')
-      .getMany();
+  async findActivityFeedForUser(
+    userId: string,
+    page: number = 1,
+    limit: number = 50,
+  ): Promise<DropActivityLog[]> {
+    const skip = (page - 1) * limit;
+
+    // Split OR clause into two target queries to leverage indexes
+    const [myLogs, organiserLogs] = await Promise.all([
+      this.logRepo.find({
+        where: { userId },
+        relations: { drop: true, user: true },
+        order: { createdAt: 'DESC' },
+        take: limit + skip, // Fetch enough to cover the page after merging
+      }),
+      this.logRepo.find({
+        where: { drop: { organiserId: userId } },
+        relations: { drop: true, user: true },
+        order: { createdAt: 'DESC' },
+        take: limit + skip,
+      }),
+    ]);
+
+    // Merge, deduplicate by ID, sort, and slice
+    const combined = [...myLogs, ...organiserLogs];
+    const unique = Array.from(new Map(combined.map((item) => [item.id, item])).values());
+    unique.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    return unique.slice(skip, skip + limit);
   }
 
   async findPaginatedActivityLogs(
@@ -274,16 +295,17 @@ export class DropsRepository {
   }
 
   async findRecentJoinedChiefIds(userId: string, limit: number = 3): Promise<string[]> {
-    const joined = await this.crewRepo.createQueryBuilder('crew')
-      .innerJoinAndSelect('crew.drop', 'drop')
+    const rows = await this.crewRepo.createQueryBuilder('crew')
+      .select('drop.organiserId', 'organiserId')
+      .innerJoin('crew.drop', 'drop')
       .where('crew.userId = :userId', { userId })
       .andWhere('crew.status = :status', { status: DropCrewStatus.IN })
       .andWhere('drop.organiserId != :userId', { userId })
       .orderBy('crew.joinedAt', 'DESC')
       .limit(20)
-      .getMany();
+      .getRawMany<{ organiserId: string }>();
 
-    return Array.from(new Set(joined.map((c) => c.drop.organiserId))).slice(0, limit);
+    return Array.from(new Set(rows.map((r) => r.organiserId))).slice(0, limit);
   }
 
   async findPublicDrops(

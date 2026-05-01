@@ -209,8 +209,6 @@ export class DropsService {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
 
-    await this.dropsCronService.transitionDropStatuses();
-
     return this.dropsRepository.findFeed(user.id);
   }
 
@@ -312,7 +310,8 @@ export class DropsService {
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
-    if (drop.organiserId !== (await this.usersService.findByFirebaseUid(firebaseUid))?.id) {
+    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (drop.organiserId !== organiser?.id) {
       throw new ForbiddenException('Only the organiser can invite people');
     }
 
@@ -330,7 +329,7 @@ export class DropsService {
 
     await this.dropsRepository.writeLog({
       dropId,
-      userId: (await this.usersService.findByFirebaseUid(firebaseUid))!.id,
+      userId: organiser.id,
       action: 'invited_member',
       changedFields: { invitedUserId: userId },
     });
@@ -564,29 +563,42 @@ export class DropsService {
     };
   }
 
-  async findMyActivityLogs(firebaseUid: string): Promise<DropActivityLog[]> {
+  async findMyActivityLogs(
+    firebaseUid: string,
+    page: number = 1,
+    limit: number = 50,
+  ): Promise<DropActivityLog[]> {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
-    return this.dropsRepository.findActivityFeedForUser(user.id);
+    return this.dropsRepository.findActivityFeedForUser(user.id, page, limit);
   }
 
-  async discover(firebaseUid?: string, page = 1, limit = 6, category?: DropCategory): Promise<DiscoverDropsResponseDto> {
-    await this.dropsCronService.transitionDropStatuses();
+  async discover(
+    firebaseUid?: string,
+    page = 1,
+    limit = 6,
+    category?: DropCategory,
+  ): Promise<DiscoverDropsResponseDto> {
+    // 1. Parallel: featured drop + user lookup
+    const [featuredResult, user] = await Promise.all([
+      this.dropsRepository.findPublicDrops(1, 1),
+      firebaseUid ? this.usersService.findByFirebaseUid(firebaseUid) : Promise.resolve(null),
+    ]);
 
-    const featuredResult = await this.dropsRepository.findPublicDrops(1, 1);
     const featuredRow = featuredResult.data[0] ?? null;
     const excludeIds = featuredRow ? [featuredRow.id] : [];
-    const allPublicPaginated = await this.dropsRepository.findPublicDrops(page, limit, category, excludeIds);
 
+    // 2. Parallel: all public paginated + chiefIds (if user exists)
+    const [allPublicPaginated, chiefIds] = await Promise.all([
+      this.dropsRepository.findPublicDrops(page, limit, category, excludeIds),
+      user ? this.dropsRepository.findRecentJoinedChiefIds(user.id) : Promise.resolve([]),
+    ]);
+
+    // 3. Parallel: upcoming drops by chiefs + spark state
+    // First, collect all IDs we need to check sparks for
     let recentChiefsRows: Drop[] = [];
-    let dbUserId: string | undefined;
-    if (firebaseUid) {
-      const user = await this.usersService.findByFirebaseUid(firebaseUid);
-      if (user) {
-        dbUserId = user.id;
-        const chiefIds = await this.dropsRepository.findRecentJoinedChiefIds(user.id);
-        recentChiefsRows = await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, category);
-      }
+    if (chiefIds.length > 0) {
+      recentChiefsRows = await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, category);
     }
 
     const ids = new Set<string>();
@@ -596,8 +608,8 @@ export class DropsService {
     const dropIdList = [...ids];
 
     let viewerSparkedDropIds: Set<string> | undefined;
-    if (dbUserId !== undefined && dropIdList.length > 0) {
-      const sparked = await this.dropsRepository.findDropIdsSparkedByUser(dbUserId, dropIdList);
+    if (user && dropIdList.length > 0) {
+      const sparked = await this.dropsRepository.findDropIdsSparkedByUser(user.id, dropIdList);
       viewerSparkedDropIds = new Set(sparked);
     }
 
