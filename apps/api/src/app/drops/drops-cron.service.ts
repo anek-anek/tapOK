@@ -38,11 +38,15 @@ export class DropsCronService {
 
     const ids = drops.map((d) => d.id);
     await this.dropsRepository.bulkTransitionStatus(ids, DropStatus.COMPLETED);
+    
+    // Clean up non-featured photos for the completed drops
+    await this.dropsRepository.deleteNonFeaturedPhotosForDrops(ids);
+
     await this.dropsRepository.bulkWriteLogs(
       drops.map((d) => ({ dropId: d.id, userId: d.organiserId, action: 'marked_completed' })),
     );
 
-    this.logger.log(`Transitioned ${ids.length} drop(s) ONGOING → COMPLETED`);
+    this.logger.log(`Transitioned ${ids.length} drop(s) ONGOING → COMPLETED (Curation Complete)`);
     return ids.length;
   }
 }
