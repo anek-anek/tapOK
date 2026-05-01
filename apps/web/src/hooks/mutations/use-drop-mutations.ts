@@ -165,11 +165,35 @@ export function useUploadPhoto(dropId: string): UseMutationResult<any, Error, st
 
 export function useFeaturePhoto(dropId: string): UseMutationResult<any, Error, string> {
   const queryClient = useQueryClient();
+  const photoKey = ['drops', dropId, 'photos'];
 
   return useMutation({
     mutationFn: (photoId: string) => dropsService.featurePhoto(dropId, photoId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['drops', dropId, 'photos'] });
+    onMutate: async (photoId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: photoKey });
+
+      // Snapshot the previous value
+      const previousPhotos = queryClient.getQueryData<any[]>(photoKey);
+
+      // Optimistically update to the new value
+      if (previousPhotos) {
+        queryClient.setQueryData(photoKey, previousPhotos.map(p => 
+          p.id === photoId ? { ...p, isFeatured: !p.isFeatured } : p
+        ));
+      }
+
+      return { previousPhotos };
+    },
+    onError: (_err, _photoId, context) => {
+      // Roll back on error
+      if (context?.previousPhotos) {
+        queryClient.setQueryData(photoKey, context.previousPhotos);
+      }
+    },
+    onSettled: () => {
+      // Refresh to ensure sync
+      void queryClient.invalidateQueries({ queryKey: photoKey });
       void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
     },
   });

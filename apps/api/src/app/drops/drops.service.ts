@@ -39,6 +39,7 @@ const PUBLIC_ACTIVITY_CHANGED_FIELDS = new Set([
 @Injectable()
 export class DropsService {
   private readonly _createInFlight = new Set<string>();
+  private readonly _featureInFlight = new Set<string>();
 
   constructor(
     private readonly dropsRepository: DropsRepository,
@@ -715,7 +716,15 @@ export class DropsService {
   }
 
   async featurePhoto(dropId: string, photoId: string, firebaseUid: string): Promise<DropPhoto> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    const featureKey = `${dropId}:${photoId}`;
+    if (this._featureInFlight.has(featureKey)) {
+      // Just return the current state of the photo if already processing
+      return this.dropsRepository.findPhotoById(photoId) as Promise<DropPhoto>;
+    }
+    this._featureInFlight.add(featureKey);
+
+    try {
+      const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('User not found');
 
     const drop = await this.dropsRepository.findById(dropId);
@@ -780,6 +789,9 @@ export class DropsService {
     });
 
     return this.dropsRepository.findPhotoById(photoId) as Promise<DropPhoto>;
+    } finally {
+      this._featureInFlight.delete(featureKey);
+    }
   }
 
   async deletePhoto(dropId: string, photoId: string, firebaseUid: string): Promise<void> {

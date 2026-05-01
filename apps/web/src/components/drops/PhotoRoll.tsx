@@ -18,6 +18,7 @@ import { useUploadPhoto, useFeaturePhoto, useDeletePhoto } from '@/hooks/mutatio
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { ModalShell } from '@/components/modal-shell';
+import { DeletePhotoModal } from './DeletePhotoModal';
 import type { Drop, DropPhoto } from '@/types/drop';
 
 interface PhotoRollProps {
@@ -31,6 +32,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<DropPhoto | null>(null);
+  const [photoToDelete, setPhotoToDelete] = useState<DropPhoto | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const { data: photos = [], isLoading } = useQuery({
@@ -89,13 +91,8 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
     }
   };
 
-  const handleDelete = async (photoId: string) => {
-    try {
-      await deleteMutation.mutateAsync(photoId);
-      toast.success('PHOTO REMOVED');
-    } catch {
-      toast.error('FAILED TO REMOVE PHOTO');
-    }
+  const handleDelete = (photo: DropPhoto) => {
+    setPhotoToDelete(photo);
   };
 
   const isCompleted = drop.status === 'completed';
@@ -229,22 +226,27 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleFeature(photo.id);
+                          !featureMutation.isPending && handleFeature(photo.id);
                         }}
+                        disabled={featureMutation.isPending}
                         className={cn(
-                          "flex h-8 w-8 items-center justify-center rounded-sm border-2 border-tok-black transition-all hover:scale-110 active:scale-95",
+                          "flex h-8 w-8 items-center justify-center rounded-sm border-2 border-tok-black transition-all hover:scale-110 active:scale-95 disabled:opacity-50",
                           photo.isFeatured ? "bg-white text-tok-black" : "bg-tok-yellow text-tok-black"
                         )}
                         title={photo.isFeatured ? "Unfeature this photo" : "Feature this photo"}
                       >
-                        <IconStar size={14} strokeWidth={2.5} className={photo.isFeatured ? "fill-tok-black" : ""} />
+                        {featureMutation.isPending ? (
+                          <IconLoader size={12} className="animate-spin" />
+                        ) : (
+                          <IconStar size={14} strokeWidth={2.5} className={photo.isFeatured ? "fill-tok-black" : ""} />
+                        )}
                       </button>
                     )}
                     {(isOwner || isOrganiser) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDelete(photo.id);
+                          handleDelete(photo);
                         }}
                         className="flex h-8 w-8 items-center justify-center rounded-sm border-2 border-tok-black bg-red-500 text-white transition-all hover:scale-110 active:scale-95"
                         title="Delete photo"
@@ -325,21 +327,26 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleFeature(photo.id);
+                                  !featureMutation.isPending && handleFeature(photo.id);
                                 }}
+                                disabled={featureMutation.isPending}
                                 className={cn(
-                                  "flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0.5 active:shadow-none",
+                                  "flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0.5 active:shadow-none disabled:opacity-50",
                                   photo.isFeatured ? "bg-white text-tok-black" : "bg-tok-yellow text-tok-black"
                                 )}
                               >
-                                <IconStar size={16} strokeWidth={2.5} className={photo.isFeatured ? "fill-tok-black" : ""} />
+                                {featureMutation.isPending ? (
+                                  <IconLoader size={16} className="animate-spin" />
+                                ) : (
+                                  <IconStar size={16} strokeWidth={2.5} className={photo.isFeatured ? "fill-tok-black" : ""} />
+                                )}
                               </button>
                             )}
                             {(photo.userId === userId || isOrganiser) && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDelete(photo.id);
+                                  handleDelete(photo);
                                 }}
                                 className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-red-500 text-white shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0.5 active:shadow-none"
                               >
@@ -446,6 +453,15 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
             </div>
           )}
         </ModalShell>
+      )}
+
+      {/* Delete Photo Modal */}
+      {photoToDelete && (
+        <DeletePhotoModal
+          dropId={drop.id}
+          photo={photoToDelete}
+          onClose={() => setPhotoToDelete(null)}
+        />
       )}
     </div>
   );
