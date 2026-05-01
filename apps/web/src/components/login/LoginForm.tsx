@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { auth, googleProvider } from '@/lib/firebase';
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth';
@@ -46,6 +46,36 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     }
   }, [serverError]);
 
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setGoogleLoading(true);
+          const finalized = await finalizeSession(result.user, { sync: false });
+
+          if (!finalized.ok) {
+            const msg = Array.isArray(finalized.message) ? finalized.message[0] : finalized.message;
+            toast.error(String(msg).toUpperCase());
+            setGoogleLoading(false);
+            return;
+          }
+
+          toast.success('WELCOME BACK');
+          setSession(result.user, finalized.dbUser);
+          router.replace(redirectTo);
+        }
+      } catch (error: unknown) {
+        const code = (error as { code?: string }).code ?? '';
+        if (code === 'auth/popup-closed-by-user') return;
+        toast.error(String(getFirebaseError(code)).toUpperCase());
+        setGoogleLoading(false);
+      }
+    };
+
+    void checkRedirect();
+  }, [router, redirectTo, setSession]);
+
   const {
     register,
     handleSubmit,
@@ -59,6 +89,12 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     setServerError(null);
     setGoogleLoading(true);
     try {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+
       const result = await signInWithPopup(auth, googleProvider);
       const finalized = await finalizeSession(result.user, { sync: false });
 

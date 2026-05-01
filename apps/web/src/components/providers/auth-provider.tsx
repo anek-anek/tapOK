@@ -61,7 +61,7 @@ export function AuthProvider({
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        if (window.location.pathname === '/register') {
+        if (window.location.pathname === '/register' || window.location.pathname === '/login') {
           setLoading(false);
           return;
         }
