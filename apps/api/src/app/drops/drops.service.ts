@@ -16,10 +16,25 @@ import { DropCrew } from './entities/drop-crew.entity';
 import { DropPhoto } from './entities/drop-photo.entity';
 import { DropCategory, DropCrewStatus, DropStatus, SupabaseStorageService } from '../../common';
 import { CreateDropDto } from './dto/create-drop.dto';
+import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
 import { DiscoverDropsResponseDto } from './dto/discover-drops-response.dto';
+import { DropActivityLogPublicDto } from './dto/drop-activity-log-public.dto';
 import { DropDiscoverSummaryDto } from './dto/drop-discover-summary.dto';
 import { DropPhotoPublicDto } from './dto/drop-photo-public.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
+
+const PUBLIC_ACTIVITY_CHANGED_FIELDS = new Set([
+  'name',
+  'scheduledAt',
+  'location',
+  'expectedHeadcount',
+  'isLocked',
+  'isPublic',
+  'status',
+  'category',
+  'overview',
+  'coverPhoto',
+]);
 
 @Injectable()
 export class DropsService {
@@ -66,6 +81,54 @@ export class DropsService {
       summary.sparkedByViewer = viewerSparkedDropIds.has(row.id);
     }
     return summary;
+  }
+
+  private toPublicActivityLog(log: DropActivityLog): DropActivityLogPublicDto {
+    const safeChangedFields = this.toSafeChangedFields(log.changedFields);
+
+    return {
+      id: log.id,
+      dropId: log.dropId,
+      userId: log.userId,
+      user: {
+        id: log.user.id,
+        firstName: log.user.firstName,
+        lastName: log.user.lastName,
+        avatar: log.user.avatar,
+      },
+      action: log.action,
+      ...(safeChangedFields && { changedFields: safeChangedFields }),
+      createdAt: log.createdAt,
+    };
+  }
+
+  private toSafeChangedFields(
+    changedFields?: Record<string, unknown>,
+  ): Record<string, true> | undefined {
+    if (!changedFields) return undefined;
+
+    const safeKeys = Object.keys(changedFields).filter((key) =>
+      PUBLIC_ACTIVITY_CHANGED_FIELDS.has(key),
+    );
+
+    if (safeKeys.length === 0) return undefined;
+
+    return Object.fromEntries(safeKeys.map((key) => [key, true])) as Record<string, true>;
+  }
+
+  private async assertCanViewDropActivity(dropId: string, firebaseUid: string): Promise<void> {
+    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('Authenticated user not found in database');
+
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId === user.id) return;
+
+    const activeCrew = await this.dropsRepository.findActiveInCrewMember(dropId, user.id);
+    if (!activeCrew) {
+      throw new NotFoundException(`Drop ${dropId} not found or no access`);
+    }
   }
 
   async create(dto: CreateDropDto, firebaseUid: string): Promise<Drop> {
@@ -446,9 +509,14 @@ export class DropsService {
     firebaseUid: string,
     page: number,
     limit: number,
-  ): Promise<{ data: DropActivityLog[]; total: number; page: number; totalPages: number }> {
-    await this.findOne(dropId, firebaseUid);
-    return this.dropsRepository.findPaginatedActivityLogs(dropId, page, limit);
+  ): Promise<ActivityLogsPageDto> {
+    await this.assertCanViewDropActivity(dropId, firebaseUid);
+    const logsPage = await this.dropsRepository.findPaginatedActivityLogs(dropId, page, limit);
+
+    return {
+      ...logsPage,
+      data: logsPage.data.map((log) => this.toPublicActivityLog(log)),
+    };
   }
 
   async findMyActivityLogs(firebaseUid: string): Promise<DropActivityLog[]> {

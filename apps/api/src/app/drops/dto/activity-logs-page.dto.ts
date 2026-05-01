@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { DropActivityLog } from '../entities/drop-activity-log.entity';
+import { DropActivityLogPublicDto } from './drop-activity-log-public.dto';
 
 export class ActivityLogsPageDto {
-  @ApiProperty({ type: [DropActivityLog] })
-  data: DropActivityLog[];
+  @ApiProperty({ type: [DropActivityLogPublicDto] })
+  data: DropActivityLogPublicDto[];
 
   @ApiProperty()
   total: number;

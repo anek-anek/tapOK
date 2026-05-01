@@ -2553,13 +2553,74 @@
           "createdAt"
         ]
       },
+      "CrewMemberUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "DropActivityLogPublicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/CrewMemberUserDto"
+          },
+          "action": {
+            "type": "string"
+          },
+          "changedFields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "description": "Whitelisted changed field names only; values are always true."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "dropId",
+          "userId",
+          "user",
+          "action",
+          "createdAt"
+        ]
+      },
       "ActivityLogsPageDto": {
         "type": "object",
         "properties": {
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DropActivityLog"
+              "$ref": "#/components/schemas/DropActivityLogPublicDto"
             }
           },
           "total": {
@@ -2681,28 +2742,6 @@
             "example": "hangout"
           }
         }
-      },
-      "CrewMemberUserDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "avatar": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "firstName",
-          "lastName"
-        ]
       },
       "CrewMemberDto": {
         "type": "object",
