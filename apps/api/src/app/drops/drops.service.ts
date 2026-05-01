@@ -608,6 +608,26 @@ export class DropsService {
     });
   }
 
+  async sparkDrop(dropId: string, firebaseUid: string): Promise<void> {
+    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('User not found');
+
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException('Drop not found');
+
+    const existing = await this.dropsRepository.findSpark(dropId, user.id);
+    if (existing) return; // Already sparked
+
+    await this.dropsRepository.addSpark(dropId, user.id);
+  }
+
+  async unsparkDrop(dropId: string, firebaseUid: string): Promise<void> {
+    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('User not found');
+
+    await this.dropsRepository.removeSpark(dropId, user.id);
+  }
+
   private async generateUniqueJoinCode(): Promise<string> {
     let joinCode: string;
     let exists: boolean;

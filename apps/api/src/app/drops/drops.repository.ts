@@ -8,6 +8,7 @@ import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
 
 import { DropPhoto } from './entities/drop-photo.entity';
+import { DropSpark } from './entities/drop-spark.entity';
 
 @Injectable()
 export class DropsRepository {
@@ -20,12 +21,14 @@ export class DropsRepository {
     private readonly crewRepo: Repository<DropCrew>,
     @InjectRepository(DropPhoto)
     private readonly photoRepo: Repository<DropPhoto>,
+    @InjectRepository(DropSpark)
+    private readonly sparkRepo: Repository<DropSpark>,
   ) {}
 
   findById(id: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
       where: { id },
-      relations: { organiser: true, activityLogs: { user: true } },
+      relations: { organiser: true, activityLogs: { user: true }, sparks: true },
       order: { activityLogs: { createdAt: 'DESC' } },
     });
   }
@@ -33,7 +36,7 @@ export class DropsRepository {
   findByOrganiserId(organiserId: string): Promise<Drop[]> {
     return this.dropRepo.find({
       where: { organiserId },
-      relations: { organiser: true },
+      relations: { organiser: true, sparks: true },
       order: { scheduledAt: 'ASC' },
     });
   }
@@ -57,6 +60,7 @@ export class DropsRepository {
       .leftJoin('drop.crew', 'crew_me', 'crew_me.userId = :userId', { userId })
       .leftJoinAndSelect('drop.crew', 'crew')
       .leftJoinAndSelect('crew.user', 'user')
+      .leftJoinAndSelect('drop.sparks', 'sparks')
       .where('drop.organiserId = :userId', { userId })
       .orWhere('crew_me.userId = :userId AND crew_me.status = :accepted', {
         userId,
@@ -69,7 +73,7 @@ export class DropsRepository {
   findByJoinCode(joinCode: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
       where: { joinCode },
-      relations: { organiser: true },
+      relations: { organiser: true, sparks: true },
     });
   }
 
@@ -197,7 +201,7 @@ export class DropsRepository {
     }
     return this.dropRepo.find({
       where,
-      relations: { organiser: true },
+      relations: { organiser: true, sparks: true },
       order: { scheduledAt: 'ASC' },
     });
   }
@@ -236,7 +240,7 @@ export class DropsRepository {
 
     const [data, total] = await this.dropRepo.findAndCount({
       where,
-      relations: { organiser: true },
+      relations: { organiser: true, sparks: true },
       order: { scheduledAt: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -279,5 +283,22 @@ export class DropsRepository {
 
   async deletePhoto(id: string): Promise<void> {
     await this.photoRepo.delete(id);
+  }
+  
+  async addSpark(dropId: string, userId: string): Promise<DropSpark> {
+    const spark = this.sparkRepo.create({ dropId, userId });
+    return this.sparkRepo.save(spark);
+  }
+
+  async removeSpark(dropId: string, userId: string): Promise<void> {
+    await this.sparkRepo.delete({ dropId, userId });
+  }
+
+  async findSpark(dropId: string, userId: string): Promise<DropSpark | null> {
+    return this.sparkRepo.findOneBy({ dropId, userId });
+  }
+
+  async countSparks(dropId: string): Promise<number> {
+    return this.sparkRepo.countBy({ dropId });
   }
 }

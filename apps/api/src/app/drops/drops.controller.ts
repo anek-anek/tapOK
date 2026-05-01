@@ -376,4 +376,28 @@ export class DropsController {
   ): Promise<void> {
     return this.dropsService.deletePhoto(id, photoId, request.user.uid);
   }
+
+  @Post(':id/spark')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Spark a drop (hype)' })
+  @ApiResponse({ status: 204, description: 'Dropped sparked.' })
+  sparkDrop(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.sparkDrop(id, request.user.uid);
+  }
+
+  @Delete(':id/spark')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Unspark a drop' })
+  @ApiResponse({ status: 204, description: 'Dropped unsparked.' })
+  unsparkDrop(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.unsparkDrop(id, request.user.uid);
+  }
 }

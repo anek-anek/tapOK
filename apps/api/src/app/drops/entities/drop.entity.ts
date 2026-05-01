@@ -13,6 +13,7 @@ import { DropCategory, DropStatus } from '../../../common';
 import { User } from '../../users/entities/user.entity';
 import { DropActivityLog } from './drop-activity-log.entity';
 import { DropCrew } from './drop-crew.entity';
+import { DropSpark } from './drop-spark.entity';
 
 @Entity('drops')
 export class Drop {
@@ -82,6 +83,10 @@ export class Drop {
 
   @OneToMany(() => DropCrew, (crew) => crew.drop)
   crew: DropCrew[];
+
+  @ApiProperty({ type: () => [DropSpark] })
+  @OneToMany(() => DropSpark, (spark) => spark.drop)
+  sparks: DropSpark[];
 
   @ApiProperty()
   @CreateDateColumn({ type: 'timestamptz' })

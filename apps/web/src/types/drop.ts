@@ -47,8 +47,16 @@ export interface Drop {
   organiser: DropOrganiser;
   crew?: CrewMember[];
   activityLogs?: DropActivityLog[];
+  sparks?: DropSpark[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DropSpark {
+  id: string;
+  dropId: string;
+  userId: string;
+  createdAt: string;
 }
 
 export type DropCrewStatus = 'in' | 'pending' | 'rejected' | 'removed' | 'invited';
