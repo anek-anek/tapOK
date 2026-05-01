@@ -474,6 +474,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
         wrappedClose(true);
       }
     } finally {
+      isBusyRef.current = false;
       setIsSubmittingInternal(false);
     }
   });
