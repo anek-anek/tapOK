@@ -958,11 +958,6 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                                   marked_completed: 'closed the mission',
                                 }[log.action] ?? log.action.replace(/_/g, ' ')}
                               </span>
-                              {log.action === 'updated' && log.changedFields && Object.keys(log.changedFields).length > 0 && (
-                                <span className="block mt-1 font-mono text-[10px] text-tok-black/40">
-                                  FIELDS: {Object.keys(log.changedFields).join(', ').toUpperCase()}
-                                </span>
-                              )}
                             </p>
                             <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
                               {formatLogTime(log.createdAt)}
