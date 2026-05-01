@@ -11,15 +11,7 @@ interface Profile {
   avatar?: string;
 }
 
-function sessionCookieHeader(value: string, maxAge: number): string {
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  return `${SESSION_COOKIE}=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure}`;
-}
 
-function profileCookieHeader(value: string, maxAge: number): string {
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  return `${PROFILE_COOKIE}=${value}; Path=/; SameSite=Strict; Max-Age=${maxAge}${secure}`;
-}
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -37,12 +29,23 @@ export async function POST(req: NextRequest) {
   }
 
   const res = NextResponse.json({ ok: true });
-  res.headers.append('Set-Cookie', sessionCookieHeader(idToken, MAX_AGE));
+
+  const cookieOptions = {
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict' as const,
+    maxAge: MAX_AGE,
+  };
+
+  res.cookies.set(SESSION_COOKIE, idToken, cookieOptions);
 
   const profile: Profile | undefined = body?.profile;
   if (profile && typeof profile === 'object') {
-    const encoded = encodeURIComponent(JSON.stringify(profile));
-    res.headers.append('Set-Cookie', profileCookieHeader(encoded, MAX_AGE));
+    res.cookies.set(PROFILE_COOKIE, JSON.stringify(profile), {
+      ...cookieOptions,
+      httpOnly: false,
+    });
   }
 
   return res;
@@ -50,7 +53,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE() {
   const res = NextResponse.json({ ok: true });
-  res.headers.append('Set-Cookie', sessionCookieHeader('', 0));
-  res.headers.append('Set-Cookie', profileCookieHeader('', 0));
+  res.cookies.delete(SESSION_COOKIE);
+  res.cookies.delete(PROFILE_COOKIE);
   return res;
 }
