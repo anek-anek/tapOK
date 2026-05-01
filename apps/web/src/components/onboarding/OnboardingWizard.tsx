@@ -3,9 +3,6 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   ArrowRight as IconArrowRight,
   Check as IconCheck,
@@ -16,42 +13,20 @@ import {
   Share2 as IconShare2,
   ExternalLink as IconExternalLink,
   Loader2 as IconLoader,
-  Lock as IconLock,
 } from 'lucide-react';
-import { useCreateDrop } from '@/hooks/mutations/use-drop-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
 import { track } from '@/lib/analytics';
-import { AuthPageShell } from '@/components/auth/AuthPageShell';
+import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { toast } from 'react-hot-toast';
 import type { Drop } from '@/types/drop';
-
-// ─── Drop creation schema ────────────────────────────────────────────────────
-
-const dropSchema = z.object({
-  name: z.string().min(1, 'Give your drop a name'),
-  scheduledAt: z.string().min(1, 'Pick a time'),
-  location: z.string().min(1, 'Where are you meeting?'),
-  isLocked: z.boolean().optional(),
-});
-
-type DropFormValues = z.infer<typeof dropSchema>;
-
-// ─── Shared motion config ────────────────────────────────────────────────────
+import { DropModal } from '@/components/drop-modal';
 
 const slide = {
-  enter: { opacity: 0, x: 36 },
-  center: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -36 },
+  enter: { opacity: 0, y: 15 },
+  center: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -15 },
 };
 
-const springEase = [0.32, 0.72, 0, 1] as const;
-
-// ─── Shared input style ──────────────────────────────────────────────────────
-
-const INPUT =
-  'w-full rounded-xl border border-[#2a2118]/12 bg-white px-4 py-3 text-sm text-[#2a2118] placeholder-[#2a2118]/25 outline-hidden transition-all duration-200 focus:border-tok-teal focus:ring-2 focus:ring-tok-teal/10 hover:border-[#2a2118]/20';
-
-// ─── Step 0: Outcome Splash ──────────────────────────────────────────────────
 
 function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCrew: () => void; onSkip: () => void }) {
   return (
@@ -61,372 +36,185 @@ function OutcomeSplash({ onChief, onCrew, onSkip }: { onChief: () => void; onCre
       initial="enter"
       animate="center"
       exit="exit"
-      transition={{ duration: 0.3, ease: springEase }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       className="flex w-full flex-col"
     >
-      <p className="mb-2 font-inter text-[10px] uppercase tracking-[3px] text-[#2a2118]/35">
-        Welcome to TapOK
-      </p>
-      <h1 className="mb-2 font-passion text-[44px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[52px]">
-        The plan starts<br />with you.
-      </h1>
-      <p className="mb-8 text-sm text-[#2a2118]/50">What brings you here today?</p>
+      <div
+        className="mb-3 inline-flex w-fit items-center gap-2"
+        style={{
+          background: '#006666',
+          color: 'var(--color-tok-cream)',
+          fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
+          fontSize: '10px',
+          fontWeight: 700,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          padding: '4px 10px',
+          border: '2px solid #000',
+          boxShadow: '3px 3px 0 #000',
+        }}
+      >
+        WELCOME TO TAPOK
+      </div>
 
-      <div className="flex flex-col gap-3">
+      <h1 className="mb-2 font-passion text-[48px] leading-[0.9] uppercase tracking-tighter text-black sm:text-[56px]">
+        THE PLAN STARTS<br />WITH YOU.
+      </h1>
+      <p className="mb-8 font-inter text-sm text-black/50">What brings you here today?</p>
+
+      <div className="flex flex-col gap-4">
         {/* Chief option */}
-        <motion.button
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.98 }}
+        <button
           onClick={() => { track('onboarding_path_chief'); onChief(); }}
-          className="group flex items-center justify-between gap-4 rounded-2xl border border-[#2a2118]/10 bg-white px-4 py-4 text-left shadow-xs transition-shadow hover:shadow-md sm:px-6 sm:py-5"
+          className="group flex items-center justify-between gap-4 border-2 border-black bg-white px-5 py-5 text-left transition-all duration-200"
+          style={{ boxShadow: '4px 4px 0 #000' }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = 'translate(-2px,-2px)';
+            (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0 #000';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = '';
+            (e.currentTarget as HTMLElement).style.boxShadow = '4px 4px 0 #000';
+          }}
         >
           <div>
-            <p className="mb-0.5 font-passion text-sm font-bold uppercase tracking-wider text-[#2a2118]">
+            <p className="mb-0.5 font-passion text-xl uppercase tracking-tight text-black">
               Drop a plan
             </p>
-            <p className="text-xs text-[#2a2118]/45">I&apos;m the Chief — I&apos;ll organise this</p>
+            <p className="font-inter text-xs text-black/45">I&apos;m the Chief — I&apos;ll organise this</p>
           </div>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-tok-teal text-[#F7E9B2] transition-transform group-hover:scale-110">
-            <IconArrowRight size={14} />
+          <div className="flex h-10 w-10 items-center justify-center border-2 border-black bg-tok-teal text-white transition-transform group-hover:scale-110 shadow-[2px_2px_0_#000]">
+            <IconArrowRight size={18} strokeWidth={3} />
           </div>
-        </motion.button>
+        </button>
 
         {/* Crew option */}
-        <motion.button
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.98 }}
+        <button
           onClick={() => { track('onboarding_path_crew'); onCrew(); }}
-          className="group flex items-center justify-between gap-4 rounded-2xl border border-[#2a2118]/10 bg-white px-4 py-4 text-left shadow-xs transition-shadow hover:shadow-md sm:px-6 sm:py-5"
+          className="group flex items-center justify-between gap-4 border-2 border-black bg-white px-5 py-5 text-left transition-all duration-200"
+          style={{ boxShadow: '4px 4px 0 #000' }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = 'translate(-2px,-2px)';
+            (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0 #000';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = '';
+            (e.currentTarget as HTMLElement).style.boxShadow = '4px 4px 0 #000';
+          }}
         >
           <div>
-            <p className="mb-0.5 font-passion text-sm font-bold uppercase tracking-wider text-[#2a2118]">
+            <p className="mb-0.5 font-passion text-xl uppercase tracking-tight text-black">
               Join a drop
             </p>
-            <p className="text-xs text-[#2a2118]/45">I have a link or join code from a Chief</p>
+            <p className="font-inter text-xs text-black/45">I have a link or join code</p>
           </div>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2a2118] text-[#F7E9B2] transition-transform group-hover:scale-110">
-            <IconUsers size={14} />
+          <div className="flex h-10 w-10 items-center justify-center border-2 border-black bg-black text-tok-cream transition-transform group-hover:scale-110 shadow-[2px_2px_0_#000]">
+            <IconUsers size={18} strokeWidth={2.5} />
           </div>
-        </motion.button>
+        </button>
       </div>
 
       <button
         onClick={onSkip}
-        className="mt-3 self-center font-inter text-[10px] text-[#2a2118]/30 transition-colors hover:text-[#2a2118]/60 underline underline-offset-4"
+        className="mt-6 self-center font-passion text-xs uppercase tracking-widest text-black/30 transition-colors hover:text-black/60 underline underline-offset-8"
       >
         Skip for now
       </button>
 
-      <p className="mt-10 font-inter text-[11px] text-[#2a2118]/30">
-        Built for friend groups who are tired of maybes.
+      <p className="mt-12 font-inter text-[11px] uppercase tracking-wider text-black/25">
+        Built for groups who are tired of &quot;maybe&quot;.
       </p>
     </motion.div>
   );
 }
 
-// ─── Step 1 (Crew): Code Entry ───────────────────────────────────────────────
+import { ModalShell } from '@/components/modal-shell';
+import { X as IconX } from 'lucide-react';
 
-function CrewEntry({ onBack }: { onBack: () => void }) {
+import { dropsService } from '@/services/drops.service';
+
+function JoinModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const [code, setCode] = useState('');
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => { track('crew_code_entry_viewed'); }, []);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const trimmed = code.trim().toUpperCase();
-    if (!trimmed) return;
-    track('crew_code_submitted', { code: trimmed });
-    router.push(`/drops/join/${trimmed}`);
-  };
+    if (!trimmed || trimmed.length < 4) return;
 
-  return (
-    <motion.div
-      key="crew-entry"
-      variants={slide}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      transition={{ duration: 0.3, ease: springEase }}
-      className="w-full"
-    >
-      <button
-        onClick={onBack}
-        className="mb-5 flex items-center gap-1.5 text-xs text-[#2a2118]/40 transition-colors hover:text-[#2a2118]/70"
-      >
-        ← Back
-      </button>
-
-      <h2 className="mb-1 font-passion text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
-        Got a code?
-      </h2>
-      <p className="mb-6 text-sm text-[#2a2118]/50">
-        Enter the join code or paste the link your Chief sent you.
-      </p>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label className="font-inter text-[10px] uppercase tracking-widest text-[#2a2118]/45">
-            Join code
-          </label>
-          <input
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="e.g. A1B2C3D4"
-            autoFocus
-            autoCapitalize="characters"
-            autoComplete="off"
-            spellCheck={false}
-            className={INPUT}
-          />
-        </div>
-
-        <motion.button
-          type="submit"
-          disabled={code.trim().length < 4}
-          whileHover={code.trim().length >= 4 ? { y: -2 } : {}}
-          whileTap={code.trim().length >= 4 ? { scale: 0.98 } : {}}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-xs transition-all hover:bg-tok-teal/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Tap In
-        </motion.button>
-      </form>
-    </motion.div>
-  );
-}
-
-// ─── Progress chip ───────────────────────────────────────────────────────────
-
-function ProgressChip({ filled }: { filled: [boolean, boolean, boolean] }) {
-  const done = filled.filter(Boolean).length;
-  return (
-    <div className="mb-5 flex items-center gap-2.5">
-      {filled.map((f, i) => (
-        <motion.div
-          key={i}
-          animate={f ? { scale: [1, 1.28, 1] } : { scale: 1 }}
-          transition={{ duration: 0.22 }}
-          className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold transition-colors duration-200 ${
-            f ? 'bg-tok-teal text-white' : 'bg-[#2a2118]/10 text-[#2a2118]/35'
-          }`}
-        >
-          {f ? <IconCheck size={10} strokeWidth={3} /> : i + 1}
-        </motion.div>
-      ))}
-      <span className="font-inter text-[10px] text-[#2a2118]/40">
-        {done === 3 ? 'Ready to go live' : `${3 - done} thing${3 - done !== 1 ? 's' : ''} to go`}
-      </span>
-    </div>
-  );
-}
-
-// ─── Step 1: Drop Builder ────────────────────────────────────────────────────
-
-function DropBuilder({
-  onBack,
-  onLive,
-  name,
-}: {
-  onBack: () => void;
-  onLive: (drop: Drop) => void;
-  name: string;
-}) {
-  const createDrop = useCreateDrop();
-
-  // Track when the drop builder step is first viewed
-  useEffect(() => { track('drop_builder_viewed'); }, []);
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm<DropFormValues>({
-    resolver: zodResolver(dropSchema),
-    defaultValues: { name: '', scheduledAt: '', location: '', isLocked: false },
-  });
-
-  const [dropName, scheduledAt, location] = watch(['name', 'scheduledAt', 'location']);
-
-  const filled: [boolean, boolean, boolean] = [
-    dropName.trim().length > 0,
-    scheduledAt.length > 0,
-    location.trim().length > 0,
-  ];
-  const allFilled = filled.every(Boolean);
-
-  // Local min datetime for the native date/time picker
-  const now = new Date();
-  const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  const minDateTime = localNow.toISOString().slice(0, 16);
-
-  const onSubmit = async (values: DropFormValues) => {
+    setIsChecking(true);
     try {
-      const drop = await createDrop.mutateAsync({
-        name: values.name.trim(),
-        scheduledAt: new Date(values.scheduledAt).toISOString(),
-        location: values.location.trim(),
-        isLocked: values.isLocked ?? false,
-      });
-      track('drop_created', { dropId: drop.id });
-      toast.success('DROP CREATED SUCCESSFULLY');
-      onLive(drop);
+      const drop = await dropsService.getByJoinCode(trimmed);
+      track('crew_code_submitted', { code: trimmed, dropId: drop.id });
+      toast.success('DROP FOUND! TAPPING YOU IN...');
+      router.push(`/drops/join/${trimmed}`);
     } catch (err: any) {
-      const rawMsg = err.response?.data?.message || 'COULD NOT CREATE THE DROP';
-      const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+      const msg = err.response?.data?.message || 'INVALID JOIN CODE';
       toast.error(String(msg).toUpperCase());
+      setIsChecking(false);
     }
   };
 
   return (
-    <motion.div
-      key="builder"
-      variants={slide}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      transition={{ duration: 0.3, ease: springEase }}
-      className="w-full"
-    >
-      <button
-        onClick={onBack}
-        className="mb-5 flex items-center gap-1.5 text-xs text-[#2a2118]/40 transition-colors hover:text-[#2a2118]/70"
-      >
-        ← Back
-      </button>
-
-      <ProgressChip filled={filled} />
-
-      <h2 className="mb-1 font-passion text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
-        Drop a plan.
-      </h2>
-      <p className="mb-6 text-sm text-[#2a2118]/50">
-        Give your crew one clear thing to say yes or no to.
-      </p>
-
-      {/* Host preview */}
-      <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-[#2a2118]/8 bg-[#F7E9B2]/40 px-4 py-2.5">
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tok-teal font-inter text-[9px] font-bold text-[#F7E9B2]">
-          {name.charAt(0).toUpperCase()}
-        </div>
-        <p className="text-xs text-[#2a2118]/55">
-          <span className="font-semibold text-[#2a2118]/75">{name}</span> is dropping a plan
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        {/* Drop name */}
-        <div className="flex flex-col gap-1.5">
-          <label className="font-inter text-[10px] uppercase tracking-widest text-[#2a2118]/45">
-            Name
-          </label>
-          <input
-            {...register('name')}
-            type="text"
-            placeholder="Friday tacos"
-            autoFocus
-            className={INPUT}
-          />
-          {errors.name && <p className="text-xs text-red-600">{errors.name.message}</p>}
-        </div>
-
-        {/* Date/time */}
-        <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1.5 font-inter text-[10px] uppercase tracking-widest text-[#2a2118]/45">
-            <IconCalendar size={11} />
-            When
-          </label>
-          <input
-            {...register('scheduledAt')}
-            type="datetime-local"
-            min={minDateTime}
-            className={INPUT}
-          />
-          {errors.scheduledAt && <p className="text-xs text-red-600">{errors.scheduledAt.message}</p>}
-        </div>
-
-        {/* Location */}
-        <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1.5 font-inter text-[10px] uppercase tracking-widest text-[#2a2118]/45">
-            <IconMapPin size={11} />
-            Where
-          </label>
-          <input
-            {...register('location')}
-            type="text"
-            placeholder="El Camino, BGC"
-            className={INPUT}
-          />
-          {errors.location && <p className="text-xs text-red-600">{errors.location.message}</p>}
-        </div>
-
-        <Controller
-          name="isLocked"
-          control={control}
-          render={({ field }) => (
+    <ModalShell onClose={onClose}>
+      {(close) => (
+        <div className="flex w-full max-w-md flex-col overflow-hidden border-[3px] border-black bg-tok-cream p-6 sm:p-8 shadow-[10px_10px_0px_#262624]">
+          <div className="mb-6 flex items-start justify-between text-left">
+            <div className="flex-1 text-left">
+              <h2 className="font-passion text-3xl uppercase tracking-tight text-black text-left">
+                JOIN A DROP.
+              </h2>
+              <p className="font-inter text-sm text-black/40 text-left">
+                Enter the code provided by your Chief.
+              </p>
+            </div>
             <button
-              type="button"
-              onClick={() => field.onChange(!field.value)}
-              className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 transition-colors ${
-                field.value
-                  ? 'border-amber-400/40 bg-amber-50/80'
-                  : 'border-[#2a2118]/12 bg-white hover:border-[#2a2118]/20'
-              }`}
+              onClick={close}
+              className="flex h-8 w-8 shrink-0 items-center justify-center border-2 border-black bg-white text-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0_#000]"
             >
-              <div className="flex items-center gap-3">
-                <IconLock
-                  size={13}
-                  className={field.value ? 'text-amber-700' : 'text-[#2a2118]/30'}
-                />
-                <div className="text-left">
-                  <p className={`font-inter text-[10px] uppercase tracking-widest ${field.value ? 'text-amber-800' : 'text-[#2a2118]/55'}`}>
-                    Lock Drop
-                  </p>
-                  <p className={`text-xs font-light leading-tight ${field.value ? 'text-amber-700/70' : 'text-[#2a2118]/35'}`}>
-                    New joiners will require approval
-                  </p>
-                </div>
-              </div>
-              <div className={`relative h-5 w-9 rounded-full transition-colors ${field.value ? 'bg-amber-500' : 'bg-[#2a2118]/15'}`}>
-                <span
-                  className="absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-all duration-200"
-                  style={{ transform: `translateX(${field.value ? '18px' : '2px'})` }}
-                />
-              </div>
+              <IconX size={18} strokeWidth={2.5} />
             </button>
-          )}
-        />
+          </div>
 
+          <form onSubmit={handleSubmit} className="relative">
+            <div className="flex h-14 sm:h-16 items-stretch border-[3px] border-black bg-white shadow-[6px_6px_0_#262624]">
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="ACCESS CODE"
+                autoFocus
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck={false}
+                disabled={isChecking}
+                className="min-w-0 flex-1 px-4 sm:px-5 font-passion text-lg sm:text-xl font-bold tracking-widest text-black placeholder:text-black/15 focus:outline-none disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={code.trim().length < 4 || isChecking}
+                className="flex items-center justify-center border-l-[3px] border-black bg-[#D9D9D9] px-6 sm:px-10 font-passion text-lg sm:text-xl font-bold tracking-widest text-black transition-colors hover:bg-black hover:text-white disabled:opacity-40"
+              >
+                {isChecking ? (
+                  <IconLoader className="animate-spin" size={20} />
+                ) : (
+                  'JOIN'
+                )}
+              </button>
+            </div>
 
-        <div className="mt-1 flex flex-col gap-2">
-          <p className="text-center font-inter text-[9px] uppercase tracking-[2px] text-[#2a2118]/25">
-            No maybes — crew taps In or Out
-          </p>
-          <motion.button
-            type="submit"
-            disabled={isSubmitting || !allFilled}
-            whileHover={allFilled ? { y: -2 } : {}}
-            whileTap={allFilled ? { scale: 0.98 } : {}}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-xs transition-all hover:bg-tok-teal/90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <>
-                <IconLoader size={13} className="animate-spin" />
-                Going Live…
-              </>
-            ) : (
-              'Go Live'
-            )}
-          </motion.button>
+            <p className="mt-6 text-left font-inter text-[11px] uppercase tracking-wider text-black/25">
+              Crew taps in or out. No maybes allowed.
+            </p>
+          </form>
         </div>
-      </form>
-    </motion.div>
+      )}
+    </ModalShell>
   );
 }
-
-// ─── Step 2: Live Confirmation (Aha Moment) ──────────────────────────────────
 
 function DropLive({ drop }: { drop: Drop }) {
   const router = useRouter();
@@ -477,192 +265,219 @@ function DropLive({ drop }: { drop: Drop }) {
       initial="enter"
       animate="center"
       exit="exit"
-      transition={{ duration: 0.3, ease: springEase }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       className="flex w-full flex-col"
     >
-      {/* Live badge */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.82 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.1, duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
-        className="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-tok-teal/10 px-3.5 py-1.5"
-      >
-        <motion.span
-          animate={{ scale: [1, 1.5, 1], opacity: [1, 0.25, 1] }}
-          transition={{ repeat: Infinity, repeatDelay: 1.0, duration: 0.55 }}
-          className="h-1.5 w-1.5 rounded-full bg-tok-teal"
-        />
-        <span className="font-inter text-[10px] font-semibold uppercase tracking-[2px] text-tok-teal">
-          Drop is live
+      <div className="mb-4 flex items-center gap-3">
+        <span className="flex h-2 w-2 rounded-full bg-tok-teal animate-livepulse shadow-[0_0_8px_rgba(0,102,102,0.6)]" />
+        <span className="font-passion text-xs uppercase tracking-[0.2em] text-tok-teal font-bold">
+          DROP IS LIVE
         </span>
-      </motion.div>
+      </div>
 
-      <h2 className="mb-1 font-passion text-[38px] leading-none uppercase tracking-wide text-[#2a2118] sm:text-[44px]">
-        Your drop is live.
+      <h2 className="mb-1 font-passion text-[48px] leading-[0.9] uppercase tracking-tighter text-black sm:text-[56px]">
+        YOUR DROP<br />IS LIVE.
       </h2>
-      <p className="mb-6 text-sm text-[#2a2118]/50">Now get your first In.</p>
+      <p className="mb-8 font-inter text-sm text-black/50">Now get your first Tap In.</p>
 
-      {/* Drop card */}
+      {/* Drop card summary */}
       <motion.div
-        initial={{ y: 18, opacity: 0 }}
+        initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.18, duration: 0.38 }}
-        className="mb-5 overflow-hidden rounded-2xl border border-[#2a2118]/10 border-l-4 border-l-tok-teal bg-white shadow-[0_8px_24px_rgba(42,33,24,0.07)]"
+        transition={{ delay: 0.2, duration: 0.4 }}
+        className="mb-8 border-2 border-black bg-white shadow-[6px_6px_0_#262624]"
       >
-        <div className="flex items-start justify-between gap-3 p-4 sm:p-5">
-          <div className="min-w-0 flex-1">
-            <p className="mb-2.5 font-passion text-[15px] font-bold text-[#2a2118]">{drop.name}</p>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2 text-xs text-[#2a2118]/55">
-                <IconCalendar size={11} className="shrink-0" />
-                <span>{formatDateTime(drop.scheduledAt)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-[#2a2118]/55">
-                <IconMapPin size={11} className="shrink-0" />
-                <span className="truncate">{drop.location}</span>
-              </div>
+        <div className="p-5">
+          <div className="mb-4 flex items-start justify-between">
+            <h3 className="font-passion text-2xl uppercase leading-none text-black">{drop.name}</h3>
+            <div className="border-2 border-tok-teal px-2 py-0.5 shadow-[2px_2px_0_#000]">
+              <span className="font-passion text-[10px] uppercase tracking-widest text-tok-teal font-bold">LIVE</span>
             </div>
           </div>
 
-          {/* LIVE stamp */}
-          <motion.div
-            initial={{ rotate: -14, scale: 0, opacity: 0 }}
-            animate={{ rotate: 0, scale: 1, opacity: 1 }}
-            transition={{ delay: 0.36, duration: 0.32, ease: [0.34, 1.56, 0.64, 1] }}
-            className="ml-3 shrink-0 rounded border border-tok-teal/60 px-1.5 py-0.5"
-          >
-            <span className="font-inter text-[8px] font-bold uppercase tracking-[2px] text-tok-teal">
-              Live
-            </span>
-          </motion.div>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3 font-passion text-xs uppercase tracking-wider text-black/60">
+              <IconCalendar size={14} className="text-tok-teal" />
+              <span>{formatDateTime(drop.scheduledAt)}</span>
+            </div>
+            <div className="flex items-center gap-3 font-passion text-xs uppercase tracking-wider text-black/60">
+              <IconMapPin size={14} className="text-tok-teal" />
+              <span className="truncate">{drop.location}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="border-t border-[#2a2118]/8 px-5 py-2.5">
-          <p className="font-inter text-[10px] text-[#2a2118]/35">
-            Join code:{' '}
-            <span className="font-bold tracking-wider text-[#2a2118]/60">{drop.joinCode}</span>
+        <div className="border-t-2 border-dashed border-black/10 bg-tok-cream/20 px-5 py-3">
+          <p className="font-passion text-xs uppercase tracking-widest text-black/40">
+            JOIN CODE: <span className="text-black font-bold text-sm tracking-normal">{drop.joinCode}</span>
           </p>
         </div>
       </motion.div>
 
-      {/* Share link */}
+      {/* Share link container */}
       <motion.div
-        initial={{ y: 12, opacity: 0 }}
+        initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.28, duration: 0.35 }}
-        className="mb-5"
+        transition={{ delay: 0.3, duration: 0.4 }}
+        className="mb-8"
       >
-        <p className="mb-1.5 font-inter text-[10px] uppercase tracking-[2px] text-[#2a2118]/35">
-          Send this where the chaos usually starts
+        <p className="mb-2 font-passion text-[10px] uppercase tracking-[0.2em] text-black/35">
+          SEND THIS WHERE THE CHAOS USUALLY STARTS
         </p>
-        <div className="flex items-stretch overflow-hidden rounded-xl border border-[#2a2118]/10 bg-white">
-          <p className="flex-1 truncate px-4 py-2.5 font-inter text-[11px] text-[#2a2118]/55">
+        <div className="flex items-stretch border-2 border-black bg-white shadow-[4px_4px_0_#000]">
+          <p className="flex-1 truncate px-4 py-3 font-inter text-xs text-black/55">
             {shareUrl}
           </p>
           <button
             onClick={handleCopy}
-            className="flex shrink-0 items-center gap-1.5 border-l border-[#2a2118]/8 px-3.5 py-2.5 transition-colors hover:bg-[#F7E9B2]/60"
+            className="flex shrink-0 items-center gap-2 border-l-2 border-black px-4 py-3 transition-colors hover:bg-tok-teal hover:text-white"
           >
             {copied ? (
-              <IconCheck size={12} className="text-tok-teal" />
+              <IconCheck size={14} strokeWidth={3} />
             ) : (
-              <IconCopy size={12} className="text-[#2a2118]/40" />
+              <IconCopy size={14} />
             )}
-            <span className="font-inter text-[10px] text-[#2a2118]/50">
-              {copied ? 'Copied!' : 'Copy'}
+            <span className="font-passion text-xs uppercase tracking-widest font-bold">
+              {copied ? 'COPIED' : 'COPY'}
             </span>
           </button>
         </div>
       </motion.div>
 
-      {/* CTAs */}
+      {/* Primary Actions */}
       <motion.div
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.38, duration: 0.35 }}
-        className="flex flex-col gap-2.5"
+        transition={{ delay: 0.4, duration: 0.4 }}
+        className="flex flex-col gap-4"
       >
-        <motion.button
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.98 }}
+        <button
           onClick={handleShare}
-          className="flex items-center justify-center gap-2 rounded-full bg-tok-teal px-6 py-3.5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-xs transition-all hover:bg-tok-teal/90"
+          className="flex items-center justify-center gap-3 border-2 border-black bg-tok-teal px-8 py-4 font-passion text-2xl uppercase tracking-wider text-white shadow-[6px_6px_0px_0px_#262624] transition-all duration-150"
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = 'translate(-2px,-2px)';
+            (e.currentTarget as HTMLElement).style.boxShadow = '8px 8px 0px 0px #262624';
+            (e.currentTarget as HTMLElement).style.backgroundColor = '#005555';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = '';
+            (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0px 0px #262624';
+            (e.currentTarget as HTMLElement).style.backgroundColor = '';
+          }}
         >
-          <IconShare2 size={13} />
-          Send to crew
-        </motion.button>
+          <IconShare2 size={20} strokeWidth={2.5} />
+          SEND TO CREW
+        </button>
 
         <button
           onClick={() => { track('drop_view_clicked', { dropId: drop.id }); router.push(`/drops/${drop.id}`); }}
-          className="flex items-center justify-center gap-2 rounded-full border border-[#2a2118]/12 bg-transparent px-6 py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-[#2a2118]/55 transition-colors hover:bg-[#2a2118]/5"
+          className="flex items-center justify-center gap-2 border-2 border-black bg-transparent px-8 py-3.5 font-passion text-lg uppercase tracking-widest text-black/60 transition-all hover:bg-black hover:text-white"
         >
-          <IconExternalLink size={12} />
-          View my drop
+          <IconExternalLink size={16} />
+          VIEW MY DROP
         </button>
       </motion.div>
 
-      {/* Founder note */}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.65, duration: 0.5 }}
-        className="mt-7 font-inter text-[10px] italic leading-relaxed text-[#2a2118]/30"
+        transition={{ delay: 0.7, duration: 0.5 }}
+        className="mt-10 font-inter text-[11px] uppercase tracking-widest leading-relaxed text-black/25 text-center"
       >
-        &ldquo;We built TapOK because plans deserve better than buried DMs. Your first drop is live.
-        Now make it happen.&rdquo;
+        Plans deserve better than buried DMs.<br />Your first drop is live.
       </motion.p>
     </motion.div>
   );
 }
-
-// ─── Main wizard ─────────────────────────────────────────────────────────────
 
 export function OnboardingWizard() {
   const router = useRouter();
   const params = useSearchParams();
   const { dbUser } = useAuth();
 
-  // firstName from URL param (set by RegisterForm after fresh signup) or from dbUser
-  // for users who navigate directly to /onboarding while already authenticated.
-  const firstName = params.get('name') ?? dbUser?.firstName ?? 'You';
-
   const [step, setStep] = useState(0);
   const [path, setPath] = useState<'chief' | 'crew' | null>(null);
   const [liveDrop, setLiveDrop] = useState<Drop | null>(null);
-  const createDrop = useCreateDrop();
+  const [showModal, setShowModal] = useState(false);
 
-  // Track when onboarding is first viewed
   useEffect(() => { track('onboarding_started'); }, []);
 
   const handleLive = (drop: Drop) => {
     setLiveDrop(drop);
     setStep(2);
+    setShowModal(false);
+  };
+
+  const handleChiefStart = () => {
+    setPath('chief');
+    setStep(1);
+    setShowModal(true);
   };
 
   return (
-    <AuthPageShell footerClassName="">
-          <AnimatePresence mode="wait">
-            {step === 0 && (
-              <OutcomeSplash
-                onChief={() => { setPath('chief'); setStep(1); }}
-                onCrew={() => { setPath('crew'); setStep(1); }}
-                onSkip={() => router.push('/')}
+    <AuthPageShell footerClassName="hidden sm:block">
+      <AnimatePresence mode="wait">
+        {step === 0 && (
+          <OutcomeSplash
+            onChief={handleChiefStart}
+            onCrew={() => { setPath('crew'); setStep(1); setShowModal(true); }}
+            onSkip={() => router.push('/')}
+          />
+        )}
+
+        {step === 1 && path === 'chief' && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="mb-6 flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-tok-teal/10">
+              <IconLoader className="animate-spin text-tok-teal" size={32} />
+            </div>
+            <h2 className="font-passion text-3xl uppercase tracking-tight text-black">
+              Initializing Drop...
+            </h2>
+            <p className="mt-2 font-inter text-sm text-black/40">
+              Wait for the Chief's terminal to open.
+            </p>
+
+            {showModal && (
+              <DropModal
+                onClose={() => {
+                  setShowModal(false);
+                  setStep(0);
+                  setPath(null);
+                }}
+                onSuccess={handleLive}
               />
             )}
-            {step === 1 && path === 'chief' && (
-              <DropBuilder
-                onBack={() => setStep(0)}
-                onLive={handleLive}
-                name={firstName}
+          </div>
+        )}
+
+        {step === 1 && path === 'crew' && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="mb-6 flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-tok-teal/10">
+              <IconLoader className="animate-spin text-tok-teal" size={32} />
+            </div>
+            <h2 className="font-passion text-3xl uppercase tracking-tight text-black">
+              Syncing Crew...
+            </h2>
+            <p className="mt-2 font-inter text-sm text-black/40">
+              Connecting to the Chief's mission.
+            </p>
+
+            {showModal && (
+              <JoinModal
+                onClose={() => {
+                  setShowModal(false);
+                  setStep(0);
+                  setPath(null);
+                }}
               />
             )}
-            {step === 1 && path === 'crew' && (
-              <CrewEntry onBack={() => setStep(0)} />
-            )}
-            {step === 2 && liveDrop && (
-              <DropLive drop={liveDrop} />
-            )}
-          </AnimatePresence>
+          </div>
+        )}
+
+        {step === 2 && liveDrop && (
+          <DropLive drop={liveDrop} />
+        )}
+      </AnimatePresence>
     </AuthPageShell>
   );
 }
