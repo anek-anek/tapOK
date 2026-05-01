@@ -708,7 +708,7 @@ export class DropsService {
 
       await this.dropsRepository.updatePhoto(photoId, {
         url: publicUrl,
-        base64: null, // Clear base64 to save DB space once moved to storage
+        base64: null,
         isFeatured: true,
       });
 
@@ -759,11 +759,10 @@ export class DropsService {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('User not found');
 
-    const drop = await this.dropsRepository.findById(dropId);
-    if (!drop) throw new NotFoundException('Drop not found');
+    await this.findOne(dropId, firebaseUid);
 
     const existing = await this.dropsRepository.findSpark(dropId, user.id);
-    if (existing) return; // Already sparked
+    if (existing) return;
 
     await this.dropsRepository.addSpark(dropId, user.id);
   }
@@ -772,6 +771,7 @@ export class DropsService {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('User not found');
 
+    await this.findOne(dropId, firebaseUid);
     await this.dropsRepository.removeSpark(dropId, user.id);
   }
 
