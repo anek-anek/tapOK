@@ -494,11 +494,8 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   onChange={handleCoverSelect}
                 />
 
-                {/* Cover photo actions — Neubrutalist style */}
-                <div className={cn(
-                  "absolute z-30 flex items-center gap-2 transition-all",
-                  coverPreview ? "bottom-4 right-4" : "inset-0 flex-col justify-center"
-                )}>
+                {/* Cover photo actions — Neubrutalist style, now always centered */}
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 px-4 transition-all sm:gap-3">
                   <button
                     type="button"
                     onClick={() => coverInputRef.current?.click()}
@@ -506,7 +503,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                     className="flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-cream px-4 font-passion text-[11px] font-bold uppercase tracking-wider text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
                   >
                     <IconImagePlus size={16} strokeWidth={2.5} />
-                    <span>{coverPreview ? 'Change' : 'Add Cover Photo'}</span>
+                    <span>{coverPreview ? 'Change Cover' : 'Add Cover Photo'}</span>
                   </button>
 
                   {coverPreview && (
@@ -514,9 +511,10 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                       type="button"
                       onClick={() => void handleCoverRemove()}
                       disabled={isBusy}
-                      className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-[#ff5c5c] text-white shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
+                      className="flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-[#ff5c5c] px-4 font-passion text-[11px] font-bold uppercase tracking-wider text-white shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
                     >
                       <IconTrash size={16} strokeWidth={2.5} />
+                      <span>Remove</span>
                     </button>
                   )}
                 </div>
