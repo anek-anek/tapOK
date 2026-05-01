@@ -28,6 +28,11 @@ export const metadata: Metadata = {
     template: '%s | TapOK',
   },
   description: 'TapOk is where a plan becomes real. Orchestrate drops, board your crew, and keep the log in one place.',
+  icons: {
+    icon: '/tapok.png',
+    shortcut: '/tapok.png',
+    apple: '/tapok.png',
+  },
 };
 
 function readInitialDbUser() {
