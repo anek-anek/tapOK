@@ -208,6 +208,7 @@ export class DropsRepository {
     const [data, total] = await this.dropRepo.findAndCount({
       where: {
         isPublic: true,
+        status: In([DropStatus.ACTIVE, DropStatus.ONGOING]),
         ...(category && { category }),
       },
       relations: { organiser: true },

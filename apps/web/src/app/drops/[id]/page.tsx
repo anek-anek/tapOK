@@ -420,14 +420,16 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
-              <button
-                type="button"
-                onClick={() => setShareModalOpen(true)}
-                className="group relative flex h-12 flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
-              >
-                <IconShare2 size={16} strokeWidth={2.5} />
-                <span className="pt-0.5">Share</span>
-              </button>
+              {!isCompleted && (
+                <button
+                  type="button"
+                  onClick={() => setShareModalOpen(true)}
+                  className="group relative flex h-12 flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
+                >
+                  <IconShare2 size={16} strokeWidth={2.5} />
+                  <span className="pt-0.5">Share</span>
+                </button>
+              )}
               {canEdit && (
                 <button
                   type="button"
@@ -457,7 +459,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         </section>
 
         {/* Content Grid */}
-        <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+        <div className={`grid gap-8 ${!isCompleted ? 'lg:grid-cols-[1fr_360px]' : ''}`}>
           {/* Left: Ledger & Activity */}
           <div className="order-2 lg:order-1">
             {/* Presence / Quick Action for Crew */}
@@ -723,10 +725,12 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
 
-          {/* Right: Digital Ticket Sidebar (Desktop Only) */}
-          <aside className="order-1 hidden lg:block lg:order-2 lg:self-start">
-            <DigitalTicket drop={drop} />
-          </aside>
+          {/* Right: Digital Ticket Sidebar (Desktop Only, hidden when completed) */}
+          {!isCompleted && (
+            <aside className="order-1 hidden lg:block lg:order-2 lg:self-start">
+              <DigitalTicket drop={drop} />
+            </aside>
+          )}
         </div>
       </main>
 

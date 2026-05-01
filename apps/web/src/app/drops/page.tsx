@@ -166,23 +166,25 @@ export default function DropsPage() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [isJoiningNavigation, setIsJoiningNavigation] = useState(false);
 
-  const { activeDrops, completedDrops, focusDrop, remainingActive } = useMemo(() => {
-    // The backend already returns drops sorted by scheduledAt ASC
-    const active = drops.filter(
+  const { activeDrops, completedDrops, focusDrop, upcomingCount, pastCount } = useMemo(() => {
+    const current = drops.filter(
       (d) => d.status === 'active' || d.status === 'ongoing'
     );
-    const completed = drops
-      .filter((d) => d.status === 'completed')
-      .sort(sortRecent);
-
-    const focus = active[0] ?? null;
-    const remaining = focus ? active.filter((d) => d.id !== focus.id) : active;
+    const focus = current[0] ?? null;
+    const upcoming = current.filter(
+      (d) => d.status === 'active' && d.id !== focus?.id
+    );
+    const past = [
+      ...drops.filter((d) => d.status === 'completed'),
+      ...current.filter((d) => d.status === 'ongoing' && d.id !== focus?.id),
+    ].sort(sortRecent);
 
     return {
-      activeDrops: active,
-      completedDrops: completed,
+      activeDrops: upcoming,
+      completedDrops: past,
       focusDrop: focus,
-      remainingActive: remaining,
+      upcomingCount: current.filter((d) => d.status === 'active').length,
+      pastCount: past.length,
     };
   }, [drops]);
 
@@ -330,7 +332,7 @@ export default function DropsPage() {
                         : 'bg-tok-black/10 text-tok-black/40',
                     )}
                   >
-                    {activeDrops.length}
+                    {upcomingCount}
                   </span>
                 </button>
 
@@ -353,7 +355,7 @@ export default function DropsPage() {
                         : 'bg-tok-black/10 text-tok-black/40',
                     )}
                   >
-                    {completedDrops.length}
+                    {pastCount}
                   </span>
                 </button>
               </div>
@@ -362,17 +364,17 @@ export default function DropsPage() {
             {/* Tab content */}
             <div className="mt-3 space-y-2">
               {activeTab === 'upcoming' ? (
-                activeDrops.length === 0 ? (
+                upcomingCount === 0 ? (
                   <EmptyTabState
                     message="Nothing upcoming"
                     sub="Create a new Drop or join one with a code and it will appear here."
                   />
-                ) : remainingActive.length === 0 && focusDrop ? (
+                ) : activeDrops.length === 0 ? (
                   <p className="py-6 text-center font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
                     That's your only upcoming drop — shown above
                   </p>
                 ) : (
-                  remainingActive.map((drop) => (
+                  activeDrops.map((drop) => (
                     <ListDropCard
                       key={drop.id}
                       drop={drop}
@@ -382,11 +384,15 @@ export default function DropsPage() {
                     />
                   ))
                 )
-              ) : completedDrops.length === 0 ? (
+              ) : pastCount === 0 ? (
                 <EmptyTabState
                   message="No past drops"
                   sub="Finished plans will collect here with their logs and share links."
                 />
+              ) : completedDrops.length === 0 ? (
+                <p className="py-6 text-center font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
+                  That's your focus drop — shown above
+                </p>
               ) : (
                 completedDrops.map((drop) => (
                   <ListDropCard
