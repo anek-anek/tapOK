@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 export const authInputClass =
-  'w-full border-2 border-black bg-[#FFF4BD] px-4 py-3 text-sm text-black placeholder-black/30 outline-hidden transition-all duration-150 ease-in-out focus:bg-white focus:shadow-[4px_4px_0_#000] focus:ring-0 hover:border-tok-teal font-inter rounded-none';
+  'w-full border-2 border-black bg-tok-cream px-4 py-3 text-sm text-black placeholder-black/30 outline-hidden transition-all duration-150 ease-in-out focus:bg-white focus:shadow-[4px_4px_0_#000] focus:ring-0 hover:border-tok-teal font-inter rounded-none';
 
 type AuthFormFieldProps = {
   label: string;
@@ -44,7 +44,7 @@ const socialProofItems = [
 
 export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }: AuthPageShellProps) {
   return (
-    <div className="flex min-h-dvh bg-[#FFF4BD] lg:min-h-screen">
+    <div className="flex min-h-dvh bg-tok-cream lg:min-h-screen">
       <style>{`
         @keyframes authFadeUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -86,7 +86,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
       `}</style>
 
       {/* ── LEFT: Form panel ── */}
-      <div className="auth-panel-in flex w-full flex-col justify-between bg-[#FFF4BD] px-5 py-6 sm:px-8 sm:py-8 lg:w-[48%] lg:px-14 lg:py-10 border-r-0 lg:border-r-2 lg:border-black">
+      <div className="auth-panel-in flex w-full flex-col justify-between bg-tok-cream px-5 py-6 sm:px-8 sm:py-8 lg:w-[48%] lg:px-14 lg:py-10 border-r-0 lg:border-r-2 lg:border-black">
 
         {/* Logo */}
         <Link
@@ -102,7 +102,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
             (e.currentTarget as HTMLElement).style.opacity = '1';
           }}
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-tok-teal text-xl text-[#FFF4BD]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-tok-teal text-xl text-tok-cream">
             TAP
           </span>
           <span>OK</span>
@@ -128,7 +128,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
             className="auth-live-dot inline-block h-2 w-2 rounded-full bg-tok-teal"
           />
           <span
-            className="font-passion text-xs uppercase tracking-[0.2em] text-[#FFF4BD]/40"
+            className="font-passion text-xs uppercase tracking-[0.2em] text-tok-cream/40"
           >
             TAPOK IS LIVE
           </span>
@@ -137,7 +137,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
         {/* Hero text */}
         <div>
           <p
-            className="font-passion font-bold uppercase leading-none text-[#FFF4BD]"
+            className="font-passion font-bold uppercase leading-none text-tok-cream"
             style={{ fontSize: 'clamp(40px, 4.5vw, 72px)', letterSpacing: '-0.01em' }}
           >
             MAKE PLANS.
@@ -147,7 +147,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
             <span style={{ color: '#006666' }}>SHOW UP.</span>
           </p>
 
-          <p className="mt-6 font-inter text-sm leading-relaxed text-[#FFF4BD]/45 max-w-xs">
+          <p className="mt-6 font-inter text-sm leading-relaxed text-tok-cream/45 max-w-xs">
             One Chief. One Drop. Real headcount — no maybes, no ghost replies, no chaos.
           </p>
 
@@ -173,7 +173,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
                   style={{ borderColor: 'rgba(255,244,189,0.08)' }}
                 />
                 <span
-                  className="font-passion text-sm uppercase tracking-wider text-[#FFF4BD]/60"
+                  className="font-passion text-sm uppercase tracking-wider text-tok-cream/60"
                 >
                   {item.label}
                 </span>
@@ -188,12 +188,12 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
             className="h-1 flex-1"
             style={{ background: '#006666', boxShadow: '0 0 12px rgba(0,102,102,0.6)' }}
           />
-          <span className="font-passion text-xs uppercase tracking-[0.15em] text-[#FFF4BD]/20">
+          <span className="font-passion text-xs uppercase tracking-[0.15em] text-tok-cream/20">
             DROP IT. SHARE IT. TAP IN.
           </span>
           <div
             className="h-1 w-8"
-            style={{ background: '#FFF4BD', opacity: 0.12 }}
+            style={{ background: 'var(--color-tok-cream)', opacity: 0.12 }}
           />
         </div>
       </div>

@@ -32,6 +32,11 @@ export class CreateDropDto {
   @Min(1)
   expectedHeadcount?: number;
 
+  @ApiPropertyOptional({ example: 'This is a fun beach shoot' })
+  @IsOptional()
+  @IsString()
+  overview?: string;
+
   @ApiPropertyOptional({ example: false })
   @IsOptional()
   @IsBoolean()

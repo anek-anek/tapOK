@@ -68,7 +68,7 @@ export function ModalShell({
         onClick={triggerClose}
       />
       <div
-        className="absolute inset-x-0 bottom-0 z-10 max-h-[92dvh] sm:relative sm:inset-x-auto sm:bottom-auto sm:w-full sm:max-w-[720px]"
+        className="absolute inset-x-0 bottom-0 z-10 max-h-[92dvh] sm:relative sm:inset-x-auto sm:bottom-auto sm:w-full sm:max-w-[720px] sm:max-h-[90vh]"
         style={{
           animation: closing
             ? `tapok-slideDown ${CLOSE_DURATION}ms cubic-bezier(0.4,0,1,1) forwards`

@@ -41,6 +41,7 @@ export interface Drop {
   isLocked: boolean;
   isPublic: boolean;
   category?: DropCategory;
+  overview?: string | null;
   organiserId: string;
   organiser: DropOrganiser;
   activityLogs?: DropActivityLog[];
@@ -89,6 +90,7 @@ export interface CreateDropDto {
   isLocked?: boolean;
   isPublic?: boolean;
   category?: DropCategory;
+  overview?: string;
 }
 
 export interface UpdateDropDto {
@@ -100,4 +102,5 @@ export interface UpdateDropDto {
   isPublic?: boolean;
   status?: DropStatus;
   category?: DropCategory;
+  overview?: string;
 }

@@ -49,6 +49,7 @@ export class DropsService {
         scheduledAt: new Date(dto.scheduledAt),
         location: dto.location,
         expectedHeadcount: dto.expectedHeadcount,
+        overview: dto.overview,
         isLocked: dto.isLocked ?? false,
         isPublic: dto.isPublic ?? true,
         status: DropStatus.ACTIVE,
@@ -137,6 +138,7 @@ export class DropsService {
     if (dto.isPublic !== undefined) changedFields['isPublic'] = dto.isPublic;
     if (dto.status !== undefined) changedFields['status'] = dto.status;
     if (dto.category !== undefined) changedFields['category'] = dto.category;
+    if (dto.overview !== undefined) changedFields['overview'] = dto.overview;
 
     await this.dropsRepository.update(id, {
       ...(dto.name !== undefined && { name: dto.name }),
@@ -147,6 +149,7 @@ export class DropsService {
       ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
       ...(dto.status !== undefined && { status: dto.status }),
       ...(dto.category !== undefined && { category: dto.category }),
+      ...(dto.overview !== undefined && { overview: dto.overview }),
     });
 
     const statusActionMap: Partial<Record<DropStatus, string>> = {

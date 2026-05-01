@@ -106,7 +106,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FFF4BD]">
+      <div className="flex min-h-screen items-center justify-center bg-tok-cream">
         <Loader2 className="h-6 w-6 animate-spin text-tok-teal" />
       </div>
     );
@@ -119,7 +119,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           className="mb-3 inline-flex items-center gap-2"
           style={{
             background: '#006666',
-            color: '#FFF4BD',
+            color: 'var(--color-tok-cream)',
             fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
             fontSize: '10px',
             fontWeight: 700,

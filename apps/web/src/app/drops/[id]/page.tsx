@@ -462,6 +462,18 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         <div className={`grid gap-8 ${!isCompleted ? 'lg:grid-cols-[1fr_360px]' : ''}`}>
           {/* Left: Ledger & Activity */}
           <div className="order-2 lg:order-1">
+            {/* Drop Overview */}
+            {drop.overview && (
+              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
+                <p className="font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-tok-teal">
+                  Mission Overview
+                </p>
+                <div className="mt-3 font-inter text-sm leading-relaxed text-tok-black/80 whitespace-pre-wrap">
+                  {drop.overview}
+                </div>
+              </div>
+            )}
+
             {/* Presence / Quick Action for Crew */}
             {!isOrganiser && crewStatus?.status === 'in' && !isCompleted && (
               <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">

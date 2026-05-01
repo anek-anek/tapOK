@@ -200,6 +200,10 @@
     height: 8px;
   }
 
+  ::-webkit-scrollbar-track {
+    background: var(--color-tok-cream);
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

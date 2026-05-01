@@ -77,7 +77,7 @@ export class DropsRepository {
 
   async update(
     id: string,
-    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic' | 'category'>> & {
+    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic' | 'category' | 'overview'>> & {
       expectedHeadcount?: number | null;
     },
   ): Promise<void> {
