@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useMounted } from '@/hooks/use-mounted';
 import type { DropCrew, DropCrewStatus } from '@/types/drop';
 import type { UseMutationResult } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 
 function formatDateTime(iso: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -53,6 +54,7 @@ type JoinCtaProps = {
   joinMutation: UseMutationResult<DropCrew, Error, void>;
   isLocked: boolean;
   onViewDrop: () => void;
+  onJoin: () => void;
   dbUser: { id: string } | null;
   joinCode: string;
 };
@@ -64,6 +66,7 @@ function JoinCta({
   joinMutation,
   isLocked,
   onViewDrop,
+  onJoin,
   dbUser,
   joinCode,
 }: JoinCtaProps) {
@@ -180,7 +183,7 @@ function JoinCta({
       <div>
         <button
           disabled={isJoining}
-          onClick={() => { track('crew_tap_in_clicked'); joinMutation.mutate(); }}
+          onClick={onJoin}
           className={`${baseBtn} bg-tok-teal text-[#F7E9B2] shadow-[8px_8px_0px_#1C1C1A] hover:shadow-[10px_10px_0px_#1C1C1A] disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0`}
         >
           {isJoining ? (
@@ -198,11 +201,6 @@ function JoinCta({
         {isLocked && (
           <p className="mt-4 text-center font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/30">
             Request will be sent for approval
-          </p>
-        )}
-        {joinError && !isAlreadyJoinedError && (
-          <p className="mt-3 text-center font-passion text-[11px] font-bold text-red-600/70">
-            FAILED TO JOIN. PLEASE RETRY.
           </p>
         )}
       </div>
@@ -226,6 +224,24 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   );
 
   const joinMutation = useJoinDrop(drop?.id ?? '');
+
+  const handleJoin = () => {
+    track('crew_tap_in_clicked');
+    joinMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        if (data.status === 'pending') {
+          toast.success('REQUEST SENT FOR APPROVAL');
+        } else {
+          toast.success('YOU ARE LOCKED IN!');
+        }
+      },
+      onError: (err: any) => {
+        const rawMsg = err.response?.data?.message || 'FAILED TO JOIN DROP';
+        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+        toast.error(String(msg).toUpperCase());
+      }
+    });
+  };
 
   const isOrganiser = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
   const isNotCrew =
@@ -360,6 +376,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
                 joinMutation={joinMutation}
                 isLocked={drop.isLocked}
                 onViewDrop={() => router.push(`/drops/${drop.id}`)}
+                onJoin={handleJoin}
                 dbUser={dbUser}
                 joinCode={joinCode}
               />

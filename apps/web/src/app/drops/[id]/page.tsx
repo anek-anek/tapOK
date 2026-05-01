@@ -37,6 +37,7 @@ import { DigitalTicket } from '@/components/drops/DigitalTicket';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence } from '@/hooks/mutations/use-drop-mutations';
+import { toast } from 'react-hot-toast';
 import type { DropStatus } from '@/types/drop';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
@@ -177,7 +178,7 @@ function PageSkeleton() {
       <TapokNavbar />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10">
         <Skeleton className="mb-8 h-4 w-32 rounded-sm bg-black/5" />
-        
+
         {/* Billboard Skeleton */}
         <div className="mb-10 rounded-[4px] border-[3px] border-tok-black/10 bg-tok-teal/10 p-6 sm:p-10 lg:p-12 shadow-[8px_8px_0px_rgba(0,0,0,0.05)]">
           <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
@@ -248,10 +249,10 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const mounted = useMounted();
   const { dbUser, loading: authLoading, isReady } = useAuth();
   const { data: drop, isLoading, isFetched, isError } = useDrop(id);
-  
+
   // Robust loading state using isFetched
   const isHardLoading = !isFetched || (isLoading && !drop);
-  
+
   const { data: crewStatus } = useMyCrewStatus(id, { enabled: Boolean(dbUser) });
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -266,6 +267,73 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const { mutate: approveJoinRequest, isPending: isApproving, variables: approvingUserId } = useApproveJoinRequest(id);
   const { mutate: rejectJoinRequest, isPending: isRejecting, variables: rejectingUserId } = useRejectJoinRequest(id);
   const { mutate: removeCrewMember, isPending: isRemoving, variables: removingUserId } = useRemoveCrewMember(id);
+
+  const handleLeave = () => {
+    leaveDrop(undefined, {
+      onSuccess: () => {
+        setLeaveModalOpen(false);
+        toast.success('ABANDONED DROP SUCCESSFULLY');
+        router.push('/drops');
+      },
+      onError: (err: any) => {
+        const rawMsg = err.response?.data?.message || 'FAILED TO LEAVE DROP';
+        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+        toast.error(String(msg).toUpperCase());
+      }
+    });
+  };
+
+  const handleUpdatePresence = (isPresent: boolean) => {
+    updatePresence(isPresent, {
+      onSuccess: () => {
+        toast.success(isPresent ? 'YOU TAPPED IN' : 'YOU TAPPED OUT');
+      },
+      onError: (err: any) => {
+        const rawMsg = err.response?.data?.message || 'FAILED TO UPDATE ATTENDANCE';
+        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+        toast.error(String(msg).toUpperCase());
+      }
+    });
+  };
+
+  const handleApprove = (userId: string) => {
+    approveJoinRequest(userId, {
+      onSuccess: () => {
+        toast.success('JOIN REQUEST APPROVED');
+      },
+      onError: (err: any) => {
+        const rawMsg = err.response?.data?.message || 'FAILED TO APPROVE REQUEST';
+        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+        toast.error(String(msg).toUpperCase());
+      }
+    });
+  };
+
+  const handleReject = (userId: string) => {
+    rejectJoinRequest(userId, {
+      onSuccess: () => {
+        toast.success('JOIN REQUEST REJECTED');
+      },
+      onError: (err: any) => {
+        const rawMsg = err.response?.data?.message || 'FAILED TO REJECT REQUEST';
+        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+        toast.error(String(msg).toUpperCase());
+      }
+    });
+  };
+
+  const handleRemoveMember = (userId: string) => {
+    removeCrewMember(userId, {
+      onSuccess: () => {
+        toast.success('MEMBER REMOVED FROM CREW');
+      },
+      onError: (err: any) => {
+        const rawMsg = err.response?.data?.message || 'FAILED TO REMOVE MEMBER';
+        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+        toast.error(String(msg).toUpperCase());
+      }
+    });
+  };
 
   const pendingMembers = crew?.filter((m) => m.status === 'pending') ?? [];
   const activeMembers = crew?.filter((m) => m.status === 'in') ?? [];
@@ -408,24 +476,22 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                     <button
                       type="button"
                       disabled={isUpdatingPresence || crewStatus?.isPresent === true}
-                      onClick={() => updatePresence(true)}
-                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${
-                        crewStatus?.isPresent
+                      onClick={() => handleUpdatePresence(true)}
+                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${crewStatus?.isPresent
                           ? 'bg-tok-teal text-white shadow-[3px_3px_0px_#1C1C1A]'
                           : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
-                      }`}
+                        }`}
                     >
                       {crewStatus?.isPresent ? 'I am In ✓' : 'Tap In'}
                     </button>
                     <button
                       type="button"
                       disabled={isUpdatingPresence || crewStatus?.isPresent === false}
-                      onClick={() => updatePresence(false)}
-                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${
-                        !crewStatus?.isPresent
+                      onClick={() => handleUpdatePresence(false)}
+                      className={`h-12 min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all ${!crewStatus?.isPresent
                           ? 'bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A]'
                           : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
-                      }`}
+                        }`}
                     >
                       {!crewStatus?.isPresent ? 'I am Out ✓' : 'Tap Out'}
                     </button>
@@ -466,7 +532,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => rejectJoinRequest(member.userId)}
+                          onClick={() => handleReject(member.userId)}
                           disabled={(isRejecting && rejectingUserId === member.userId) || (isApproving && approvingUserId === member.userId)}
                           className="h-10 flex-1 rounded-[4px] border-2 border-tok-black bg-white px-4 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-red-600 hover:bg-red-50 disabled:opacity-50 sm:flex-none"
                         >
@@ -474,7 +540,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         </button>
                         <button
                           type="button"
-                          onClick={() => approveJoinRequest(member.userId)}
+                          onClick={() => handleApprove(member.userId)}
                           disabled={(isApproving && approvingUserId === member.userId) || (isRejecting && rejectingUserId === member.userId)}
                           className="h-10 flex-1 rounded-[4px] border-2 border-tok-black bg-tok-teal px-4 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-white hover:bg-tok-teal/90 disabled:opacity-50 sm:flex-none"
                         >
@@ -529,7 +595,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                         {!isCompleted && (
                           <button
                             type="button"
-                            onClick={() => removeCrewMember(member.userId)}
+                            onClick={() => handleRemoveMember(member.userId)}
                             disabled={isRemoving && removingUserId === member.userId}
                             className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-red-500 hover:bg-red-50 disabled:opacity-50"
                             title="Remove from crew"
@@ -674,7 +740,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         <LeaveConfirmModal
           dropName={drop.name}
           isPending={isLeaving}
-          onConfirm={() => leaveDrop(undefined, { onSuccess: () => setLeaveModalOpen(false) })}
+          onConfirm={handleLeave}
           onClose={() => setLeaveModalOpen(false)}
         />
       )}
@@ -689,6 +755,7 @@ function CopyButton({ text }: { text: string }) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(text);
+      toast.success('LINK COPIED TO CLIPBOARD');
     } catch {
       return;
     }

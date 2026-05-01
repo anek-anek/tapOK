@@ -22,6 +22,7 @@ import { useCreateDrop } from '@/hooks/mutations/use-drop-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
 import { track } from '@/lib/analytics';
 import { AuthPageShell } from '@/components/auth/AuthPageShell';
+import { toast } from 'react-hot-toast';
 import type { Drop } from '@/types/drop';
 
 // ─── Drop creation schema ────────────────────────────────────────────────────
@@ -232,7 +233,6 @@ function DropBuilder({
   name: string;
 }) {
   const createDrop = useCreateDrop();
-  const [serverError, setServerError] = useState<string | null>(null);
 
   // Track when the drop builder step is first viewed
   useEffect(() => { track('drop_builder_viewed'); }, []);
@@ -263,8 +263,6 @@ function DropBuilder({
   const minDateTime = localNow.toISOString().slice(0, 16);
 
   const onSubmit = async (values: DropFormValues) => {
-    setServerError(null);
-    track('drop_go_live_clicked');
     try {
       const drop = await createDrop.mutateAsync({
         name: values.name.trim(),
@@ -273,9 +271,12 @@ function DropBuilder({
         isLocked: values.isLocked ?? false,
       });
       track('drop_created', { dropId: drop.id });
+      toast.success('DROP CREATED SUCCESSFULLY');
       onLive(drop);
-    } catch {
-      setServerError('Could not create the drop. Please try again.');
+    } catch (err: any) {
+      const rawMsg = err.response?.data?.message || 'COULD NOT CREATE THE DROP';
+      const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+      toast.error(String(msg).toUpperCase());
     }
   };
 
@@ -398,11 +399,6 @@ function DropBuilder({
           )}
         />
 
-        {serverError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-            <p className="text-xs text-red-700">{serverError}</p>
-          </div>
-        )}
 
         <div className="mt-1 flex flex-col gap-2">
           <p className="text-center font-inter text-[9px] uppercase tracking-[2px] text-[#2a2118]/25">
@@ -456,6 +452,7 @@ function DropLive({ drop }: { drop: Drop }) {
     await navigator.clipboard.writeText(shareUrl);
     track('drop_share_link_copied', { dropId: drop.id });
     setCopied(true);
+    toast.success('LINK COPIED TO CLIPBOARD');
     if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     copyTimerRef.current = setTimeout(() => setCopied(false), 2500);
   }
@@ -632,6 +629,7 @@ export function OnboardingWizard() {
   const [step, setStep] = useState(0);
   const [path, setPath] = useState<'chief' | 'crew' | null>(null);
   const [liveDrop, setLiveDrop] = useState<Drop | null>(null);
+  const createDrop = useCreateDrop();
 
   // Track when onboarding is first viewed
   useEffect(() => { track('onboarding_started'); }, []);

@@ -6,8 +6,9 @@ import { cn } from '@/lib/utils';
 import { Analytics } from '@vercel/analytics/react';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
+import { ToastProvider } from '@/components/providers/toast-provider';
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 const passionOne = Passion_One({
   subsets: ['latin'],
@@ -42,11 +43,11 @@ function readInitialDbUser() {
       const profileRaw = jar.get('user_profile')?.value;
       const profile = profileRaw
         ? (JSON.parse(decodeURIComponent(profileRaw)) as {
-            firstName?: string;
-            lastName?: string;
-            email?: string;
-            avatar?: string;
-          })
+          firstName?: string;
+          lastName?: string;
+          email?: string;
+          avatar?: string;
+        })
         : null;
 
       if (!decoded.sub || !decoded.role) return null;
@@ -80,7 +81,10 @@ export default async function RootLayout({
     <html lang="en" className={cn(passionOne.variable, inter.variable, "font-sans", geist.variable)}>
       <body>
         <QueryProvider>
-          <AuthProvider initialDbUser={initialDbUser}>{children}</AuthProvider>
+          <AuthProvider initialDbUser={initialDbUser}>
+            {children}
+            <ToastProvider />
+          </AuthProvider>
         </QueryProvider>
         <Analytics />
       </body>
