@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -24,6 +25,7 @@ export class OrganizationMember {
   organizationId: string;
 
   @ApiProperty()
+  @Index('idx_organization_members_user_id')
   @Column()
   userId: string;
 

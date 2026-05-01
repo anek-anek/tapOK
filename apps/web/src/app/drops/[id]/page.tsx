@@ -27,6 +27,7 @@ import {
   Ban as IconBan,
   ChevronLeft as IconChevronLeft,
   ChevronRight as IconChevronRight,
+  Lock as IconLock,
 } from 'lucide-react';
 import { useDrop, useMyCrewStatus, useDropCrew, useDropActivityLogs } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -37,10 +38,11 @@ import { DigitalTicket } from '@/components/drops/DigitalTicket';
 import { PhotoRoll } from '@/components/drops/PhotoRoll';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence } from '@/hooks/mutations/use-drop-mutations';
+import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
 import { SparkButton } from '@/components/drops/spark-button';
 import { toast } from 'react-hot-toast';
 import type { DropStatus } from '@/types/drop';
+import { cn } from '@/lib/utils';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
   active: {
@@ -174,6 +176,126 @@ function LeaveConfirmModal({
   );
 }
 
+function RemoveMemberConfirmModal({
+  memberName,
+  onConfirm,
+  onClose,
+  isPending,
+}: {
+  memberName: string;
+  onConfirm: () => void;
+  onClose: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <ModalShell onClose={!isPending ? onClose : () => { }}>
+      {(close) => (
+        <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[8px_8px_0px_#1C1C1A]">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <p className="font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-red-500">
+              Expel Member
+            </p>
+            <button
+              type="button"
+              onClick={close}
+              disabled={isPending}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-colors hover:bg-red-50 disabled:opacity-40"
+            >
+              <IconX size={16} strokeWidth={2.5} />
+            </button>
+          </div>
+          <h3 className="mt-1 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
+            REMOVE FROM CREW?
+          </h3>
+          <p className="mt-3 font-inter text-sm leading-relaxed text-tok-black/60">
+            You are about to remove <span className="font-bold text-tok-black">{memberName}</span> from the crew.
+            They will lose access to the mission log and live activity immediately.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={close}
+              disabled={isPending}
+              className="flex-1 rounded-[4px] border-[3px] border-tok-black bg-white py-3.5 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={isPending}
+              className="flex-1 rounded-[4px] border-[3px] border-tok-black bg-red-500 py-3.5 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-60"
+            >
+              {isPending ? 'Removing…' : 'Remove Member'}
+            </button>
+          </div>
+        </div>
+      )}
+    </ModalShell>
+  );
+}
+
+function JoinConfirmModal({
+  drop,
+  onConfirm,
+  onClose,
+  isPending,
+}: {
+  drop: any;
+  onConfirm: () => void;
+  onClose: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <ModalShell onClose={!isPending ? onClose : () => { }}>
+      {(close) => (
+        <div className="rounded-[4px] border-[3px] border-tok-black bg-tok-cream p-6 shadow-[8px_8px_0px_#1C1C1A]">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <p className="font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-tok-teal">
+              Join Mission
+            </p>
+            <button
+              type="button"
+              onClick={close}
+              disabled={isPending}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-colors hover:bg-tok-teal/5 disabled:opacity-40"
+            >
+              <IconX size={16} strokeWidth={2.5} />
+            </button>
+          </div>
+          <h3 className="mt-1 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
+            {drop.isLocked ? 'REQUEST TO JOIN?' : 'JOIN THE CREW?'}
+          </h3>
+          <p className="mt-3 font-inter text-sm leading-relaxed text-tok-black/60">
+            {drop.isLocked
+              ? "This drop is locked. The chief will need to approve your request before you're in the crew."
+              : "You're about to board the crew for this drop. You'll get access to the mission log and live activity."
+            }
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={close}
+              disabled={isPending}
+              className="flex-1 rounded-[4px] border-[3px] border-tok-black bg-white py-3.5 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={isPending}
+              className="flex-1 rounded-[4px] border-[3px] border-tok-black bg-tok-teal py-3.5 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-60"
+            >
+              {isPending ? 'Processing…' : drop.isLocked ? 'Send Request' : 'Join Now'}
+            </button>
+          </div>
+        </div>
+      )}
+    </ModalShell>
+  );
+}
+
 function PageSkeleton() {
   return (
     <div className="min-h-screen bg-tok-cream text-[#1C1C1A]">
@@ -259,9 +381,13 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [removeModalOpen, setRemoveModalOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ userId: string; name: string } | null>(null);
   const [logPage, setLogPage] = useState(1);
   const { mutate: leaveDrop, isPending: isLeaving } = useLeaveDrop(id);
   const { mutate: updatePresence, isPending: isUpdatingPresence } = useUpdatePresence(id);
+  const { mutate: joinDrop, isPending: isJoining } = useJoinDrop(id);
 
   const isOrganiserCheck = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
   const canViewActivityLogs = isOrganiserCheck || crewStatus?.status === 'in';
@@ -327,13 +453,34 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
     });
   };
 
-  const handleRemoveMember = (userId: string) => {
-    removeCrewMember(userId, {
+  const handleRemoveMember = () => {
+    if (!memberToRemove) return;
+    removeCrewMember(memberToRemove.userId, {
       onSuccess: () => {
+        setRemoveModalOpen(false);
+        setMemberToRemove(null);
         toast.success('MEMBER REMOVED FROM CREW');
       },
       onError: (err: any) => {
         const rawMsg = err.response?.data?.message || 'FAILED TO REMOVE MEMBER';
+        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+        toast.error(String(msg).toUpperCase());
+      }
+    });
+  };
+
+  const handleJoin = () => {
+    joinDrop(undefined, {
+      onSuccess: (data) => {
+        setJoinModalOpen(false);
+        if (data.status === 'pending') {
+          toast.success('JOIN REQUEST SENT');
+        } else {
+          toast.success('JOINED CREW SUCCESSFULLY');
+        }
+      },
+      onError: (err: any) => {
+        const rawMsg = err.response?.data?.message || 'FAILED TO JOIN DROP';
         const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
         toast.error(String(msg).toUpperCase());
       }
@@ -376,7 +523,6 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const isOrganiser = isOrganiserCheck;
   const isCompleted = drop.status === 'completed';
   const canEdit = isOrganiser && !isCompleted;
-  const canLeave = !isOrganiser && !isCompleted && (crewStatus?.status === 'in' || crewStatus?.status === 'pending');
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
 
   return (
@@ -407,13 +553,29 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
               <div className="absolute inset-0 bg-linear-to-r from-tok-teal via-tok-teal/80 to-transparent" />
             </div>
           )}
+
+          {/* Absolute Top-Right Actions */}
+          <div className="absolute right-4 top-4 z-20 flex items-center gap-3 sm:right-6 sm:top-6 lg:right-8 lg:top-8">
+            <SparkButton drop={drop} variant="hero" />
+          </div>
+
           <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
             <div className="flex-1">
               <div className="mb-4 flex items-center gap-3">
                 <StatusPill status={drop.status} />
-                <span className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-[#F7E9B2]/40">
+                <span className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-cream/40">
                   CODE: {drop.joinCode}
                 </span>
+                {drop.isPublic && (
+                  <span className={cn(
+                    "rounded-sm border-2 px-2 py-0.5 font-passion text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,0.2)]",
+                    drop.isLocked
+                      ? "border-amber-400 bg-amber-400 text-black"
+                      : "border-emerald-400 bg-emerald-400 text-white"
+                  )}>
+                    {drop.isLocked ? "Approval Required" : "Instant Join"}
+                  </span>
+                )}
               </div>
               <h1 className="break-words font-passion text-[clamp(32px,6vw,72px)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-[#F7E9B2]">
                 {drop.name}
@@ -431,7 +593,6 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
-              <SparkButton drop={drop} variant="hero" />
               {!isCompleted && (
                 <button
                   type="button"
@@ -442,6 +603,51 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                   <span className="pt-0.5">Share</span>
                 </button>
               )}
+              {/* Primary Action Button (Join/Request/Leave/Awaiting) */}
+              {!isOrganiser && !isCompleted && (
+                <div className="flex-1 sm:flex-none">
+                  {crewStatus?.status === 'pending' ? (
+                    <button
+                      type="button"
+                      onClick={() => setLeaveModalOpen(true)}
+                      className="group relative flex h-12 w-full min-w-[140px] items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-amber-400 px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:px-6"
+                    >
+                      <IconClock size={16} strokeWidth={2.5} />
+                      <span className="pt-0.5">Awaiting Approval</span>
+                    </button>
+                  ) : crewStatus?.status === 'in' ? (
+                    <button
+                      type="button"
+                      onClick={() => setLeaveModalOpen(true)}
+                      className="group relative flex h-12 w-full min-w-[120px] items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-red-500 px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:px-6"
+                    >
+                      <IconLogOut size={16} strokeWidth={2.5} />
+                      <span className="pt-0.5 text-nowrap">Leave Drop</span>
+                    </button>
+                  ) : drop.isPublic ? (
+                    <button
+                      type="button"
+                      onClick={() => setJoinModalOpen(true)}
+                      disabled={isJoining}
+                      className="group relative flex h-12 w-full min-w-[140px] items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-tok-teal px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:px-6"
+                    >
+                      {isJoining ? (
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                      ) : drop.isLocked ? (
+                        <>
+                          <IconLock size={16} strokeWidth={2.5} />
+                          <span className="pt-0.5">Request Join</span>
+                        </>
+                      ) : (
+                        <>
+                          <IconUserCheck size={16} strokeWidth={2.5} />
+                          <span className="pt-0.5">Join Crew</span>
+                        </>
+                      )}
+                    </button>
+                  ) : null}
+                </div>
+              )}
               {canEdit && (
                 <button
                   type="button"
@@ -450,16 +656,6 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 >
                   <IconEdit size={16} strokeWidth={2.5} />
                   <span className="pt-0.5 text-nowrap">Edit Drop</span>
-                </button>
-              )}
-              {canLeave && (
-                <button
-                  type="button"
-                  onClick={() => setLeaveModalOpen(true)}
-                  className="group relative flex h-12 min-w-[100px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-red-500 px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
-                >
-                  <IconLogOut size={16} strokeWidth={2.5} />
-                  <span className="pt-0.5">Leave</span>
                 </button>
               )}
             </div>
@@ -504,8 +700,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                       disabled={isUpdatingPresence || crewStatus?.isPresent === true}
                       onClick={() => handleUpdatePresence(true)}
                       className={`h-12 w-full min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all sm:w-auto ${crewStatus?.isPresent
-                          ? 'bg-tok-teal text-white shadow-[3px_3px_0px_#1C1C1A]'
-                          : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
+                        ? 'bg-tok-teal text-white shadow-[3px_3px_0px_#1C1C1A]'
+                        : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
                         }`}
                     >
                       {crewStatus?.isPresent ? 'I am In ✓' : 'Tap In'}
@@ -515,8 +711,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                       disabled={isUpdatingPresence || crewStatus?.isPresent === false}
                       onClick={() => handleUpdatePresence(false)}
                       className={`h-12 w-full min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all sm:w-auto ${!crewStatus?.isPresent
-                          ? 'bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A]'
-                          : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
+                        ? 'bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A]'
+                        : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
                         }`}
                     >
                       {!crewStatus?.isPresent ? 'I am Out ✓' : 'Tap Out'}
@@ -581,8 +777,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
             {/* Photo Roll */}
             <div className="mb-10">
-              <PhotoRoll 
-                drop={drop} 
+              <PhotoRoll
+                drop={drop}
                 userId={dbUser?.id}
                 isOrganiser={isOrganiser}
                 isCrewMember={crewStatus?.status === 'in'}
@@ -624,16 +820,22 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                           Joined {formatLogTime(member.joinedAt)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className={`font-passion text-sm font-bold uppercase tracking-widest ${member.isPresent ? 'text-emerald-600' : 'text-red-500'}`}>
-                          {member.isPresent ? 'PRESENT' : 'ABSENT'}
+                      <div className="flex items-center gap-6">
+                        <span className={cn(
+                          "rounded-full px-4 py-1.5 font-passion text-[11px] font-bold uppercase tracking-[1.5px] border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A]",
+                          member.isPresent ? "bg-emerald-500 text-white" : "bg-white text-red-500"
+                        )}>
+                          {member.isPresent ? 'TAPPED IN' : 'TAPPED OUT'}
                         </span>
                         {!isCompleted && (
                           <button
                             type="button"
-                            onClick={() => handleRemoveMember(member.userId)}
+                            onClick={() => {
+                              setMemberToRemove({ userId: member.userId, name: `${member.user.firstName} ${member.user.lastName}` });
+                              setRemoveModalOpen(true);
+                            }}
                             disabled={isRemoving && removingUserId === member.userId}
-                            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-red-500 hover:bg-red-50 disabled:opacity-50"
+                            className="flex h-8 w-8 items-center justify-center text-tok-black/20 transition-colors hover:text-red-500 disabled:opacity-50"
                             title="Remove from crew"
                           >
                             <IconUserX size={16} strokeWidth={2.5} />
@@ -782,6 +984,25 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
           isPending={isLeaving}
           onConfirm={handleLeave}
           onClose={() => setLeaveModalOpen(false)}
+        />
+      )}
+      {joinModalOpen && (
+        <JoinConfirmModal
+          drop={drop}
+          isPending={isJoining}
+          onConfirm={handleJoin}
+          onClose={() => setJoinModalOpen(false)}
+        />
+      )}
+      {removeModalOpen && memberToRemove && (
+        <RemoveMemberConfirmModal
+          memberName={memberToRemove.name}
+          isPending={isRemoving}
+          onConfirm={handleRemoveMember}
+          onClose={() => {
+            setRemoveModalOpen(false);
+            setMemberToRemove(null);
+          }}
         />
       )}
     </div>

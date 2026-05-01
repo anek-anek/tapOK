@@ -14,6 +14,7 @@ import {
   LogIn as IconLogIn,
   UserPlus as IconUserPlus,
   ArrowRight as IconArrowRight,
+  Ticket as IconTicket,
 } from 'lucide-react';
 import { useDropByJoinCode, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
@@ -146,13 +147,31 @@ function JoinCta({
     );
   }
 
-  if (crewStatus === 'rejected') {
+  if (crewStatus === 'rejected' || crewStatus === 'removed') {
+    const isJoining = joinMutation.isPending;
     return (
-      <div className="text-center">
+      <div className="text-center space-y-6">
         <div className="inline-flex items-center gap-2 rounded-sm border-2 border-red-500/20 bg-red-500/5 px-4 py-2">
           <IconLock size={14} className="text-red-600" strokeWidth={2.5} />
-          <span className="font-passion text-[11px] font-bold uppercase tracking-[1px] text-red-700">Request Declined</span>
+          <span className="font-passion text-[11px] font-bold uppercase tracking-[1px] text-red-700">
+            {crewStatus === 'rejected' ? 'Request Declined' : 'Removed from Crew'}
+          </span>
         </div>
+        
+        <button
+          disabled={isJoining}
+          onClick={onJoin}
+          className={`${baseBtn} bg-tok-teal text-[#F7E9B2] shadow-[8px_8px_0px_#1C1C1A] hover:shadow-[10px_10px_0px_#1C1C1A] disabled:opacity-50`}
+        >
+          {isJoining ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#F7E9B2]/40 border-t-[#F7E9B2]" />
+              Processing…
+            </>
+          ) : (
+            'Try Joining Again'
+          )}
+        </button>
       </div>
     );
   }
@@ -303,92 +322,142 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
     <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
       <TapokNavbar />
 
-      <main className="mx-auto max-w-md px-4 py-8 sm:py-16">
-        <div className="overflow-hidden rounded-2xl border-[3px] border-tok-black bg-white shadow-[12px_12px_0px_#1C1C1A]">
-          {/* Header - Split Tone Teal */}
-          <div className="border-b-[3px] border-tok-black bg-tok-teal px-6 py-8 text-[#F7E9B2]">
-            <div className="flex flex-col gap-5">
-              <div className="flex h-16 w-16 items-center justify-center rounded-sm border-[3px] border-[#F7E9B2]/20 bg-[#F7E9B2]/10 font-passion text-2xl font-bold tracking-[0.1em] text-[#F7E9B2] shadow-[4px_4px_0px_rgba(0,0,0,0.2)]">
-                {getInitials(drop.name)}
+      <main className="mx-auto max-w-md px-4 py-12 sm:py-20">
+        <div className="relative">
+          {/* Large background watermark text */}
+          <div className="pointer-events-none absolute -left-10 -top-12 z-0 select-none font-passion text-[140px] font-bold uppercase leading-none text-tok-black/[0.03]">
+            INVITE
+          </div>
+
+          <div className="relative overflow-hidden rounded-2xl border-[4px] border-tok-black bg-white shadow-[12px_12px_0px_#1C1C1A]">
+            {/* Decorative Top Accent */}
+            <div className="h-3 w-full bg-tok-teal" />
+
+            <div className="p-8 sm:p-10">
+              {/* Mission Header */}
+              <div className="mb-10 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-tok-black bg-tok-cream shadow-[3px_3px_0px_#1C1C1A]">
+                    {drop.organiser.avatar ? (
+                      <img
+                        src={drop.organiser.avatar}
+                        alt={organiserName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="font-passion text-lg font-bold text-tok-black">
+                        {drop.organiser.firstName[0]}{drop.organiser.lastName[0]}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-black/40 leading-none">
+                      MISSION CHIEF
+                    </p>
+                    <p className="mt-1.5 truncate font-passion text-lg font-bold uppercase tracking-tight text-tok-black leading-none">
+                      {organiserName}
+                    </p>
+                  </div>
+                </div>
+                <div className="hidden h-12 w-[2px] bg-tok-black/5 sm:block" />
+                <div className="hidden flex-col items-end sm:flex">
+                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-black/40 leading-none">
+                    JOIN CODE
+                  </p>
+                  <p className="mt-1.5 font-passion text-lg font-bold uppercase tracking-[2px] text-tok-teal leading-none">
+                    {drop.joinCode}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-passion text-[10px] font-bold uppercase tracking-[4px] text-[#F7E9B2]/40">
-                  {organiserName} IS DROPPING...
+
+              {/* Mission Title Section */}
+              <div className="space-y-3">
+                <p className="font-passion text-[11px] font-bold uppercase tracking-[5px] text-tok-teal">
+                  YOU ARE INVITED TO
                 </p>
-                <h1 className="mt-1 font-passion text-4xl font-bold uppercase leading-none tracking-tighter">
+                <h1 className="break-words font-passion text-[56px] font-bold uppercase leading-[0.85] tracking-tighter text-tok-black sm:text-[64px]">
                   {drop.name}
                 </h1>
               </div>
-            </div>
-          </div>
 
-          {/* Details Body */}
-          <div className="space-y-6 p-6">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="flex items-center gap-4 rounded-sm border-2 border-tok-black/5 bg-tok-cream/20 p-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
-                  <IconCalendar size={18} strokeWidth={2.5} />
-                </div>
-                <div>
-                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-black/30">SCHEDULED</p>
-                  <p className="font-passion text-[13px] font-bold uppercase tracking-wide">{formatDateTime(drop.scheduledAt)}</p>
-                </div>
+              {/* Perforation Line Decoration */}
+              <div className="relative my-12 flex items-center gap-4">
+                {/* Hole punch effects using relative circles */}
+                <div className="absolute -left-[64px] h-10 w-10 rounded-full border-[4px] border-tok-black bg-tok-cream shadow-inner" />
+                <div className="h-[2px] flex-1 border-t-[3px] border-dashed border-tok-black/15" />
+                <div className="absolute -right-[64px] h-10 w-10 rounded-full border-[4px] border-tok-black bg-tok-cream shadow-inner" />
               </div>
 
-              <div className="flex items-center gap-4 rounded-sm border-2 border-tok-black/5 bg-tok-cream/20 p-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
-                  <IconMapPin size={18} strokeWidth={2.5} />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-black/30">LOCATION</p>
-                  <p className="truncate font-passion text-[13px] font-bold uppercase tracking-wide">{drop.location}</p>
-                </div>
-              </div>
-
-              {drop.expectedHeadcount ? (
-                <div className="flex items-center gap-4 rounded-sm border-2 border-tok-black/5 bg-tok-cream/20 p-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
-                    <IconUsers size={18} strokeWidth={2.5} />
+              {/* Mission Briefing Details */}
+              <div className="grid grid-cols-1 gap-8">
+                <div className="flex items-start gap-5">
+                  <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-teal/10 text-tok-teal shadow-[3px_3px_0px_rgba(0,0,0,0.1)]">
+                    <IconCalendar size={16} strokeWidth={3} />
                   </div>
                   <div>
-                    <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-black/30">CREW SIZE</p>
-                    <p className="font-passion text-[13px] font-bold uppercase tracking-wide">{drop.expectedHeadcount} EXPECTED</p>
+                    <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/30">DATE & TIME</p>
+                    <p className="mt-0.5 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black leading-tight">
+                      {formatDateTime(drop.scheduledAt)}
+                    </p>
                   </div>
                 </div>
-              ) : null}
+
+                <div className="flex items-start gap-5">
+                  <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-teal/10 text-tok-teal shadow-[3px_3px_0px_rgba(0,0,0,0.1)]">
+                    <IconMapPin size={16} strokeWidth={3} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/30">LOCATION</p>
+                    <p className="mt-0.5 truncate font-passion text-2xl font-bold uppercase tracking-tight text-tok-black leading-tight">
+                      {drop.location}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Security Status Badge */}
+              {drop.isLocked && (
+                <div className="mt-12 flex items-center gap-4 rounded-sm border-[3px] border-tok-black bg-amber-400 p-5 shadow-[6px_6px_0px_#1C1C1A]">
+                  <IconLock size={28} className="shrink-0" strokeWidth={2.5} />
+                  <p className="font-passion text-[11px] font-bold uppercase leading-tight tracking-[1.5px] text-tok-black">
+                    SECURED MISSION: ACCESS REQUIRES CHIEF APPROVAL AFTER TAP IN.
+                  </p>
+                </div>
+              )}
+
+              {/* Participation CTA Area */}
+              <div className="mt-12 pt-8 border-t-[3px] border-tok-black/5">
+                <JoinCta
+                  isOrganiser={isOrganiser}
+                  crewStatus={crewStatus?.status}
+                  isNotCrew={isNotCrew}
+                  joinMutation={joinMutation}
+                  isLocked={drop.isLocked}
+                  onViewDrop={() => router.push(`/drops/${drop.id}`)}
+                  onJoin={handleJoin}
+                  dbUser={dbUser}
+                  joinCode={joinCode}
+                />
+              </div>
             </div>
 
-            {drop.isLocked && (
-              <div className="mt-4 flex items-center gap-3 rounded-sm border-[3px] border-tok-black bg-amber-400 p-4 shadow-[4px_4px_0px_#1C1C1A]">
-                <IconLock size={20} className="shrink-0" strokeWidth={2.5} />
-                <p className="font-passion text-[11px] font-bold uppercase leading-tight tracking-[1.5px]">
-                  SECURE DROP: ACCESS REQUIRES ORGANISER APPROVAL.
+            {/* Bottom Footer Stub Decoration */}
+            <div className="flex items-center justify-center gap-6 border-t-[3px] border-tok-black bg-tok-black py-5 px-8 text-[#F7E9B2]">
+              <div className="h-[2px] flex-1 bg-[#F7E9B2]/20" />
+              <div className="flex items-center gap-3">
+                <IconTicket size={16} className="text-[#F7E9B2]/40" />
+                <p className="font-passion text-[11px] font-bold uppercase tracking-[6px] text-[#F7E9B2]">
+                  {drop.joinCode}
                 </p>
               </div>
-            )}
-
-            {/* CTA Container */}
-            <div className="pt-4">
-              <JoinCta
-                isOrganiser={isOrganiser}
-                crewStatus={crewStatus?.status}
-                isNotCrew={isNotCrew}
-                joinMutation={joinMutation}
-                isLocked={drop.isLocked}
-                onViewDrop={() => router.push(`/drops/${drop.id}`)}
-                onJoin={handleJoin}
-                dbUser={dbUser}
-                joinCode={joinCode}
-              />
+              <div className="h-[2px] flex-1 bg-[#F7E9B2]/20" />
             </div>
           </div>
 
-          {/* Footer Branding */}
-          <div className="bg-tok-black/5 px-6 py-4 text-center">
-            <p className="font-passion text-[10px] font-bold uppercase tracking-[4px] text-tok-black/20">
-              POWERED BY TapOK PROTOCOL v1.0
-            </p>
-          </div>
+          {/* Branding Tagline */}
+          <p className="mt-8 text-center font-passion text-[10px] font-bold uppercase tracking-[4px] text-tok-black/20">
+            TapOK PROTOCOL v1.0 • SECURE INVITE SYSTEM
+          </p>
         </div>
       </main>
     </div>

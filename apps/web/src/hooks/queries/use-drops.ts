@@ -43,7 +43,8 @@ export function useDrop(id: string) {
     queryKey: dropKeys.detail(id),
     queryFn: () => dropsService.getOne(id),
     enabled: Boolean(id),
-    refetchInterval: 30_000,
+    refetchInterval: 10_000, // Reduced from 30s for better responsiveness
+    staleTime: 5_000,
   });
 }
 
@@ -52,7 +53,8 @@ export function useDropByJoinCode(joinCode: string) {
     queryKey: dropKeys.byJoinCode(joinCode),
     queryFn: () => dropsService.getByJoinCode(joinCode),
     enabled: Boolean(joinCode),
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
+    staleTime: 5_000,
   });
 }
 

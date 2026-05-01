@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -17,6 +18,7 @@ export class DropActivityLog {
   id: string;
 
   @ApiProperty()
+  @Index('idx_drop_activity_logs_drop_id')
   @Column()
   dropId: string;
 

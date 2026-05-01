@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -20,6 +21,7 @@ export class Organization {
   name: string;
 
   @ApiProperty({ required: false })
+  @Index('idx_organizations_slug')
   @Column({ nullable: true })
   slug?: string;
 
