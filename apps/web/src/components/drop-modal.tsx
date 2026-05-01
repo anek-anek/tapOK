@@ -311,7 +311,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
   const updateDrop = useUpdateDrop(drop?.id ?? '');
   const uploadCoverPhoto = useUploadCoverPhoto(drop?.id ?? '');
   const deleteCoverPhoto = useDeleteCoverPhoto(drop?.id ?? '');
-  const { user } = useAuth();
+  const { dbUser } = useAuth();
   const { data: myCrew } = useMyCrewStatus(drop?.id ?? '', { enabled: isEdit });
   const pendingIdRef = useRef<string | null>(null);
 
@@ -837,8 +837,8 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   <div className="mt-10 border-t-2 border-dashed border-tok-black/10 pt-8">
                     <PhotoRoll 
                       drop={drop} 
-                      userId={user?.id}
-                      isOrganiser={drop.organiserId === user?.id}
+                      userId={dbUser?.id}
+                      isOrganiser={drop.organiserId === dbUser?.id}
                       isCrewMember={myCrew?.status === 'in'}
                     />
                   </div>
