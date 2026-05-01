@@ -14,8 +14,8 @@ const flipSteps = [
     num: '01',
     teaser: 'DROP A\nPLAN.',
     accentBg: '#006666',
-    accentText: '#FFF4BD',
-    backBg: '#FFF4BD',
+    accentText: '#F7E9B2',
+    backBg: '#F7E9B2',
     backBorder: '#006666',
     heading: 'Be the Chief.',
     body: "Pin a name, a time, and a place. Give your crew one clear thing to say yes or no to — no group-chat chaos, no back-and-forth.",
@@ -24,15 +24,15 @@ const flipSteps = [
     backBodyColor: 'rgba(0,0,0,0.6)',
     backHintColor: 'rgba(0,0,0,0.25)',
     tagBg: '#006666',
-    tagText: '#FFF4BD',
+    tagText: '#F7E9B2',
   },
   {
     id: 'share',
     num: '02',
     teaser: 'SPREAD\nTHE WORD.',
     accentBg: '#000',
-    accentText: '#FFF4BD',
-    backBg: '#FFF4BD',
+    accentText: '#F7E9B2',
+    backBg: '#F7E9B2',
     backBorder: '#000',
     heading: 'One link. Everywhere.',
     body: "Your Drop goes live instantly. Blast the link wherever the chaos usually starts — group chat, DMs, anywhere. One tap and they're in.",
@@ -41,23 +41,23 @@ const flipSteps = [
     backBodyColor: 'rgba(0,0,0,0.6)',
     backHintColor: 'rgba(0,0,0,0.25)',
     tagBg: '#000',
-    tagText: '#FFF4BD',
+    tagText: '#F7E9B2',
   },
   {
     id: 'live',
     num: '03',
     teaser: 'TAP IN.\nNO MAYBES.',
-    accentBg: '#FFF4BD',
+    accentBg: '#F7E9B2',
     accentText: '#006666',
     backBg: '#006666',
     backBorder: '#006666',
     heading: 'Live headcount.',
     body: "Crew taps In or Out. You get a live roster instantly — no awkward follow-ups, no buried DMs, just a clear count so the plan actually happens.",
     tag: 'DONE.',
-    backTextColor: '#FFF4BD',
-    backBodyColor: 'rgba(255,244,189,0.75)',
-    backHintColor: 'rgba(255,244,189,0.4)',
-    tagBg: '#FFF4BD',
+    backTextColor: '#F7E9B2',
+    backBodyColor: 'rgba(247,233,178,0.75)',
+    backHintColor: 'rgba(247,233,178,0.4)',
+    tagBg: '#F7E9B2',
     tagText: '#006666',
   },
 ];
@@ -246,7 +246,7 @@ export function HowItWorks({ dbUser, mounted, loading }: { dbUser: unknown; moun
   const toggle = (i: number) => setFlipped((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
 
   return (
-    <section className="bg-[#FFF4BD] px-5 py-12 md:px-10 lg:px-20">
+    <section className="bg-tok-cream px-5 py-12 md:px-10 lg:px-20">
       <style>{`
         @keyframes cardEntrance {
           from { opacity: 0; transform: translateY(32px) rotate(-1deg); }
@@ -274,7 +274,7 @@ export function HowItWorks({ dbUser, mounted, loading }: { dbUser: unknown; moun
               display: 'inline-flex',
               alignItems: 'center',
               background: '#006666',
-              color: '#FFF4BD',
+              color: '#F7E9B2',
               fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
               fontSize: '11px',
               fontWeight: 700,
@@ -360,9 +360,9 @@ const tourFeatures = [
     icon: Users,
     label: 'Live Roster',
     tag: 'CLARITY',
-    heading: 'Always know\nwho\'s in.',
-    body: 'Watch your headcount update in real time as crew taps in. No polling threads, no "did you see my message?" — just a clean, live list of who\'s actually showing up.',
-    accent: '#FFF4BD',
+    heading: "Always know\nwho's in.",
+    body: "Watch your headcount update in real time as crew taps in. No polling threads, no \"did you see my message?\" — just a clean, live list of who's actually showing up.",
+    accent: '#F7E9B2',
   },
   {
     id: 'nudge',
@@ -370,7 +370,7 @@ const tourFeatures = [
     label: 'Auto Nudges',
     tag: 'NO CHASE',
     heading: 'Stop chasing\npeople down.',
-    body: 'TapOK pings the fence-sitters so you don\'t have to. Automated reminders go out before the Drop closes — you stay the Chief, not the nag.',
+    body: "TapOK pings the fence-sitters so you don't have to. Automated reminders go out before the Drop closes — you stay the Chief, not the nag.",
     accent: '#006666',
   },
   {
@@ -380,7 +380,7 @@ const tourFeatures = [
     tag: 'SIMPLICITY',
     heading: 'One link\ndoes it all.',
     body: 'Your Drop is a single URL. Drop it in a group chat, DM, story — anywhere. No app download required for crew members. Tap the link, tap In or Out, done.',
-    accent: '#FFF4BD',
+    accent: '#F7E9B2',
   },
   {
     id: 'stats',
@@ -388,7 +388,7 @@ const tourFeatures = [
     label: 'Drop Stats',
     tag: 'INSIGHT',
     heading: 'See the full\npicture.',
-    body: 'After the Drop closes, get a breakdown — who was in, who bailed, response time. Know your crew\'s vibe for the next one.',
+    body: "After the Drop closes, get a breakdown — who was in, who bailed, response time. Know your crew's vibe for the next one.",
     accent: '#006666',
   },
   {
@@ -398,7 +398,7 @@ const tourFeatures = [
     tag: 'SAFE',
     heading: 'Your plans\nstay yours.',
     body: 'Drops are private links — only people you share with can see them. No public feed, no algorithm, no strangers crashing your plans.',
-    accent: '#FFF4BD',
+    accent: '#F7E9B2',
   },
 ];
 
@@ -461,7 +461,7 @@ function FeatureTour() {
           </div>
           <h2
             className="font-passion font-bold uppercase leading-none"
-            style={{ fontSize: 'clamp(36px,5.5vw,64px)', color: '#FFF4BD', letterSpacing: '-0.01em' }}
+            style={{ fontSize: 'clamp(36px,5.5vw,64px)', color: '#F7E9B2', letterSpacing: '-0.01em' }}
           >
             BUILT FOR THE<br />
             <span style={{ color: '#006666' }}>WAY PLANS ACTUALLY</span><br />
@@ -483,8 +483,8 @@ function FeatureTour() {
                   onClick={() => setActive(i)}
                   className={`tour-tab ${isActive ? 'active' : ''} flex items-center gap-4 rounded-none border-0 bg-transparent px-5 py-4 text-left`}
                   style={{
-                    borderLeft: `2px solid ${isActive ? '#006666' : 'rgba(255,244,189,0.08)'}`,
-                    color: isActive ? '#FFF4BD' : 'rgba(255,244,189,0.35)',
+                    borderLeft: `2px solid ${isActive ? '#006666' : 'rgba(247,233,178,0.08)'}`,
+                    color: isActive ? '#F7E9B2' : 'rgba(247,233,178,0.35)',
                     transition: 'color 0.2s ease, border-color 0.2s ease',
                   }}
                 >
@@ -496,12 +496,12 @@ function FeatureTour() {
                       width: '36px',
                       height: '36px',
                       borderRadius: '8px',
-                      background: isActive ? '#006666' : 'rgba(255,244,189,0.05)',
+                      background: isActive ? '#006666' : 'rgba(247,233,178,0.05)',
                       flexShrink: 0,
                       transition: 'background 0.2s ease',
                     }}
                   >
-                    <Icon size={16} color={isActive ? '#FFF4BD' : 'rgba(255,244,189,0.4)'} strokeWidth={2} />
+                    <Icon size={16} color={isActive ? '#F7E9B2' : 'rgba(247,233,178,0.4)'} strokeWidth={2} />
                   </div>
                   <span
                     className="font-passion text-lg uppercase tracking-wide"
@@ -520,7 +520,7 @@ function FeatureTour() {
             className="feature-detail flex flex-col justify-between rounded-none p-8 lg:p-12"
             style={{
               background: '#252522',
-              border: '1px solid rgba(255,244,189,0.07)',
+              border: '1px solid rgba(247,233,178,0.07)',
               minHeight: '280px',
             }}
           >
@@ -535,7 +535,7 @@ function FeatureTour() {
                 className="mt-4 font-passion font-bold uppercase leading-none"
                 style={{
                   fontSize: 'clamp(32px, 4vw, 54px)',
-                  color: '#FFF4BD',
+                  color: '#F7E9B2',
                   whiteSpace: 'pre-line',
                   letterSpacing: '-0.01em',
                 }}
@@ -559,7 +559,7 @@ function FeatureTour() {
                   style={{
                     height: '3px',
                     flex: 1,
-                    background: i === active ? '#006666' : 'rgba(255,244,189,0.1)',
+                    background: i === active ? '#006666' : 'rgba(247,233,178,0.1)',
                     borderRadius: '2px',
                     border: 'none',
                     cursor: 'pointer',
@@ -614,7 +614,7 @@ function BurstDecoration({ flipped = false }: { flipped?: boolean }) {
       viewBox="0 0 19 39"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="text-[#FFF4BD]"
+      className="text-tok-cream"
       style={{ transform: flipped ? 'scaleX(-1)' : 'none' }}
     >
       <line x1="9.11839" y1="1.50001" x2="16.8885" y2="8.49312" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -629,12 +629,12 @@ export default function Home() {
   const { dbUser, loading } = useAuth();
 
   return (
-    <div className="min-h-screen bg-[#FFF4BD] text-tok-black font-inter">
+    <div className="min-h-screen bg-tok-cream text-tok-black font-inter">
       <TapokNavbar />
 
       <main>
         {/* ── HERO ── */}
-        <section className="relative overflow-hidden bg-[#FFF4BD]">
+        <section className="relative overflow-hidden bg-tok-cream">
           <div className="flex min-h-[calc(100vh-60px)] flex-col lg:flex-row lg:items-stretch">
             <div className="relative z-10 flex flex-col items-start justify-center px-8 py-14 lg:w-[42%] lg:px-16 lg:py-20 xl:px-24">
               <h1 className="font-passion font-bold uppercase leading-none text-tok-black">
@@ -651,16 +651,16 @@ export default function Home() {
               {mounted && !loading && (
                 <Link
                   href={dbUser ? '/drops' : '/login'}
-                  className="mt-8 inline-block rounded-full bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white active:scale-[0.98]"
+                  className="mt-8 inline-block rounded-lg border-2 border-tok-black bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white shadow-[6px_6px_0px_0px_#262624] active:translate-y-0 active:shadow-none"
                   style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease' }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px) scale(1.04)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 28px rgba(0,102,102,0.38)';
+                    (e.currentTarget as HTMLElement).style.transform = 'translate(-2px,-2px)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '8px 8px 0px 0px #262624';
                     (e.currentTarget as HTMLElement).style.backgroundColor = '#005555';
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = '';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0px 0px #262624';
                     (e.currentTarget as HTMLElement).style.backgroundColor = '';
                   }}
                 >
@@ -691,7 +691,7 @@ export default function Home() {
           <div className="mx-auto max-w-7xl">
             <div className="mb-12 flex items-center justify-center gap-10">
               <BurstDecoration />
-              <h2 className="font-passion text-[clamp(32px,5vw,48px)] font-bold uppercase tracking-tight text-[#FFF4BD]">
+              <h2 className="font-passion text-[clamp(32px,5vw,48px)] font-bold uppercase tracking-tight text-tok-cream">
                 WHY USE TAPOK?
               </h2>
               <BurstDecoration flipped />
@@ -709,8 +709,8 @@ export default function Home() {
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = 'translate(-4px, -4px)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0 #FFF4BD';
-                    (e.currentTarget as HTMLElement).style.borderColor = '#FFF4BD';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0 var(--color-tok-cream)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-tok-cream)';
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = '';
@@ -741,9 +741,9 @@ export default function Home() {
               {trustItems.map(({ icon: Icon, label }, i) => (
                 <div key={label} className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5">
-                    <Icon size={18} className="text-[#FFF4BD]" strokeWidth={2} />
+                    <Icon size={18} className="text-tok-cream" strokeWidth={2} />
                   </div>
-                  <span className="font-passion text-sm font-bold uppercase tracking-wide text-[#FFF4BD]">
+                  <span className="font-passion text-sm font-bold uppercase tracking-wide text-tok-cream">
                     {label}
                   </span>
                   {i < trustItems.length - 1 && (
@@ -764,15 +764,15 @@ export default function Home() {
 
       <footer className="bg-tok-teal px-6 md:px-16 lg:px-24">
         <div className="mx-auto flex h-20 max-w-7xl items-center gap-4">
-          <span className="font-passion text-lg font-bold uppercase tracking-tight text-[#FFF4BD]">TapOK</span>
-          <div className="mx-4 h-4 w-px bg-[#FFF4BD]/20" />
-          <p className="hidden font-inter text-sm text-[#FFF4BD]/45 md:block">Drop it. Share it. Tap in.</p>
+          <span className="font-passion text-lg font-bold uppercase tracking-tight text-tok-cream">TapOK</span>
+          <div className="mx-4 h-4 w-px bg-tok-cream/20" />
+          <p className="hidden font-inter text-sm text-tok-cream/45 md:block">Drop it. Share it. Tap in.</p>
           <div className="ml-auto flex items-center gap-6">
             {[
               { label: 'Privacy', href: '#' },
               { label: 'Terms', href: '#' },
             ].map(({ label, href }) => (
-              <a key={label} href={href} className="font-inter text-sm text-[#FFF4BD]/50 transition-colors hover:text-[#FFF4BD]">
+              <a key={label} href={href} className="font-inter text-sm text-tok-cream/50 transition-colors hover:text-tok-cream">
                 {label}
               </a>
             ))}
