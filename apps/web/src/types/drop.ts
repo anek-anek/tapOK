@@ -45,6 +45,7 @@ export interface Drop {
   coverPhoto?: string | null;
   organiserId: string;
   organiser: DropOrganiser;
+  crew?: CrewMember[];
   activityLogs?: DropActivityLog[];
   createdAt: string;
   updatedAt: string;

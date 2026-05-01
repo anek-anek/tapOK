@@ -247,6 +247,34 @@ export function ListDropCard({
               <span className="font-passion truncate uppercase tracking-wider">{drop.location}</span>
             </span>
           </div>
+          
+          {/* Crew Avatars */}
+          {drop.crew && drop.crew.length > 0 && (
+            <div className="mt-3 flex items-center gap-1">
+              <div className="flex -space-x-2 overflow-hidden">
+                {drop.crew.slice(0, 5).map((member) => (
+                  <div 
+                    key={member.id} 
+                    className="inline-block h-6 w-6 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden"
+                    title={`${member.user.firstName} ${member.user.lastName}`}
+                  >
+                    {member.user.avatar ? (
+                      <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center font-passion text-[8px] text-tok-teal">
+                        {member.user.firstName[0]}{member.user.lastName[0]}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {drop.crew.length > 5 && (
+                <span className="font-passion text-[10px] font-bold text-tok-black/40 ml-1">
+                  +{drop.crew.length - 5} MORE
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

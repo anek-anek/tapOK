@@ -2,15 +2,18 @@
 
 import { Mail, Phone, Calendar as IconCalendar, Pencil, X, Check, User, ChevronDown, Camera } from 'lucide-react';
 import { useRef, useState } from 'react';
+import Link from 'next/link';
 import { TapokNavbar } from '@/components/tapok-navbar';
-import { useCurrentUser } from '@/hooks/queries/use-users';
+import { useCurrentUser, useFrequentCrew } from '@/hooks/queries/use-users';
 import { useUpdateUser } from '@/hooks/mutations/use-user-mutations';
+import { useMyDrops } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMounted } from '@/hooks/use-mounted';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
+import { ListDropCard, ListCardSkeleton } from '@/components/drops/drop-cards';
 import {
   Popover,
   PopoverContent,
@@ -74,6 +77,8 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateUser = useUpdateUser(profile?.id ?? '');
+  const { data: myDrops = [], isLoading: dropsLoading } = useMyDrops();
+  const { data: frequentCrew = [], isLoading: crewLoading } = useFrequentCrew();
 
   function startEdit() {
     setForm({
@@ -178,6 +183,13 @@ export default function ProfilePage() {
 
             {/* Activity Skeleton */}
             <div className="h-40 w-full border-2 border-tok-black/10 bg-tok-white p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]" />
+            
+            {/* Drops Skeleton */}
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-48 rounded-none bg-tok-black/5" />
+              <ListCardSkeleton />
+              <ListCardSkeleton />
+            </div>
           </div>
         </main>
       </div>
@@ -210,6 +222,10 @@ export default function ProfilePage() {
       } catch { return 'JUNE 2024'; }
     })()
     : 'JUNE 2024';
+
+  const orchestratedDrops = myDrops.filter(d => d.organiserId === profile?.id);
+  const activeDrops = orchestratedDrops.filter(d => d.status !== 'completed');
+  const pastDrops = orchestratedDrops.filter(d => d.status === 'completed');
 
   return (
     <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/20">
@@ -494,6 +510,80 @@ export default function ProfilePage() {
               </div>
             </div>
           </section>
+
+          {/* Orchestrated Drops Section */}
+          <section className="mt-12 space-y-10">
+            {activeDrops.length > 0 && (
+              <div className="space-y-6">
+                <div className="flex items-end justify-between border-b-2 border-tok-black pb-2">
+                  <h3 className="font-passion text-3xl uppercase tracking-tighter">Active Missions</h3>
+                  <span className="font-passion text-sm text-tok-black/40">{activeDrops.length} ONGOING</span>
+                </div>
+                <div className="space-y-4">
+                  {activeDrops.map(drop => (
+                    <ListDropCard key={drop.id} drop={drop} viewerId={profile?.id} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {pastDrops.length > 0 && (
+              <div className="space-y-6">
+                <div className="flex items-end justify-between border-b-2 border-tok-black pb-2">
+                  <h3 className="font-passion text-3xl uppercase tracking-tighter">Past Operations</h3>
+                  <span className="font-passion text-sm text-tok-black/40">{pastDrops.length} ARCHIVED</span>
+                </div>
+                <div className="grid gap-4">
+                  {pastDrops.map(drop => (
+                    <ListDropCard key={drop.id} drop={drop} viewerId={profile?.id} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {orchestratedDrops.length === 0 && !dropsLoading && (
+              <div className="border-2 border-dashed border-tok-black/20 p-12 text-center">
+                <p className="font-passion text-xl text-tok-black/40 uppercase">No drops orchestrated yet.</p>
+                <Link 
+                  href="/drops" 
+                  className="mt-4 inline-block font-passion text-sm text-tok-teal underline decoration-2 underline-offset-4"
+                >
+                  START YOUR FIRST MISSION
+                </Link>
+              </div>
+            )}
+          </section>
+
+          {/* Frequent Crew Section */}
+          {frequentCrew.length > 0 && (
+            <section className="mt-16">
+              <div className="mb-6 border-b-2 border-tok-black pb-2">
+                <h3 className="font-passion text-3xl uppercase tracking-tighter">Frequent Crew</h3>
+                <p className="font-inter text-[10px] font-black text-tok-black/40 uppercase tracking-widest">Regular Accomplices</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {frequentCrew.map((member) => (
+                  <div key={member.id} className="flex items-center gap-4 border-2 border-tok-black bg-tok-white p-4 shadow-[4px_4px_0px_0px_#262624]">
+                    <div className="flex h-12 w-12 items-center justify-center border-2 border-tok-black bg-tok-teal-pale overflow-hidden">
+                      {member.avatar ? (
+                        <img src={member.avatar} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="font-passion text-lg text-tok-teal">
+                          {member.firstName[0]}{member.lastName[0]}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-passion text-xl uppercase leading-none">{member.firstName} {member.lastName}</h4>
+                      <p className="mt-1 font-inter text-[10px] font-bold text-tok-black/40 uppercase">
+                        {member.frequencyCount} SHARED MISSIONS
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
         </div>
       </main>

@@ -49,13 +49,15 @@ export class DropsRepository {
   findFeed(userId: string): Promise<Drop[]> {
     return this.dropRepo.createQueryBuilder('drop')
       .leftJoinAndSelect('drop.organiser', 'organiser')
-      .leftJoin('drop.crew', 'crew', 'crew.userId = :userId', { userId })
+      .leftJoin('drop.crew', 'crew_me', 'crew_me.userId = :userId', { userId })
+      .leftJoinAndSelect('drop.crew', 'crew')
+      .leftJoinAndSelect('crew.user', 'user')
       .where('drop.organiserId = :userId', { userId })
-      .orWhere('crew.userId = :userId AND crew.status = :accepted', {
+      .orWhere('crew_me.userId = :userId AND crew_me.status = :accepted', {
         userId,
         accepted: DropCrewStatus.IN,
       })
-      .orderBy('drop.scheduledAt', 'ASC')
+      .orderBy('drop.scheduledAt', 'DESC')
       .getMany();
   }
 
