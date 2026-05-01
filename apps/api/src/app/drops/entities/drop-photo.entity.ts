@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -18,10 +19,12 @@ export class DropPhoto {
   id: string;
 
   @ApiProperty()
+  @Index('idx_drop_photos_drop_id')
   @Column()
   dropId: string;
 
   @ApiProperty()
+  @Index('idx_drop_photos_user_id')
   @Column()
   userId: string;
 

@@ -231,7 +231,7 @@ export default function DropsPage() {
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
         {/* Page header row */}
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-6">
+        <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
             <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
               COMMAND CENTER
@@ -260,7 +260,7 @@ export default function DropsPage() {
               <button
                 type="submit"
                 disabled={joinCode.trim().length < 4 || isJoiningNavigation}
-                className="h-full border-l-[3px] border-tok-black bg-tok-teal px-5 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:bg-tok-teal/90 disabled:bg-tok-black/20 disabled:text-tok-black/40"
+                className="flex h-full w-24 items-center justify-center border-l-[3px] border-tok-black bg-tok-teal font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:bg-tok-teal/90 disabled:bg-tok-black/20 disabled:text-tok-black/40"
               >
                 {isJoiningNavigation ? '...' : 'JOIN'}
               </button>

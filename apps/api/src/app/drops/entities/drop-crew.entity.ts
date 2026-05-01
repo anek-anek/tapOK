@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -20,10 +21,12 @@ export class DropCrew {
   id: string;
 
   @ApiProperty()
+  @Index('idx_drop_crew_drop_id')
   @Column()
   dropId: string;
 
   @ApiProperty()
+  @Index('idx_drop_crew_user_id')
   @Column()
   userId: string;
 

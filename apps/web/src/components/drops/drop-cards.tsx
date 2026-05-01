@@ -16,7 +16,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { SparkButton } from './spark-button';
 
 export function crewFor(drop: DropCardModel): CrewMember[] | undefined {
-  return 'crew' in drop ? drop.crew : undefined;
+  if (!('crew' in drop) || !drop.crew) return undefined;
+  return drop.crew.filter((m) => m.status === 'in');
 }
 
 function isShareableDrop(drop: DropCardModel): drop is Drop {
@@ -85,10 +86,10 @@ export function HeroDropCard({
         {/* Visual Section */}
         <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px]">
           {drop.coverPhoto ? (
-            <img 
-              src={drop.coverPhoto} 
-              alt={drop.name} 
-              className="absolute inset-0 h-full w-full object-cover" 
+            <img
+              src={drop.coverPhoto}
+              alt={drop.name}
+              className="absolute inset-0 h-full w-full object-cover"
             />
 
           ) : (
@@ -96,7 +97,7 @@ export function HeroDropCard({
               {getInitials(drop.name)}
             </div>
           )}
-          
+
           {/* Status Badge overlay */}
           <div className="absolute bottom-3 left-3 flex flex-col gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-sm bg-amber-400 px-2 py-1 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A]">
@@ -128,7 +129,7 @@ export function HeroDropCard({
                 </span>
               )}
             </div>
-            
+
             <h2 className="font-passion text-2xl font-bold leading-tight tracking-tight text-tok-cream md:text-3xl">
               {drop.name}
             </h2>
@@ -145,8 +146,8 @@ export function HeroDropCard({
             <div className="mb-6 flex items-center gap-3">
               <div className="flex items-center">
                 {crew.slice(0, 4).map((member, i) => (
-                  <div 
-                    key={member.id} 
+                  <div
+                    key={member.id}
                     className={cn(
                       "relative h-8 w-8 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden",
                       i > 0 && "-ml-4"
@@ -284,7 +285,7 @@ export function ListDropCard({
             </div>
           )}
 
-          
+
           {/* Status Badge overlay */}
           {drop.status === 'ongoing' && (
             <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-sm bg-amber-400 px-1.5 py-0.5 font-passion text-[8px] font-bold uppercase tracking-wider text-tok-black border-2 border-tok-black shadow-[1.5px_1.5px_0px_#1C1C1A]">
@@ -343,8 +344,8 @@ export function ListDropCard({
               {crew && crew.length > 0 ? (
                 <>
                   {crew.slice(0, 3).map((member, i) => (
-                    <div 
-                      key={member.id} 
+                    <div
+                      key={member.id}
                       className={cn(
                         "relative h-6 w-6 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden",
                         i > 0 && "-ml-3"

@@ -86,10 +86,32 @@ export function useUpdatePresence(dropId: string): UseMutationResult<void, Error
 
   return useMutation({
     mutationFn: (isPresent: boolean) => dropsService.updatePresence(dropId, isPresent),
-    onSuccess: (_data, isPresent) => {
-      queryClient.setQueryData(dropKeys.crewMe(dropId), (prev: DropCrew | undefined) =>
-        prev ? { ...prev, isPresent } : prev,
+    onMutate: async (isPresent) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: dropKeys.crewMe(dropId) });
+      await queryClient.cancelQueries({ queryKey: dropKeys.crew(dropId) });
+
+      // Snapshot the previous value
+      const previousStatus = queryClient.getQueryData<DropCrew>(dropKeys.crewMe(dropId));
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(dropKeys.crewMe(dropId), (old: any) =>
+        old ? { ...old, isPresent } : old
       );
+
+      // Return a context object with the snapshotted value
+      return { previousStatus };
+    },
+    onError: (_err, _isPresent, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousStatus) {
+        queryClient.setQueryData(dropKeys.crewMe(dropId), context.previousStatus);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we're in sync with the server
+      void queryClient.invalidateQueries({ queryKey: dropKeys.crewMe(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.crew(dropId) });
       void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
     },
   });

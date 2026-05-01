@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -19,6 +20,7 @@ export class DropSpark {
   id: string;
 
   @ApiProperty()
+  @Index('idx_drop_sparks_drop_id')
   @Column()
   dropId: string;
 

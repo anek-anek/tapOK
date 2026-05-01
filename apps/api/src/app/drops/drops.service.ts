@@ -322,7 +322,12 @@ export class DropsService {
       }
 
       const existing = await this.dropsRepository.findCrewMember(dropId, user.id);
-      if (existing && existing.status !== DropCrewStatus.INVITED) {
+      if (
+        existing &&
+        existing.status !== DropCrewStatus.INVITED &&
+        existing.status !== DropCrewStatus.REJECTED &&
+        existing.status !== DropCrewStatus.REMOVED
+      ) {
         throw new ConflictException('You have already joined this drop');
       }
 
@@ -334,7 +339,7 @@ export class DropsService {
       const isPresent = !drop.isLocked;
 
       let crewMember;
-      if (existing && existing.status === DropCrewStatus.INVITED) {
+      if (existing) {
         await this.dropsRepository.updateCrewStatus(dropId, user.id, memberStatus, isPresent);
         crewMember = await this.dropsRepository.findCrewMember(dropId, user.id);
       } else {
