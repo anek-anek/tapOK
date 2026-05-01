@@ -31,13 +31,39 @@ interface RegisterFormProps {
 
 export default function RegisterForm({ redirectTo }: RegisterFormProps) {
   const router = useRouter();
-  const { loading, setSession } = useAuth();
+  const { user, dbUser, loading, setSession } = useAuth();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignUpFormValues>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (user && dbUser && !googleLoading && !isSubmitting) {
+      const isCrewJoin = redirectTo.startsWith('/drops/join/');
+      if (isCrewJoin) {
+        router.replace(redirectTo);
+      } else {
+        router.replace('/drops');
+      }
+    }
+  }, [user, dbUser, googleLoading, isSubmitting, router, redirectTo]);
 
   useEffect(() => {
     if (serverError && errorRef.current) {
@@ -82,21 +108,6 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
 
     void checkRedirect();
   }, [router, redirectTo, setSession]);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<SignUpFormValues>({
-    resolver: zodResolver(signUpSchema),
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
-  });
 
   const handleGoogleSignUp = async () => {
     setServerError(null);

@@ -31,12 +31,27 @@ interface LoginFormProps {
 
 export default function LoginForm({ redirectTo }: LoginFormProps) {
   const router = useRouter();
-  const { loading, setSession } = useAuth();
+  const { user, dbUser, loading, setSession } = useAuth();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  });
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (user && dbUser && !googleLoading && !isSubmitting) {
+      router.replace(redirectTo);
+    }
+  }, [user, dbUser, googleLoading, isSubmitting, router, redirectTo]);
 
   useEffect(() => {
     if (serverError && errorRef.current) {
@@ -75,15 +90,6 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
 
     void checkRedirect();
   }, [router, redirectTo, setSession]);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
-  });
 
   const handleGoogleSignIn = async () => {
     setServerError(null);
