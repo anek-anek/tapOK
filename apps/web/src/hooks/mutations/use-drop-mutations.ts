@@ -94,3 +94,27 @@ export function useUpdatePresence(dropId: string): UseMutationResult<void, Error
     },
   });
 }
+
+export function useUploadCoverPhoto(dropId: string): UseMutationResult<Drop, Error, File> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => dropsService.uploadCoverPhoto(dropId, file),
+    onSuccess: (data) => {
+      queryClient.setQueryData(dropKeys.detail(dropId), data);
+      void queryClient.invalidateQueries({ queryKey: dropKeys.minePrefix() });
+    },
+  });
+}
+
+export function useDeleteCoverPhoto(dropId: string): UseMutationResult<void, Error, void> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => dropsService.deleteCoverPhoto(dropId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.minePrefix() });
+    },
+  });
+}

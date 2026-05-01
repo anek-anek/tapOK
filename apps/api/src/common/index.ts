@@ -13,3 +13,4 @@ export * from './firebase/firebase.module';
 export * from './guards/cron.guard';
 export * from './guards/firebase-auth.guard';
 export * from './guards/roles.guard';
+export * from './supabase-storage.service';

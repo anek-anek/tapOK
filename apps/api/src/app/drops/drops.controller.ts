@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -12,10 +13,15 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -286,5 +292,41 @@ export class DropsController {
     @Req() request: RequestWithUser,
   ): Promise<void> {
     return this.dropsService.removeCrewMember(id, userId, request.user.uid);
+  }
+
+  @Post(':id/cover-photo')
+  @UseGuards(FirebaseAuthGuard)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
+  @ApiOperation({ summary: 'Upload or replace the drop cover photo (organiser only, max 5 MB, JPG/PNG)' })
+  @ApiResponse({ status: 201, type: Drop })
+  @ApiResponse({ status: 400, description: 'No file provided or unsupported format.' })
+  @ApiResponse({ status: 403, description: 'Only the organiser can update the cover photo.' })
+  @ApiResponse({ status: 404, description: 'Drop not found.' })
+  async uploadCoverPhoto(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() request: RequestWithUser,
+  ): Promise<Drop> {
+    if (!file) throw new BadRequestException('No file provided');
+    if (!['image/jpeg', 'image/png'].includes(file.mimetype)) {
+      throw new BadRequestException('Only JPG and PNG files are supported');
+    }
+    return this.dropsService.uploadCoverPhoto(id, request.user.uid, file.buffer, file.mimetype);
+  }
+
+  @Delete(':id/cover-photo')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete the drop cover photo (organiser only)' })
+  @ApiResponse({ status: 204, description: 'Cover photo deleted.' })
+  @ApiResponse({ status: 403, description: 'Only the organiser can delete the cover photo.' })
+  @ApiResponse({ status: 404, description: 'Drop not found.' })
+  deleteCoverPhoto(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.deleteCoverPhoto(id, request.user.uid);
   }
 }

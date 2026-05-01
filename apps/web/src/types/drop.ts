@@ -42,6 +42,7 @@ export interface Drop {
   isPublic: boolean;
   category?: DropCategory;
   overview?: string | null;
+  coverPhoto?: string | null;
   organiserId: string;
   organiser: DropOrganiser;
   activityLogs?: DropActivityLog[];

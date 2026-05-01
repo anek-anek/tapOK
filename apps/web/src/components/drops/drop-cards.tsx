@@ -59,93 +59,103 @@ export function HeroDropCard({
 
   return (
     <div className="relative overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal px-6 py-6 shadow-[8px_8px_0px_#1C1C1A]">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 font-passion text-xl font-bold tracking-widest text-tok-cream">
-            {getInitials(drop.name)}
-          </div>
+      {drop.coverPhoto && (
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <img src={drop.coverPhoto} alt="" className="h-full w-full object-cover opacity-50" />
+          <div className="absolute inset-0 bg-tok-teal/40" />
+          <div className="absolute inset-0 bg-linear-to-r from-tok-teal via-tok-teal/80 to-transparent" />
+        </div>
+      )}
 
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 font-passion text-[10px] font-bold uppercase tracking-[3px] text-amber-400">
-                <span className="relative flex h-1.5 w-1.5 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
+      <div className="relative z-10">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 font-passion text-xl font-bold tracking-widest text-tok-cream">
+              {getInitials(drop.name)}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 font-passion text-[10px] font-bold uppercase tracking-[3px] text-amber-400">
+                  <span className="relative flex h-1.5 w-1.5 shrink-0">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  </span>
+                  {drop.status === 'ongoing' ? 'Ongoing Now' : 'Next Drop'}
                 </span>
-                {drop.status === 'ongoing' ? 'Ongoing Now' : 'Next Drop'}
-              </span>
-              {!drop.isPublic && (
-                <span className="inline-flex items-center gap-1.5 rounded-sm bg-tok-black/20 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-tok-cream">
-                  <Lock size={10} strokeWidth={3} />
-                  Private
-                </span>
-              )}
-              {drop.category && (
-                <span className="inline-flex items-center gap-1.5 rounded-sm bg-tok-black/20 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-amber-400 border border-amber-400/30">
-                  {drop.category}
-                </span>
+                {!drop.isPublic && (
+                  <span className="inline-flex items-center gap-1.5 rounded-sm bg-tok-black/20 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-tok-cream">
+                    <Lock size={10} strokeWidth={3} />
+                    Private
+                  </span>
+                )}
+                {drop.category && (
+                  <span className="inline-flex items-center gap-1.5 rounded-sm bg-tok-black/20 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-amber-400 border border-amber-400/30">
+                    {drop.category}
+                  </span>
+                )}
+              </div>
+              <h2 className="mt-1 font-passion text-3xl font-bold leading-none tracking-tight text-tok-cream">
+                {drop.name}
+              </h2>
+              <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[3px] text-tok-cream/80">
+                {role} • <span className="text-tok-cream">{drop.joinCode}</span>
+              </p>
+              {drop.overview && (
+                <p className="mt-3 font-inter text-xs leading-relaxed text-tok-cream/90 line-clamp-2 max-w-xl">
+                  {drop.overview}
+                </p>
               )}
             </div>
-            <h2 className="mt-1 font-passion text-3xl font-bold leading-none tracking-tight text-tok-cream">
-              {drop.name}
-            </h2>
-            <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[3px] text-tok-cream/40">
-              {role} • <span className="text-tok-cream/60">{drop.joinCode}</span>
-            </p>
-            {drop.overview && (
-              <p className="mt-3 font-inter text-xs leading-relaxed text-tok-cream/60 line-clamp-2 max-w-xl">
-                {drop.overview}
-              </p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            {onShare && (
+              <button
+                onClick={() => onShare(drop)}
+                className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 text-tok-cream transition-all hover:-translate-y-0.5 hover:bg-tok-cream/20 active:translate-y-0"
+              >
+                <ClipboardCopy size={16} strokeWidth={2.5} />
+              </button>
             )}
+            {canEdit && (
+              <button
+                onClick={() => onEdit(drop)}
+                className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 text-tok-cream transition-all hover:-translate-y-0.5 hover:bg-tok-cream/20 active:translate-y-0"
+              >
+                <Edit3 size={16} strokeWidth={2.5} />
+              </button>
+            )}
+            <Link
+              href={`/drops/${drop.id}`}
+              className="flex h-10 items-center justify-center gap-2.5 rounded-sm border-2 border-tok-black bg-tok-cream px-5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+            >
+              <span className="pt-0.5">Open Drop</span>
+              <ArrowRight size={14} strokeWidth={2.5} />
+            </Link>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          {onShare && (
-            <button
-              onClick={() => onShare(drop)}
-              className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 text-tok-cream transition-all hover:-translate-y-0.5 hover:bg-tok-cream/20 active:translate-y-0"
-            >
-              <ClipboardCopy size={16} strokeWidth={2.5} />
-            </button>
-          )}
-          {canEdit && (
-            <button
-              onClick={() => onEdit(drop)}
-              className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-cream/20 bg-tok-cream/10 text-tok-cream transition-all hover:-translate-y-0.5 hover:bg-tok-cream/20 active:translate-y-0"
-            >
-              <Edit3 size={16} strokeWidth={2.5} />
-            </button>
-          )}
-          <Link
-            href={`/drops/${drop.id}`}
-            className="flex h-10 items-center justify-center gap-2.5 rounded-sm border-2 border-tok-black bg-tok-cream px-5 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
-          >
-            <span className="pt-0.5">Open Drop</span>
-            <ArrowRight size={14} strokeWidth={2.5} />
-          </Link>
-        </div>
-      </div>
-
-      <div className="mt-8 grid grid-cols-1 gap-4 border-t-2 border-dashed border-tok-cream/10 pt-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="flex items-center gap-3">
-          <CalendarDays size={14} className="text-tok-cream/60" strokeWidth={2.5} />
-          <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream/60">{formatDateTime(drop.scheduledAt)}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <MapPin size={14} className="text-tok-cream/60" strokeWidth={2.5} />
-          <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-tok-cream/60">{drop.location}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Users size={14} className="text-tok-cream/60" strokeWidth={2.5} />
-          <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-tok-cream/60">{drop.organiser.firstName} {drop.organiser.lastName}</span>
-        </div>
-        {drop.expectedHeadcount ? (
+        <div className="mt-8 grid grid-cols-2 gap-4 border-t-2 border-dashed border-tok-cream/30 pt-6 lg:grid-cols-4">
           <div className="flex items-center gap-3">
-            <Ticket size={14} className="text-tok-cream/60" strokeWidth={2.5} />
-            <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream/60">{drop.expectedHeadcount} CREW EXPECTED</span>
+            <CalendarDays size={14} className="text-tok-cream" strokeWidth={2.5} />
+            <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream">{formatDateTime(drop.scheduledAt)}</span>
           </div>
-        ) : null}
+          <div className="flex items-center gap-3">
+            <MapPin size={14} className="text-tok-cream" strokeWidth={2.5} />
+            <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-tok-cream">{drop.location}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Users size={14} className="text-tok-cream" strokeWidth={2.5} />
+            <span className="font-passion truncate text-[11px] font-bold uppercase tracking-wider text-tok-cream">{drop.organiser.firstName} {drop.organiser.lastName}</span>
+          </div>
+          {drop.expectedHeadcount ? (
+            <div className="flex items-center gap-3">
+              <Ticket size={14} className="text-tok-cream" strokeWidth={2.5} />
+              <span className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream">{drop.expectedHeadcount} CREW EXPECTED</span>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

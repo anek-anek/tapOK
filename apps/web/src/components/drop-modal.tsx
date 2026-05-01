@@ -13,11 +13,17 @@ import {
   Lock as IconLock,
   Users as IconUsers,
   ChevronDown as IconChevronDown,
+  ImagePlus as IconImagePlus,
+  Trash2 as IconTrash,
 } from 'lucide-react';
 import {
   useCreateDrop,
   useUpdateDrop,
+  useUploadCoverPhoto,
+  useDeleteCoverPhoto,
 } from '@/hooks/mutations/use-drop-mutations';
+import { ALLOWED_COVER_PHOTO_TYPES, MAX_COVER_PHOTO_SIZE } from '@/lib/supabase-storage';
+import { dropsService } from '@/services/drops.service';
 import { toast } from 'react-hot-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -300,7 +306,44 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
   const router = useRouter();
   const createDrop = useCreateDrop();
   const updateDrop = useUpdateDrop(drop?.id ?? '');
+  const uploadCoverPhoto = useUploadCoverPhoto(drop?.id ?? '');
+  const deleteCoverPhoto = useDeleteCoverPhoto(drop?.id ?? '');
   const pendingIdRef = useRef<string | null>(null);
+
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(drop?.coverPhoto ?? null);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!ALLOWED_COVER_PHOTO_TYPES.includes(file.type)) {
+      setCoverError('Only JPG and PNG files are supported');
+      return;
+    }
+    if (file.size > MAX_COVER_PHOTO_SIZE) {
+      setCoverError('File must be under 5 MB');
+      return;
+    }
+    setCoverError(null);
+    setPendingCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const handleCoverRemove = async () => {
+    if (isEdit && drop?.coverPhoto && !pendingCoverFile) {
+      try {
+        await deleteCoverPhoto.mutateAsync();
+      } catch {
+        toast.error('FAILED TO DELETE COVER PHOTO');
+        return;
+      }
+    }
+    setPendingCoverFile(null);
+    setCoverPreview(null);
+    if (coverInputRef.current) coverInputRef.current.value = '';
+  };
 
   const isBusyRef = useRef(false);
 
@@ -339,7 +382,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
     'overview',
   ]);
 
-  const isBusy = createDrop.isPending || updateDrop.isPending || isSubmitting;
+  const isBusy = createDrop.isPending || updateDrop.isPending || uploadCoverPhoto.isPending || deleteCoverPhoto.isPending || isSubmitting;
   isBusyRef.current = isBusy;
   const serverError = createDrop.error || updateDrop.error;
 
@@ -368,13 +411,25 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
       if (Object.keys(dto).length > 0) {
         try {
           await updateDrop.mutateAsync(dto);
-          toast.success('DROP UPDATED SUCCESSFULLY');
         } catch (err: any) {
           const rawMsg = err.response?.data?.message || 'FAILED TO UPDATE DROP';
           const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
           toast.error(String(msg).toUpperCase());
+          return;
         }
       }
+
+      if (pendingCoverFile && drop?.id) {
+        try {
+          await uploadCoverPhoto.mutateAsync(pendingCoverFile);
+        } catch {
+          toast.error('DROP UPDATED BUT COVER PHOTO UPLOAD FAILED — PLEASE RETRY');
+          wrappedClose();
+          return;
+        }
+      }
+
+      toast.success('DROP UPDATED SUCCESSFULLY');
       wrappedClose();
     } else {
       const dto = {
@@ -387,29 +442,93 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
         category: values.category ?? undefined,
         overview: values.overview,
       };
+
+      let createdId: string;
       try {
         const result = await createDrop.mutateAsync(dto);
-        pendingIdRef.current = result.id;
-        toast.success('DROP DEPLOYED SUCCESSFULLY');
-        wrappedClose();
+        createdId = result.id;
+        pendingIdRef.current = createdId;
       } catch (err: any) {
         const rawMsg = err.response?.data?.message || 'FAILED TO DEPLOY DROP';
         const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
         toast.error(String(msg).toUpperCase());
+        return;
       }
+
+      if (pendingCoverFile) {
+        try {
+          await dropsService.uploadCoverPhoto(createdId, pendingCoverFile);
+        } catch {
+          toast.error('DROP DEPLOYED BUT COVER PHOTO UPLOAD FAILED — PLEASE RETRY IN EDIT MODE');
+        }
+      }
+
+      toast.success('DROP DEPLOYED SUCCESSFULLY');
+      wrappedClose();
     }
   });
 
   return (
     <ModalShell onClose={wrappedClose}>
       {(close) => {
-
         return (
           <div className="flex max-h-[inherit] flex-col overflow-hidden rounded-2xl border-[3px] border-tok-black bg-white shadow-[10px_10px_0px_#1C1C1A]">
             <div className="grid grid-cols-1 overflow-y-auto sm:grid-cols-[220px_1fr]">
-              {/* Dark left panel — desktop only */}
-              <aside className="hidden flex-col justify-between bg-tok-teal px-6 py-8 sm:flex">
-                <div>
+              {/* Left panel — Header on mobile, sidebar on desktop */}
+              <aside className="group relative flex flex-col justify-between overflow-hidden bg-tok-teal px-6 py-6 min-h-[140px] sm:min-h-0 sm:py-8 sm:flex">
+                {/* Cover photo background */}
+                {coverPreview && (
+                  <div className="pointer-events-none absolute inset-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={coverPreview} alt="" className="h-full w-full object-cover opacity-40" />
+                    <div className="absolute inset-0 bg-tok-black/20" />
+                  </div>
+                )}
+
+                {/* Hidden file input */}
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  className="hidden"
+                  onChange={handleCoverSelect}
+                />
+
+                {/* Cover photo actions — Neubrutalist style, now always centered */}
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 px-4 transition-all sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={isBusy}
+                    className="flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-cream px-4 font-passion text-[11px] font-bold uppercase tracking-wider text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
+                  >
+                    <IconImagePlus size={16} strokeWidth={2.5} />
+                    <span>{coverPreview ? 'Change Cover' : 'Add Cover Photo'}</span>
+                  </button>
+
+                  {coverPreview && (
+                    <button
+                      type="button"
+                      onClick={() => void handleCoverRemove()}
+                      disabled={isBusy}
+                      className="flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-[#ff5c5c] px-4 font-passion text-[11px] font-bold uppercase tracking-wider text-white shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
+                    >
+                      <IconTrash size={16} strokeWidth={2.5} />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                </div>
+
+                {coverError && (
+                  <div className="absolute top-4 left-4 right-4 z-40">
+                    <p className="rounded-sm border-2 border-tok-black bg-red-500 px-3 py-1.5 font-passion text-[10px] font-bold uppercase tracking-wider text-white shadow-[4px_4px_0px_#1C1C1A]">
+                      {coverError}
+                    </p>
+                  </div>
+                )}
+
+                {/* Panel content — desktop only for details */}
+                <div className="relative z-20 hidden sm:block">
                   <p className="mb-3 font-passion text-[9px] font-bold uppercase tracking-[3.5px] text-tok-cream/50">
                     {isEdit ? 'DROP UPDATE' : 'INITIALIZING DROP'}
                   </p>
@@ -421,7 +540,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
                   </div>
                 </div>
 
-                <div className="space-y-3 text-[11px] font-bold text-tok-cream/60">
+                <div className="relative z-20 space-y-3 text-[11px] font-bold text-tok-cream/60 hidden sm:block">
                   {scheduledAt && (
                     <div className="flex items-center gap-2.5">
                       <IconCalendar size={12} className="text-amber-400" strokeWidth={2.5} />
