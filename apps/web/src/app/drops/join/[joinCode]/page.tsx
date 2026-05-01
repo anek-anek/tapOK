@@ -157,11 +157,11 @@ function JoinCta({
             {crewStatus === 'rejected' ? 'Request Declined' : 'Removed from Crew'}
           </span>
         </div>
-        
+
         <button
           disabled={isJoining}
           onClick={onJoin}
-          className={`${baseBtn} bg-tok-teal text-[#F7E9B2] shadow-[8px_8px_0px_#1C1C1A] hover:shadow-[10px_10px_0px_#1C1C1A] disabled:opacity-50`}
+          className={`${baseBtn} mt-4 bg-tok-teal text-[#F7E9B2] shadow-[8px_8px_0px_#1C1C1A] hover:shadow-[10px_10px_0px_#1C1C1A] disabled:opacity-50`}
         >
           {isJoining ? (
             <>
