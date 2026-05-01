@@ -368,6 +368,11 @@ export class DropsRepository {
   async deletePhoto(id: string): Promise<void> {
     await this.photoRepo.delete(id);
   }
+
+  async deleteNonFeaturedPhotosForDrops(dropIds: string[]): Promise<void> {
+    if (dropIds.length === 0) return;
+    await this.photoRepo.delete({ dropId: In(dropIds), isFeatured: false });
+  }
   
   async addSpark(dropId: string, userId: string): Promise<DropSpark> {
     const spark = this.sparkRepo.create({ dropId, userId });

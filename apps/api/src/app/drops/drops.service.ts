@@ -254,6 +254,11 @@ export class DropsService {
       ...(dto.category !== undefined && { category: dto.category }),
       ...(dto.overview !== undefined && { overview: dto.overview }),
     });
+    
+    // If the drop is manually marked as completed, clean up non-featured photos
+    if (dto.status === DropStatus.COMPLETED) {
+      await this.dropsRepository.deleteNonFeaturedPhotosForDrops([id]);
+    }
 
     const statusActionMap: Partial<Record<DropStatus, string>> = {
       [DropStatus.ONGOING]: 'marked_ongoing',
@@ -690,7 +695,18 @@ export class DropsService {
     const photo = await this.dropsRepository.findPhotoById(photoId);
     if (!photo || photo.dropId !== dropId) throw new NotFoundException('Photo not found');
 
-    if (photo.isFeatured) return photo;
+    if (photo.isFeatured) {
+      // Unfeature
+      await this.dropsRepository.updatePhoto(photoId, { isFeatured: false });
+      
+      await this.dropsRepository.writeLog({
+        dropId,
+        userId: user.id,
+        action: 'photo_unfeatured',
+      });
+
+      return this.dropsRepository.findPhotoById(photoId) as Promise<DropPhoto>;
+    }
 
     // To save storage as requested, we only upload to Supabase when featured
     if (photo.base64) {
@@ -719,10 +735,9 @@ export class DropsService {
         base64: null,
         isFeatured: true,
       });
-
-      // Also update the drop cover photo if the chief wants to?
-      // For now, the requirement just says "feature". 
-      // I'll assume featuring means it gets special status in the roll.
+    } else {
+      // Already has a URL but was unfeatured, just re-feature it
+      await this.dropsRepository.updatePhoto(photoId, { isFeatured: true });
     }
 
     await this.dropsRepository.writeLog({

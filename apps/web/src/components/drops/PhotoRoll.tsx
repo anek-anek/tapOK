@@ -73,11 +73,19 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
   };
 
   const handleFeature = async (photoId: string) => {
+    const photo = photos.find((p: any) => p.id === photoId);
+    const isUnfeaturing = photo?.isFeatured;
+
+    if (!isUnfeaturing && reachedFeaturedLimit) {
+      toast.error('MAX 5 HIGHLIGHTS ALLOWED');
+      return;
+    }
+
     try {
       await featureMutation.mutateAsync(photoId);
-      toast.success('PHOTO FEATURED');
+      toast.success(isUnfeaturing ? 'MOMENT UNFEATURED' : 'MOMENT HIGHLIGHTED');
     } catch {
-      toast.error('FAILED TO FEATURE PHOTO');
+      toast.error(isUnfeaturing ? 'FAILED TO UNFEATURE' : 'FAILED TO FEATURE');
     }
   };
 
@@ -90,10 +98,16 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
     }
   };
 
-  const canUpload = isOrganiser || isCrewMember;
+  const isCompleted = drop.status === 'completed';
+  const canUpload = (isOrganiser || isCrewMember) && !isCompleted;
   const userPhotos = photos.filter((p: any) => p.userId === userId);
   const reachedUserLimit = userPhotos.length >= 3;
   const reachedTotalLimit = photos.length >= 10;
+
+  const featuredPhotos = photos.filter((p: any) => p.isFeatured);
+  const reachedFeaturedLimit = featuredPhotos.length >= 5;
+
+  const displayedPhotos = isCompleted ? featuredPhotos : photos;
 
   if (isLoading) {
     return (
@@ -108,24 +122,39 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <IconCamera size={18} className="text-tok-black" strokeWidth={2.5} />
-          <h3 className="font-passion text-lg font-bold uppercase tracking-wider text-tok-black">Photo Roll</h3>
-          <span className="rounded-full bg-tok-black px-2 py-0.5 font-passion text-[10px] font-bold text-white">
-            {photos.length}/10
-          </span>
+          <h3 className="font-passion text-lg font-bold uppercase tracking-wider text-tok-black">
+            {isCompleted ? 'Mission Highlights' : 'Photo Roll'}
+          </h3>
+          {isCompleted && (
+            <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/40">
+              (Curated)
+            </span>
+          )}
         </div>
 
-        {canUpload && !reachedTotalLimit && !reachedUserLimit && (
+        {canUpload && !reachedTotalLimit && (
           <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isCompressing || uploadMutation.isPending}
-            className="flex h-9 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-yellow px-4 font-passion text-[11px] font-bold uppercase tracking-wider text-tok-black shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
-          >
-            {isCompressing || uploadMutation.isPending ? (
-              <IconLoader size={14} className="animate-spin" />
-            ) : (
-              <IconPlus size={14} strokeWidth={3} />
+            onClick={() => !reachedUserLimit && fileInputRef.current?.click()}
+            disabled={isCompressing || uploadMutation.isPending || reachedUserLimit}
+            className={cn(
+              "flex h-9 items-center gap-2 rounded-sm border-[3px] border-tok-black px-4 font-passion text-[11px] font-bold uppercase tracking-wider transition-all",
+              reachedUserLimit
+                ? "bg-tok-black/5 text-tok-black/40 border-tok-black/20 cursor-not-allowed"
+                : "bg-tok-yellow text-tok-black shadow-[3px_3px_0px_#1C1C1A] hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
             )}
-            <span>Add Photo</span>
+          >
+            {reachedUserLimit ? (
+              <span>Limit Reached</span>
+            ) : (
+              <>
+                {isCompressing || uploadMutation.isPending ? (
+                  <IconLoader size={14} className="animate-spin" />
+                ) : (
+                  <IconPlus size={14} strokeWidth={3} />
+                )}
+                <span>Add Photo</span>
+              </>
+            )}
           </button>
         )}
       </div>
@@ -154,7 +183,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
         <>
           {/* Desktop View - Horizontal Scroll */}
           <div className="no-scrollbar hidden sm:flex gap-4 overflow-x-auto pb-4 pt-1 px-1">
-            {photos.map((photo: any) => {
+            {displayedPhotos.map((photo: any) => {
               const isOwner = photo.userId === userId;
               const displayUrl = photo.url || photo.base64;
 
@@ -187,16 +216,19 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
 
                   {/* Actions Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center gap-2 bg-tok-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                    {isOrganiser && !photo.isFeatured && (
+                    {isOrganiser && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleFeature(photo.id);
                         }}
-                        className="flex h-8 w-8 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-yellow text-tok-black transition-all hover:scale-110 active:scale-95"
-                        title="Feature this photo"
+                        className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-sm border-2 border-tok-black transition-all hover:scale-110 active:scale-95",
+                          photo.isFeatured ? "bg-white text-tok-black" : "bg-tok-yellow text-tok-black"
+                        )}
+                        title={photo.isFeatured ? "Unfeature this photo" : "Feature this photo"}
                       >
-                        <IconStar size={14} strokeWidth={2.5} />
+                        <IconStar size={14} strokeWidth={2.5} className={photo.isFeatured ? "fill-tok-black" : ""} />
                       </button>
                     )}
                     {(isOwner || isOrganiser) && (
@@ -221,26 +253,26 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
           <div className="relative flex flex-col items-center sm:hidden pt-4 pb-8">
             <div className="relative h-[320px] w-[260px]">
               <AnimatePresence mode="popLayout">
-                {photos.slice().reverse().map((photo: any, index: number) => {
-                  const actualIndex = photos.length - 1 - index;
+                {displayedPhotos.slice().reverse().map((photo: any, index: number) => {
+                  const actualIndex = displayedPhotos.length - 1 - index;
                   // Only show current and next 2 for performance and cleaner look
                   if (actualIndex < currentIndex || actualIndex > currentIndex + 2) return null;
-                  
+
                   const isTop = actualIndex === currentIndex;
                   const offset = actualIndex - currentIndex;
-                  
+
                   return (
                     <motion.div
                       key={photo.id}
                       layout
                       initial={{ scale: 0.8, opacity: 0, y: 20 }}
-                      animate={{ 
-                        scale: 1 - offset * 0.05, 
-                        opacity: 1, 
+                      animate={{
+                        scale: 1 - offset * 0.05,
+                        opacity: 1,
                         y: offset * -12,
                         x: offset * 4,
                         rotate: isTop ? 0 : (offset % 2 === 0 ? 2 : -2),
-                        zIndex: 10 - offset 
+                        zIndex: 10 - offset
                       }}
                       exit={{ x: -300, opacity: 0, rotate: -20, scale: 0.9 }}
                       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
@@ -255,7 +287,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
                         alt="Drop moment"
                         className="h-full w-full object-cover"
                       />
-                      
+
                       {isTop && (
                         <>
                           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-tok-black/80 to-transparent p-3 pt-8">
@@ -268,18 +300,21 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
                               <IconStar size={12} className="fill-tok-black text-tok-black" strokeWidth={3} />
                             </div>
                           )}
-                          
+
                           {/* Mobile Actions Overlay */}
                           <div className="absolute right-2 top-2 flex flex-col gap-2">
-                             {isOrganiser && !photo.isFeatured && (
+                            {isOrganiser && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleFeature(photo.id);
                                 }}
-                                className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-yellow text-tok-black shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0.5 active:shadow-none"
+                                className={cn(
+                                  "flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0.5 active:shadow-none",
+                                  photo.isFeatured ? "bg-white text-tok-black" : "bg-tok-yellow text-tok-black"
+                                )}
                               >
-                                <IconStar size={16} strokeWidth={2.5} />
+                                <IconStar size={16} strokeWidth={2.5} className={photo.isFeatured ? "fill-tok-black" : ""} />
                               </button>
                             )}
                             {(photo.userId === userId || isOrganiser) && (
@@ -313,7 +348,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
               </button>
 
               <div className="flex gap-2">
-                {photos.map((_, i) => (
+                {displayedPhotos.map((_, i) => (
                   <div
                     key={i}
                     className={cn(
@@ -325,8 +360,8 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
               </div>
 
               <button
-                onClick={() => setCurrentIndex(prev => Math.min(photos.length - 1, prev + 1))}
-                disabled={currentIndex === photos.length - 1}
+                onClick={() => setCurrentIndex(prev => Math.min(displayedPhotos.length - 1, prev + 1))}
+                disabled={currentIndex === displayedPhotos.length - 1}
                 className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all active:translate-y-0.5 active:shadow-none disabled:opacity-30"
               >
                 <IconChevronRight size={24} strokeWidth={3} />
@@ -353,7 +388,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
               >
                 <IconX size={20} strokeWidth={3} />
               </button>
-              
+
               <div className="flex flex-col">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -361,7 +396,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
                   alt="Full moment"
                   className="max-h-[80vh] w-full object-contain bg-tok-black/20"
                 />
-                
+
                 <div className="border-t-[4px] border-tok-black bg-tok-yellow p-4">
                   <div className="flex items-center justify-between">
                     <div>
