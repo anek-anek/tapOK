@@ -142,6 +142,7 @@ export interface CreateDropDto {
   isPublic?: boolean;
   category?: DropCategory;
   overview?: string;
+  idempotencyKey?: string;
 }
 
 export interface UpdateDropDto {

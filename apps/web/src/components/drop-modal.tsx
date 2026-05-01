@@ -253,6 +253,8 @@ function DateTimePicker({
               captionLayout="dropdown"
               defaultMonth={selectedDate}
               onSelect={handleDateSelect}
+              startMonth={new Date()}
+              endMonth={new Date(new Date().getFullYear() + 10, 11)}
             />
           </PopoverContent>
         </Popover>
@@ -309,6 +311,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
   const uploadCoverPhoto = useUploadCoverPhoto(drop?.id ?? '');
   const deleteCoverPhoto = useDeleteCoverPhoto(drop?.id ?? '');
   const pendingIdRef = useRef<string | null>(null);
+  const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
   const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(drop?.coverPhoto ?? null);
@@ -347,8 +350,9 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
 
   const isBusyRef = useRef(false);
 
-  const wrappedClose = useCallback(() => {
-    if (isBusyRef.current) return;
+  const wrappedClose = useCallback((force = false) => {
+    // If force is true, we ignore isBusy (used for programmatic close after success)
+    if (force !== true && isBusyRef.current) return;
     onClose();
     if (pendingIdRef.current && !isEdit) {
       router.push(`/drops/${pendingIdRef.current}`);
@@ -382,89 +386,98 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
     'overview',
   ]);
 
-  const isBusy = createDrop.isPending || updateDrop.isPending || uploadCoverPhoto.isPending || deleteCoverPhoto.isPending || isSubmitting;
+  const [isSubmittingInternal, setIsSubmittingInternal] = useState(false);
+  const isBusy = createDrop.isPending || updateDrop.isPending || uploadCoverPhoto.isPending || deleteCoverPhoto.isPending || isSubmitting || isSubmittingInternal;
   isBusyRef.current = isBusy;
   const serverError = createDrop.error || updateDrop.error;
 
   const onSubmit = handleSubmit(async (values) => {
-    if (isBusy) return;
-    const scheduledAtIso = values.scheduledAt ? toIsoString(values.scheduledAt) : undefined;
-    const expectedHeadcount = normalizeExpectedHeadcount(values.expectedHeadcount);
+    if (isSubmittingInternal) return;
+    setIsSubmittingInternal(true);
 
-    if (isEdit && drop) {
-      const dto: Parameters<typeof updateDrop.mutateAsync>[0] = {};
-      if (values.name !== drop.name) dto.name = values.name;
-      if (scheduledAtIso && scheduledAtIso !== drop.scheduledAt) dto.scheduledAt = scheduledAtIso;
-      if (values.location !== drop.location) dto.location = values.location;
-      const updatedExpectedHeadcount = getUpdatedExpectedHeadcount(
-        values.expectedHeadcount,
-        drop.expectedHeadcount,
-      );
-      if (updatedExpectedHeadcount !== undefined && updatedExpectedHeadcount !== drop.expectedHeadcount) {
-        dto.expectedHeadcount = updatedExpectedHeadcount;
-      }
-      if (values.isLocked !== drop.isLocked) dto.isLocked = values.isLocked;
-      if (values.isPublic !== drop.isPublic) dto.isPublic = values.isPublic;
-      if (values.category !== drop.category) dto.category = values.category ?? undefined;
-      if (values.overview !== drop.overview) dto.overview = values.overview;
+    try {
+      const scheduledAtIso = values.scheduledAt ? toIsoString(values.scheduledAt) : undefined;
+      const expectedHeadcount = normalizeExpectedHeadcount(values.expectedHeadcount);
 
-      if (Object.keys(dto).length > 0) {
+      if (isEdit && drop) {
+        const dto: Parameters<typeof updateDrop.mutateAsync>[0] = {};
+        if (values.name !== drop.name) dto.name = values.name;
+        if (scheduledAtIso && scheduledAtIso !== drop.scheduledAt) dto.scheduledAt = scheduledAtIso;
+        if (values.location !== drop.location) dto.location = values.location;
+        const updatedExpectedHeadcount = getUpdatedExpectedHeadcount(
+          values.expectedHeadcount,
+          drop.expectedHeadcount,
+        );
+        if (updatedExpectedHeadcount !== undefined && updatedExpectedHeadcount !== drop.expectedHeadcount) {
+          dto.expectedHeadcount = updatedExpectedHeadcount;
+        }
+        if (values.isLocked !== drop.isLocked) dto.isLocked = values.isLocked;
+        if (values.isPublic !== drop.isPublic) dto.isPublic = values.isPublic;
+        if (values.category !== drop.category) dto.category = values.category ?? undefined;
+        if (values.overview !== drop.overview) dto.overview = values.overview;
+
+        if (Object.keys(dto).length > 0) {
+          try {
+            await updateDrop.mutateAsync(dto);
+          } catch (err: any) {
+            const rawMsg = err.response?.data?.message || 'FAILED TO UPDATE DROP';
+            const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+            toast.error(String(msg).toUpperCase());
+            return;
+          }
+        }
+
+        if (pendingCoverFile && drop?.id) {
+          try {
+            await uploadCoverPhoto.mutateAsync(pendingCoverFile);
+          } catch {
+            toast.error('DROP UPDATED BUT COVER PHOTO UPLOAD FAILED — PLEASE RETRY');
+            wrappedClose(true);
+            return;
+          }
+        }
+
+        toast.success('DROP UPDATED SUCCESSFULLY');
+        wrappedClose(true);
+      } else {
+        const dto = {
+          name: values.name,
+          scheduledAt: scheduledAtIso ?? toIsoString(values.scheduledAt),
+          location: values.location,
+          expectedHeadcount,
+          isLocked: values.isLocked ?? false,
+          isPublic: values.isPublic ?? true,
+          category: values.category ?? undefined,
+          overview: values.overview,
+          idempotencyKey: idempotencyKeyRef.current,
+        };
+
+        let createdId: string;
         try {
-          await updateDrop.mutateAsync(dto);
+          const result = await createDrop.mutateAsync(dto);
+          createdId = result.id;
+          pendingIdRef.current = createdId;
         } catch (err: any) {
-          const rawMsg = err.response?.data?.message || 'FAILED TO UPDATE DROP';
+          const rawMsg = err.response?.data?.message || 'FAILED TO DEPLOY DROP';
           const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
           toast.error(String(msg).toUpperCase());
           return;
         }
-      }
 
-      if (pendingCoverFile && drop?.id) {
-        try {
-          await uploadCoverPhoto.mutateAsync(pendingCoverFile);
-        } catch {
-          toast.error('DROP UPDATED BUT COVER PHOTO UPLOAD FAILED — PLEASE RETRY');
-          wrappedClose();
-          return;
+        if (pendingCoverFile) {
+          try {
+            await dropsService.uploadCoverPhoto(createdId, pendingCoverFile);
+          } catch {
+            toast.error('DROP DEPLOYED BUT COVER PHOTO UPLOAD FAILED — PLEASE RETRY IN EDIT MODE');
+          }
         }
+
+        toast.success('DROP DEPLOYED SUCCESSFULLY');
+        wrappedClose(true);
       }
-
-      toast.success('DROP UPDATED SUCCESSFULLY');
-      wrappedClose();
-    } else {
-      const dto = {
-        name: values.name,
-        scheduledAt: scheduledAtIso ?? toIsoString(values.scheduledAt),
-        location: values.location,
-        expectedHeadcount,
-        isLocked: values.isLocked ?? false,
-        isPublic: values.isPublic ?? true,
-        category: values.category ?? undefined,
-        overview: values.overview,
-      };
-
-      let createdId: string;
-      try {
-        const result = await createDrop.mutateAsync(dto);
-        createdId = result.id;
-        pendingIdRef.current = createdId;
-      } catch (err: any) {
-        const rawMsg = err.response?.data?.message || 'FAILED TO DEPLOY DROP';
-        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
-        toast.error(String(msg).toUpperCase());
-        return;
-      }
-
-      if (pendingCoverFile) {
-        try {
-          await dropsService.uploadCoverPhoto(createdId, pendingCoverFile);
-        } catch {
-          toast.error('DROP DEPLOYED BUT COVER PHOTO UPLOAD FAILED — PLEASE RETRY IN EDIT MODE');
-        }
-      }
-
-      toast.success('DROP DEPLOYED SUCCESSFULLY');
-      wrappedClose();
+    } finally {
+      isBusyRef.current = false;
+      setIsSubmittingInternal(false);
     }
   });
 
@@ -472,7 +485,7 @@ export function DropModal({ drop, onClose }: { drop?: Drop; onClose: () => void 
     <ModalShell onClose={wrappedClose}>
       {(close) => {
         return (
-          <div className="flex max-h-[inherit] min-w-0 flex-col overflow-hidden rounded-2xl border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
+          <div className="flex max-h-[inherit] min-w-0 flex-col overflow-hidden rounded-sm border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
             <div className="grid min-w-0 grid-cols-1 overflow-y-auto overflow-x-hidden sm:grid-cols-[minmax(160px,220px)_minmax(0,1fr)]">
               {/* Left panel — Header on mobile, sidebar on desktop */}
               <aside className="group relative flex min-w-0 flex-col justify-between overflow-hidden bg-tok-teal px-6 py-6 min-h-[140px] sm:min-h-0 sm:py-8 sm:flex">

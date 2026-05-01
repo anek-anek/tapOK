@@ -59,7 +59,7 @@ const formatDateForDisplay = (dateStr?: string | Date) => {
 
 export default function ProfilePage() {
   const mounted = useMounted();
-  const { dbUser } = useAuth();
+  const { dbUser, refreshUser } = useAuth();
   const { data: profile, isLoading } = useCurrentUser();
   const displayUser = profile ?? dbUser;
 
@@ -130,7 +130,8 @@ export default function ProfilePage() {
     if (form.avatar !== (profile.avatar ?? '')) dto.avatar = form.avatar || undefined;
 
     updateUser.mutate(dto, {
-      onSuccess: () => {
+      onSuccess: async () => {
+        await refreshUser();
         setEditing(false);
         toast.success('PROFILE UPDATED SUCCESSFULLY');
       },

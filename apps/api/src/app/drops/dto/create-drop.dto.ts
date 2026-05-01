@@ -51,4 +51,9 @@ export class CreateDropDto {
   @IsOptional()
   @IsEnum(DropCategory)
   category?: DropCategory;
+
+  @ApiPropertyOptional({ example: 'uuid-string' })
+  @IsOptional()
+  @IsString()
+  idempotencyKey?: string;
 }

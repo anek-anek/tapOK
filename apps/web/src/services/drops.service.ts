@@ -22,6 +22,10 @@ export const dropsService = {
   update(id: string, dto: UpdateDropDto): Promise<Drop> {
     return api.patch<Drop>(`/drops/${id}`, dto).then((r) => r.data);
   },
+  
+  delete(id: string): Promise<void> {
+    return api.delete(`/drops/${id}`).then(() => undefined);
+  },
 
   joinDrop(id: string): Promise<DropCrew> {
     return api.post<DropCrew>(`/drops/${id}/join`).then((r) => r.data);

@@ -39,6 +39,7 @@ const PUBLIC_ACTIVITY_CHANGED_FIELDS = new Set([
 @Injectable()
 export class DropsService {
   private readonly _createInFlight = new Set<string>();
+  private readonly _featureInFlight = new Set<string>();
 
   constructor(
     private readonly dropsRepository: DropsRepository,
@@ -135,12 +136,21 @@ export class DropsService {
     const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!organiser) throw new NotFoundException('Authenticated user not found in database');
 
-    // Prevent duplicate submissions racing in the same process window
-    const idempotencyKey = `${organiser.id}:${dto.name}:${dto.scheduledAt}`;
-    if (this._createInFlight.has(idempotencyKey)) {
-      throw new ConflictException('A drop with the same name and time is already being created');
+    // 1. If idempotencyKey is provided, check if we've already created this drop
+    if (dto.idempotencyKey) {
+      const existing = await this.dropsRepository.findByIdempotencyKey(dto.idempotencyKey);
+      if (existing) {
+        // Return the existing drop to fulfill the idempotency contract
+        return existing;
+      }
     }
-    this._createInFlight.add(idempotencyKey);
+
+    // 2. Prevent duplicate submissions racing in the same process window (short-term guard)
+    const inFlightKey = dto.idempotencyKey || `${organiser.id}:${dto.name}:${dto.scheduledAt}`;
+    if (this._createInFlight.has(inFlightKey)) {
+      throw new ConflictException('This drop is already being created');
+    }
+    this._createInFlight.add(inFlightKey);
 
     try {
       const joinCode = await this.generateUniqueJoinCode();
@@ -160,6 +170,7 @@ export class DropsService {
         joinCode,
         shareUrl,
         organiserId: organiser.id,
+        idempotencyKey: dto.idempotencyKey,
       });
 
       await this.dropsRepository.writeLog({
@@ -170,7 +181,7 @@ export class DropsService {
 
       return this.dropsRepository.findById(drop.id) as Promise<Drop>;
     } finally {
-      this._createInFlight.delete(idempotencyKey);
+      this._createInFlight.delete(inFlightKey);
     }
   }
 
@@ -274,6 +285,26 @@ export class DropsService {
     });
 
     return this.dropsRepository.findById(id) as Promise<Drop>;
+  }
+
+  async delete(id: string, firebaseUid: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(id);
+    if (!drop) throw new NotFoundException(`Drop ${id} not found`);
+
+    if (drop.organiser.firebaseUid !== firebaseUid) {
+      throw new ForbiddenException('Only the organiser can delete this drop');
+    }
+
+    // Clean up cover photo if exists
+    if (drop.coverPhoto) {
+      try {
+        await this.storageService.deleteDropCover(id);
+      } catch (err) {
+        console.error('Failed to delete cover photo from storage during drop deletion', err);
+      }
+    }
+
+    await this.dropsRepository.delete(id);
   }
 
   async inviteToDrop(dropId: string, userId: string, firebaseUid: string): Promise<void> {
@@ -685,7 +716,15 @@ export class DropsService {
   }
 
   async featurePhoto(dropId: string, photoId: string, firebaseUid: string): Promise<DropPhoto> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    const featureKey = `${dropId}:${photoId}`;
+    if (this._featureInFlight.has(featureKey)) {
+      // Just return the current state of the photo if already processing
+      return this.dropsRepository.findPhotoById(photoId) as Promise<DropPhoto>;
+    }
+    this._featureInFlight.add(featureKey);
+
+    try {
+      const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('User not found');
 
     const drop = await this.dropsRepository.findById(dropId);
@@ -750,6 +789,9 @@ export class DropsService {
     });
 
     return this.dropsRepository.findPhotoById(photoId) as Promise<DropPhoto>;
+    } finally {
+      this._featureInFlight.delete(featureKey);
+    }
   }
 
   async deletePhoto(dropId: string, photoId: string, firebaseUid: string): Promise<void> {

@@ -51,6 +51,13 @@ export class DropsRepository {
     });
   }
 
+  findByIdempotencyKey(key: string): Promise<Drop | null> {
+    return this.dropRepo.findOne({
+      where: { idempotencyKey: key },
+      relations: { organiser: true, sparks: true },
+    });
+  }
+
   findByOrganiserId(organiserId: string): Promise<Drop[]> {
     return this.dropRepo.find({
       where: { organiserId },
@@ -389,5 +396,9 @@ export class DropsRepository {
 
   async countSparks(dropId: string): Promise<number> {
     return this.sparkRepo.countBy({ dropId });
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.dropRepo.delete(id);
   }
 }

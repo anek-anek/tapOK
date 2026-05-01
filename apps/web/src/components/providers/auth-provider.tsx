@@ -32,6 +32,7 @@ interface AuthContextValue {
   loading: boolean;
   isReady: boolean;
   setSession: (firebaseUser: User, dbUser: DbUser) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -40,6 +41,7 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   isReady: false,
   setSession: () => undefined,
+  refreshUser: async () => undefined,
 });
 
 export function AuthProvider({
@@ -101,8 +103,16 @@ export function AuthProvider({
     setIsReady(true);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    if (!user) return;
+    const result = await finalizeSession(user, { sync: false });
+    if (result.ok) {
+      setDbUser(result.dbUser);
+    }
+  }, [user]);
+
   return (
-    <AuthContext.Provider value={{ user, dbUser, loading, isReady, setSession }}>
+    <AuthContext.Provider value={{ user, dbUser, loading, isReady, setSession, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

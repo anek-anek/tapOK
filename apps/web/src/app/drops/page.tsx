@@ -19,6 +19,7 @@ import {
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { DropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
+import { DeleteDropModal } from '@/components/drops/DeleteDropModal';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMyDrops } from '@/hooks/queries/use-drops';
 import {
@@ -162,6 +163,7 @@ export default function DropsPage() {
   const [shareModalDrop, setShareModalDrop] = useState<Drop | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editDrop, setEditDrop] = useState<Drop | null>(null);
+  const [deleteDrop, setDeleteDrop] = useState<Drop | null>(null);
   const [joinCode, setJoinCode] = useState('');
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [isJoiningNavigation, setIsJoiningNavigation] = useState(false);
@@ -268,7 +270,7 @@ export default function DropsPage() {
 
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-teal px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto"
+              className="flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-sm border-[3px] border-tok-black bg-tok-teal px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto"
             >
               <Plus size={16} strokeWidth={2.5} />
               New Drop
@@ -307,6 +309,7 @@ export default function DropsPage() {
                 viewerId={dbUser?.id}
                 onShare={handleShare}
                 onEdit={setEditDrop}
+                onDelete={setDeleteDrop}
               />
             )}
 
@@ -381,6 +384,7 @@ export default function DropsPage() {
                       viewerId={dbUser?.id}
                       onShare={handleShare}
                       onEdit={setEditDrop}
+                      onDelete={setDeleteDrop}
                     />
                   ))
                 )
@@ -401,6 +405,7 @@ export default function DropsPage() {
                     viewerId={dbUser?.id}
                     onShare={handleShare}
                     onEdit={setEditDrop}
+                    onDelete={setDeleteDrop}
                   />
                 ))
               )}
@@ -420,6 +425,12 @@ export default function DropsPage() {
       )}
       {editDrop && editDrop.organiserId === dbUser?.id && (
         <DropModal drop={editDrop} onClose={() => setEditDrop(null)} />
+      )}
+      {deleteDrop && deleteDrop.organiserId === dbUser?.id && (
+        <DeleteDropModal 
+          drop={deleteDrop} 
+          onClose={() => setDeleteDrop(null)} 
+        />
       )}
     </div>
   );

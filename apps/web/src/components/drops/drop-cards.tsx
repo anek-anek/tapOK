@@ -4,11 +4,12 @@ import Link from 'next/link';
 import {
   ArrowRight,
   CalendarDays,
-  ClipboardCopy,
   Edit3,
   Lock,
   MapPin,
   Users,
+  Share,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CrewMember, Drop, DropCardModel } from '@/types/drop';
@@ -56,16 +57,19 @@ export function HeroDropCard({
   viewerId,
   onShare,
   onEdit,
+  onDelete,
 }: {
   drop: DropCardModel;
   viewerId?: string | null;
   onShare?: (drop: Drop) => void;
   onEdit?: (drop: Drop) => void;
+  onDelete?: (drop: Drop) => void;
 }) {
   const role = getRole(drop, viewerId);
   const crew = crewFor(drop);
   const isOrganiser = !!viewerId && drop.organiserId === viewerId;
-  const canEdit = isOrganiser && drop.status !== 'completed' && onEdit && isShareableDrop(drop);
+  const canEdit = isOrganiser && drop.status !== 'completed' && isShareableDrop(drop);
+  const canDelete = isOrganiser && onDelete && isShareableDrop(drop);
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,6 +81,12 @@ export function HeroDropCard({
     e.preventDefault();
     e.stopPropagation();
     if (isShareableDrop(drop)) onEdit?.(drop);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isShareableDrop(drop)) onDelete?.(drop);
   };
 
   return (
@@ -128,6 +138,21 @@ export function HeroDropCard({
                   {drop.category}
                 </span>
               )}
+            </div>
+
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-tok-cream/30 bg-tok-black/20">
+                {drop.organiser?.avatar ? (
+                  <img src={drop.organiser.avatar} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-passion text-[9px] text-tok-cream">
+                    {drop.organiser?.firstName?.[0] || '?'}{drop.organiser?.lastName?.[0] || ''}
+                  </div>
+                )}
+              </div>
+              <p className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream/90">
+                CHIEF {drop.organiser?.firstName} {drop.organiser?.lastName}
+              </p>
             </div>
 
             <h2 className="font-passion text-2xl font-bold leading-tight tracking-tight text-tok-cream md:text-3xl">
@@ -212,16 +237,7 @@ export function HeroDropCard({
             className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream/90 active:translate-y-0 active:shadow-none"
             title="Share Drop"
           >
-            <ClipboardCopy size={18} strokeWidth={3} />
-          </button>
-        )}
-        {canEdit && (
-          <button
-            onClick={handleEdit}
-            className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream/90 active:translate-y-0 active:shadow-none"
-            title="Edit Drop"
-          >
-            <Edit3 size={18} strokeWidth={3} />
+            <Share size={18} strokeWidth={3} />
           </button>
         )}
       </div>
@@ -236,16 +252,19 @@ export function ListDropCard({
   viewerId,
   onShare,
   onEdit,
+  onDelete,
 }: {
   drop: DropCardModel;
   viewerId?: string | null;
   onShare?: (drop: Drop) => void;
   onEdit?: (drop: Drop) => void;
+  onDelete?: (drop: Drop) => void;
 }) {
   const role = getRole(drop, viewerId);
   const crew = crewFor(drop);
   const isOrganiser = !!viewerId && drop.organiserId === viewerId;
-  const canEdit = isOrganiser && drop.status !== 'completed' && onEdit && isShareableDrop(drop);
+  const canEdit = isOrganiser && drop.status !== 'completed' && isShareableDrop(drop);
+  const canDelete = isOrganiser && onDelete && isShareableDrop(drop);
   const isCompleted = drop.status === 'completed';
 
   const handleShare = (e: React.MouseEvent) => {
@@ -258,6 +277,12 @@ export function ListDropCard({
     e.preventDefault();
     e.stopPropagation();
     if (isShareableDrop(drop)) onEdit?.(drop);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isShareableDrop(drop)) onDelete?.(drop);
   };
 
   return (
@@ -375,9 +400,23 @@ export function ListDropCard({
                 </div>
               )}
             </div>
-            <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/30">
-              {crew && crew.length > 0 ? 'In the crew' : 'Be the first'}
-            </span>
+
+            <div className="h-4 w-px bg-tok-black/10 mx-1" />
+
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale">
+                {drop.organiser?.avatar ? (
+                  <img src={drop.organiser.avatar} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-passion text-[8px] text-tok-teal">
+                    {drop.organiser?.firstName?.[0] || '?'}{drop.organiser?.lastName?.[0] || ''}
+                  </div>
+                )}
+              </div>
+              <p className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/60">
+                Chief {drop.organiser?.firstName}
+              </p>
+            </div>
           </div>
         </div>
       </Link>
@@ -396,16 +435,25 @@ export function ListDropCard({
             className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
             title="Share Drop"
           >
-            <ClipboardCopy size={16} strokeWidth={2.5} />
+            <Share size={16} strokeWidth={2.5} />
           </button>
         )}
-        {canEdit && (
+        {canEdit && onEdit && (
           <button
             onClick={handleEdit}
             className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
             title="Edit Drop"
           >
             <Edit3 size={16} strokeWidth={2.5} />
+          </button>
+        )}
+        {canDelete && (
+          <button
+            onClick={handleDelete}
+            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-red-500 shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-red-50 active:translate-y-0 active:shadow-none"
+            title="Delete Drop"
+          >
+            <Trash2 size={16} strokeWidth={2.5} />
           </button>
         )}
       </div>

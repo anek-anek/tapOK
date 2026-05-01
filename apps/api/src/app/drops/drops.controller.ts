@@ -193,6 +193,20 @@ export class DropsController {
     return this.dropsService.update(id, dto, request.user.uid);
   }
 
+  @Delete(':id')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a drop (organiser only)' })
+  @ApiResponse({ status: 204, description: 'Drop deleted successfully.' })
+  @ApiResponse({ status: 403, description: 'Only the organiser can delete this drop.' })
+  @ApiResponse({ status: 404, description: 'Drop not found.' })
+  delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.delete(id, request.user.uid);
+  }
+
   @Post(':id/invite/:userId')
   @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Invite a user to a drop (organiser only)' })
