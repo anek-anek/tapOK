@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
 import { UsersService } from '../users/users.service';
 import { DropsRepository } from './drops.repository';
+import { DropsCronService } from './drops-cron.service';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
@@ -24,6 +25,7 @@ export class DropsService {
     private readonly dropsRepository: DropsRepository,
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
+    private readonly dropsCronService: DropsCronService,
   ) {}
 
   async create(dto: CreateDropDto, firebaseUid: string): Promise<Drop> {
@@ -90,6 +92,9 @@ export class DropsService {
   async findMyDrops(firebaseUid: string): Promise<Drop[]> {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
+
+    await this.dropsCronService.transitionDropStatuses();
+
     return this.dropsRepository.findFeed(user.id);
   }
 
@@ -414,6 +419,9 @@ export class DropsService {
     recentChiefsDrops: Drop[];
     allPublic: { data: Drop[]; total: number; page: number; totalPages: number };
   }> {
+    // Trigger lazy status transitions for discovery too
+    await this.dropsCronService.transitionDropStatuses();
+
     const allPublicPaginated = await this.dropsRepository.findPublicDrops(page, limit, category);
 
     let recentChiefsDrops: Drop[] = [];

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DropStatus } from '../../common';
 import { DropsRepository } from './drops.repository';
 
-const DROP_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
+const DROP_DURATION_MS = 4 * 60 * 60 * 1000;
 
 @Injectable()
 export class DropsCronService {

@@ -72,7 +72,7 @@ export function HeroDropCard({
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
                 </span>
-                Next Drop
+                {drop.status === 'ongoing' ? 'Ongoing Now' : 'Next Drop'}
               </span>
               {!drop.isPublic && (
                 <span className="inline-flex items-center gap-1.5 rounded-sm bg-tok-black/20 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-tok-cream">
@@ -194,6 +194,15 @@ export function ListDropCard({
                 • COMPLETED
               </span>
             )}
+            {drop.status === 'ongoing' && (
+              <span className="flex items-center gap-1 font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-amber-500">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" />
+                </span>
+                • Ongoing
+              </span>
+            )}
             {!drop.isPublic && (
               <span className="font-passion text-[10px] font-bold uppercase tracking-[1px] sm:tracking-[2px] text-tok-teal/40">
                 • PRIVATE
@@ -236,7 +245,7 @@ export function ListDropCard({
               <Edit3 size={14} strokeWidth={2.5} />
             </button>
           )}
-          {onShare && (
+          {onShare && !isCompleted && (
             <button
               onClick={() => onShare(drop)}
               className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0"
