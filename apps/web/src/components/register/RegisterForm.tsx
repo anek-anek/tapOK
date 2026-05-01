@@ -126,7 +126,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FFF4BD]">
+      <div className="flex min-h-screen items-center justify-center bg-tok-cream">
         <Loader2 className="h-6 w-6 animate-spin text-tok-teal" />
       </div>
     );
@@ -139,7 +139,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
           className="mb-3 inline-flex items-center gap-2"
           style={{
             background: '#000',
-            color: '#FFF4BD',
+            color: 'var(--color-tok-cream)',
             fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
             fontSize: '10px',
             fontWeight: 700,
@@ -297,18 +297,18 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
         <button
           type="submit"
           disabled={isSubmitting || googleLoading}
-          className="animate-fade-up-7 mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white active:scale-[0.98]"
+          className="animate-fade-up-7 mt-1 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-tok-black bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white shadow-[6px_6px_0px_0px_#262624] active:translate-y-0 active:shadow-none"
           style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease', opacity: isSubmitting || googleLoading ? 0.6 : 1, cursor: isSubmitting || googleLoading ? 'not-allowed' : 'pointer' }}
           onMouseEnter={(e) => {
             if (!isSubmitting && !googleLoading) {
-              (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px) scale(1.04)';
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 28px rgba(0,102,102,0.38)';
+              (e.currentTarget as HTMLElement).style.transform = 'translate(-2px,-2px)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '8px 8px 0px 0px #262624';
               (e.currentTarget as HTMLElement).style.backgroundColor = '#005555';
             }
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.transform = '';
-            (e.currentTarget as HTMLElement).style.boxShadow = '';
+            (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0px 0px #262624';
             (e.currentTarget as HTMLElement).style.backgroundColor = '';
           }}
         >

@@ -7,12 +7,12 @@ interface RegisterPageProps {
 }
 
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
-  const { redirectTo = '/' } = await searchParams;
+  const { redirectTo = '/drops' } = await searchParams;
 
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#FFF4BD]">
+        <div className="flex min-h-screen items-center justify-center bg-tok-cream">
           <Loader2 className="h-6 w-6 animate-spin text-tok-teal" />
         </div>
       }

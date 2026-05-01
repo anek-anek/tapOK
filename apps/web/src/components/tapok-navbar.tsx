@@ -158,13 +158,13 @@ export function TapokNavbar() {
                 <>
                   <Link
                     href="/login"
-                    className={`${passionOne.className} rounded-full border-2 border-black/25 bg-transparent px-5 py-1.5 text-base uppercase tracking-[1.5px] text-black transition-all hover:scale-105 hover:border-black/50 hover:shadow-lg`}
+                    className={`${passionOne.className} rounded-lg border-2 border-tok-black bg-white px-5 py-1.5 text-base uppercase tracking-[1.5px] text-tok-black shadow-[4px_4px_0px_0px_#262624] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#262624] active:translate-y-0 active:shadow-none`}
                   >
                     Log In
                   </Link>
                   <Link
                     href="/login"
-                    className={`${passionOne.className} rounded-full bg-tok-teal px-5 py-1.5 text-base uppercase tracking-[1.5px] text-white transition-all hover:scale-105 hover:bg-tok-teal-mid hover:shadow-lg`}
+                    className={`${passionOne.className} rounded-lg border-2 border-tok-black bg-tok-teal px-5 py-1.5 text-base uppercase tracking-[1.5px] text-white shadow-[4px_4px_0px_0px_#262624] transition-all hover:-translate-y-0.5 hover:bg-tok-teal-mid hover:shadow-[5px_5px_0px_0px_#262624] active:translate-y-0 active:shadow-none`}
                   >
                     Sign Up
                   </Link>
@@ -283,14 +283,14 @@ export function TapokNavbar() {
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`${passionOne.className} flex h-14 items-center justify-center rounded-2xl border-2 border-black/20 bg-transparent text-xl uppercase tracking-[1.5px] text-black`}
+                    className={`${passionOne.className} flex h-14 items-center justify-center rounded-xl border-2 border-tok-black bg-white text-xl uppercase tracking-[1.5px] text-tok-black shadow-[4px_4px_0px_0px_#262624] active:translate-y-0 active:shadow-none`}
                   >
                     Log In
                   </Link>
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`${passionOne.className} flex h-14 items-center justify-center rounded-2xl bg-tok-teal text-xl uppercase tracking-[1.5px] text-white shadow-lg`}
+                    className={`${passionOne.className} flex h-14 items-center justify-center rounded-xl border-2 border-tok-black bg-tok-teal text-xl uppercase tracking-[1.5px] text-white shadow-[4px_4px_0px_0px_#262624] active:translate-y-0 active:shadow-none`}
                   >
                     Sign Up
                   </Link>
