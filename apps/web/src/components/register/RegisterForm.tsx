@@ -16,7 +16,10 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { finalizeSession } from '@/lib/auth/finalize-session';
 import { getRegisterFirebaseError } from '@/lib/auth/firebase-auth-errors';
 import { resolveGoogleRedirectSession } from '@/lib/auth/google-redirect';
-import { signInWithGoogleInteractive } from '@/lib/auth/google-signin';
+import {
+  shouldDeleteGoogleUserOnFinalizeFailure,
+  signInWithGoogleInteractive,
+} from '@/lib/auth/google-signin';
 import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { toast } from 'react-hot-toast';
@@ -215,6 +218,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       const finalized = await finalizeSession(outcome.user, {
         mode: 'signup',
         provider: 'google',
+        deleteCreatedUserOnFailure: shouldDeleteGoogleUserOnFinalizeFailure(outcome),
       });
 
       if (!finalized.ok) {
