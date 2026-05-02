@@ -248,12 +248,14 @@ export function ListDropCard({
   onShare,
   onEdit,
   onDelete,
+  showShareEditDelete = true,
 }: {
   drop: DropCardModel;
   viewerId?: string | null;
   onShare?: (drop: Drop) => void;
   onEdit?: (drop: Drop) => void;
   onDelete?: (drop: Drop) => void;
+  showShareEditDelete?: boolean;
 }) {
   const role = getRole(drop, viewerId);
   const crew = crewFor(drop);
@@ -315,47 +317,54 @@ export function ListDropCard({
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tok-black opacity-75" />
                 <span className="relative inline-flex h-1 w-1 rounded-full bg-tok-black" />
               </span>
-              Live
+              Ongoing
             </div>
           )}
         </div>
 
         {/* Content Area */}
-        <div className="relative flex flex-1 flex-col p-4">
-          <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            <span className="font-passion text-[9px] font-bold uppercase tracking-[1px] text-tok-black/40">
+        <div className="relative flex flex-1 flex-col p-5 sm:p-6">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black/50">
               {role}
             </span>
             {drop.category && (
-              <span className="rounded-sm bg-tok-teal-pale px-1.5 py-0.5 font-passion text-[8px] font-bold uppercase tracking-wider text-tok-teal border border-tok-teal/20">
+              <span className="rounded-sm bg-tok-teal-pale px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-tok-teal border border-tok-teal/20">
                 {drop.category}
               </span>
             )}
             {!drop.isPublic && (
-              <span className="inline-flex items-center gap-1 rounded-sm bg-tok-black/5 px-1.5 py-0.5 font-passion text-[8px] font-bold uppercase tracking-wider text-tok-black/40">
-                <Lock size={8} strokeWidth={3} />
+              <span className="inline-flex items-center gap-1 rounded-sm bg-tok-black/5 px-2 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/50">
+                <Lock size={10} strokeWidth={3} />
                 Private
               </span>
             )}
           </div>
 
-          <h3 className="font-passion text-xl font-bold leading-tight text-tok-black group-hover:text-tok-teal transition-colors pr-10 sm:pr-0 mb-2">
+          <h3
+            className={cn(
+              'font-passion text-2xl font-bold leading-snug text-tok-black group-hover:text-tok-teal transition-colors mb-2.5 sm:text-[26px]',
+              showShareEditDelete ? 'pr-10 sm:pr-0' : '',
+            )}
+          >
             {drop.name}
           </h3>
 
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-bold text-tok-black/40 mb-3">
-            <span className="inline-flex items-center gap-1">
-              <CalendarDays size={12} className="text-tok-teal" strokeWidth={2.5} />
-              <span className="font-passion uppercase tracking-wider">{formatDateTime(drop.scheduledAt)}</span>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-bold text-tok-black/55 mb-3.5 sm:text-[13px]">
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays size={14} className="shrink-0 text-tok-teal" strokeWidth={2.5} />
+              <span className="font-passion uppercase tracking-[0.06em]">{formatDateTime(drop.scheduledAt)}</span>
             </span>
-            <span className="inline-flex items-center gap-1">
-              <MapPin size={12} className="text-tok-teal" strokeWidth={2.5} />
-              <span className="font-passion truncate uppercase tracking-wider max-w-[150px]">{drop.location}</span>
+            <span className="inline-flex items-center gap-1.5 min-w-0">
+              <MapPin size={14} className="shrink-0 text-tok-teal" strokeWidth={2.5} />
+              <span className="font-passion truncate uppercase tracking-[0.06em] max-w-[180px] sm:max-w-[220px]">
+                {drop.location}
+              </span>
             </span>
           </div>
 
           {drop.overview && (
-            <p className="font-inter text-[11px] leading-relaxed text-tok-black/60 line-clamp-2 mb-4">
+            <p className="font-inter text-sm leading-relaxed text-tok-black/72 line-clamp-2 mb-4 sm:text-[15px] sm:leading-relaxed">
               {drop.overview}
             </p>
           )}
@@ -413,7 +422,7 @@ export function ListDropCard({
                   </div>
                 )}
               </div>
-              <p className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/60">
+              <p className="font-passion text-[11px] font-bold uppercase tracking-[0.08em] text-tok-black/65 sm:text-xs">
                 Chief {drop.organiser?.firstName}
               </p>
             </div>
@@ -427,104 +436,144 @@ export function ListDropCard({
         <SparkButton drop={drop} className="bg-white" />
       </div>
 
-      <div className="absolute left-4 top-4 z-20 flex gap-2 transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5">
-
-        {onShare && !isCompleted && isShareableDrop(drop) && (
-          <button
-            onClick={handleShare}
-            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
-            title="Share Drop"
-          >
-            <Share size={16} strokeWidth={2.5} />
-          </button>
-        )}
-        {canEdit && onEdit && (
-          <button
-            onClick={handleEdit}
-            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
-            title="Edit Drop"
-          >
-            <Edit3 size={16} strokeWidth={2.5} />
-          </button>
-        )}
-        {canDelete && (
-          <button
-            onClick={handleDelete}
-            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-red-500 shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-red-50 active:translate-y-0 active:shadow-none"
-            title="Delete Drop"
-          >
-            <Trash2 size={16} strokeWidth={2.5} />
-          </button>
-        )}
-      </div>
+      {showShareEditDelete && (
+        <div className="absolute left-4 top-4 z-20 flex gap-2 transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5">
+          {onShare && !isCompleted && isShareableDrop(drop) && (
+            <button
+              onClick={handleShare}
+              className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
+              title="Share Drop"
+            >
+              <Share size={16} strokeWidth={2.5} />
+            </button>
+          )}
+          {canEdit && onEdit && (
+            <button
+              onClick={handleEdit}
+              className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
+              title="Edit Drop"
+            >
+              <Edit3 size={16} strokeWidth={2.5} />
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={handleDelete}
+              className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-red-500 shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-red-50 active:translate-y-0 active:shadow-none"
+              title="Delete Drop"
+            >
+              <Trash2 size={16} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 export function HeroCardSkeleton() {
-
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black/10 bg-tok-teal/5 md:flex-row">
-      <Skeleton className="aspect-video w-full shrink-0 border-b-[3px] border-tok-black/5 md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px]" />
-      <div className="flex-1 p-5 space-y-4 md:p-6">
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/10" />
-          <Skeleton className="h-10 w-3/4 max-w-[300px] rounded-sm bg-tok-black/5" />
-        </div>
-        <div className="space-y-1.5">
-          <Skeleton className="h-2.5 w-full rounded-sm bg-tok-black/5" />
-          <Skeleton className="h-2.5 w-2/3 rounded-sm bg-tok-black/5" />
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center">
-            <Skeleton className="h-8 w-8 rounded-full border-2 border-tok-black/5 bg-tok-black/5" />
-            <Skeleton className="-ml-4 h-8 w-8 rounded-full border-2 border-tok-black/5 bg-tok-black/5" />
-            <Skeleton className="-ml-4 h-8 w-8 rounded-full border-2 border-tok-black/5 bg-tok-black/5" />
+    <div className="group relative">
+      <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal shadow-[8px_8px_0px_#1C1C1A] md:flex-row">
+        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px]">
+          <Skeleton className="absolute inset-0 h-full w-full rounded-none bg-tok-black/20" />
+          <div className="pointer-events-none absolute bottom-3 left-3">
+            <Skeleton className="h-7 w-30 rounded-sm border-2 border-tok-black bg-amber-400/70 shadow-[2px_2px_0px_#1C1C1A]" />
           </div>
-          <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/10" />
         </div>
 
+        <div className="relative flex flex-1 flex-col p-5 md:p-6">
+          <div className="mb-3 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Skeleton className="h-3 w-14 rounded-sm bg-tok-cream/25" />
+              <Skeleton className="h-5 w-18 rounded-sm border border-amber-400/30 bg-tok-black/25" />
+            </div>
+            <div className="flex items-center gap-2.5">
+              <Skeleton className="h-6 w-6 shrink-0 rounded-full border border-tok-cream/30 bg-tok-black/25" />
+              <Skeleton className="h-3 max-w-[220px] flex-1 rounded-sm bg-tok-cream/30" />
+            </div>
+            <Skeleton className="h-9 max-w-xl rounded-sm bg-tok-cream/25" />
+            <Skeleton className="h-4 max-w-lg rounded-sm bg-tok-cream/20" />
+            <Skeleton className="h-4 max-w-md rounded-sm bg-tok-cream/15" />
+          </div>
 
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex items-center">
+              <Skeleton className="h-8 w-8 rounded-full border-2 border-tok-black bg-tok-teal-pale/70" />
+              <Skeleton className="-ml-4 h-8 w-8 rounded-full border-2 border-tok-black bg-tok-teal-pale/55" />
+              <Skeleton className="-ml-4 h-8 w-8 rounded-full border-2 border-tok-black bg-tok-teal-pale/45" />
+            </div>
+            <Skeleton className="h-3 w-28 rounded-sm bg-tok-cream/25" />
+          </div>
 
-        <div className="pt-4 grid grid-cols-1 gap-3 border-t border-dashed border-tok-black/5 sm:grid-cols-2">
-          <Skeleton className="h-8 w-full rounded-sm bg-tok-black/5" />
-          <Skeleton className="h-8 w-full rounded-sm bg-tok-black/5" />
+          <div className="mt-auto grid grid-cols-1 gap-3 border-t border-dashed border-tok-cream/20 pt-4 sm:grid-cols-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-4 shrink-0 rounded-sm bg-tok-cream/35" />
+              <Skeleton className="h-4 flex-1 rounded-sm bg-tok-cream/25" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-4 shrink-0 rounded-sm bg-tok-cream/35" />
+              <Skeleton className="h-4 flex-1 rounded-sm bg-tok-cream/25" />
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <Skeleton className="h-10 w-44 rounded-sm border-2 border-tok-black bg-tok-cream/50 shadow-[3px_3px_0px_#1C1C1A]" />
+          </div>
         </div>
-        <Skeleton className="h-10 w-40 rounded-sm bg-tok-black/5 border-2 border-tok-black/5" />
+      </div>
+
+      <div className="pointer-events-none absolute right-3 top-3 z-20">
+        <Skeleton className="h-11 w-11 rounded-md border-[3px] border-tok-black bg-tok-cream shadow-[3px_3px_0px_#1C1C1A]" />
       </div>
     </div>
   );
 }
 
 export function ListCardSkeleton() {
-
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black/10 bg-white/40 mt-4 sm:flex-row">
-      <Skeleton className="aspect-video w-full shrink-0 border-b-[3px] border-tok-black/5 sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]" />
-      <div className="flex-1 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-2.5 w-12 rounded-sm bg-tok-black/10" />
-          <Skeleton className="h-2.5 w-16 rounded-sm bg-tok-black/10 opacity-50" />
-        </div>
-        <Skeleton className="h-6 w-3/4 max-w-[240px] rounded-sm bg-tok-black/5" />
-        <div className="flex gap-3">
-          <Skeleton className="h-3 w-20 rounded-sm bg-tok-black/10 opacity-50" />
-          <Skeleton className="h-3 w-20 rounded-sm bg-tok-black/10 opacity-50" />
-        </div>
-        <div className="space-y-1.5">
-          <Skeleton className="h-2.5 w-full rounded-sm bg-tok-black/5" />
-          <Skeleton className="h-2.5 w-4/5 rounded-sm bg-tok-black/5" />
-        </div>
-        <div className="flex items-center gap-2 pt-1">
-          <div className="flex items-center">
-            <Skeleton className="h-6 w-6 rounded-full border-2 border-tok-black/5 bg-tok-black/5" />
-            <Skeleton className="-ml-3 h-6 w-6 rounded-full border-2 border-tok-black/5 bg-tok-black/5" />
+    <div className="group relative mt-4">
+      <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] sm:flex-row">
+        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
+          <Skeleton className="absolute inset-0 h-full w-full rounded-none bg-tok-teal/15" />
+          <div className="pointer-events-none absolute bottom-2 left-2 sm:bottom-2 sm:left-2">
+            <Skeleton className="h-5 w-16 rounded-sm border border-tok-black/30 bg-amber-400/60" />
           </div>
-          <Skeleton className="h-2.5 w-16 rounded-sm bg-tok-black/10 opacity-50" />
         </div>
 
+        <div className="relative flex flex-1 flex-col p-5 sm:p-6">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <Skeleton className="h-2.5 w-14 rounded-sm bg-tok-black/15" />
+            <Skeleton className="h-5 w-17 rounded-sm bg-tok-teal-pale/80" />
+          </div>
 
+          <Skeleton className="mb-2.5 h-8 max-w-md rounded-sm bg-tok-black/10" />
 
+          <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
+            <Skeleton className="h-4 w-44 rounded-sm bg-tok-black/10" />
+            <Skeleton className="h-4 w-36 rounded-sm bg-tok-black/10" />
+          </div>
+
+          <div className="mb-4 space-y-2">
+            <Skeleton className="h-4 w-full max-w-xl rounded-sm bg-tok-black/8" />
+            <Skeleton className="h-4 w-full max-w-lg rounded-sm bg-tok-black/8" />
+          </div>
+
+          <div className="mt-auto flex items-center gap-2">
+            <div className="flex items-center">
+              <Skeleton className="h-6 w-6 rounded-full border-2 border-tok-black bg-tok-teal-pale/70" />
+              <Skeleton className="-ml-3 h-6 w-6 rounded-full border-2 border-tok-black bg-tok-teal-pale/55" />
+              <Skeleton className="-ml-3 h-6 w-6 rounded-full border-2 border-tok-black bg-tok-teal-pale/45" />
+            </div>
+            <div className="mx-1 h-4 w-px bg-tok-black/10" />
+            <Skeleton className="h-6 w-6 shrink-0 rounded-full border-2 border-tok-black bg-tok-teal-pale/70" />
+            <Skeleton className="h-3 w-28 rounded-sm bg-tok-black/12" />
+          </div>
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute right-4 top-4 z-20">
+        <Skeleton className="h-10 w-10 rounded-md border-2 border-tok-black bg-white shadow-[2px_2px_0px_#1C1C1A]" />
       </div>
     </div>
   );

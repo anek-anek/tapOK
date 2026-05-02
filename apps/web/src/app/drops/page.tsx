@@ -12,7 +12,6 @@ import {
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { DropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
-import { DeleteDropModal } from '@/components/drops/DeleteDropModal';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMyDrops } from '@/hooks/queries/use-drops';
 import {
@@ -34,6 +33,29 @@ import {
 
 function sortRecent(a: Drop, b: Drop) {
   return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+}
+
+function DropsDotGrid() {
+  return (
+    <div
+      className="pointer-events-none fixed inset-0 opacity-[0.03]"
+      style={{
+        backgroundImage:
+          'radial-gradient(circle at 1px 1px, var(--color-tok-black) 1px, transparent 0)',
+        backgroundSize: '32px 32px',
+      }}
+    />
+  );
+}
+
+function DropsWatermark() {
+  return (
+    <div className="pointer-events-none absolute top-[20%] right-0 select-none overflow-hidden opacity-[0.05]">
+      <span className="font-passion block translate-x-1/4 text-[clamp(140px,38vw,300px)] font-black leading-none tracking-tighter text-tok-teal">
+        DROPS
+      </span>
+    </div>
+  );
 }
 
 function GateCard() {
@@ -112,26 +134,67 @@ function EmptyTabState({ message, sub }: { message: string; sub: string }) {
   );
 }
 
+/** Hero + tab strip + list rows — matches the board below the static page header. */
+function DropsBoardBodySkeleton() {
+  return (
+    <>
+      <HeroCardSkeleton />
+
+      <div className="mt-8 flex items-center justify-end">
+        <div className="flex gap-2">
+          <Skeleton className="flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-black px-5">
+            <Skeleton className="h-3 w-16 rounded-sm bg-white/25" />
+            <Skeleton className="h-5 w-7 rounded-full bg-white/20" />
+          </Skeleton>
+          <Skeleton className="flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-white px-5">
+            <Skeleton className="h-3 w-10 rounded-sm bg-tok-black/15" />
+            <Skeleton className="h-5 w-7 rounded-full bg-tok-black/10" />
+          </Skeleton>
+        </div>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <ListCardSkeleton />
+        <ListCardSkeleton />
+      </div>
+    </>
+  );
+}
+
+function DropsBoardSkeleton() {
+  return (
+    <>
+      <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+        <div className="space-y-4">
+          <Skeleton className="h-3 w-44 rounded-sm bg-tok-teal/30" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-[clamp(44px,10vw,72px)] max-w-[min(100%,320px)] rounded-sm bg-tok-black/10" />
+            <Skeleton className="h-[clamp(44px,10vw,72px)] max-w-[min(100%,220px)] rounded-sm bg-tok-teal/35" />
+          </div>
+        </div>
+
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+          <div className="flex h-12 w-full overflow-hidden rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] sm:w-auto">
+            <Skeleton className="h-full min-w-[140px] flex-1 rounded-none bg-tok-black/6" />
+            <Skeleton className="h-full w-24 shrink-0 rounded-none border-l-[3px] border-tok-black bg-tok-teal/40" />
+          </div>
+          <Skeleton className="flex h-12 w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-teal/35 px-6 shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:min-w-[148px]" />
+        </div>
+      </div>
+
+      <DropsBoardBodySkeleton />
+    </>
+  );
+}
+
 function PageSkeleton() {
   return (
-    <div className="min-h-screen bg-tok-cream text-tok-black">
+    <div className="relative min-h-screen bg-tok-cream text-tok-black">
+      <DropsDotGrid />
       <TapokNavbar />
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-6">
-          <div className="space-y-3">
-            <Skeleton className="h-3 w-32 rounded-sm bg-tok-black/10" />
-            <Skeleton className="h-12 w-48 rounded-sm bg-tok-black/5" />
-          </div>
-          <div className="flex gap-3">
-            <Skeleton className="h-12 w-40 rounded-sm bg-tok-black/5 border-[3px] border-tok-black/5" />
-            <Skeleton className="h-12 w-32 rounded-sm bg-tok-black/5 border-[3px] border-tok-black/5" />
-          </div>
-        </div>
-        <HeroCardSkeleton />
-        <div className="mt-8 space-y-2">
-          <ListCardSkeleton />
-          <ListCardSkeleton />
-        </div>
+      <DropsWatermark />
+      <main className="relative z-1 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
+        <DropsBoardSkeleton />
       </main>
     </div>
   );
@@ -142,21 +205,19 @@ export default function DropsPage() {
   const mounted = useMounted();
   const { user, dbUser, loading, isReady } = useAuth();
   const {
-    data: drops = [],
-    isLoading,
-    isFetched,
+    data,
+    isPending,
+    isFetching,
     isError,
   } = useMyDrops({
     enabled: isReady && Boolean(user),
   });
 
-  // Use isFetched to prevent premature "empty" states during initial load
-  const isHardLoading = !isFetched || (isLoading && drops.length === 0);
+  const drops = data ?? [];
+  const showBoardBodySkeleton = isPending;
 
   const [shareModalDrop, setShareModalDrop] = useState<Drop | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [editDrop, setEditDrop] = useState<Drop | null>(null);
-  const [deleteDrop, setDeleteDrop] = useState<Drop | null>(null);
   const [joinCode, setJoinCode] = useState('');
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [isJoiningNavigation, setIsJoiningNavigation] = useState(false);
@@ -166,19 +227,14 @@ export default function DropsPage() {
       (d) => d.status === 'active' || d.status === 'ongoing'
     );
     const focus = current[0] ?? null;
-    const upcoming = current.filter(
-      (d) => d.status === 'active' && d.id !== focus?.id
-    );
-    const past = [
-      ...drops.filter((d) => d.status === 'completed'),
-      ...current.filter((d) => d.status === 'ongoing' && d.id !== focus?.id),
-    ].sort(sortRecent);
+    const upcoming = current.filter((d) => d.id !== focus?.id);
+    const past = drops.filter((d) => d.status === 'completed').sort(sortRecent);
 
     return {
       activeDrops: upcoming,
       completedDrops: past,
       focusDrop: focus,
-      upcomingCount: current.filter((d) => d.status === 'active').length,
+      upcomingCount: current.length,
       pastCount: past.length,
     };
   }, [drops]);
@@ -197,9 +253,11 @@ export default function DropsPage() {
 
   if (!loading && !user) {
     return (
-      <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
+      <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
+        <DropsDotGrid />
         <TapokNavbar />
-        <main className="mx-auto flex min-h-[calc(100vh-88px)] max-w-5xl items-center px-4 py-8 sm:px-6 lg:px-10">
+        <DropsWatermark />
+        <main className="relative z-1 mx-auto flex min-h-[calc(100vh-88px)] max-w-5xl items-center px-4 py-8 sm:px-6 lg:px-10">
           <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]">
             <div>
               <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
@@ -221,18 +279,21 @@ export default function DropsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
+    <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
+      <DropsDotGrid />
       <TapokNavbar />
+      <DropsWatermark />
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
+      <main className="relative z-1 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
         {/* Page header row */}
         <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
             <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
-              COMMAND CENTER
+              YOUR DROP BOARD
             </p>
-            <h1 className="font-passion text-[clamp(56px,12vw,84px)] font-black uppercase leading-[0.8] tracking-tighter text-tok-black">
-              YOUR <span className="text-tok-teal">BOARD.</span>
+            <h1 className="font-passion text-[clamp(52px,11vw,84px)] font-black uppercase leading-[0.8] tracking-tight text-tok-black">
+              START YOUR{' '}
+              <span className="text-tok-teal">DROP.</span>
             </h1>
           </div>
 
@@ -272,15 +333,7 @@ export default function DropsPage() {
         </div>
 
         {/* Board */}
-        {isHardLoading ? (
-          <>
-            <HeroCardSkeleton />
-            <div className="mt-4 space-y-2">
-              <ListCardSkeleton />
-              <ListCardSkeleton />
-            </div>
-          </>
-        ) : isError ? (
+        {isError ? (
           <Alert className="rounded-[20px] border-tok-black/10 bg-white/72 p-6 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
             <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/34">
               Something slipped
@@ -293,6 +346,8 @@ export default function DropsPage() {
               keeps happening.
             </AlertDescription>
           </Alert>
+        ) : showBoardBodySkeleton ? (
+          <DropsBoardBodySkeleton />
         ) : (
           <>
             {/* Hero / Focus card — always shown when there's an active drop */}
@@ -373,9 +428,7 @@ export default function DropsPage() {
                       key={drop.id}
                       drop={drop}
                       viewerId={dbUser?.id}
-                      onShare={handleShare}
-                      onEdit={setEditDrop}
-                      onDelete={setDeleteDrop}
+                      showShareEditDelete={false}
                     />
                   ))
                 )
@@ -384,19 +437,13 @@ export default function DropsPage() {
                   message="No past drops"
                   sub="Finished plans will collect here with their logs and share links."
                 />
-              ) : completedDrops.length === 0 ? (
-                <p className="py-6 text-center font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
-                  That&apos;s your focus drop — shown above
-                </p>
               ) : (
                 completedDrops.map((drop) => (
                   <ListDropCard
                     key={drop.id}
                     drop={drop}
                     viewerId={dbUser?.id}
-                    onShare={handleShare}
-                    onEdit={setEditDrop}
-                    onDelete={setDeleteDrop}
+                    showShareEditDelete={false}
                   />
                 ))
               )}
@@ -413,15 +460,6 @@ export default function DropsPage() {
       )}
       {createModalOpen && (
         <DropModal onClose={() => setCreateModalOpen(false)} />
-      )}
-      {editDrop && editDrop.organiserId === dbUser?.id && (
-        <DropModal drop={editDrop} onClose={() => setEditDrop(null)} />
-      )}
-      {deleteDrop && deleteDrop.organiserId === dbUser?.id && (
-        <DeleteDropModal 
-          drop={deleteDrop} 
-          onClose={() => setDeleteDrop(null)} 
-        />
       )}
     </div>
   );

@@ -29,6 +29,9 @@ export class DropsCronService {
       drops.map((d) => ({ dropId: d.id, userId: d.organiserId, action: 'marked_ongoing' })),
     );
 
+    this.logger.log(
+      `Drop activity (cron): ${JSON.stringify({ action: 'marked_ongoing', count: ids.length })}`,
+    );
     this.logger.log(`Transitioned ${ids.length} drop(s) ACTIVE → ONGOING`);
     return ids.length;
   }
@@ -48,6 +51,9 @@ export class DropsCronService {
       drops.map((d) => ({ dropId: d.id, userId: d.organiserId, action: 'marked_completed' })),
     );
 
+    this.logger.log(
+      `Drop activity (cron): ${JSON.stringify({ action: 'marked_completed', count: ids.length })}`,
+    );
     this.logger.log(`Transitioned ${ids.length} drop(s) ONGOING → COMPLETED (Curation Complete)`);
     return ids.length;
   }

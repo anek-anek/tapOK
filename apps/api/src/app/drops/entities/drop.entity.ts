@@ -92,6 +92,12 @@ export class Drop {
   @OneToMany(() => DropSpark, (spark) => spark.drop)
   sparks: DropSpark[];
 
+  @ApiProperty({ required: false })
+  sparkCount?: number;
+
+  @ApiProperty({ required: false })
+  sparkedByViewer?: boolean;
+
   @ApiProperty()
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

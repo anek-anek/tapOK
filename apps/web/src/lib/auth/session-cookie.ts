@@ -28,7 +28,7 @@ export async function postSessionCookie(
         body,
       });
       if (res.ok) return true;
-      const retryable = res.status >= 500;
+      const retryable = res.status >= 500 && res.status !== 503;
       if (retryable && attempt < attempts - 1) {
         await delay(250 * (attempt + 1));
         continue;

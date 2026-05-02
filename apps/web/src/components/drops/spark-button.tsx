@@ -83,7 +83,9 @@ export function SparkButton({
     // Trigger local state immediately
     const nextSparked = !localSparked;
     setLocalSparked(nextSparked);
-    setLocalCount(prev => nextSparked ? prev + 1 : Math.max(0, prev - 1));
+    setLocalCount((prev) =>
+      nextSparked ? (prev ?? 0) + 1 : Math.max(0, (prev ?? 0) - 1),
+    );
 
     // Fire animation on spark (not unspark)
     if (nextSparked) {

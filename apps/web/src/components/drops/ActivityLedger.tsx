@@ -108,6 +108,10 @@ export function ActivityLedger({ dropId, page, setPage }: ActivityLedgerProps) {
                     marked_out: 'tapped OUT',
                     marked_ongoing: 'pushed the drop LIVE',
                     marked_completed: 'closed the mission',
+                    photo_added: 'posted a new shot to the roll',
+                    photo_removed: 'removed a shot from the roll',
+                    photo_featured: 'spotlighted a moment',
+                    photo_unfeatured: 'cleared the spotlight',
                   }[log.action] ?? log.action.replace(/_/g, ' ')}
                 </span>
               </p>

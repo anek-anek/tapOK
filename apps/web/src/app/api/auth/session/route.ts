@@ -20,10 +20,31 @@ export async function POST(req: NextRequest) {
   }
 
   const apiUrl = getApiUrl();
-  const check = await fetch(`${apiUrl}/users/me`, {
-    headers: { Authorization: `Bearer ${idToken}` },
-    cache: 'no-store',
-  });
+  let check: Response;
+  try {
+    check = await fetch(`${apiUrl}/users/me`, {
+      headers: { Authorization: `Bearer ${idToken}` },
+      cache: 'no-store',
+    });
+  } catch (cause) {
+    const code =
+      typeof cause === 'object' &&
+      cause !== null &&
+      'code' in cause &&
+      typeof (cause as { code?: unknown }).code === 'string'
+        ? (cause as { code: string }).code
+        : undefined;
+    console.error('[api/auth/session] upstream fetch failed', { apiUrl, code, cause });
+    return NextResponse.json(
+      {
+        error: 'API_UNAVAILABLE',
+        message:
+          'Cannot reach the backend API.',
+      },
+      { status: 503 },
+    );
+  }
+
   if (!check.ok) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }

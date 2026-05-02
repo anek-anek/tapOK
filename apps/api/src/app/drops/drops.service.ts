@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -44,6 +45,7 @@ const PUBLIC_ACTIVITY_CHANGED_FIELDS = new Set([
 
 @Injectable()
 export class DropsService {
+  private readonly logger = new Logger(DropsService.name);
   private readonly _createInFlight = new Set<string>();
   private readonly _featureInFlight = new Set<string>();
 
@@ -138,6 +140,32 @@ export class DropsService {
     }
   }
 
+  private async recordDropActivity(
+    data: Partial<DropActivityLog>,
+    auditExtra?: Record<string, unknown>,
+  ): Promise<void> {
+    await this.dropsRepository.writeLog(data);
+    const meta: Record<string, unknown> = {
+      dropId: data.dropId,
+      userId: data.userId,
+      action: data.action,
+      ...auditExtra,
+    };
+    if (data.changedFields && typeof data.changedFields === 'object') {
+      meta.changedFieldKeys = Object.keys(data.changedFields as object);
+    }
+    this.logger.log(`Drop activity: ${JSON.stringify(meta)}`);
+  }
+
+  private logDropAction(
+    action: string,
+    dropId: string,
+    userId: string,
+    extra?: Record<string, unknown>,
+  ): void {
+    this.logger.log(`Drop action: ${JSON.stringify({ action, dropId, userId, ...extra })}`);
+  }
+
   async create(dto: CreateDropDto, firebaseUid: string): Promise<Drop> {
     const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!organiser) throw new NotFoundException('Authenticated user not found in database');
@@ -180,7 +208,7 @@ export class DropsService {
         idempotencyKey: dto.idempotencyKey,
       });
 
-      await this.dropsRepository.writeLog({
+      await this.recordDropActivity({
         dropId: drop.id,
         userId: organiser.id,
         action: 'created',
@@ -192,7 +220,7 @@ export class DropsService {
           drop.id,
           organiser.id,
           DropCrewStatus.IN,
-          !(drop.isLocked ?? false),
+          true,
           DropCrewMemberRole.CHIEF,
         );
       }
@@ -232,7 +260,22 @@ export class DropsService {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
 
-    return this.dropsRepository.findFeed(user.id);
+    const drops = await this.dropsRepository.findFeed(user.id);
+    if (drops.length === 0) {
+      return drops;
+    }
+
+    const sparkedIds = await this.dropsRepository.findDropIdsSparkedByUser(
+      user.id,
+      drops.map((d) => d.id),
+    );
+    const sparked = new Set(sparkedIds);
+
+    for (const drop of drops) {
+      drop.sparkedByViewer = sparked.has(drop.id);
+    }
+
+    return drops;
   }
 
   async findByJoinCode(joinCode: string, firebaseUid?: string): Promise<Drop> {
@@ -299,7 +342,7 @@ export class DropsService {
     };
     const action = dto.status !== undefined ? (statusActionMap[dto.status] ?? 'updated') : 'updated';
 
-    await this.dropsRepository.writeLog({
+    await this.recordDropActivity({
       dropId: id,
       userId: drop.organiserId,
       action,
@@ -322,11 +365,15 @@ export class DropsService {
       try {
         await this.storageService.deleteDropCover(id);
       } catch (err) {
-        console.error('Failed to delete cover photo from storage during drop deletion', err);
+        const detail = err instanceof Error ? err.message : String(err);
+        this.logger.warn(
+          `Failed to delete cover photo from storage during drop deletion (dropId=${id}): ${detail}`,
+        );
       }
     }
 
     await this.dropsRepository.delete(id);
+    this.logDropAction('drop_deleted', id, drop.organiserId);
   }
 
   async inviteToDrop(dropId: string, userId: string, firebaseUid: string): Promise<void> {
@@ -351,7 +398,7 @@ export class DropsService {
       await this.dropsRepository.addCrewMember(dropId, userId, DropCrewStatus.INVITED, false);
     }
 
-    await this.dropsRepository.writeLog({
+    await this.recordDropActivity({
       dropId,
       userId: organiserId!,
       action: 'invited_member',
@@ -406,7 +453,7 @@ export class DropsService {
         crewMember = await this.dropsRepository.addCrewMember(dropId, user.id, memberStatus, isPresent);
       }
 
-      await this.dropsRepository.writeLog({
+      await this.recordDropActivity({
         dropId,
         userId: user.id,
         action: drop.isLocked ? 'join_requested' : 'joined',
@@ -434,7 +481,7 @@ export class DropsService {
 
     await this.dropsRepository.removeCrewMember(dropId, user.id);
 
-    await this.dropsRepository.writeLog({
+    await this.recordDropActivity({
       dropId,
       userId: user.id,
       action: 'left',
@@ -478,7 +525,7 @@ export class DropsService {
 
     await this.dropsRepository.updateCrewStatus(dropId, targetUserId, DropCrewStatus.REJECTED);
 
-    await this.dropsRepository.writeLog({
+    await this.recordDropActivity({
       dropId,
       userId: organiser.id,
       action: 'join_request_rejected',
@@ -506,7 +553,7 @@ export class DropsService {
 
     await this.dropsRepository.updateCrewStatus(dropId, targetUserId, DropCrewStatus.IN, true);
 
-    await this.dropsRepository.writeLog({
+    await this.recordDropActivity({
       dropId,
       userId: organiser.id,
       action: 'join_request_approved',
@@ -534,7 +581,7 @@ export class DropsService {
 
     await this.dropsRepository.updateCrewStatus(dropId, targetUserId, DropCrewStatus.REMOVED);
 
-    await this.dropsRepository.writeLog({
+    await this.recordDropActivity({
       dropId,
       userId: organiser.id,
       action: 'member_removed',
@@ -565,7 +612,7 @@ export class DropsService {
 
     await this.dropsRepository.updateCrewPresence(dropId, user.id, isPresent);
 
-    await this.dropsRepository.writeLog({
+    await this.recordDropActivity({
       dropId,
       userId: user.id,
       action: isPresent ? 'marked_in' : 'marked_out',
@@ -669,7 +716,7 @@ export class DropsService {
     const publicUrl = await this.storageService.uploadDropCover(id, buffer, mimeType);
 
     await this.dropsRepository.update(id, { coverPhoto: publicUrl });
-    await this.dropsRepository.writeLog({ dropId: id, userId: drop.organiserId, action: 'updated', changedFields: { coverPhoto: publicUrl } });
+    await this.recordDropActivity({ dropId: id, userId: drop.organiserId, action: 'updated', changedFields: { coverPhoto: publicUrl } });
 
     return this.dropsRepository.findById(id) as Promise<Drop>;
   }
@@ -684,7 +731,7 @@ export class DropsService {
 
     await this.storageService.deleteDropCover(id);
     await this.dropsRepository.update(id, { coverPhoto: null });
-    await this.dropsRepository.writeLog({ dropId: id, userId: drop.organiserId, action: 'updated', changedFields: { coverPhoto: null } });
+    await this.recordDropActivity({ dropId: id, userId: drop.organiserId, action: 'updated', changedFields: { coverPhoto: null } });
   }
 
   async uploadPhoto(dropId: string, firebaseUid: string, base64: string): Promise<DropPhoto> {
@@ -722,11 +769,14 @@ export class DropsService {
       isFeatured: false,
     });
 
-    await this.dropsRepository.writeLog({
-      dropId,
-      userId: user.id,
-      action: 'photo_added',
-    });
+    await this.recordDropActivity(
+      {
+        dropId,
+        userId: user.id,
+        action: 'photo_added',
+      },
+      { photoId: photo.id },
+    );
 
     return photo;
   }
@@ -784,11 +834,14 @@ export class DropsService {
       // Unfeature
       await this.dropsRepository.updatePhoto(photoId, { isFeatured: false });
       
-      await this.dropsRepository.writeLog({
-        dropId,
-        userId: user.id,
-        action: 'photo_unfeatured',
-      });
+      await this.recordDropActivity(
+        {
+          dropId,
+          userId: user.id,
+          action: 'photo_unfeatured',
+        },
+        { photoId },
+      );
 
       return this.dropsRepository.findPhotoById(photoId) as Promise<DropPhoto>;
     }
@@ -825,11 +878,14 @@ export class DropsService {
       await this.dropsRepository.updatePhoto(photoId, { isFeatured: true });
     }
 
-    await this.dropsRepository.writeLog({
-      dropId,
-      userId: user.id,
-      action: 'photo_featured',
-    });
+    await this.recordDropActivity(
+      {
+        dropId,
+        userId: user.id,
+        action: 'photo_featured',
+      },
+      { photoId },
+    );
 
     return this.dropsRepository.findPhotoById(photoId) as Promise<DropPhoto>;
     } finally {
@@ -859,11 +915,14 @@ export class DropsService {
 
     await this.dropsRepository.deletePhoto(photoId);
 
-    await this.dropsRepository.writeLog({
-      dropId,
-      userId: user.id,
-      action: 'photo_removed',
-    });
+    await this.recordDropActivity(
+      {
+        dropId,
+        userId: user.id,
+        action: 'photo_removed',
+      },
+      { photoId },
+    );
   }
 
   async sparkDrop(dropId: string, firebaseUid: string): Promise<void> {
@@ -876,6 +935,7 @@ export class DropsService {
     if (existing) return;
 
     await this.dropsRepository.addSpark(dropId, user.id);
+    this.logDropAction('spark', dropId, user.id);
   }
 
   async unsparkDrop(dropId: string, firebaseUid: string): Promise<void> {
@@ -884,6 +944,7 @@ export class DropsService {
 
     await this.findOne(dropId, firebaseUid);
     await this.dropsRepository.removeSpark(dropId, user.id);
+    this.logDropAction('unspark', dropId, user.id);
   }
 
   private validateImageBase64(base64: string): void {

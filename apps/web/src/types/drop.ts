@@ -87,6 +87,8 @@ export interface Drop {
   crew?: CrewMember[];
   activityLogs?: DropActivityLog[];
   sparks?: DropSpark[];
+  sparkCount?: number;
+  sparkedByViewer?: boolean;
   createdAt: string;
   updatedAt: string;
 }
