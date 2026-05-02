@@ -17,7 +17,6 @@ import {
   shouldDeleteGoogleUserOnFinalizeFailure,
   signInWithGoogleInteractive,
 } from '@/lib/auth/google-signin';
-import { lookupExistingAuthProvider } from '@/lib/auth/provider-check';
 import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { useAuthFormReset } from '@/lib/auth/use-auth-form-reset';
@@ -144,22 +143,6 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   const handleGoogleSignIn = async () => {
     const normalizedEmail = getValues('email').trim().toLowerCase();
 
-    if (!normalizedEmail) {
-      showError('Enter your email first to continue with Google.');
-      return;
-    }
-
-    try {
-      const existingAuthProvider = await lookupExistingAuthProvider(normalizedEmail);
-      if (existingAuthProvider === 'password') {
-        showError(getLoginFirebaseError('auth/account-exists-with-different-credential'));
-        return;
-      }
-    } catch {
-      showError('Unable to verify this email right now. Please try again.');
-      return;
-    }
-
     setGoogleLoading(true);
     try {
       const outcome = await signInWithGoogleInteractive(normalizedEmail);
@@ -168,6 +151,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       const finalized = await finalizeSession(outcome.user, {
         mode: 'login',
         provider: 'google',
+        payload: { email: normalizedEmail },
         deleteCreatedUserOnFailure: shouldDeleteGoogleUserOnFinalizeFailure(outcome),
       });
 
@@ -197,7 +181,6 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   };
 
   const onSubmit = async (values: LoginFormValues) => {
-    clearForm();
     try {
       const { user } = await signInWithEmailAndPassword(
         getFirebaseAuth(),
@@ -215,6 +198,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       }
 
       toast.success('WELCOME BACK');
+      clearForm();
       setSession(user, finalized.dbUser);
       router.replace(
         resolveAuthSuccessRedirect({
@@ -226,6 +210,30 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       );
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
+
+      // If it's a generic "invalid credentials" error from Firebase,
+      // it might be because the account exists but uses a different provider (e.g. Google).
+      if (code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/invalid-login-credentials') {
+        try {
+          const checkRes = await fetch('/api/users/auth-provider-check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: values.email }),
+          });
+
+          if (checkRes.ok) {
+            const data = await checkRes.json();
+            if (data.exists && data.authProvider === 'google') {
+              showError('This email is registered with Google. Continue with Google sign-in instead.');
+              return;
+            }
+          }
+        } catch (checkError) {
+          // Fallback to generic error if check fails
+          console.error('Provider check failed:', checkError);
+        }
+      }
+
       showError(getLoginFirebaseError(code));
     }
   };
@@ -376,10 +384,10 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
             (e.currentTarget as HTMLElement).style.backgroundColor = '';
           }}
         >
-          {isSubmitting ? (
+          {isSubmitting || googleLoading ? (
             <>
               <Loader2 size={15} className="animate-spin" />
-              <span className="animate-fade-in">Signing in…</span>
+              <span className="animate-fade-in">Processing…</span>
             </>
           ) : (
             'TAP BACK IN'

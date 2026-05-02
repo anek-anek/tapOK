@@ -20,7 +20,6 @@ import {
   shouldDeleteGoogleUserOnFinalizeFailure,
   signInWithGoogleInteractive,
 } from '@/lib/auth/google-signin';
-import { lookupExistingAuthProvider } from '@/lib/auth/provider-check';
 import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { useAuthFormReset } from '@/lib/auth/use-auth-form-reset';
@@ -213,22 +212,6 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
   const handleGoogleSignUp = async () => {
     const normalizedEmail = getValues('email').trim().toLowerCase();
 
-    if (!normalizedEmail) {
-      showError('Enter your email first to continue with Google.');
-      return;
-    }
-
-    try {
-      const existingAuthProvider = await lookupExistingAuthProvider(normalizedEmail);
-      if (existingAuthProvider === 'password') {
-        showError(getRegisterFirebaseError('auth/account-exists-with-different-credential'));
-        return;
-      }
-    } catch {
-      showError('Unable to verify this email right now. Please try again.');
-      return;
-    }
-
     setGoogleLoading(true);
     try {
       const outcome = await signInWithGoogleInteractive(normalizedEmail);
@@ -237,6 +220,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       const finalized = await finalizeSession(outcome.user, {
         mode: 'signup',
         provider: 'google',
+        payload: { email: normalizedEmail },
         deleteCreatedUserOnFailure: shouldDeleteGoogleUserOnFinalizeFailure(outcome),
       });
 
@@ -268,7 +252,6 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
   };
 
   const onSubmit = async (values: SignUpFormValues) => {
-    clearForm();
     try {
       const { user } = await createUserWithEmailAndPassword(
         getFirebaseAuth(),
@@ -289,11 +272,31 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       }
 
       clearPendingSignupCleanup();
+      clearForm();
       completeSuccessfulSignUp(user, finalized, values.firstName.trim());
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
 
       if (code === 'auth/email-already-in-use') {
+        // Check for provider mismatch on our backend
+        try {
+          const checkRes = await fetch('/api/users/auth-provider-check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: values.email }),
+          });
+
+          if (checkRes.ok) {
+            const data = await checkRes.json();
+            if (data.exists && data.authProvider === 'google') {
+              showError('This email is registered with Google. Continue with Google sign-in instead.');
+              return;
+            }
+          }
+        } catch (checkError) {
+          console.error('Provider check failed:', checkError);
+        }
+
         try {
           if (hasRecentPendingSignupCleanup(values.email)) {
             await delay(500);
@@ -317,6 +320,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             }
 
             clearPendingSignupCleanup();
+            clearForm();
             completeSuccessfulSignUp(recovered.user, finalized, values.firstName.trim());
             return;
           }
@@ -516,10 +520,10 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             (e.currentTarget as HTMLElement).style.backgroundColor = '';
           }}
         >
-          {isSubmitting ? (
+          {isSubmitting || googleLoading ? (
             <>
               <Loader2 size={15} className="animate-spin" />
-              <span className="animate-fade-in">Creating account…</span>
+              <span className="animate-fade-in">Processing…</span>
             </>
           ) : (
             'TAP IN'

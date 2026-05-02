@@ -43,4 +43,9 @@ export class SyncUserDto {
   @IsOptional()
   @IsEnum(AuthProvider)
   authProvider?: AuthProvider;
+
+  @ApiPropertyOptional({ example: 'user@example.com' })
+  @IsOptional()
+  @IsString()
+  email?: string;
 }

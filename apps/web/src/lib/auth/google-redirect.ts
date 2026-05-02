@@ -25,9 +25,13 @@ export async function resolveGoogleRedirectSession(
     const result = await getRedirectResult(getFirebaseAuth());
     if (!result) return { status: 'none' };
 
+    const hint = typeof window !== 'undefined' ? sessionStorage.getItem('tapok_auth_email_hint') : null;
+    if (typeof window !== 'undefined') sessionStorage.removeItem('tapok_auth_email_hint');
+
     const finalized = await finalizeSession(result.user, {
       mode,
       provider: 'google',
+      payload: hint ? { email: hint } : undefined,
       deleteCreatedUserOnFailure: shouldDeleteGoogleUserOnFinalizeFailure(result),
     });
 
