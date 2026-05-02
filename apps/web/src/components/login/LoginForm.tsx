@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { signInWithEmailAndPassword, getRedirectResult } from 'firebase/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { auth, googleProvider } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { finalizeSession } from '@/lib/auth/finalize-session';
+import { signInWithGoogleInteractive } from '@/lib/auth/google-signin';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { toast } from 'react-hot-toast';
 
@@ -98,14 +99,10 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     setServerError(null);
     setGoogleLoading(true);
     try {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        await signInWithRedirect(auth, googleProvider);
-        return;
-      }
+      const outcome = await signInWithGoogleInteractive();
+      if (outcome === 'redirect') return;
 
-      const result = await signInWithPopup(auth, googleProvider);
-      const finalized = await finalizeSession(result.user, { sync: false });
+      const finalized = await finalizeSession(outcome.user, { sync: false });
 
       if (!finalized.ok) {
         const msg = Array.isArray(finalized.message) ? finalized.message[0] : finalized.message;
@@ -114,7 +111,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       }
 
       toast.success('WELCOME BACK');
-      setSession(result.user, finalized.dbUser);
+      setSession(outcome.user, finalized.dbUser);
       router.replace(redirectTo);
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
@@ -152,16 +149,13 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-tok-cream">
-        <Loader2 className="h-6 w-6 animate-spin text-tok-teal" />
-      </div>
-    );
-  }
-
   return (
     <AuthPageShell>
+      {loading && !user && (
+        <p className="mb-4 text-center font-inter text-xs text-black/45" aria-live="polite">
+          Connecting…
+        </p>
+      )}
       <div className="animate-fade-up mb-6">
         <div
           className="mb-3 inline-flex items-center gap-2"
