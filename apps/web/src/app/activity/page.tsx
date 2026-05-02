@@ -9,6 +9,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useMyActivity } from '@/hooks/queries/use-drops';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { DropActivityLog } from '@/types/drop';
+import { phraseForDropLogAction } from '@/lib/drop-log-phrases';
 import { cn } from '@/lib/utils';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -81,33 +82,11 @@ function describeAction(log: DropActivityLog, isYou: boolean): React.ReactNode {
     <strong key="name" className="font-bold text-tok-black underline decoration-tok-teal/30 decoration-2 underline-offset-2">{text}</strong>
   );
 
-  switch (log.action) {
-    case 'created':
-      return <>{bold(name)} dropped a new plan</>;
-    case 'updated': {
-      const fields = log.changedFields ? Object.keys(log.changedFields) : [];
-      if (fields.includes('isLocked')) {
-        const locked = (log.changedFields as Record<string, unknown>)['isLocked'];
-        return <>{bold(name)} {locked ? 'locked' : 'unlocked'} the drop</>;
-      }
-      if (fields.includes('scheduledAt')) {
-        return <>{bold(name)} moved the time</>;
-      }
-      return <>{bold(name)} updated the drop</>;
-    }
-    case 'joined':
-      return <>{bold(name)} tapped in</>;
-    case 'join_requested':
-      return <>{bold(name)} requested to join</>;
-    case 'join_request_approved':
-      return <>{bold(name)} approved a join request</>;
-    case 'join_request_rejected':
-      return <>{bold(name)} rejected a join request</>;
-    case 'left':
-      return <>{bold(name)} left the drop</>;
-    default:
-      return <>{bold(name)} {log.action.replace(/_/g, ' ')}</>;
-  }
+  return (
+    <>
+      {bold(name)} {phraseForDropLogAction(log.action)}
+    </>
+  );
 }
 
 // ── components ────────────────────────────────────────────────────────────────
@@ -166,19 +145,30 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
   );
 }
 
+function FeedSectionHeaderSkeleton() {
+  return (
+    <div className="px-6 py-3 bg-tok-black/90 border-b-2 border-tok-black/80 flex justify-between items-center">
+      <Skeleton className="h-3 w-[72px] sm:w-28 rounded-sm bg-tok-cream/25" />
+      <span className="w-2 h-2 rounded-full bg-tok-teal/90 shrink-0" aria-hidden />
+    </div>
+  );
+}
+
 function FeedItemSkeleton() {
   return (
     <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b-2 border-tok-black/5 last:border-b-0">
-      <Skeleton className="w-8 h-8 sm:w-12 sm:h-12 rounded-full shrink-0 bg-tok-black/5 border-2 border-tok-black/10 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]" />
-      <div className="flex-1 min-w-0 space-y-2">
-        <Skeleton className="h-4 w-3/4 rounded-sm bg-tok-black/5" />
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-5 w-20 rounded-sm bg-tok-black/5" />
-          <Skeleton className="h-3 w-12 rounded-sm bg-tok-black/5" />
+      <Skeleton className="w-8 h-8 sm:w-12 sm:h-12 rounded-full shrink-0 bg-tok-black/6 border-2 border-tok-black/15 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.12)]" />
+      <div className="flex-1 min-w-0">
+        <Skeleton className="h-[14px] sm:h-[15px] w-[92%] max-w-md rounded-sm bg-tok-black/8" />
+        <Skeleton className="h-[14px] sm:h-[15px] w-[55%] mt-2 rounded-sm bg-tok-black/5 sm:hidden" />
+        <div className="flex items-center gap-3 mt-2">
+          <Skeleton className="h-7 w-[104px] sm:w-[120px] rounded-sm bg-tok-black/6 border-2 border-tok-teal/15" />
+          <Skeleton className="h-3 w-px rounded-none bg-tok-black/15 shrink-0 hidden sm:block" />
+          <Skeleton className="h-[12px] w-14 rounded-sm bg-tok-black/6" />
         </div>
       </div>
-      <div className="hidden sm:block">
-        <Skeleton className="h-8 w-8 rounded-full bg-tok-black/5 border-2 border-tok-black/10" />
+      <div className="hidden sm:flex items-center shrink-0">
+        <Skeleton className="h-9 w-9 rounded-full bg-tok-black/6 border-2 border-tok-black/25" />
       </div>
     </div>
   );
@@ -187,12 +177,97 @@ function FeedItemSkeleton() {
 function FeedSkeleton() {
   return (
     <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden">
-      <div className="px-6 py-3 bg-tok-black/5 border-b-2 border-tok-black/10">
-        <Skeleton className="h-3 w-24 rounded-sm bg-tok-black/10" />
+      <div>
+        <FeedSectionHeaderSkeleton />
+        <FeedItemSkeleton />
+        <FeedItemSkeleton />
       </div>
-      <FeedItemSkeleton />
-      <FeedItemSkeleton />
-      <FeedItemSkeleton />
+      <div>
+        <FeedSectionHeaderSkeleton />
+        <FeedItemSkeleton />
+        <FeedItemSkeleton />
+        <FeedItemSkeleton />
+      </div>
+    </div>
+  );
+}
+
+function ActivityHeroSkeleton() {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 sm:mb-16">
+      <div className="space-y-4 max-w-xl">
+        <Skeleton className="h-3 w-40 rounded-sm bg-tok-teal/30" />
+        <Skeleton className="h-[clamp(52px,11vw,100px)] w-[min(100%,280px)] sm:w-[min(100%,380px)] rounded-sm bg-tok-black/6" />
+        <Skeleton className="h-4 w-40 sm:w-52 rounded-sm bg-tok-black/5" />
+      </div>
+      <div className="flex items-center gap-3 px-5 py-2.5 border-[3px] border-tok-black/80 shadow-[4px_4px_0px_#1C1C1A] rounded-sm bg-white self-start sm:self-auto">
+        <Skeleton className="h-3 w-3 rounded-full bg-tok-teal/40 shrink-0" />
+        <Skeleton className="h-4 w-[148px] sm:w-[168px] rounded-sm bg-tok-black/8" />
+      </div>
+    </div>
+  );
+}
+
+function DropRowSkeleton() {
+  return (
+    <div className="flex items-start gap-3 px-5 py-4 border-b-2 border-tok-black/5 last:border-b-0">
+      <Skeleton className="mt-1 h-3 w-3 rounded-full shrink-0 bg-tok-black/6 border-2 border-tok-black/15" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <Skeleton className="h-4 w-[78%] rounded-sm bg-tok-black/8" />
+        <div className="space-y-1.5">
+          <Skeleton className="h-3 w-1/2 rounded-sm bg-tok-black/5" />
+          <Skeleton className="h-3 w-2/5 rounded-sm bg-tok-black/5" />
+        </div>
+      </div>
+      <Skeleton className="h-6 w-12 rounded-sm bg-tok-black/6 border-2 border-tok-teal/15 shrink-0 mt-0.5" />
+    </div>
+  );
+}
+
+function CrewRowSkeleton() {
+  return (
+    <div className="flex items-center gap-4 px-5 py-4 border-b-2 border-tok-black/5 last:border-b-0">
+      <Skeleton className="h-10 w-10 rounded-full shrink-0 bg-tok-black/6 border-2 border-tok-black/15 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.12)]" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <Skeleton className="h-4 w-28 rounded-sm bg-tok-black/8" />
+        <Skeleton className="h-3 w-16 rounded-sm bg-tok-black/5" />
+      </div>
+      <div className="flex flex-col items-center gap-1 shrink-0">
+        <Skeleton className="h-7 w-7 rounded-sm bg-tok-black/6" />
+        <Skeleton className="h-2 w-6 rounded-sm bg-tok-black/4" />
+      </div>
+    </div>
+  );
+}
+
+function ActivePanelSkeleton() {
+  return (
+    <div className="space-y-10">
+      <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 bg-tok-teal/3 border-b-2 border-tok-black/80">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-3.5 w-3.5 rounded-sm bg-tok-teal/30 shrink-0" />
+            <Skeleton className="h-3 w-28 rounded-sm bg-tok-black/8" />
+          </div>
+          <Skeleton className="h-3 w-12 rounded-sm bg-tok-black/6" />
+        </div>
+        <div className="divide-y-2 divide-tok-black/5">
+          <DropRowSkeleton />
+          <DropRowSkeleton />
+        </div>
+      </div>
+
+      <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_#262624] rounded-xl overflow-hidden">
+        <div className="flex items-center gap-2 px-5 pt-5 pb-4 bg-tok-black/90 border-b-2 border-tok-black/80">
+          <Skeleton className="h-3.5 w-3.5 rounded-sm bg-tok-cream/25 shrink-0" />
+          <Skeleton className="h-3 w-24 rounded-sm bg-tok-cream/25" />
+        </div>
+        <div className="divide-y-2 divide-tok-black/5">
+          <CrewRowSkeleton />
+          <CrewRowSkeleton />
+          <CrewRowSkeleton />
+        </div>
+      </div>
     </div>
   );
 }
@@ -220,10 +295,10 @@ function Feed({
             <span className="text-2xl">⚠️</span>
           </div>
           <h2 className="font-passion text-[32px] font-black uppercase tracking-tight text-tok-black leading-none">
-            Ledger Error
+            Unable to load drop log
           </h2>
           <p className="mt-4 text-[16px] font-medium text-tok-black/60 leading-relaxed">
-            We couldn&apos;t retrieve the activity stream. This usually means the connection was interrupted.
+            Please check your connection and try again.
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -238,10 +313,10 @@ function Feed({
             <ActivityIcon size={32} className="text-tok-black/30" />
           </div>
           <h2 className="font-passion text-[32px] font-black uppercase tracking-tight text-tok-black">
-            Silence in the ranks
+            Quiet on the deck
           </h2>
           <p className="mt-4 text-[16px] font-medium text-tok-black/50 max-w-sm mx-auto leading-relaxed">
-            Your activity ledger is waiting for its first entry. Join a Drop or start one to see things moving.
+            Nothing in your drop log yet. Join a drop or start one to see the mission log and live activity here.
           </p>
           <div className="mt-10">
             <Link
@@ -293,7 +368,7 @@ function GateCard() {
         Identify <br /> <span className="text-tok-teal">Yourself</span>
       </h2>
       <p className="mt-6 sm:mt-8 text-[16px] sm:text-[18px] font-medium text-tok-black/60 leading-relaxed max-w-md">
-        The activity ledger is reserved for verified crew members. Sign in to track your squad.
+        The drop log and live activity are for signed-in crew. Sign in to see what&apos;s moving across your drops.
       </p>
       <div className="mt-10 flex flex-wrap gap-4">
         <Link
@@ -333,19 +408,18 @@ export default function ActivityPage() {
     return (
       <div className="min-h-screen bg-tok-cream text-tok-black">
         <TapokNavbar />
-        <main className="relative mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10">
-          <div className="grid gap-10 sm:gap-16 lg:grid-cols-[1fr_340px]">
-            <div className="space-y-10">
-              <div className="space-y-6">
-                <Skeleton className="h-24 sm:h-32 w-3/4 rounded-sm bg-tok-black/5" />
-                <Skeleton className="h-6 w-1/2 rounded-sm bg-tok-black/5" />
-              </div>
+        <main className="relative mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10 pb-24">
+          <ActivityHeroSkeleton />
+          <div className="grid gap-12 lg:grid-cols-[1fr_340px]">
+            <div>
               <FeedSkeleton />
             </div>
-            <div className="hidden lg:block space-y-10">
-              <Skeleton className="h-[250px] rounded-xl border-4 border-tok-black/5 bg-tok-white/40 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]" />
-              <Skeleton className="h-[300px] rounded-xl border-4 border-tok-black/5 bg-tok-white/40 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]" />
-            </div>
+            <aside className="hidden lg:block">
+              <ActivePanelSkeleton />
+            </aside>
+          </div>
+          <div className="lg:hidden mt-12">
+            <ActivePanelSkeleton />
           </div>
         </main>
       </div>
@@ -378,29 +452,32 @@ export default function ActivityPage() {
 
 
       <TapokNavbar />
-      <div className="absolute top-[20%] right-0 opacity-[0.05] pointer-events-none select-none overflow-hidden">
-        <span className="font-passion text-[300px] font-black leading-none tracking-tighter text-tok-teal block translate-x-1/4">
-          LEDGER
+      <div className="pointer-events-none absolute top-[20%] right-0 select-none overflow-hidden opacity-[0.05]">
+        <span className="font-passion block translate-x-1/4 text-[clamp(100px,32vw,280px)] font-black leading-none tracking-tighter text-tok-teal">
+          ACTIVITY
         </span>
       </div>
 
       <main className="relative mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10 pb-24">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-16 animate-fade-up">
           <div>
-            <h1 className="font-passion text-[clamp(56px,12vw,110px)] font-black uppercase leading-[0.8] tracking-tighter text-tok-black">
-              THE <span className="text-tok-teal">FEED.</span>
-            </h1>
-            <p className="mt-4 text-[15px] font-bold uppercase tracking-[2px] text-tok-black/40">
-              {isHardLoading ? 'SYNCING LEDGER...' : 'LATEST CREW UPDATES.'}
+            <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+              YOUR DROP ACTIVITY
             </p>
+            <h1 className="font-passion text-[clamp(52px,11vw,84px)] font-black uppercase leading-[0.8] tracking-tight text-tok-black">
+            THE DROP{' '}
+              <span className="text-tok-teal">LOG.</span>
+            </h1>
           </div>
 
           <div className="flex items-center gap-3 px-5 py-2.5 bg-white border-[3px] border-tok-black shadow-[4px_4px_0px_#1C1C1A] rounded-sm font-passion text-[14px] font-black uppercase tracking-wider text-tok-black self-start sm:self-auto">
             <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tok-teal opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-tok-teal"></span>
+              {isHardLoading ? (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tok-teal opacity-75" />
+              ) : null}
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-tok-teal" />
             </span>
-            Live Activity Stream
+            {isHardLoading ? 'Syncing drop log…' : 'Live activity'}
           </div>
         </div>
 
