@@ -8,8 +8,11 @@ export function HeroActions() {
   const mounted = useMounted();
   const { dbUser, loading } = useAuth();
 
-  if (!mounted) return <div className="mt-8 h-[52px] w-[180px] rounded-lg bg-tok-teal/10" />;
-  if (loading) return <div className="mt-8 h-[52px] w-[180px] animate-pulse rounded-lg bg-tok-teal/30" />;
+  if (!mounted || loading) {
+    return (
+      <div className="mt-8 inline-block h-[60px] w-[214px] rounded-lg border-2 border-tok-black/10 bg-tok-teal/5 animate-pulse" />
+    );
+  }
 
   return (
     <Link
