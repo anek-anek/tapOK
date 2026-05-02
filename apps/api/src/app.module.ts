@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
+import { ScheduleModule } from '@nestjs/schedule';
+
 import { FirebaseAuthGuard, FirebaseModule, THROTTLE_DEFAULT, THROTTLE_STRICT } from './common';
 import { AppController } from './app.controller';
 import { HealthModule } from './app/health/health.module';
@@ -15,6 +17,7 @@ import { DropsModule } from './app/drops/drops.module';
   controllers: [AppController],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       { name: 'default', ...THROTTLE_DEFAULT },
       { name: 'strict',  ...THROTTLE_STRICT },

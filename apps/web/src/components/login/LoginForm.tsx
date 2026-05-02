@@ -14,9 +14,12 @@ import { finalizeSession } from '@/lib/auth/finalize-session';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { toast } from 'react-hot-toast';
 
-const GENERIC_AUTH_ERROR = 'Incorrect email or password.';
+const GENERIC_AUTH_ERROR = 'No TapOK account found. Please sign up first.';
 
 const FIREBASE_ERRORS: Record<string, string> = {
+  'auth/user-not-found': 'No TapOK account found. Please sign up first.',
+  'auth/invalid-credential': 'No TapOK account found. Please sign up first.',
+  'auth/invalid-login-credentials': 'No TapOK account found. Please sign up first.',
   'auth/too-many-requests': 'Too many attempts. Please try again later.',
   'auth/network-request-failed': 'Network error. Check your connection and try again.',
 };
@@ -129,8 +132,11 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       const finalized = await finalizeSession(user, { sync: false });
 
       if (!finalized.ok) {
-        const msg = finalized.reason === 'no_account'
-          ? 'No TapOK account found for this email. Please sign up first.'
+        const isNoAccount =
+          finalized.reason === 'no_account' ||
+          String(finalized.message).toLowerCase().includes('no tapok account');
+        const msg = isNoAccount
+          ? 'No TapOK account found. Please sign up first.'
           : finalized.message;
         const displayMsg = Array.isArray(msg) ? msg[0] : msg;
         toast.error(String(displayMsg).toUpperCase());

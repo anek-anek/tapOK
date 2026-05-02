@@ -32,6 +32,7 @@ interface RegisterFormProps {
 export default function RegisterForm({ redirectTo }: RegisterFormProps) {
   const router = useRouter();
   const { user, dbUser, loading, setSession } = useAuth();
+  const handledSuccessRedirectRef = useRef(false);
 
   const {
     register,
@@ -55,6 +56,8 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
   const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (handledSuccessRedirectRef.current) return;
+
     if (user && dbUser && !googleLoading && !isSubmitting) {
       const isCrewJoin = redirectTo.startsWith('/drops/join/');
       if (isCrewJoin) {
@@ -92,6 +95,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
           setSession(result.user, finalized.dbUser);
 
           const isCrewJoin = redirectTo.startsWith('/drops/join/');
+          handledSuccessRedirectRef.current = true;
           if (isCrewJoin) {
             router.replace(redirectTo);
           } else {
@@ -132,6 +136,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       setSession(result.user, finalized.dbUser);
 
       const isCrewJoin = redirectTo.startsWith('/drops/join/');
+      handledSuccessRedirectRef.current = true;
       if (isCrewJoin) {
         router.replace(redirectTo);
       } else {
@@ -166,6 +171,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       setSession(user, finalized.dbUser);
 
       const isCrewJoin = redirectTo.startsWith('/drops/join/');
+      handledSuccessRedirectRef.current = true;
       if (isCrewJoin) {
         router.replace(redirectTo);
       } else {

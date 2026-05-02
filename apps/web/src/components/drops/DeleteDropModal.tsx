@@ -1,6 +1,6 @@
 'use client';
 
-import { ModalShell } from '@/components/modal-shell';
+import { CLOSE_DURATION, ModalShell } from '@/components/modal-shell';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 import { useDeleteDrop } from '@/hooks/mutations/use-drop-mutations';
 import { toast } from 'react-hot-toast';
@@ -16,15 +16,16 @@ export function DeleteDropModal({ drop, onClose }: DeleteDropModalProps) {
   const deleteDrop = useDeleteDrop();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = async () => {
+  const handleDelete = async (close: () => void) => {
     setIsDeleting(true);
     try {
       await deleteDrop.mutateAsync(drop.id);
       toast.success('DROP DELETED SUCCESSFULLY');
-      onClose(true);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'FAILED TO DELETE DROP';
-      toast.error(Array.isArray(msg) ? msg[0].toUpperCase() : String(msg).toUpperCase());
+      close();
+      setTimeout(() => onClose(true), CLOSE_DURATION);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'FAILED TO DELETE DROP';
+      toast.error(String(msg).toUpperCase());
     } finally {
       setIsDeleting(false);
     }
@@ -46,7 +47,7 @@ export function DeleteDropModal({ drop, onClose }: DeleteDropModalProps) {
             </div>
             {!isDeleting && (
               <button
-                onClick={() => onClose()}
+                onClick={close}
                 className="flex h-8 w-8 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:bg-tok-black/5 active:bg-tok-black/10"
               >
                 <X size={16} strokeWidth={3} />
@@ -63,7 +64,7 @@ export function DeleteDropModal({ drop, onClose }: DeleteDropModalProps) {
                   Critical Warning
                 </p>
                 <p className="text-[14px] leading-relaxed text-tok-black/70">
-                  You are about to delete <span className="font-bold text-tok-black">"{drop.name}"</span>. 
+                  You are about to delete <span className="font-bold text-tok-black">&quot;{drop.name}&quot;</span>. 
                   All crew data, mission logs, and photos will be permanently erased. This action cannot be undone.
                 </p>
               </div>
@@ -73,14 +74,14 @@ export function DeleteDropModal({ drop, onClose }: DeleteDropModalProps) {
           {/* Actions */}
           <div className="flex flex-col gap-4 border-t-[3px] border-tok-black bg-white p-6 sm:flex-row">
             <button
-              onClick={() => onClose()}
+              onClick={close}
               disabled={isDeleting}
               className="flex h-16 flex-1 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white font-passion text-base font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
-              onClick={handleDelete}
+              onClick={() => void handleDelete(close)}
               disabled={isDeleting}
               className="flex h-16 flex-1 items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-red-500 font-passion text-base font-bold uppercase tracking-[2px] text-white shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-red-600 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
             >

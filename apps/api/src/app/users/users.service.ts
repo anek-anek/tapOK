@@ -20,8 +20,8 @@ export class UsersService {
     private readonly dataSource: DataSource,
   ) {}
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.findAll();
+  findAll(page: number = 1, limit: number = 100): Promise<User[]> {
+    return this.usersRepository.findAll(page, limit);
   }
 
   async findOne(id: string): Promise<User> {

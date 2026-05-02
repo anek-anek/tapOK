@@ -3,7 +3,7 @@ import { getApiUrl } from '@/lib/config';
 
 const SESSION_COOKIE = '__session';
 const PROFILE_COOKIE = 'user_profile';
-const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+const MAX_AGE = 60 * 60 * 24 * 30;
 
 interface Profile {
   firstName: string;
@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
   const apiUrl = getApiUrl();
   const check = await fetch(`${apiUrl}/users/me`, {
     headers: { Authorization: `Bearer ${idToken}` },
+    cache: 'no-store',
   });
   if (!check.ok) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
     path: '/',
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
+    sameSite: 'lax' as const,
     maxAge: MAX_AGE,
   };
 
@@ -41,7 +42,8 @@ export async function POST(req: NextRequest) {
 
   const profile: Profile | undefined = body?.profile;
   if (profile && typeof profile === 'object') {
-    res.cookies.set(PROFILE_COOKIE, JSON.stringify(profile), {
+    const encoded = encodeURIComponent(JSON.stringify(profile));
+    res.cookies.set(PROFILE_COOKIE, encoded, {
       ...cookieOptions,
       httpOnly: false,
     });

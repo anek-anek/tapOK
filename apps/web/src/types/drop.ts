@@ -143,6 +143,7 @@ export interface CreateDropDto {
   category?: DropCategory;
   overview?: string;
   idempotencyKey?: string;
+  coverPhotoBase64?: string;
 }
 
 export interface UpdateDropDto {

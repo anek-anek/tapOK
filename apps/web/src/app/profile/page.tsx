@@ -78,7 +78,7 @@ export default function ProfilePage() {
 
   const updateUser = useUpdateUser(profile?.id ?? '');
   const { data: myDrops = [], isLoading: dropsLoading } = useMyDrops();
-  const { data: frequentCrew = [], isLoading: crewLoading } = useFrequentCrew();
+  const { data: frequentCrew = [] } = useFrequentCrew();
 
   function startEdit() {
     setForm({
@@ -120,7 +120,7 @@ export default function ProfilePage() {
       return;
     }
 
-    const dto: any = {};
+    const dto: Record<string, unknown> = {};
     if (form.firstName !== profile.firstName) dto.firstName = form.firstName;
     if (form.lastName !== profile.lastName) dto.lastName = form.lastName;
     if (form.phone !== (profile.phone ?? '')) dto.phone = form.phone || undefined;
@@ -135,9 +135,8 @@ export default function ProfilePage() {
         setEditing(false);
         toast.success('PROFILE UPDATED SUCCESSFULLY');
       },
-      onError: (err: any) => {
-        const rawMsg = err.response?.data?.message || 'FAILED TO UPDATE PROFILE';
-        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'FAILED TO UPDATE PROFILE';
         toast.error(String(msg).toUpperCase());
       }
     });
@@ -242,31 +241,34 @@ export default function ProfilePage() {
       <TapokNavbar />
 
       <main className="relative mx-auto max-w-2xl px-6 py-12">
-        {/* Page Header */}
-        <div className="mb-10 flex items-end justify-between border-b-4 border-tok-black pb-4">
-          <h1 className="font-passion text-6xl tracking-tighter text-tok-black uppercase">
+        {/* Page Header — stack on narrow viewports so title never overlaps actions */}
+        <div className="mb-10 flex flex-col gap-4 border-b-4 border-tok-black pb-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+          <h1 className="min-w-0 shrink font-passion text-[clamp(2.5rem,12vw,3.75rem)] leading-none tracking-tighter text-tok-black uppercase sm:text-6xl">
             Profile
           </h1>
           {!editing ? (
             <button
+              type="button"
               onClick={startEdit}
-              className="group flex items-center gap-2 border-2 border-tok-black bg-tok-teal px-4 py-2 font-passion text-lg text-tok-white shadow-[3px_3px_0px_0px_#262624] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#262624] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              className="group flex w-full shrink-0 items-center justify-center gap-2 border-2 border-tok-black bg-tok-teal px-4 py-2 font-passion text-lg text-tok-white shadow-[3px_3px_0px_0px_#262624] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#262624] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:w-auto sm:justify-start"
             >
               <Pencil size={18} />
               EDIT
             </button>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex w-full shrink-0 flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
               <button
+                type="button"
                 onClick={cancelEdit}
-                className="border-2 border-tok-black bg-tok-white px-4 py-2 font-passion text-lg text-tok-black shadow-[3px_3px_0px_0px_#262624] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#262624]"
+                className="min-h-11 min-w-0 flex-1 border-2 border-tok-black bg-tok-white px-4 py-2 font-passion text-base text-tok-black shadow-[3px_3px_0px_0px_#262624] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#262624] sm:flex-initial sm:text-lg"
               >
                 CANCEL
               </button>
               <button
+                type="button"
                 onClick={saveEdit}
                 disabled={updateUser.isPending}
-                className="flex items-center gap-2 border-2 border-tok-black bg-tok-teal px-6 py-2 font-passion text-lg text-tok-white shadow-[3px_3px_0px_0px_#262624] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#262624] disabled:opacity-50"
+                className="flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 border-2 border-tok-black bg-tok-teal px-4 py-2 font-passion text-base text-tok-white shadow-[3px_3px_0px_0px_#262624] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#262624] disabled:opacity-50 sm:flex-initial sm:px-6 sm:text-lg"
               >
                 {updateUser.isPending ? 'SAVING...' : (
                   <>

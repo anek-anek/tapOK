@@ -523,7 +523,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/OrganizationMember"
+                    "$ref": "#/components/schemas/OrganizationMemberPublicDto"
                   }
                 }
               }
@@ -958,6 +958,39 @@
           }
         ],
         "summary": "Edit a drop (organiser only, active/ongoing status)",
+        "tags": [
+          "drops"
+        ]
+      },
+      "delete": {
+        "operationId": "DropsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Drop deleted successfully."
+          },
+          "403": {
+            "description": "Only the organiser can delete this drop."
+          },
+          "404": {
+            "description": "Drop not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a drop (organiser only)",
         "tags": [
           "drops"
         ]
@@ -2127,6 +2160,68 @@
           "joinedAt"
         ]
       },
+      "OrganizationMemberUserPublicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string"
+          },
+          "userHandle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "OrganizationMemberPublicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "admin",
+              "member"
+            ]
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/OrganizationMemberUserPublicDto"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "userId",
+          "role",
+          "joinedAt",
+          "user"
+        ]
+      },
       "CreateOrganizationDto": {
         "type": "object",
         "properties": {
@@ -2391,6 +2486,14 @@
               "party"
             ],
             "example": "hangout"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "example": "uuid-string"
+          },
+          "coverPhotoBase64": {
+            "type": "string",
+            "description": "Optional JPG/PNG cover as data URL; max 5MB decoded size."
           }
         },
         "required": [
@@ -2479,6 +2582,10 @@
           "isLocked": {
             "type": "boolean",
             "default": false
+          },
+          "idempotencyKey": {
+            "type": "object",
+            "nullable": true
           },
           "organiserId": {
             "type": "string"

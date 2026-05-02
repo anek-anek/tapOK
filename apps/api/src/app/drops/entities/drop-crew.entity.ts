@@ -15,6 +15,8 @@ import { Drop } from './drop.entity';
 
 @Entity('drop_crew')
 @Unique(['dropId', 'userId'])
+@Index('idx_drop_crew_user_status', ['userId', 'status'])
+@Index('idx_drop_crew_drop_status', ['dropId', 'status'])
 export class DropCrew {
   @ApiProperty()
   @PrimaryGeneratedColumn('uuid')

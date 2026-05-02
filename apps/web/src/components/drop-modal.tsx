@@ -23,7 +23,6 @@ import {
   useDeleteCoverPhoto,
 } from '@/hooks/mutations/use-drop-mutations';
 import { ALLOWED_COVER_PHOTO_TYPES, MAX_COVER_PHOTO_SIZE } from '@/lib/supabase-storage';
-import { dropsService } from '@/services/drops.service';
 import { toast } from 'react-hot-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -127,6 +126,15 @@ function mergeDateAndTime(date: Date | undefined, time24: string): string {
 
 function toIsoString(value: string): string {
   return new Date(value).toISOString();
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 function normalizeExpectedHeadcount(value: FormValues['expectedHeadcount']) {
@@ -397,8 +405,6 @@ export function DropModal({
   const [isSubmittingInternal, setIsSubmittingInternal] = useState(false);
   const isBusy = createDrop.isPending || updateDrop.isPending || uploadCoverPhoto.isPending || deleteCoverPhoto.isPending || isSubmitting || isSubmittingInternal;
   isBusyRef.current = isBusy;
-  const serverError = createDrop.error || updateDrop.error;
-
   const onSubmit = handleSubmit(async (values) => {
     if (isSubmittingInternal) return;
     setIsSubmittingInternal(true);
@@ -427,9 +433,8 @@ export function DropModal({
         if (Object.keys(dto).length > 0) {
           try {
             await updateDrop.mutateAsync(dto);
-          } catch (err: any) {
-            const rawMsg = err.response?.data?.message || 'FAILED TO UPDATE DROP';
-            const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'FAILED TO UPDATE DROP';
             toast.error(String(msg).toUpperCase());
             return;
           }
@@ -449,6 +454,16 @@ export function DropModal({
         if (onSuccess) onSuccess({ ...drop, ...dto } as Drop);
         wrappedClose(true);
       } else {
+        let coverPhotoBase64: string | undefined;
+        if (pendingCoverFile) {
+          try {
+            coverPhotoBase64 = await readFileAsDataUrl(pendingCoverFile);
+          } catch {
+            toast.error('FAILED TO READ COVER PHOTO');
+            return;
+          }
+        }
+
         const dto = {
           name: values.name,
           scheduledAt: scheduledAtIso ?? toIsoString(values.scheduledAt),
@@ -459,6 +474,7 @@ export function DropModal({
           category: values.category ?? undefined,
           overview: values.overview,
           idempotencyKey: idempotencyKeyRef.current,
+          ...(coverPhotoBase64 ? { coverPhotoBase64 } : {}),
         };
 
         let result: Drop;
@@ -467,19 +483,10 @@ export function DropModal({
           result = await createDrop.mutateAsync(dto);
           createdId = result.id;
           pendingIdRef.current = createdId;
-        } catch (err: any) {
-          const rawMsg = err.response?.data?.message || 'FAILED TO DEPLOY DROP';
-          const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'FAILED TO DEPLOY DROP';
           toast.error(String(msg).toUpperCase());
           return;
-        }
-
-        if (pendingCoverFile) {
-          try {
-            await dropsService.uploadCoverPhoto(createdId, pendingCoverFile);
-          } catch {
-            toast.error('DROP DEPLOYED BUT COVER PHOTO UPLOAD FAILED — PLEASE RETRY IN EDIT MODE');
-          }
         }
 
         toast.success('DROP DEPLOYED SUCCESSFULLY');

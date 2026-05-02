@@ -27,6 +27,7 @@ export class DropActivityLog {
   drop: Drop;
 
   @ApiProperty()
+  @Index('idx_drop_activity_logs_user_id')
   @Column()
   userId: string;
 

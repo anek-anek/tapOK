@@ -108,8 +108,12 @@ export class DropsController {
   @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: "Get the authenticated user's activity logs across all drops" })
   @ApiResponse({ status: 200, type: [DropActivityLog] })
-  getMyActivity(@Req() request: RequestWithUser): Promise<DropActivityLog[]> {
-    return this.dropsService.findMyActivityLogs(request.user.uid);
+  getMyActivity(
+    @Req() request: RequestWithUser,
+    @Query('page', new ParseIntPipe({ optional: true })) page = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit = 50,
+  ): Promise<DropActivityLog[]> {
+    return this.dropsService.findMyActivityLogs(request.user.uid, page, limit);
   }
 
   @Get('join/:joinCode')

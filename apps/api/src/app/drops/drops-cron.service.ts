@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { DropStatus } from '../../common';
 import { DropsRepository } from './drops.repository';
 
@@ -10,6 +11,7 @@ export class DropsCronService {
 
   constructor(private readonly dropsRepository: DropsRepository) {}
 
+  @Cron('* * * * *') // Runs every minute
   async transitionDropStatuses(): Promise<{ toOngoing: number; toCompleted: number }> {
     const now = new Date();
     const toOngoing = await this.transitionActiveToOngoing(now);

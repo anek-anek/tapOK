@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowRight,
   CalendarDays,
@@ -51,42 +52,33 @@ export function getRole(drop: DropCardModel, userId?: string | null) {
   return userId && drop.organiserId === userId ? 'Chief' : 'Crew';
 }
 
+function getCrewMemberDisplay(member: CrewMember) {
+  const firstName = member.user?.firstName?.trim() || 'Crew';
+  const lastName = member.user?.lastName?.trim() || '';
+  const avatar = member.user?.avatar || undefined;
+  const initials = `${firstName[0] || 'C'}${lastName[0] || ''}`.toUpperCase();
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  return { firstName, lastName, avatar, initials, fullName };
+}
+
 /** The dark teal "Next Up" hero card pinned at the top of the board */
 export function HeroDropCard({
   drop,
   viewerId,
   onShare,
-  onEdit,
-  onDelete,
 }: {
   drop: DropCardModel;
   viewerId?: string | null;
   onShare?: (drop: Drop) => void;
-  onEdit?: (drop: Drop) => void;
-  onDelete?: (drop: Drop) => void;
 }) {
   const role = getRole(drop, viewerId);
   const crew = crewFor(drop);
-  const isOrganiser = !!viewerId && drop.organiserId === viewerId;
-  const canEdit = isOrganiser && drop.status !== 'completed' && isShareableDrop(drop);
-  const canDelete = isOrganiser && onDelete && isShareableDrop(drop);
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isShareableDrop(drop)) onShare?.(drop);
-  };
-
-  const handleEdit = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isShareableDrop(drop)) onEdit?.(drop);
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isShareableDrop(drop)) onDelete?.(drop);
   };
 
   return (
@@ -96,10 +88,12 @@ export function HeroDropCard({
         {/* Visual Section */}
         <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px]">
           {drop.coverPhoto ? (
-            <img
+            <Image
               src={drop.coverPhoto}
               alt={drop.name}
-              className="absolute inset-0 h-full w-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
 
           ) : (
@@ -124,17 +118,11 @@ export function HeroDropCard({
         <div className="relative flex flex-1 flex-col p-5 md:p-6">
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-2">
-              <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-amber-400/80">
+              <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-amber-300 [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]">
                 {role}
-                {'joinCode' in drop && drop.joinCode ? (
-                  <>
-                    {' • '}
-                    <span className="text-tok-cream">{drop.joinCode}</span>
-                  </>
-                ) : null}
               </span>
               {drop.category && (
-                <span className="rounded-sm bg-tok-black/20 px-1.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-amber-400 border border-amber-400/30">
+                <span className="rounded-sm bg-tok-black/20 px-1.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-amber-300 border border-amber-400/40 [text-shadow:0_1px_2px_rgba(0,0,0,0.3)]">
                   {drop.category}
                 </span>
               )}
@@ -143,25 +131,25 @@ export function HeroDropCard({
             <div className="flex items-center gap-2.5 mb-2">
               <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-tok-cream/30 bg-tok-black/20">
                 {drop.organiser?.avatar ? (
-                  <img src={drop.organiser.avatar} alt="" className="h-full w-full object-cover" />
+                  <Image src={drop.organiser.avatar} alt="" width={24} height={24} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center font-passion text-[9px] text-tok-cream">
                     {drop.organiser?.firstName?.[0] || '?'}{drop.organiser?.lastName?.[0] || ''}
                   </div>
                 )}
               </div>
-              <p className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream/90">
+              <p className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream [text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">
                 CHIEF {drop.organiser?.firstName} {drop.organiser?.lastName}
               </p>
             </div>
 
-            <h2 className="font-passion text-2xl font-bold leading-tight tracking-tight text-tok-cream md:text-3xl">
+            <h2 className="font-passion text-2xl font-bold leading-tight tracking-tight text-tok-cream [text-shadow:0_2px_8px_rgba(0,0,0,0.35)] md:text-3xl">
               {drop.name}
             </h2>
           </div>
 
           {drop.overview && (
-            <p className="font-inter text-xs leading-relaxed text-tok-cream/70 line-clamp-2 max-w-lg mb-4">
+            <p className="font-inter text-sm leading-relaxed text-tok-cream/92 line-clamp-2 max-w-lg mb-4 [text-shadow:0_1px_3px_rgba(0,0,0,0.35)]">
               {drop.overview}
             </p>
           )}
@@ -170,23 +158,26 @@ export function HeroDropCard({
           {crew && crew.length > 0 && (
             <div className="mb-6 flex items-center gap-3">
               <div className="flex items-center">
-                {crew.slice(0, 4).map((member, i) => (
-                  <div
-                    key={member.id}
-                    className={cn(
-                      "relative h-8 w-8 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden",
-                      i > 0 && "-ml-4"
-                    )}
-                  >
-                    {member.user.avatar ? (
-                      <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center font-passion text-[10px] text-tok-teal">
-                        {member.user.firstName[0]}{member.user.lastName[0]}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {crew.slice(0, 4).map((member, i) => {
+                  const display = getCrewMemberDisplay(member);
+                  return (
+                    <div
+                      key={member.id}
+                      className={cn(
+                        "relative h-8 w-8 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden",
+                        i > 0 && "-ml-4"
+                      )}
+                    >
+                      {display.avatar ? (
+                        <Image src={display.avatar} alt="" width={32} height={32} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center font-passion text-[10px] text-tok-teal">
+                          {display.initials}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
                 {crew.length > 4 && (
                   <div className="relative -ml-4 flex h-8 w-8 items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion text-[10px] font-bold text-tok-black">
                     +{crew.length - 4}
@@ -195,7 +186,7 @@ export function HeroDropCard({
               </div>
 
 
-              <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-cream/60">
+              <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-cream/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]">
                 {crew.length} in the crew
               </span>
             </div>
@@ -204,12 +195,16 @@ export function HeroDropCard({
           {/* Footer Grid */}
           <div className="mt-auto grid grid-cols-1 gap-3 border-t border-dashed border-tok-cream/20 pt-4 sm:grid-cols-2">
             <div className="flex items-center gap-2.5">
-              <CalendarDays size={14} className="text-tok-cream/60" strokeWidth={2.5} />
-              <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-cream">{formatDateTime(drop.scheduledAt)}</span>
+              <CalendarDays size={16} className="shrink-0 text-tok-cream/85" strokeWidth={2.5} />
+              <span className="font-passion text-xs font-bold uppercase tracking-wider text-tok-cream [text-shadow:0_1px_3px_rgba(0,0,0,0.35)] sm:text-[13px]">
+                {formatDateTime(drop.scheduledAt)}
+              </span>
             </div>
-            <div className="flex items-center gap-2.5">
-              <MapPin size={14} className="text-tok-cream/60" strokeWidth={2.5} />
-              <span className="font-passion truncate text-[10px] font-bold uppercase tracking-wider text-tok-cream">{drop.location}</span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <MapPin size={16} className="shrink-0 text-tok-cream/85" strokeWidth={2.5} />
+              <span className="truncate font-passion text-xs font-bold uppercase tracking-wider text-tok-cream [text-shadow:0_1px_3px_rgba(0,0,0,0.35)] sm:text-[13px]">
+                {drop.location}
+              </span>
             </div>
           </div>
 
@@ -299,10 +294,12 @@ export function ListDropCard({
         {/* Visual Element */}
         <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
           {drop.coverPhoto ? (
-            <img
+            <Image
               src={drop.coverPhoto}
               alt={drop.name}
-              className="absolute inset-0 h-full w-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
             <div className="absolute inset-0 flex h-full w-full items-center justify-center bg-tok-teal/10 font-passion text-2xl font-bold tracking-widest text-tok-teal/30">
@@ -368,24 +365,27 @@ export function ListDropCard({
             <div className="flex items-center">
               {crew && crew.length > 0 ? (
                 <>
-                  {crew.slice(0, 3).map((member, i) => (
-                    <div
-                      key={member.id}
-                      className={cn(
-                        "relative h-6 w-6 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden",
-                        i > 0 && "-ml-3"
-                      )}
-                      title={`${member.user.firstName} ${member.user.lastName}`}
-                    >
-                      {member.user.avatar ? (
-                        <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center font-passion text-[8px] text-tok-teal">
-                          {member.user.firstName[0]}{member.user.lastName[0]}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {crew.slice(0, 3).map((member, i) => {
+                    const display = getCrewMemberDisplay(member);
+                    return (
+                      <div
+                        key={member.id}
+                        className={cn(
+                          "relative h-6 w-6 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden",
+                          i > 0 && "-ml-3"
+                        )}
+                        title={display.fullName}
+                      >
+                        {display.avatar ? (
+                          <Image src={display.avatar} alt="" width={24} height={24} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center font-passion text-[8px] text-tok-teal">
+                            {display.initials}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   {crew.length > 3 && (
                     <div className="relative -ml-3 flex h-6 w-6 items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion text-[8px] font-bold text-tok-black">
                       +{crew.length - 3}
@@ -406,7 +406,7 @@ export function ListDropCard({
             <div className="flex items-center gap-2">
               <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale">
                 {drop.organiser?.avatar ? (
-                  <img src={drop.organiser.avatar} alt="" className="h-full w-full object-cover" />
+                  <Image src={drop.organiser.avatar} alt="" width={24} height={24} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center font-passion text-[8px] text-tok-teal">
                     {drop.organiser?.firstName?.[0] || '?'}{drop.organiser?.lastName?.[0] || ''}

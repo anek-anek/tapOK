@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Passion_One } from 'next/font/google';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { LogOut, User as IconUser, Menu, X } from 'lucide-react';
 import { signOut } from 'firebase/auth';
@@ -177,9 +178,11 @@ export function TapokNavbar() {
                     className={`${passionOne.className} inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-tok-black bg-white text-[11px] uppercase tracking-[1.5px] text-tok-black shadow-[3px_3px_0px_0px_#262624] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#262624] focus-visible:outline-hidden active:translate-y-0 active:shadow-none`}
                   >
                     {dbUser.avatar ? (
-                      <img
+                      <Image
                         src={dbUser.avatar}
                         alt={`${dbUser.firstName} ${dbUser.lastName}`}
+                        width={40}
+                        height={40}
                         className="h-full w-full rounded-full object-cover"
                       />
                     ) : (
@@ -300,9 +303,11 @@ export function TapokNavbar() {
                   <div className="flex items-center gap-4 rounded-2xl border border-black/10 bg-white/50 p-4">
                     <div className={`${passionOne.className} flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white border-2 border-tok-black text-sm tracking-wider shadow-[2px_2px_0px_0px_#262624]`}>
                       {dbUser.avatar ? (
-                        <img
+                        <Image
                           src={dbUser.avatar}
                           alt={`${dbUser.firstName} ${dbUser.lastName}`}
+                          width={48}
+                          height={48}
                           className="h-full w-full object-cover"
                         />
                       ) : (

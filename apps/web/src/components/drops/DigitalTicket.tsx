@@ -5,7 +5,6 @@ import { QRCodeSVG } from 'qrcode.react';
 import {
   Copy as IconCopy,
   CheckCheck as IconCheckCheck,
-  Share2 as IconShare2,
 } from 'lucide-react';
 
 type DigitalTicketProps = {

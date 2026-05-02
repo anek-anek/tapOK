@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery, type UseQueryResult } from '@tanstack/react-query';
 import axios from 'axios';
 import { dropsService } from '@/services/drops.service';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -43,8 +43,17 @@ export function useDrop(id: string) {
     queryKey: dropKeys.detail(id),
     queryFn: () => dropsService.getOne(id),
     enabled: Boolean(id),
-    refetchInterval: 10_000, // Reduced from 30s for better responsiveness
-    staleTime: 5_000,
+    refetchInterval: 30_000,
+    staleTime: 25_000,
+  });
+}
+
+export function useSuspenseDrop(id: string) {
+  return useSuspenseQuery({
+    queryKey: dropKeys.detail(id),
+    queryFn: () => dropsService.getOne(id),
+    refetchInterval: 30_000,
+    staleTime: 25_000,
   });
 }
 
@@ -53,8 +62,8 @@ export function useDropByJoinCode(joinCode: string) {
     queryKey: dropKeys.byJoinCode(joinCode),
     queryFn: () => dropsService.getByJoinCode(joinCode),
     enabled: Boolean(joinCode),
-    refetchInterval: 10_000,
-    staleTime: 5_000,
+    refetchInterval: 30_000,
+    staleTime: 25_000,
   });
 }
 
@@ -66,6 +75,7 @@ export function useMyActivity(options?: { enabled?: boolean }) {
     queryFn: () => dropsService.getMyActivity(),
     enabled: (options?.enabled ?? true) && Boolean(uid),
     refetchInterval: 30_000,
+    staleTime: 30_000,
   });
 }
 
@@ -87,6 +97,16 @@ export function useDropActivityLogs(dropId: string, page: number, options?: { en
     queryFn: () => dropsService.getActivityLogs(dropId, page),
     enabled: (options?.enabled ?? true) && Boolean(dropId),
     refetchInterval: 30_000,
+    staleTime: 30_000,
+  });
+}
+
+export function useSuspenseDropActivityLogs(dropId: string, page: number) {
+  return useSuspenseQuery({
+    queryKey: dropKeys.activityLogs(dropId, page),
+    queryFn: () => dropsService.getActivityLogs(dropId, page),
+    refetchInterval: 30_000,
+    staleTime: 30_000,
   });
 }
 
@@ -95,6 +115,16 @@ export function useDropCrew(dropId: string, options?: { enabled?: boolean }): Us
     queryKey: dropKeys.crew(dropId),
     queryFn: () => dropsService.getCrew(dropId),
     enabled: (options?.enabled ?? true) && Boolean(dropId),
-    refetchInterval: 5_000,
+    refetchInterval: 20_000,
+    staleTime: 15_000,
+  });
+}
+
+export function useSuspenseDropCrew(dropId: string) {
+  return useSuspenseQuery({
+    queryKey: dropKeys.crew(dropId),
+    queryFn: () => dropsService.getCrew(dropId),
+    refetchInterval: 20_000,
+    staleTime: 15_000,
   });
 }

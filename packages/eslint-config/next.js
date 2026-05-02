@@ -47,6 +47,17 @@ export const nextJsConfig = [
       ...pluginReactHooks.configs.recommended.rules,
       // React scope no longer necessary with new JSX transform.
       "react/react-in-jsx-scope": "off",
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@tabler/icons-react",
+              message: "Use lucide-react icons instead of Tabler icons.",
+            },
+          ],
+        },
+      ],
     },
   },
 ];

@@ -22,11 +22,13 @@ function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
   return SwaggerModule.createDocument(app, config);
 }
 
+import compression from 'compression';
 import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   app = await NestFactory.create(AppModule);
 
+  app.use(compression());
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
 

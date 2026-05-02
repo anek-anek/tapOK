@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CalendarDays, MapPin, TrendingUp, Users, Activity as ActivityIcon } from 'lucide-react';
+import { CalendarDays, MapPin, TrendingUp, Users } from 'lucide-react';
 import { useMyDrops } from '@/hooks/queries/use-drops';
 import { useFrequentCrew } from '@/hooks/queries/use-users';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -113,6 +113,10 @@ export function ActivePanel({
   activityLoading: boolean;
   currentUserId?: string;
 }) {
+  void activityLogs;
+  void activityLoading;
+  void currentUserId;
+
   const { data: apiDrops, isLoading: dropsLoading, isFetched: dropsFetched } = useMyDrops();
 
   const activeDrops: DropPreview[] = (

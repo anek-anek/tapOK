@@ -12,8 +12,12 @@ export class UsersRepository {
     private readonly repo: Repository<User>,
   ) {}
 
-  findAll(): Promise<User[]> {
-    return this.repo.find();
+  findAll(page: number = 1, limit: number = 100): Promise<User[]> {
+    return this.repo.find({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
   }
 
   findById(id: string): Promise<User | null> {

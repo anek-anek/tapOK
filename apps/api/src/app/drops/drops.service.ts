@@ -180,6 +180,12 @@ export class DropsService {
         action: 'created',
       });
 
+      if (dto.coverPhotoBase64?.trim()) {
+        const { buffer, mimeType } = this.coverBufferFromDataUrl(dto.coverPhotoBase64);
+        const publicUrl = await this.storageService.uploadDropCover(drop.id, buffer, mimeType);
+        await this.dropsRepository.update(drop.id, { coverPhoto: publicUrl });
+      }
+
       return this.dropsRepository.findById(drop.id) as Promise<Drop>;
     } finally {
       this._createInFlight.delete(inFlightKey);
@@ -208,8 +214,6 @@ export class DropsService {
   async findMyDrops(firebaseUid: string): Promise<Drop[]> {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
-
-    await this.dropsCronService.transitionDropStatuses();
 
     return this.dropsRepository.findFeed(user.id);
   }
@@ -312,7 +316,9 @@ export class DropsService {
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
-    if (drop.organiserId !== (await this.usersService.findByFirebaseUid(firebaseUid))?.id) {
+    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
+    const organiserId = organiser?.id;
+    if (drop.organiserId !== organiserId) {
       throw new ForbiddenException('Only the organiser can invite people');
     }
 
@@ -330,7 +336,7 @@ export class DropsService {
 
     await this.dropsRepository.writeLog({
       dropId,
-      userId: (await this.usersService.findByFirebaseUid(firebaseUid))!.id,
+      userId: organiserId!,
       action: 'invited_member',
       changedFields: { invitedUserId: userId },
     });
@@ -564,45 +570,64 @@ export class DropsService {
     };
   }
 
-  async findMyActivityLogs(firebaseUid: string): Promise<DropActivityLog[]> {
+  async findMyActivityLogs(
+    firebaseUid: string,
+    page: number = 1,
+    limit: number = 50,
+  ): Promise<DropActivityLog[]> {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
-    return this.dropsRepository.findActivityFeedForUser(user.id);
+    return this.dropsRepository.findActivityFeedForUser(user.id, page, limit);
   }
 
-  async discover(firebaseUid?: string, page = 1, limit = 6, category?: DropCategory): Promise<DiscoverDropsResponseDto> {
-    await this.dropsCronService.transitionDropStatuses();
+  async discover(
+    firebaseUid?: string,
+    page = 1,
+    limit = 6,
+    category?: DropCategory,
+  ): Promise<DiscoverDropsResponseDto> {
+    // 1. Parallel: featured drop + user lookup + public list + chief IDs
+    // We fetch the public list without exclusion to allow parallelization, then filter in memory
+    const [featuredResult, user, allPublicPaginated, chiefIds] = await Promise.all([
+      this.dropsRepository.findPublicDrops(1, 1),
+      firebaseUid ? this.usersService.findByFirebaseUid(firebaseUid) : Promise.resolve(null),
+      this.dropsRepository.findPublicDrops(page, limit, category),
+      firebaseUid ? (async () => {
+        const u = await this.usersService.findByFirebaseUid(firebaseUid);
+        return u ? this.dropsRepository.findRecentJoinedChiefIds(u.id) : [];
+      })() : Promise.resolve([]),
+    ]);
 
-    const featuredResult = await this.dropsRepository.findPublicDrops(1, 1);
     const featuredRow = featuredResult.data[0] ?? null;
-    const excludeIds = featuredRow ? [featuredRow.id] : [];
-    const allPublicPaginated = await this.dropsRepository.findPublicDrops(page, limit, category, excludeIds);
+    
+    // Filter out the featured drop from the public list if it exists there
+    if (featuredRow) {
+      allPublicPaginated.data = allPublicPaginated.data.filter(d => d.id !== featuredRow.id);
+      // If we filtered one out, we might have limit-1 items. For UX this is usually fine, 
+      // or we could have fetched limit+1 to be safe.
+    }
 
-    let recentChiefsRows: Drop[] = [];
-    let dbUserId: string | undefined;
-    if (firebaseUid) {
-      const user = await this.usersService.findByFirebaseUid(firebaseUid);
-      if (user) {
-        dbUserId = user.id;
-        const chiefIds = await this.dropsRepository.findRecentJoinedChiefIds(user.id);
-        recentChiefsRows = await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, category);
+    // 2. Fetch upcoming drops by chiefs
+    const recentChiefsRows = chiefIds.length > 0 
+      ? await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, category)
+      : [];
+
+    // 3. Fetch spark state for all visible drops in one go
+    let sparks: Set<string> | undefined;
+    if (user) {
+      const dropIdList = new Set<string>();
+      if (featuredRow) dropIdList.add(featuredRow.id);
+      allPublicPaginated.data.forEach(r => dropIdList.add(r.id));
+      recentChiefsRows.forEach(r => dropIdList.add(r.id));
+
+      if (dropIdList.size > 0) {
+        const sparked = await this.dropsRepository.findDropIdsSparkedByUser(user.id, [...dropIdList]);
+        sparks = new Set(sparked);
       }
     }
 
-    const ids = new Set<string>();
-    if (featuredRow) ids.add(featuredRow.id);
-    for (const r of recentChiefsRows) ids.add(r.id);
-    for (const r of allPublicPaginated.data) ids.add(r.id);
-    const dropIdList = [...ids];
-
-    let viewerSparkedDropIds: Set<string> | undefined;
-    if (dbUserId !== undefined && dropIdList.length > 0) {
-      const sparked = await this.dropsRepository.findDropIdsSparkedByUser(dbUserId, dropIdList);
-      viewerSparkedDropIds = new Set(sparked);
-    }
-
     const map = (row: Drop & { sparkCount?: number }) =>
-      this.mapRowToDiscoverSummary(row, viewerSparkedDropIds);
+      this.mapRowToDiscoverSummary(row, sparks);
 
     return {
       featured: featuredRow ? map(featuredRow as Drop & { sparkCount?: number }) : null,
@@ -864,6 +889,24 @@ export class DropsService {
     if (sizeBytes > 5 * 1024 * 1024) {
       throw new BadRequestException('Image size exceeds 5MB limit');
     }
+  }
+
+  /** Parses a validated data-URL image for storage upload (same rules as photo roll base64). */
+  private coverBufferFromDataUrl(dataUrl: string): { buffer: Buffer; mimeType: string } {
+    this.validateImageBase64(dataUrl);
+    const mimeMatch = dataUrl.match(/^data:([^;]+);base64,/);
+    if (!mimeMatch?.[1]) {
+      throw new BadRequestException('Invalid image format: Missing data URI prefix');
+    }
+    let mimeType = mimeMatch[1];
+    if (mimeType === 'image/jpg') {
+      mimeType = 'image/jpeg';
+    }
+    const base64Data = dataUrl.split(',')[1];
+    if (!base64Data) {
+      throw new BadRequestException('Invalid image data');
+    }
+    return { buffer: Buffer.from(base64Data, 'base64'), mimeType };
   }
 
   private async generateUniqueJoinCode(): Promise<string> {

@@ -295,7 +295,8 @@ export interface paths {
         get: operations["DropsController_findOne"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete a drop (organiser only) */
+        delete: operations["DropsController_delete"];
         options?: never;
         head?: never;
         /** Edit a drop (organiser only, active/ongoing status) */
@@ -706,6 +707,23 @@ export interface components {
             /** Format: date-time */
             joinedAt: string;
         };
+        OrganizationMemberUserPublicDto: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            avatar?: string;
+            userHandle?: string;
+        };
+        OrganizationMemberPublicDto: {
+            id: string;
+            organizationId: string;
+            userId: string;
+            /** @enum {string} */
+            role: "owner" | "admin" | "member";
+            /** Format: date-time */
+            joinedAt: string;
+            user: components["schemas"]["OrganizationMemberUserPublicDto"];
+        };
         CreateOrganizationDto: {
             /** @example Acme Corp */
             name: string;
@@ -795,6 +813,10 @@ export interface components {
              * @enum {string}
              */
             category?: "hangout" | "party";
+            /** @example uuid-string */
+            idempotencyKey?: string;
+            /** @description Optional JPG/PNG cover as data URL; max 5MB decoded size. */
+            coverPhotoBase64?: string;
         };
         DropSpark: {
             id: string;
@@ -822,6 +844,7 @@ export interface components {
             isPublic: boolean;
             /** @default false */
             isLocked: boolean;
+            idempotencyKey?: Record<string, never> | null;
             organiserId: string;
             organiser: components["schemas"]["User"];
             sparks: components["schemas"]["DropSpark"][];
@@ -1342,7 +1365,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OrganizationMember"][];
+                    "application/json": components["schemas"]["OrganizationMemberPublicDto"][];
                 };
             };
             /** @description Organization not found or no access. */
@@ -1575,6 +1598,40 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Drop"];
                 };
+            };
+            /** @description Drop not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Drop deleted successfully. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the organiser can delete this drop. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Drop not found. */
             404: {

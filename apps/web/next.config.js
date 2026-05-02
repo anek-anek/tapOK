@@ -16,6 +16,15 @@ const nextConfig = {
       },
     ];
   },
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'firebasestorage.googleapis.com' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: '**.supabase.co' },
+    ],
+  },
+  cacheComponents: true,
 };
 
 export default nextConfig;

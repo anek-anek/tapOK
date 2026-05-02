@@ -1,33 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useMounted } from '@/hooks/use-mounted';
 import Link from 'next/link';
-import { QRCodeSVG } from 'qrcode.react';
 import {
   ArrowLeft as IconArrowLeft,
   Calendar as IconCalendar,
   MapPin as IconMapPin,
-  Users as IconUsers,
-  Copy as IconCopy,
-  CheckCheck as IconCheckCheck,
   Share2 as IconShare2,
   Edit3 as IconEdit,
   Trash2 as IconTrash,
-  Activity as IconActivity,
   X as IconX,
-  Ticket as IconTicket,
   LogOut as IconLogOut,
 } from 'lucide-react';
 import {
-  CheckCircle2 as IconCheckCircle,
   Clock as IconClock,
   UserCheck as IconUserCheck,
-  UserX as IconUserX,
-  Ban as IconBan,
-  ChevronLeft as IconChevronLeft,
-  ChevronRight as IconChevronRight,
   Lock as IconLock,
 } from 'lucide-react';
 import { useDrop, useMyCrewStatus, useDropCrew, useDropActivityLogs } from '@/hooks/queries/use-drops';
@@ -38,6 +28,8 @@ import { DropShareModal } from '@/components/drops/DropShareModal';
 import { DeleteDropModal } from '@/components/drops/DeleteDropModal';
 import { DigitalTicket } from '@/components/drops/DigitalTicket';
 import { PhotoRoll } from '@/components/drops/PhotoRoll';
+import { CrewRoster } from '@/components/drops/CrewRoster';
+import { ActivityLedger } from '@/components/drops/ActivityLedger';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
@@ -374,13 +366,21 @@ function PageSkeleton() {
 
 export default function DropDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
+
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <DropDetailContent id={id} />
+    </Suspense>
+  );
+}
+
+function DropDetailContent({ id }: { id: string }) {
   const router = useRouter();
   const mounted = useMounted();
   const { dbUser, loading: authLoading, isReady } = useAuth();
-  const { data: drop, isLoading, isFetched, isError } = useDrop(id);
+  const { data: drop, isError, isLoading: dropLoading } = useDrop(id);
 
-  // Robust loading state using isFetched
-  const isHardLoading = !isFetched || (isLoading && !drop);
+  // Initial loading is handled by Suspense
 
   const { data: crewStatus } = useMyCrewStatus(id, { enabled: Boolean(dbUser) });
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -398,7 +398,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const isOrganiserCheck = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
   const canViewActivityLogs = isOrganiserCheck || crewStatus?.status === 'in';
   const { data: crew } = useDropCrew(id, { enabled: isOrganiserCheck || crewStatus?.status === 'in' });
-  const { data: activityPage, isFetching: isLoadingLogs } = useDropActivityLogs(id, logPage, {
+  useDropActivityLogs(id, logPage, {
     enabled: canViewActivityLogs,
   });
   const { mutate: approveJoinRequest, isPending: isApproving, variables: approvingUserId } = useApproveJoinRequest(id);
@@ -412,9 +412,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         toast.success('ABANDONED DROP SUCCESSFULLY');
         router.push('/drops');
       },
-      onError: (err: any) => {
-        const rawMsg = err.response?.data?.message || 'FAILED TO LEAVE DROP';
-        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'FAILED TO LEAVE DROP';
         toast.error(String(msg).toUpperCase());
       }
     });
@@ -425,9 +424,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
       onSuccess: () => {
         toast.success(isPresent ? 'YOU TAPPED IN' : 'YOU TAPPED OUT');
       },
-      onError: (err: any) => {
-        const rawMsg = err.response?.data?.message || 'FAILED TO UPDATE ATTENDANCE';
-        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'FAILED TO UPDATE ATTENDANCE';
         toast.error(String(msg).toUpperCase());
       }
     });
@@ -438,9 +436,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
       onSuccess: () => {
         toast.success('JOIN REQUEST APPROVED');
       },
-      onError: (err: any) => {
-        const rawMsg = err.response?.data?.message || 'FAILED TO APPROVE REQUEST';
-        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'FAILED TO APPROVE REQUEST';
         toast.error(String(msg).toUpperCase());
       }
     });
@@ -451,9 +448,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
       onSuccess: () => {
         toast.success('JOIN REQUEST REJECTED');
       },
-      onError: (err: any) => {
-        const rawMsg = err.response?.data?.message || 'FAILED TO REJECT REQUEST';
-        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'FAILED TO REJECT REQUEST';
         toast.error(String(msg).toUpperCase());
       }
     });
@@ -467,9 +463,8 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         setMemberToRemove(null);
         toast.success('MEMBER REMOVED FROM CREW');
       },
-      onError: (err: any) => {
-        const rawMsg = err.response?.data?.message || 'FAILED TO REMOVE MEMBER';
-        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'FAILED TO REMOVE MEMBER';
         toast.error(String(msg).toUpperCase());
       }
     });
@@ -485,26 +480,15 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
           toast.success('JOINED CREW SUCCESSFULLY');
         }
       },
-      onError: (err: any) => {
-        const rawMsg = err.response?.data?.message || 'FAILED TO JOIN DROP';
-        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'FAILED TO JOIN DROP';
         toast.error(String(msg).toUpperCase());
       }
     });
   };
 
   const pendingMembers = crew?.filter((m) => m.status === 'pending') ?? [];
-  const activeMembers = React.useMemo(() => {
-    if (!crew || !drop) return [];
-    const members = crew.filter((m) => m.status === 'in');
-    return [...members].sort((a, b) => {
-      if (a.userId === drop.organiserId) return -1;
-      if (b.userId === drop.organiserId) return 1;
-      return 0;
-    });
-  }, [crew, drop]);
-
-  if (!mounted || !isReady || (authLoading && !dbUser) || isHardLoading) return <PageSkeleton />;
+  if (!mounted || !isReady || (authLoading && !dbUser) || dropLoading) return <PageSkeleton />;
 
   if (isError || !drop) {
     return (
@@ -537,8 +521,6 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   const isOrganiser = isOrganiserCheck;
   const isCompleted = drop.status === 'completed';
   const canEdit = isOrganiser && !isCompleted;
-  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/drops/join/${drop.joinCode}` : drop.shareUrl;
-
   return (
     <div className="min-h-screen bg-tok-cream font-inter text-[#1C1C1A] selection:bg-tok-teal/15">
       {/* Visual background flourishes */}
@@ -562,46 +544,48 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
         <section className="relative mb-10 overflow-hidden rounded-[4px] border-[3px] border-tok-black bg-tok-teal p-6 shadow-[8px_8px_0px_#1C1C1A] sm:p-10 lg:p-12">
           {drop.coverPhoto && (
             <div className="pointer-events-none absolute inset-0 z-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={drop.coverPhoto} alt="" className="h-full w-full object-cover opacity-25" />
+              <Image src={drop.coverPhoto} alt="" fill className="object-cover opacity-25" sizes="100vw" loading="eager" priority />
               <div className="absolute inset-0 bg-linear-to-r from-tok-teal via-tok-teal/80 to-transparent" />
             </div>
           )}
 
-          {/* Absolute Top-Right Actions */}
-          <div className="absolute right-4 top-4 z-20 flex items-center gap-3 sm:right-6 sm:top-6 lg:right-8 lg:top-8">
-            <SparkButton drop={drop} variant="hero" />
-          </div>
-
           <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-            <div className="flex-1">
-              <div className="mb-4 flex items-center gap-3">
-                <StatusPill status={drop.status} scheduledAt={drop.scheduledAt} />
-                <span className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-cream/40">
-                  CODE: {drop.joinCode}
-                </span>
-                {drop.isPublic && (
-                  <span className={cn(
-                    "rounded-sm border-2 px-2 py-0.5 font-passion text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,0.2)]",
-                    drop.isLocked
-                      ? "border-amber-400 bg-amber-400 text-black"
-                      : "border-emerald-400 bg-emerald-400 text-white"
-                  )}>
-                    {drop.isLocked ? "Approval Required" : "Instant Join"}
-                  </span>
-                )}
+            <div className="min-w-0 flex-1">
+              <div className="mb-4 flex flex-wrap items-start gap-x-2 gap-y-2 sm:gap-x-3">
+                <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+                  <StatusPill status={drop.status} scheduledAt={drop.scheduledAt} />
+                  {drop.isPublic && (
+                    <span className={cn(
+                      "rounded-sm border-2 px-2 py-0.5 font-passion text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,0.2)]",
+                      drop.isLocked
+                        ? "border-amber-400 bg-amber-400 text-black"
+                        : "border-emerald-400 bg-emerald-400 text-white"
+                    )}>
+                      {drop.isLocked ? "Approval Required" : "Instant Join"}
+                    </span>
+                  )}
+                </div>
+                <div className="ml-auto shrink-0 pl-1">
+                  <SparkButton drop={drop} variant="hero" />
+                </div>
               </div>
-              <h1 className="break-words font-passion text-[clamp(32px,6vw,72px)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-[#F7E9B2]">
+              <h1
+                className="wrap-break-word font-passion text-[clamp(32px,6vw,72px)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-tok-cream [text-shadow:0_1px_2px_rgba(0,0,0,0.55),0_2px_16px_rgba(0,0,0,0.35)]"
+              >
                 {drop.name}
               </h1>
               <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
-                <div className="flex items-center gap-2.5 text-[#F7E9B2]/70">
-                  <IconCalendar size={16} className="text-[#F7E9B2]/40" strokeWidth={2.5} />
-                  <span className="font-passion text-sm font-bold uppercase tracking-wider">{formatDateTime(drop.scheduledAt)}</span>
+                <div className="flex items-center gap-2.5 text-tok-cream/92">
+                  <IconCalendar size={16} className="shrink-0 text-tok-cream/70" strokeWidth={2.5} />
+                  <span className="font-passion text-sm font-bold uppercase tracking-wider [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
+                    {formatDateTime(drop.scheduledAt)}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2.5 text-[#F7E9B2]/70">
-                  <IconMapPin size={16} className="text-[#F7E9B2]/40" strokeWidth={2.5} />
-                  <span className="font-passion text-sm font-bold uppercase tracking-wider">{drop.location}</span>
+                <div className="flex items-center gap-2.5 text-tok-cream/92">
+                  <IconMapPin size={16} className="shrink-0 text-tok-cream/70" strokeWidth={2.5} />
+                  <span className="font-passion text-sm font-bold uppercase tracking-wider [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
+                    {drop.location}
+                  </span>
                 </div>
               </div>
             </div>
@@ -611,7 +595,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                 <button
                   type="button"
                   onClick={() => setShareModalOpen(true)}
-                  className="group relative flex h-12 min-w-[100px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
+                  className="group relative flex h-12 min-w-[100px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6 lg:hidden"
                 >
                   <IconShare2 size={16} strokeWidth={2.5} />
                   <span className="pt-0.5">Share</span>
@@ -667,7 +651,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                   <button
                     type="button"
                     onClick={() => setEditModalOpen(true)}
-                    className="group relative flex h-12 min-w-[120px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-[#F7E9B2] px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
+                    className="group relative flex h-12 min-w-[120px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-tok-cream px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
                   >
                     <IconEdit size={16} strokeWidth={2.5} />
                     <span className="pt-0.5 text-nowrap">Edit</span>
@@ -685,7 +669,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
           {/* Big decorative background initials */}
-          <div className="pointer-events-none absolute -bottom-10 -right-4 z-0 font-passion text-[180px] font-bold leading-none text-[#F7E9B2]/5 opacity-20 select-none">
+          <div className="pointer-events-none absolute -bottom-10 -right-4 z-0 font-passion text-[180px] font-bold leading-none text-tok-cream/5 opacity-20 select-none">
             {getInitials(drop.name)}
           </div>
         </section>
@@ -708,22 +692,22 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
             {/* Presence / Quick Action for Crew */}
             {!isOrganiser && crewStatus?.status === 'in' && !isCompleted && (
-              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
-                <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-                  <div>
-                    <p className="font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-tok-teal">
+              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[6px_6px_0px_#1C1C1A] sm:p-6">
+                <div className="flex items-center justify-between gap-3 sm:gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="hidden font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-tok-teal sm:block">
                       Your Attendance
                     </p>
-                    <h3 className="mt-1 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
+                    <h3 className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:mt-1 sm:text-2xl">
                       Are you hitting this drop?
                     </h3>
                   </div>
-                  <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
+                  <div className="flex shrink-0 flex-row items-center gap-2 sm:gap-3">
                     <button
                       type="button"
                       disabled={isUpdatingPresence || crewStatus?.isPresent === true}
                       onClick={() => handleUpdatePresence(true)}
-                      className={`h-12 w-full min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all sm:w-auto ${crewStatus?.isPresent
+                      className={`h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black px-3 font-passion text-[11px] font-bold uppercase tracking-[1.5px] transition-all sm:h-12 sm:min-w-[120px] sm:px-4 sm:text-xs sm:tracking-[2px] ${crewStatus?.isPresent
                         ? 'bg-tok-teal text-white shadow-[3px_3px_0px_#1C1C1A]'
                         : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
                         }`}
@@ -734,7 +718,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                       type="button"
                       disabled={isUpdatingPresence || crewStatus?.isPresent === false}
                       onClick={() => handleUpdatePresence(false)}
-                      className={`h-12 w-full min-w-[120px] rounded-[4px] border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] transition-all sm:w-auto ${!crewStatus?.isPresent
+                      className={`h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black px-3 font-passion text-[11px] font-bold uppercase tracking-[1.5px] transition-all sm:h-12 sm:min-w-[120px] sm:px-4 sm:text-xs sm:tracking-[2px] ${!crewStatus?.isPresent
                         ? 'bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A]'
                         : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
                         }`}
@@ -765,7 +749,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
                       <div className="flex items-center gap-4 flex-1">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-amber-400 font-passion text-sm font-bold text-tok-black">
                           {member.user.avatar ? (
-                            <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
+                            <Image src={member.user.avatar} alt="" width={44} height={44} className="h-full w-full object-cover" />
                           ) : (
                             getLogInitials(member.user.firstName, member.user.lastName)
                           )}
@@ -804,200 +788,38 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
             )}
 
             {/* Photo Roll */}
-            <div className="mb-10">
-              <PhotoRoll
-                drop={drop}
-                userId={dbUser?.id}
-                isOrganiser={isOrganiser}
-                isCrewMember={crewStatus?.status === 'in'}
-              />
-            </div>
+            <PhotoRoll
+              drop={drop}
+              userId={dbUser?.id}
+              isOrganiser={isOrganiser}
+              isCrewMember={crewStatus?.status === 'in'}
+            />
 
             {/* Crew Roster */}
-            {(isOrganiser || crewStatus?.status === 'in') && activeMembers.length > 0 && (
-              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]">
-                <div className="border-b-[3px] border-tok-black bg-tok-teal/5 px-6 py-5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <IconUsers size={18} strokeWidth={2.5} className="text-tok-teal" />
-                      <h2 className="font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
-                        The Crew
-                      </h2>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-sm border-2 border-tok-black bg-emerald-500 px-2.5 py-0.5 font-passion text-[10px] font-bold uppercase tracking-wider text-white">
-                        {activeMembers.filter((m) => m.isPresent).length} In
-                      </span>
-                      <span className="rounded-sm border-2 border-tok-black bg-red-500 px-2.5 py-0.5 font-passion text-[10px] font-bold uppercase tracking-wider text-white">
-                        {activeMembers.filter((m) => !m.isPresent).length} Out
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="divide-y-2 divide-tok-black/5">
-                  {activeMembers.map((member) => (
-                    <div key={member.id} className="flex items-center gap-4 px-6 py-5 transition-colors hover:bg-tok-teal/2">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal font-passion text-sm font-bold text-[#F7E9B2]">
-                        {member.user.avatar ? (
-                          <img src={member.user.avatar} alt="" className="h-full w-full object-cover" />
-                        ) : (
-                          getLogInitials(member.user.firstName, member.user.lastName)
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:text-xl">
-                            {member.user.firstName} {member.user.lastName}
-                          </p>
-                          {member.userId === drop.organiserId && (
-                            <span className="inline-flex items-center rounded-sm bg-tok-black px-2 py-0.5 font-passion text-[9px] font-bold tracking-[1.5px] text-tok-yellow">
-                              CHIEF
-                            </span>
-                          )}
-                        </div>
-                        <p className="font-inter text-xs text-tok-black/40">
-                          Joined {formatLogTime(member.joinedAt)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-6">
-                        <span className={cn(
-                          "rounded-full px-4 py-1.5 font-passion text-[11px] font-bold uppercase tracking-[1.5px] border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A]",
-                          member.isPresent ? "bg-emerald-500 text-white" : "bg-white text-red-500"
-                        )}>
-                          {member.isPresent ? 'TAPPED IN' : 'TAPPED OUT'}
-                        </span>
-                        {!isCompleted && isOrganiser && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setMemberToRemove({ userId: member.userId, name: `${member.user.firstName} ${member.user.lastName}` });
-                              setRemoveModalOpen(true);
-                            }}
-                            disabled={isRemoving && removingUserId === member.userId}
-                            className="flex h-8 w-8 items-center justify-center text-tok-black/20 transition-colors hover:text-red-500 disabled:opacity-50"
-                            title="Remove from crew"
-                          >
-                            <IconUserX size={16} strokeWidth={2.5} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {(isOrganiser || crewStatus?.status === 'in') && (
+              <CrewRoster
+                dropId={id}
+                organiserId={drop.organiserId}
+                organiser={drop.organiser}
+                dropCreatedAt={drop.createdAt}
+                isOrganiser={isOrganiser}
+                isCompleted={isCompleted}
+                onRemoveMember={(userId, name) => {
+                  setMemberToRemove({ userId, name });
+                  setRemoveModalOpen(true);
+                }}
+                isRemoving={isRemoving}
+                removingUserId={removingUserId ?? null}
+              />
             )}
 
             {/* Activity Ledger */}
             {canViewActivityLogs && (
-              <div className="rounded-[4px] border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] sm:shadow-[6px_6px_0px_#1C1C1A]">
-                <div className="border-b-[3px] border-tok-black bg-tok-teal/8 px-4 py-4 sm:px-6 sm:py-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <IconActivity size={18} strokeWidth={2.5} className="text-tok-teal" />
-                      <h2 className="font-passion text-2xl font-bold uppercase tracking-tight text-tok-black">
-                        Drop Log
-                      </h2>
-                    </div>
-                    {activityPage && activityPage.total > 0 && (
-                      <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
-                        {activityPage.total} entries
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {isLoadingLogs && !activityPage ? (
-                  <div className="divide-y divide-tok-black/5">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="flex items-start gap-5 px-6 py-5">
-                        <Skeleton className="h-10 w-10 shrink-0 rounded-sm bg-black/5 border-2 border-black/5" />
-                        <div className="flex-1 space-y-2">
-                          <Skeleton className="h-4 w-2/3 rounded-sm bg-black/5" />
-                          <Skeleton className="h-2 w-24 rounded-sm bg-black/10" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : !activityPage || activityPage.data.length === 0 ? (
-                  <div className="px-6 py-12 text-center">
-                    <p className="font-passion text-sm font-bold uppercase tracking-[3px] text-black/20">
-                      Quiet on the deck
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className={`divide-y divide-tok-black/5 transition-opacity ${isLoadingLogs ? 'opacity-50' : 'opacity-100'}`}>
-                      {activityPage.data.map((log) => (
-                        <div
-                          key={log.id}
-                          className="flex items-start gap-5 px-4 py-5 transition-colors hover:bg-tok-teal/1 sm:px-6"
-                        >
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal/10 font-passion text-[10px] font-bold text-tok-teal">
-                            {log.user.avatar ? (
-                              <img src={log.user.avatar} alt="" className="h-full w-full object-cover" />
-                            ) : (
-                              getLogInitials(log.user.firstName, log.user.lastName)
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-inter text-sm leading-relaxed text-tok-black/80">
-                              <span className="truncate font-passion text-sm font-bold uppercase tracking-tight text-tok-black sm:text-base">
-                                {log.user.firstName} {log.user.lastName}
-                              </span>
-                              {' '}
-                              <span className="font-medium">
-                                {{
-                                  created: 'initiated the drop',
-                                  joined: 'boarded the crew',
-                                  join_requested: 'sent a join request',
-                                  join_request_approved: 'cleared a join request',
-                                  join_request_rejected: 'denied a join request',
-                                  left: 'abandoned ship',
-                                  updated: 'modified the plan',
-                                  member_removed: 'ejected a crew member',
-                                  marked_in: 'tapped IN',
-                                  marked_out: 'tapped OUT',
-                                  marked_ongoing: 'pushed the drop LIVE',
-                                  marked_completed: 'closed the mission',
-                                }[log.action] ?? log.action.replace(/_/g, ' ')}
-                              </span>
-                            </p>
-                            <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
-                              {formatLogTime(log.createdAt)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {activityPage.totalPages > 1 && (
-                      <div className="flex items-center justify-between border-t-[3px] border-tok-black px-4 py-4 sm:px-6">
-                        <button
-                          type="button"
-                          onClick={() => setLogPage((p) => p - 1)}
-                          disabled={logPage === 1 || isLoadingLogs}
-                          className="flex items-center gap-1.5 rounded-[4px] border-2 border-tok-black bg-white px-3 py-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-30 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-                        >
-                          <IconChevronLeft size={12} strokeWidth={2.5} />
-                          Prev
-                        </button>
-                        <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
-                          {logPage} / {activityPage.totalPages}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setLogPage((p) => p + 1)}
-                          disabled={logPage === activityPage.totalPages || isLoadingLogs}
-                          className="flex items-center gap-1.5 rounded-[4px] border-2 border-tok-black bg-white px-3 py-2 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-30 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-                        >
-                          Next
-                          <IconChevronRight size={12} strokeWidth={2.5} />
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+              <ActivityLedger
+                dropId={id}
+                page={logPage}
+                setPage={setLogPage}
+              />
             )}
           </div>
 
@@ -1056,30 +878,3 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
   );
 }
 
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success('LINK COPIED TO CLIPBOARD');
-    } catch {
-      return;
-    }
-    setCopied(true);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setCopied(false), 1800);
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="inline-flex shrink-0 items-center gap-2 rounded-sm border-2 border-tok-black bg-white px-3 py-1.5 font-passion text-[10px] font-bold uppercase tracking-[1px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
-    >
-      {copied ? <IconCheckCheck size={14} strokeWidth={2.5} /> : <IconCopy size={14} strokeWidth={2.5} />}
-      {copied ? 'Copied' : 'Copy'}
-    </button>
-  );
-}
