@@ -4,6 +4,7 @@ import { deleteUser, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { api, setAuthToken } from '@/services/api';
 import type { DbUser } from '@/components/providers/auth-provider';
+import { postSessionCookie } from '@/lib/auth/session-cookie';
 
 export type FinalizeResult =
   | { ok: true; dbUser: DbUser }
@@ -40,21 +41,14 @@ export async function finalizeSession(
     const freshToken = await firebaseUser.getIdToken(true);
     setAuthToken(freshToken);
 
-    const sessionRes = await fetch('/api/auth/session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        idToken: freshToken,
-        profile: {
-          firstName: dbUser.firstName,
-          lastName: dbUser.lastName,
-          email: dbUser.email,
-          avatar: dbUser.avatar,
-        },
-      }),
+    const sessionOk = await postSessionCookie(freshToken, {
+      firstName: dbUser.firstName,
+      lastName: dbUser.lastName,
+      email: dbUser.email,
+      avatar: dbUser.avatar,
     });
 
-    if (!sessionRes.ok) {
+    if (!sessionOk) {
       await clearSession();
       return { ok: false, reason: 'error', message: 'Something went wrong. Please try again.' };
     }

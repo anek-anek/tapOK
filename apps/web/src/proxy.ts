@@ -1,35 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify, createRemoteJWKSet } from 'jose';
-import { PAGE_PERMISSIONS } from '@/lib/auth/route-permissions';
+import { getRolesRequiredForPath } from '@/lib/auth/route-permissions';
 import { isLoginRoute, isProtectedRoute } from '@/lib/constants/routes';
 import type { UserRole } from '@/components/providers/auth-provider';
+import { verifyFirebaseSessionToken } from '@/lib/auth/session-jwt';
 
-const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
-const JWKS = createRemoteJWKSet(
-  new URL(
-    'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',
-  ),
-);
-
-async function getSessionAuth(request: NextRequest): Promise<{ isAuthenticated: boolean; role: UserRole | null }> {
+async function getSessionAuth(
+  request: NextRequest,
+): Promise<{ isAuthenticated: boolean; role: UserRole | null }> {
   const token = request.cookies.get('__session')?.value;
   if (!token) return { isAuthenticated: false, role: null };
 
-  try {
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
-      audience: FIREBASE_PROJECT_ID,
-    });
+  const verified = await verifyFirebaseSessionToken(token);
+  if (!verified) return { isAuthenticated: false, role: null };
 
-    const role = (payload as Record<string, unknown>)['role'];
-    if (role === 'admin' || role === 'photographer' || role === 'participant') {
-      return { isAuthenticated: true, role: role as UserRole };
-    }
-    // A verified session token without a custom role is still authenticated.
-    return { isAuthenticated: true, role: null };
-  } catch {
-    return { isAuthenticated: false, role: null };
-  }
+  return { isAuthenticated: true, role: verified.role as UserRole | null };
 }
 
 export async function proxy(request: NextRequest) {
@@ -48,9 +32,9 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAuthenticated && isProtectedRoute(pathname)) {
-    const allowedRoles = PAGE_PERMISSIONS[pathname];
+    const requiredRoles = getRolesRequiredForPath(pathname);
 
-    if (allowedRoles && (!role || !allowedRoles.includes(role))) {
+    if (requiredRoles?.length && (!role || !requiredRoles.includes(role))) {
       const forbiddenUrl = new URL('/forbidden', request.url);
       forbiddenUrl.searchParams.set('from', pathname);
       return NextResponse.redirect(forbiddenUrl);

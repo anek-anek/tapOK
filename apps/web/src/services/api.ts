@@ -2,6 +2,7 @@ import axios from 'axios';
 import { auth } from '@/lib/firebase';
 
 import { getApiUrl } from '@/lib/config';
+import { applyIdTokenToAxiosAndSessionCookie } from '@/lib/auth/session-cookie';
 
 export const api = axios.create({
   baseURL: getApiUrl(),
@@ -25,7 +26,7 @@ api.interceptors.response.use(
       const currentUser = auth.currentUser;
       if (currentUser) {
         const freshToken = await currentUser.getIdToken(true);
-        setAuthToken(freshToken);
+        await applyIdTokenToAxiosAndSessionCookie(freshToken);
         originalRequest.headers['Authorization'] = `Bearer ${freshToken}`;
         return api(originalRequest);
       }

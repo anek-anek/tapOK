@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { auth } from '@/lib/firebase';
 import { setAuthToken } from '@/services/api';
 import { finalizeSession } from '@/lib/auth/finalize-session';
+import { applyIdTokenToAxiosAndSessionCookie } from '@/lib/auth/session-cookie';
 
 export type UserRole = 'admin' | 'photographer' | 'participant';
 
@@ -63,15 +64,17 @@ export function AuthProvider({
       if (firebaseUser) {
         setUser(firebaseUser);
 
-        if (window.location.pathname === '/register' || window.location.pathname === '/login') {
-          setLoading(false);
-          return;
-        }
-
         if (prevUidRef.current !== null && prevUidRef.current !== firebaseUser.uid) {
           queryClient.clear();
         }
         prevUidRef.current = firebaseUser.uid;
+
+        // Registration creates a Firebase user before POST /users/sync; finalization runs from RegisterForm.
+        if (window.location.pathname === '/register') {
+          setLoading(false);
+          setIsReady(true);
+          return;
+        }
 
         const result = await finalizeSession(firebaseUser, { sync: false });
         if (result.ok) {
@@ -97,6 +100,25 @@ export function AuthProvider({
 
     return unsubscribe;
   }, [queryClient]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      void (async () => {
+        try {
+          const fresh = await user.getIdToken(true);
+          await applyIdTokenToAxiosAndSessionCookie(fresh);
+        } catch {
+          // ignore — next finalizeSession or API 401 path will recover
+        }
+      })();
+    };
+
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [user]);
 
   const setSession = useCallback((firebaseUser: User, dbUser: DbUser) => {
     setUser(firebaseUser);
