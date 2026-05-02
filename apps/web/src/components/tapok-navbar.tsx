@@ -280,28 +280,32 @@ export function TapokNavbar() {
             {/* Mobile Auth Area */}
             <div className="mt-auto mb-10 flex flex-col gap-4">
               {!isReady ? (
-                <Skeleton className="h-14 w-full rounded-2xl bg-black/5" />
+                <Skeleton className="h-14 w-full rounded border-[3px] border-tok-black/15 bg-tok-cream/40" />
               ) : !dbUser ? (
                 <>
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`${passionOne.className} flex h-14 items-center justify-center rounded-xl border-2 border-tok-black bg-white text-xl uppercase tracking-[1.5px] text-tok-black shadow-[4px_4px_0px_0px_#262624] active:translate-y-0 active:shadow-none`}
+                    className={`${passionOne.className} flex h-14 items-center justify-center rounded border-[3px] border-tok-black bg-tok-white text-xl uppercase tracking-[1.5px] text-tok-black shadow-[5px_5px_0_#000] transition-[transform,box-shadow] duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_#000] active:translate-x-0 active:translate-y-0 active:shadow-[5px_5px_0_#000]`}
                   >
                     Log In
                   </Link>
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`${passionOne.className} flex h-14 items-center justify-center rounded-xl border-2 border-tok-black bg-tok-teal text-xl uppercase tracking-[1.5px] text-white shadow-[4px_4px_0px_0px_#262624] active:translate-y-0 active:shadow-none`}
+                    className={`${passionOne.className} flex h-14 items-center justify-center rounded border-[3px] border-tok-black bg-tok-teal text-xl uppercase tracking-[1.5px] text-white shadow-[5px_5px_0_#000] transition-[transform,box-shadow,background-color] duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#005555] hover:shadow-[7px_7px_0_#000] active:translate-x-0 active:translate-y-0 active:shadow-[5px_5px_0_#000]`}
                   >
                     Sign Up
                   </Link>
                 </>
               ) : (
                 <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-4 rounded-2xl border border-black/10 bg-white/50 p-4">
-                    <div className={`${passionOne.className} flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white border-2 border-tok-black text-sm tracking-wider shadow-[2px_2px_0px_0px_#262624]`}>
+                  <div
+                    className="flex items-center gap-4 rounded border-[3px] border-tok-black bg-tok-white p-4 shadow-[5px_5px_0_#000]"
+                  >
+                    <div
+                      className={`${passionOne.className} flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-tok-black bg-tok-cream text-sm tracking-wider shadow-[3px_3px_0_#000]`}
+                    >
                       {dbUser.avatar ? (
                         <Image
                           src={dbUser.avatar}
@@ -314,28 +318,29 @@ export function TapokNavbar() {
                         initials
                       )}
                     </div>
-                    <div className="flex flex-col">
-                      <span className={`${passionOne.className} text-lg uppercase tracking-wide`}>
+                    <div className="min-w-0 flex flex-col">
+                      <span className={`${passionOne.className} truncate text-lg uppercase tracking-wide text-tok-black`}>
                         {dbUser.firstName} {dbUser.lastName}
                       </span>
-                      <span className="font-inter text-xs text-black/50">{dbUser.email}</span>
+                      <span className="truncate font-inter text-xs font-semibold text-tok-black/45">{dbUser.email}</span>
                     </div>
                   </div>
-                  
+
                   <Link
                     href="/profile"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`${passionOne.className} flex h-14 items-center gap-3 rounded-2xl bg-white/40 px-6 text-xl uppercase tracking-[1.5px] text-black`}
+                    className={`${passionOne.className} flex h-14 items-center justify-center gap-3 rounded border-[3px] border-tok-black bg-tok-white px-6 text-xl uppercase tracking-[1.5px] text-tok-black shadow-[5px_5px_0_#000] transition-[transform,box-shadow] duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_#000] active:translate-x-0 active:translate-y-0 active:shadow-[5px_5px_0_#000]`}
                   >
-                    <IconUser size={20} />
+                    <IconUser size={20} strokeWidth={2.5} />
                     Profile
                   </Link>
-                  
+
                   <button
+                    type="button"
                     onClick={handleLogout}
-                    className={`${passionOne.className} flex h-14 items-center gap-3 rounded-2xl bg-black/5 px-6 text-xl uppercase tracking-[1.5px] text-black/60`}
+                    className={`${passionOne.className} flex h-14 items-center justify-center gap-3 rounded border-[3px] border-tok-black bg-tok-cream px-6 text-xl uppercase tracking-[1.5px] text-tok-black shadow-[5px_5px_0_#000] transition-[transform,box-shadow,background-color,color] duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-red-500 hover:text-white hover:shadow-[7px_7px_0_#000] active:translate-x-0 active:translate-y-0 active:shadow-[5px_5px_0_#000]`}
                   >
-                    <LogOut size={20} />
+                    <LogOut size={20} strokeWidth={2.5} />
                     Log Out
                   </button>
                 </div>

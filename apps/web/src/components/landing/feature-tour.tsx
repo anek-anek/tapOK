@@ -1,170 +1,133 @@
 'use client';
 
 import { useState } from 'react';
-import { Zap, Users, Bell, Link2, BarChart2, Lock } from 'lucide-react';
+import {
+  CalendarPlus,
+  Link2,
+  Users,
+  Sparkles,
+  Activity,
+  Flame,
+} from 'lucide-react';
 
 const tourFeatures = [
   {
-    id: 'instant',
-    icon: Zap,
-    label: 'Instant Drops',
-    tag: 'SPEED',
-    heading: 'Live in under\n60 seconds.',
-    body: 'Name it, time it, place it. Your Drop is live the moment you hit create — no approvals, no waiting. The plan exists before anyone has a chance to overthink it.',
-    accent: '#006666',
+    id: 'create',
+    icon: CalendarPlus,
+    label: 'Create Drops',
+    tag: 'CHIEF',
+    heading: 'Build a Drop\nin minutes.',
+    body: 'Set the name, time, and place. Pick a category, add a cover, and an optional headcount. Lock the roster if you want to approve who joins — you stay in control as Chief.',
+    tabBg: 'bg-tok-teal',
+    tabIcon: 'text-tok-cream',
   },
   {
-    id: 'roster',
-    icon: Users,
-    label: 'Live Roster',
-    tag: 'CLARITY',
-    heading: "Always know\nwho's in.",
-    body: "Watch your headcount update in real time as crew taps in. No polling threads, no \"did you see my message?\" — just a clean, live list of who's actually showing up.",
-    accent: '#F7E9B2',
-  },
-  {
-    id: 'nudge',
-    icon: Bell,
-    label: 'Auto Nudges',
-    tag: 'NO CHASE',
-    heading: 'Stop chasing\npeople down.',
-    body: "TapOK pings the fence-sitters so you don't have to. Automated reminders go out before the Drop closes — you stay the Chief, not the nag.",
-    accent: '#006666',
-  },
-  {
-    id: 'link',
+    id: 'join',
     icon: Link2,
-    label: 'One Link',
-    tag: 'SIMPLICITY',
-    heading: 'One link\ndoes it all.',
-    body: 'Your Drop is a single URL. Drop it in a group chat, DM, story — anywhere. No app download required for crew members. Tap the link, tap In or Out, done.',
-    accent: '#F7E9B2',
+    label: 'Join links',
+    tag: 'SHARE',
+    heading: 'One link.\nEveryone taps in.',
+    body: 'Each Drop gets a join code and shareable URL. Crew opens it, signs in when needed, and taps In or Out. Private Drops stay off the public feed unless you mark them public.',
+    tabBg: 'bg-tok-black',
+    tabIcon: 'text-tok-cream',
   },
   {
-    id: 'stats',
-    icon: BarChart2,
-    label: 'Drop Stats',
-    tag: 'INSIGHT',
-    heading: 'See the full\npicture.',
-    body: "After the Drop closes, get a breakdown — who was in, who bailed, response time. Know your crew's vibe for the next one.",
-    accent: '#006666',
+    id: 'crew',
+    icon: Users,
+    label: 'Live roster',
+    tag: 'ROSTER',
+    heading: "See who's actually\nshowing up.",
+    body: 'The crew list updates with who’s in, out, or waiting on a locked Drop. When it’s go-time, members can mark presence so you’re not guessing headcounts.',
+    tabBg: 'bg-tok-teal',
+    tabIcon: 'text-tok-cream',
   },
   {
-    id: 'privacy',
-    icon: Lock,
-    label: 'Private by Default',
-    tag: 'SAFE',
-    heading: 'Your plans\nstay yours.',
-    body: 'Drops are private links — only people you share with can see them. No public feed, no algorithm, no strangers crashing your plans.',
-    accent: '#F7E9B2',
+    id: 'discover',
+    icon: Sparkles,
+    label: 'Discover',
+    tag: 'FEED',
+    heading: 'Browse public\nDrops.',
+    body: 'Discover surfaces Drops that are public — skim featured picks, filter by category, and find plans worth joining without digging through group chats.',
+    tabBg: 'bg-tok-black',
+    tabIcon: 'text-tok-cream',
   },
-];
+  {
+    id: 'activity',
+    icon: Activity,
+    label: 'Activity',
+    tag: 'LOG',
+    heading: 'Everything that\nhappened.',
+    body: 'Your Activity view lines up creates, joins, status changes, and other moments across your Drops — a single timeline instead of scattered notifications.',
+    tabBg: 'bg-tok-teal',
+    tabIcon: 'text-tok-cream',
+  },
+  {
+    id: 'moments',
+    icon: Flame,
+    label: 'Sparks & photos',
+    tag: 'LIVE',
+    heading: 'Energy + the\nphoto roll.',
+    body: 'Send Sparks when the vibe spikes. The photo roll captures the night — featured shots stay visible, and the rest is tidied up automatically when a Drop completes.',
+    tabBg: 'bg-tok-black',
+    tabIcon: 'text-tok-cream',
+  },
+] as const;
 
 export function FeatureTour() {
   const [active, setActive] = useState(0);
   const current = tourFeatures[active] ?? tourFeatures[0]!;
 
   return (
-    <section
-      style={{ background: '#1C1C1A' }}
-      className="px-5 py-12 md:px-10 lg:px-20"
-    >
+    <section className="border-t-[3px] border-tok-black bg-tok-cream px-5 py-14 md:px-10 lg:px-20">
       <style>{`
         @keyframes featureSlideIn {
-          from { opacity: 0; transform: translateX(18px); }
+          from { opacity: 0; transform: translateX(12px); }
           to   { opacity: 1; transform: translateX(0); }
         }
         .feature-detail {
           animation: featureSlideIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
         }
-        .tour-tab {
-          position: relative;
-          cursor: pointer;
-          transition: color 0.2s ease;
-        }
-        .tour-tab::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 2px;
-          height: 0;
-          background: #006666;
-          transition: height 0.25s ease;
-          border-radius: 1px;
-        }
-        .tour-tab.active::before {
-          height: 100%;
-        }
       `}</style>
 
       <div className="mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="mb-10">
+        <div className="mb-10 flex flex-col items-center text-center md:mb-12">
           <div
-            className="mb-4 inline-flex items-center gap-2 font-passion text-xs uppercase tracking-[0.2em]"
-            style={{ color: '#006666' }}
+            className="mb-4 inline-flex items-center border-[3px] border-tok-black bg-tok-teal px-4 py-1.5 font-passion text-[11px] font-bold uppercase tracking-[0.18em] text-tok-cream shadow-[3px_3px_0_#000]"
           >
-            <span
-              style={{
-                display: 'inline-block',
-                width: '28px',
-                height: '2px',
-                background: '#006666',
-                borderRadius: '1px',
-              }}
-            />
-            EVERYTHING YOU NEED
+            IN THE APP TODAY
           </div>
-          <h2
-            className="font-passion font-bold uppercase leading-none"
-            style={{ fontSize: 'clamp(36px,5.5vw,64px)', color: '#F7E9B2', letterSpacing: '-0.01em' }}
-          >
-            BUILT FOR THE<br />
-            <span style={{ color: '#006666' }}>WAY PLANS ACTUALLY</span><br />
-            HAPPEN.
+          <h2 className="font-passion text-[clamp(32px,5.5vw,56px)] font-bold uppercase leading-[1.05] tracking-tight text-tok-black">
+            WHAT TAPOK
+            <br />
+            <span className="text-tok-teal">ACTUALLY DOES.</span>
           </h2>
+          <p className="mt-4 max-w-lg font-inter text-base text-tok-black/55">
+            Real features from the live product — not a roadmap teaser.
+          </p>
         </div>
 
-        {/* Body: tab list + detail panel */}
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[320px_1fr]">
-
-          {/* Left: tab list */}
-          <div className="flex flex-col gap-1">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,300px)_1fr] lg:gap-10">
+          <div className="flex flex-col gap-2">
             {tourFeatures.map((f, i) => {
               const Icon = f.icon;
               const isActive = active === i;
               return (
                 <button
                   key={f.id}
+                  type="button"
                   onClick={() => setActive(i)}
-                  className={`tour-tab ${isActive ? 'active' : ''} flex items-center gap-4 rounded-none border-0 bg-transparent px-5 py-4 text-left`}
-                  style={{
-                    borderLeft: `2px solid ${isActive ? '#006666' : 'rgba(247,233,178,0.08)'}`,
-                    color: isActive ? '#F7E9B2' : 'rgba(247,233,178,0.35)',
-                    transition: 'color 0.2s ease, border-color 0.2s ease',
-                  }}
+                  className={`flex items-center gap-3 rounded border-[3px] px-4 py-3.5 text-left transition-[transform,box-shadow,background-color] duration-150 ease-out ${
+                    isActive
+                      ? 'border-tok-black bg-tok-white shadow-[5px_5px_0_#000]'
+                      : 'border-tok-black/15 bg-tok-white/60 shadow-none hover:-translate-x-0.5 hover:-translate-y-0.5 hover:border-tok-black/40 hover:shadow-[4px_4px_0_#000]'
+                  }`}
                 >
                   <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '8px',
-                      background: isActive ? '#006666' : 'rgba(247,233,178,0.05)',
-                      flexShrink: 0,
-                      transition: 'background 0.2s ease',
-                    }}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded border-[3px] border-tok-black ${f.tabBg}`}
                   >
-                    <Icon size={16} color={isActive ? '#F7E9B2' : 'rgba(247,233,178,0.4)'} strokeWidth={2} />
+                    <Icon className={f.tabIcon} size={18} strokeWidth={2.5} />
                   </div>
-                  <span
-                    className="font-passion text-lg uppercase tracking-wide"
-                    style={{ letterSpacing: '0.04em' }}
-                  >
+                  <span className="font-passion text-base uppercase tracking-wide text-tok-black">
                     {f.label}
                   </span>
                 </button>
@@ -172,59 +135,32 @@ export function FeatureTour() {
             })}
           </div>
 
-          {/* Right: detail panel */}
           <div
             key={current.id}
-            className="feature-detail flex flex-col justify-between rounded-none p-8 lg:p-12"
-            style={{
-              background: '#252522',
-              border: '1px solid rgba(247,233,178,0.07)',
-              minHeight: '280px',
-            }}
+            className="feature-detail flex flex-col justify-between border-[3px] border-tok-black bg-tok-white p-8 shadow-[8px_8px_0_#000] lg:p-10"
           >
             <div>
-              <span
-                className="font-passion text-xs uppercase tracking-[0.2em]"
-                style={{ color: '#006666' }}
-              >
+              <span className="font-passion text-xs font-bold uppercase tracking-[0.2em] text-tok-teal">
                 {current.tag}
               </span>
-              <h3
-                className="mt-4 font-passion font-bold uppercase leading-none"
-                style={{
-                  fontSize: 'clamp(32px, 4vw, 54px)',
-                  color: '#F7E9B2',
-                  whiteSpace: 'pre-line',
-                  letterSpacing: '-0.01em',
-                }}
-              >
+              <h3 className="mt-4 font-passion text-[clamp(28px,3.8vw,44px)] font-bold uppercase leading-[1.05] tracking-tight text-tok-black whitespace-pre-line">
                 {current.heading}
               </h3>
-              <p
-                className="mt-6 font-inter text-base leading-relaxed"
-                style={{ color: 'rgba(255,244,189,0.5)', maxWidth: '480px' }}
-              >
+              <p className="mt-6 max-w-lg font-inter text-base leading-relaxed font-medium text-tok-black/65">
                 {current.body}
               </p>
             </div>
 
-            {/* Bottom decorative strip */}
-            <div className="mt-10 flex items-center gap-4">
+            <div className="mt-10 flex items-center gap-2">
               {tourFeatures.map((_, i) => (
                 <button
                   key={i}
+                  type="button"
                   onClick={() => setActive(i)}
-                  style={{
-                    height: '3px',
-                    flex: 1,
-                    background: i === active ? '#006666' : 'rgba(247,233,178,0.1)',
-                    borderRadius: '2px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'background 0.2s ease',
-                    padding: 0,
-                  }}
-                  aria-label={`Go to ${tourFeatures[i]?.label ?? ''}`}
+                  className={`h-2 flex-1 rounded-sm border-2 border-tok-black transition-colors ${
+                    i === active ? 'bg-tok-teal' : 'bg-tok-cream hover:bg-tok-cream-dim'
+                  }`}
+                  aria-label={`Show feature ${i + 1}`}
                 />
               ))}
             </div>

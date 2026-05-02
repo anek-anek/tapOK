@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMounted } from '@/hooks/use-mounted';
 
+const SHARE_CARD_INK = '#3a3a36';
+
 const flipSteps = [
   {
     id: 'plan',
@@ -27,17 +29,18 @@ const flipSteps = [
     id: 'share',
     num: '02',
     teaser: 'SPREAD\nTHE WORD.',
-    accentBg: '#000',
+    accentBg: SHARE_CARD_INK,
     accentText: '#F7E9B2',
     backBg: '#F7E9B2',
-    backBorder: '#000',
+    backBorder: SHARE_CARD_INK,
+    frame: SHARE_CARD_INK,
     heading: 'One link. Everywhere.',
     body: "Your Drop goes live instantly. Blast the link wherever the chaos usually starts — group chat, DMs, anywhere. One tap and they're in.",
     tag: 'SHARE IT',
-    backTextColor: '#000',
-    backBodyColor: 'rgba(0,0,0,0.6)',
-    backHintColor: 'rgba(0,0,0,0.25)',
-    tagBg: '#000',
+    backTextColor: SHARE_CARD_INK,
+    backBodyColor: 'rgba(58,58,54,0.62)',
+    backHintColor: 'rgba(58,58,54,0.28)',
+    tagBg: SHARE_CARD_INK,
     tagText: '#F7E9B2',
   },
   {
@@ -70,6 +73,8 @@ function FlipCard({
   onToggle: () => void;
   delay: number;
 }) {
+  const frame = 'frame' in step && step.frame ? step.frame : '#000';
+
   return (
     <div
       className="flip-card-wrapper"
@@ -98,8 +103,8 @@ function FlipCard({
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
             background: step.accentBg,
-            border: '3px solid #000',
-            boxShadow: '6px 6px 0px #000',
+            border: `3px solid ${frame}`,
+            boxShadow: `6px 6px 0px ${frame}`,
             borderRadius: '4px',
             display: 'flex',
             flexDirection: 'column',
@@ -168,7 +173,7 @@ function FlipCard({
             transform: 'rotateY(180deg)',
             background: step.backBg,
             border: `3px solid ${step.backBorder}`,
-            boxShadow: '6px 6px 0px #000',
+            boxShadow: `6px 6px 0px ${frame}`,
             borderRadius: '4px',
             display: 'flex',
             flexDirection: 'column',

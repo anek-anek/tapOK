@@ -5,10 +5,11 @@ import { CurrentYear } from '@/components/CurrentYear';
 import { ShieldCheck, Headphones, Smartphone } from 'lucide-react';
 import { HeroActions } from '@/components/landing/hero-actions';
 import { HowItWorks } from '@/components/landing/how-it-works';
+import { WhyTapokFeatureCards } from '@/components/landing/why-tapok-feature-cards';
 
 const FeatureTour = dynamic(() => import('@/components/landing/feature-tour').then(mod => mod.FeatureTour), {
   ssr: true,
-  loading: () => <div className="h-96 w-full animate-pulse bg-[#1C1C1A]" />
+  loading: () => <div className="h-96 w-full animate-pulse border-t-[3px] border-tok-black/10 bg-tok-cream" />
 });
 
 const features = [
@@ -107,35 +108,7 @@ export default function Home() {
               <BurstDecoration flipped />
             </div>
 
-            <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
-              {features.map(({ image, title, desc }) => (
-                <div
-                  key={title}
-                  className="feature-card group flex flex-col items-center rounded-2xl bg-white p-6 text-center"
-                  style={{
-                    border: '2.5px solid transparent',
-                    boxShadow: 'none',
-                    transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
-                  }}
-                >
-                  <div className="relative mb-6 flex h-32 w-full items-center justify-center">
-                    <Image
-                      src={image}
-                      alt={title}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      className="select-none object-contain"
-                    />
-                  </div>
-                  <p className="mb-2 font-passion text-xl font-bold uppercase tracking-tight text-tok-teal">
-                    {title}
-                  </p>
-                  <p className="font-inter text-base leading-snug text-black font-semibold">
-                    {desc}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <WhyTapokFeatureCards items={features} />
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-6 rounded-2xl bg-[#004D4D] px-8 py-5 shadow-inner lg:gap-12 border border-white/5">
               {trustItems.map(({ icon: Icon, label }, i) => (
