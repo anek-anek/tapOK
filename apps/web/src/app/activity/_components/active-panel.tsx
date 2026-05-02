@@ -121,13 +121,19 @@ export function ActivePanel({
 
   const activeDrops: DropPreview[] = (
     apiDrops?.filter((d) => d.status === 'active' || d.status === 'ongoing') ?? []
-  ).map((d: Drop) => ({
-    id: d.id,
-    name: d.name,
-    status: d.status as 'active' | 'ongoing',
-    scheduledAt: d.scheduledAt,
-    location: d.location,
-  })).slice(0, 2);
+  )
+    .map((d: Drop) => ({
+      id: d.id,
+      name: d.name,
+      status: d.status as 'active' | 'ongoing',
+      scheduledAt: d.scheduledAt,
+      location: d.location,
+    }))
+    .sort(
+      (a, b) =>
+        new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
+    )
+    .slice(0, 3);
 
   const { data: frequentlySeen = [], isLoading: crewLoading } = useFrequentCrew();
 
@@ -225,7 +231,7 @@ export function ActivePanel({
           ) : (
             <div className="px-5 py-8 text-center bg-tok-black/1">
               <p className="text-[13px] font-medium text-tok-black/40 italic">
-                No squad activity yet.
+                No crew activity yet.
               </p>
             </div>
           )}

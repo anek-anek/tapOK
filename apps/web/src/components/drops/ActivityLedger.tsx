@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Activity as IconActivity, ChevronLeft as IconChevronLeft, ChevronRight as IconChevronRight } from 'lucide-react';
 import { useDropActivityLogs } from '@/hooks/queries/use-drops';
+import { phraseForDropLogAction } from '@/lib/drop-log-phrases';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ActivityLedgerProps {
@@ -94,26 +95,7 @@ export function ActivityLedger({ dropId, page, setPage }: ActivityLedgerProps) {
                   {log.user.firstName} {log.user.lastName}
                 </span>
                 {' '}
-                <span className="font-medium">
-                  {{
-                    created: 'initiated the drop',
-                    joined: 'boarded the crew',
-                    join_requested: 'sent a join request',
-                    join_request_approved: 'cleared a join request',
-                    join_request_rejected: 'denied a join request',
-                    left: 'abandoned ship',
-                    updated: 'modified the plan',
-                    member_removed: 'ejected a crew member',
-                    marked_in: 'tapped IN',
-                    marked_out: 'tapped OUT',
-                    marked_ongoing: 'pushed the drop LIVE',
-                    marked_completed: 'closed the mission',
-                    photo_added: 'posted a new shot to the roll',
-                    photo_removed: 'removed a shot from the roll',
-                    photo_featured: 'spotlighted a moment',
-                    photo_unfeatured: 'cleared the spotlight',
-                  }[log.action] ?? log.action.replace(/_/g, ' ')}
-                </span>
+                <span className="font-medium">{phraseForDropLogAction(log.action)}</span>
               </p>
               <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
                 {formatLogTime(log.createdAt)}
