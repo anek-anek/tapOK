@@ -7,6 +7,7 @@ import {
   type AuthMode,
   type FinalizeResult,
 } from '@/lib/auth/finalize-session';
+import { shouldDeleteGoogleUserOnFinalizeFailure } from '@/lib/auth/google-signin';
 
 type FinalizeSuccess = Extract<FinalizeResult, { ok: true }>;
 type FinalizeFailure = Extract<FinalizeResult, { ok: false }>;
@@ -27,6 +28,7 @@ export async function resolveGoogleRedirectSession(
     const finalized = await finalizeSession(result.user, {
       mode,
       provider: 'google',
+      deleteCreatedUserOnFailure: shouldDeleteGoogleUserOnFinalizeFailure(result),
     });
 
     if (!finalized.ok) {

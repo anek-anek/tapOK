@@ -1,6 +1,6 @@
 'use client';
 
-import { signInWithPopup, signInWithRedirect } from 'firebase/auth';
+import { getAdditionalUserInfo, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import type { UserCredential } from 'firebase/auth';
 import { getFirebaseAuth, getGoogleAuthProvider } from '@/lib/firebase';
 
@@ -16,6 +16,10 @@ export function prefersGoogleRedirectFlow(): boolean {
 }
 
 export type GoogleSignInOutcome = UserCredential | 'redirect';
+
+export function shouldDeleteGoogleUserOnFinalizeFailure(userCredential: UserCredential): boolean {
+  return getAdditionalUserInfo(userCredential)?.isNewUser === true;
+}
 
 export async function signInWithGoogleInteractive(): Promise<GoogleSignInOutcome> {
   const auth = getFirebaseAuth();
