@@ -28,6 +28,7 @@ export interface DropDiscoverSummary {
   coverPhoto?: string | null;
   status: DropStatus;
   category?: DropCategory | null;
+  minimumAge?: number | null;
   isLocked: boolean;
   isPublic: boolean;
   organiserId: string;
@@ -80,6 +81,7 @@ export interface Drop {
   isLocked: boolean;
   isPublic: boolean;
   category?: DropCategory;
+  minimumAge?: number | null;
   overview?: string | null;
   coverPhoto?: string | null;
   organiserId: string;
@@ -147,6 +149,7 @@ export interface CreateDropDto {
   isLocked?: boolean;
   isPublic?: boolean;
   category?: DropCategory;
+  minimumAge?: number | null;
   overview?: string;
   idempotencyKey?: string;
   coverPhotoBase64?: string;
@@ -161,6 +164,7 @@ export interface UpdateDropDto {
   isPublic?: boolean;
   status?: DropStatus;
   category?: DropCategory;
+  minimumAge?: number | null;
   overview?: string;
 }
 

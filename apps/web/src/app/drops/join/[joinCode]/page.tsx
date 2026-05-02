@@ -14,6 +14,7 @@ import {
   UserPlus as IconUserPlus,
   ArrowRight as IconArrowRight,
   Ticket as IconTicket,
+  Martini as IconMartini,
 } from 'lucide-react';
 import { useDropByJoinCode, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
@@ -25,6 +26,8 @@ import { useMounted } from '@/hooks/use-mounted';
 import type { DropCrew, DropCrewStatus } from '@/types/drop';
 import type { UseMutationResult } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { evaluateDropMinimumAgeEligibility, getJoinDropErrorMessage } from '@/lib/drop-minimum-age';
+import { CrewAvatarIconsOnly, crewFor } from '@/components/drops/drop-cards';
 
 function formatDateTime(iso: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -88,7 +91,7 @@ function JoinCta({
   if (isOrganiser) {
     return (
       <div className="text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-sm border-2 border-tok-teal/20 bg-tok-teal/5 px-4 py-2">
+        <div className="my-4 inline-flex items-center gap-2 rounded-sm border-2 border-tok-teal/20 bg-tok-teal/5 px-4 py-2">
           <span className="h-2 w-2 rounded-full bg-tok-teal animate-pulse" />
           <span className="font-passion text-[11px] font-bold uppercase tracking-[1px] text-tok-teal">YOU ORGANISED THIS DROP</span>
         </div>
@@ -106,7 +109,7 @@ function JoinCta({
   if (crewStatus === 'in') {
     return (
       <div className="text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-sm border-2 border-tok-teal/20 bg-tok-teal/5 px-4 py-2">
+        <div className="my-4 inline-flex items-center gap-2 rounded-sm border-2 border-tok-teal/20 bg-tok-teal/5 px-4 py-2">
           <IconCheckCircle size={14} className="text-tok-teal" strokeWidth={2.5} />
           <span className="font-passion text-[11px] font-bold uppercase tracking-[1px] text-tok-teal">YOU&apos;RE LOCKED IN</span>
         </div>
@@ -124,7 +127,7 @@ function JoinCta({
   if (crewStatus === 'pending') {
     return (
       <div className="text-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-sm border-2 border-amber-500/20 bg-amber-500/5 px-4 py-2">
+        <div className="my-4 inline-flex items-center gap-2 rounded-sm border-2 border-amber-500/20 bg-amber-500/5 px-4 py-2">
           <IconClock size={14} className="text-amber-600" strokeWidth={2.5} />
           <span className="font-passion text-[11px] font-bold uppercase tracking-[1px] text-amber-700">Awaiting Approval</span>
         </div>
@@ -138,7 +141,7 @@ function JoinCta({
   if (crewStatus === 'rejected' || crewStatus === 'removed') {
     const isJoining = joinMutation.isPending;
     return (
-      <div className="text-center space-y-6">
+      <div className="mt-4 text-center space-y-6">
         <div className="inline-flex items-center gap-2 rounded-sm border-2 border-red-500/20 bg-red-500/5 px-4 py-2">
           <IconLock size={14} className="text-red-600" strokeWidth={2.5} />
           <span className="font-passion text-[11px] font-bold uppercase tracking-[1px] text-red-700">
@@ -234,6 +237,11 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
 
   const handleJoin = () => {
     track('crew_tap_in_clicked');
+    const ageCheck = evaluateDropMinimumAgeEligibility(dbUser?.birthday, drop?.minimumAge);
+    if (!ageCheck.ok) {
+      toast.error(ageCheck.message.toUpperCase());
+      return;
+    }
     joinMutation.mutate(undefined, {
       onSuccess: (data) => {
         if (data.status === 'pending') {
@@ -243,8 +251,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
         }
       },
       onError: (err: unknown) => {
-        const msg = err instanceof Error ? err.message : 'FAILED TO JOIN DROP';
-        toast.error(String(msg).toUpperCase());
+        toast.error(getJoinDropErrorMessage(err).toUpperCase());
       }
     });
   };
@@ -340,6 +347,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   }
 
   const organiserName = `${drop.organiser.firstName} ${drop.organiser.lastName}`;
+  const tappedInCrew = crewFor(drop);
 
   return (
     <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
@@ -404,7 +412,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
               </div>
 
               {/* Perforation Line Decoration */}
-              <div className="relative my-12 flex items-center gap-4">
+              <div className="relative my-6 flex items-center gap-4">
                 {/* Hole punch effects using relative circles */}
                 <div className="absolute -left-[64px] h-10 w-10 rounded-full border-[4px] border-tok-black bg-tok-cream shadow-inner" />
                 <div className="h-[2px] flex-1 border-t-[3px] border-dashed border-tok-black/15" />
@@ -412,7 +420,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
               </div>
 
               {/* Mission Briefing Details */}
-              <div className="grid grid-cols-1 gap-8">
+              <div className="grid grid-cols-1 gap-8 pb-5">
                 <div className="flex items-start gap-5">
                   <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-teal/10 text-tok-teal shadow-[3px_3px_0px_rgba(0,0,0,0.1)]">
                     <IconCalendar size={16} strokeWidth={3} />
@@ -436,11 +444,33 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
                     </p>
                   </div>
                 </div>
+
+                {drop.category === 'party' && drop.minimumAge != null && (
+                  <div className="flex items-start gap-5">
+                    <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-teal/10 text-tok-teal shadow-[3px_3px_0px_rgba(0,0,0,0.1)]">
+                      <IconMartini size={16} strokeWidth={3} aria-hidden />
+                    </div>
+                    <div>
+                      <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/30">
+                        AGE REQUIREMENT
+                      </p>
+                      <p className="mt-0.5 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black leading-tight">
+                        Ages {drop.minimumAge}+
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {tappedInCrew && tappedInCrew.length > 0 ? (
+                <div className="pt-4 flex justify-center border-t-[3px] border-tok-black/5">
+                  <CrewAvatarIconsOnly crew={tappedInCrew} />
+                </div>
+              ) : null}
 
               {/* Security Status Badge */}
               {drop.isLocked && (
-                <div className="mt-12 flex items-center gap-4 rounded-sm border-[3px] border-tok-black bg-amber-400 p-5 shadow-[6px_6px_0px_#1C1C1A]">
+                <div className="mt-4 flex items-center gap-4 rounded-sm border-[3px] border-tok-black bg-amber-400 p-5 shadow-[6px_6px_0px_#1C1C1A]">
                   <IconLock size={28} className="shrink-0" strokeWidth={2.5} />
                   <p className="font-passion text-[11px] font-bold uppercase leading-tight tracking-[1.5px] text-tok-black">
                     SECURED MISSION: ACCESS REQUIRES CHIEF APPROVAL AFTER TAP IN.
@@ -449,7 +479,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
               )}
 
               {/* Participation CTA Area */}
-              <div className="mt-12 pt-8 border-t-[3px] border-tok-black/5">
+              <div className="mt-4 t-8 border-t-[3px] border-tok-black/5">
                 <JoinCta
                   isOrganiser={isOrganiser}
                   crewStatus={crewStatus?.status}

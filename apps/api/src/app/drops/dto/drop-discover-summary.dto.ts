@@ -31,6 +31,13 @@ export class DropDiscoverSummaryDto {
   @ApiPropertyOptional({ enum: DropCategory, nullable: true })
   category?: DropCategory | null;
 
+  @ApiPropertyOptional({
+    nullable: true,
+    type: Number,
+    description: 'Minimum age when category is party; null if unrestricted.',
+  })
+  minimumAge?: number | null;
+
   @ApiProperty()
   isPublic: boolean;
 

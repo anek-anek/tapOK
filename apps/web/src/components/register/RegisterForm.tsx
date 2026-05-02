@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createUserWithEmailAndPassword, getRedirectResult } from 'firebase/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { signUpSchema, type SignUpFormValues } from '@/lib/validations/auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { finalizeSession } from '@/lib/auth/finalize-session';
@@ -80,7 +80,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
   useEffect(() => {
     const checkRedirect = async () => {
       try {
-        const result = await getRedirectResult(auth);
+        const result = await getRedirectResult(getFirebaseAuth());
         if (result) {
           setGoogleLoading(true);
           const finalized = await finalizeSession(result.user, { sync: true });
@@ -152,7 +152,11 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
   const onSubmit = async (values: SignUpFormValues) => {
     setServerError(null);
     try {
-      const { user } = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const { user } = await createUserWithEmailAndPassword(
+        getFirebaseAuth(),
+        values.email,
+        values.password,
+      );
       const finalized = await finalizeSession(user, {
         sync: true,
         payload: { firstName: values.firstName.trim(), lastName: values.lastName.trim() },

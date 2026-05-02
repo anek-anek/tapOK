@@ -53,6 +53,10 @@ export class Drop {
   @Column({ type: 'enum', enum: DropCategory, nullable: true })
   category?: DropCategory;
 
+  @ApiProperty({ required: false, nullable: true, type: Number })
+  @Column({ type: 'integer', nullable: true })
+  minimumAge?: number | null;
+
   @ApiProperty()
   @Column({ unique: true })
   joinCode: string;

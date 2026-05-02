@@ -1,7 +1,7 @@
 'use client';
 
 import { deleteUser, signOut, type User as FirebaseUser } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { api, setAuthToken } from '@/services/api';
 import type { DbUser } from '@/components/providers/auth-provider';
 import { postSessionCookie } from '@/lib/auth/session-cookie';
@@ -81,7 +81,7 @@ export async function finalizeSession(
       if (creationTime && creationTime === lastSignInTime) {
         await deleteUser(firebaseUser).catch(() => undefined);
       } else {
-        await signOut(auth).catch(() => undefined);
+        await signOut(getFirebaseAuth()).catch(() => undefined);
       }
       await clearSession();
       return {

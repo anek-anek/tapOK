@@ -20,6 +20,7 @@ const PUBLIC_DISCOVER_DROP_SELECT: (keyof Drop)[] = [
   'coverPhoto',
   'status',
   'category',
+  'minimumAge',
   'isPublic',
   'isLocked',
   'organiserId',
@@ -114,7 +115,7 @@ export class DropsRepository {
 
   async update(
     id: string,
-    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic' | 'category' | 'overview' | 'coverPhoto'>> & {
+    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic' | 'category' | 'overview' | 'coverPhoto' | 'minimumAge'>> & {
       expectedHeadcount?: number | null;
     },
   ): Promise<void> {
@@ -138,6 +139,15 @@ export class DropsRepository {
   findCrewMembers(dropId: string): Promise<DropCrew[]> {
     return this.crewRepo.find({
       where: { dropId },
+      relations: { user: true },
+      order: { joinedAt: 'ASC' },
+    });
+  }
+
+  /** Active ("in") crew with user profiles — for invite / social-proof surfaces. */
+  findActiveInCrewWithUsers(dropId: string): Promise<DropCrew[]> {
+    return this.crewRepo.find({
+      where: { dropId, status: DropCrewStatus.IN },
       relations: { user: true },
       order: { joinedAt: 'ASC' },
     });

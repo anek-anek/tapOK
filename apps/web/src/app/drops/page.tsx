@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type ClipboardEvent, type FormEvent } from 'react';
 import { useMounted } from '@/hooks/use-mounted';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   CalendarDays,
   LogIn,
@@ -40,6 +40,38 @@ function sortByScheduledAtAsc(a: Drop, b: Drop) {
   return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
 }
 
+/** Join codes are uppercase hex; strip whitespace and non-hex so paste/mobile keyboards behave reliably. */
+function sanitizeJoinCode(raw: string): string {
+  return raw
+    .replace(/\s+/g, '')
+    .toUpperCase()
+    .replace(/[^A-F0-9]/g, '')
+    .slice(0, 16);
+}
+
+function handleJoinCodePaste(
+  e: ClipboardEvent<HTMLInputElement>,
+  currentValue: string,
+  setValue: (next: string) => void,
+) {
+  const pasted = e.clipboardData?.getData('text/plain');
+  if (pasted == null || pasted === '') return;
+  e.preventDefault();
+  const el = e.currentTarget;
+  const start = typeof el.selectionStart === 'number' ? el.selectionStart : currentValue.length;
+  const end = typeof el.selectionEnd === 'number' ? el.selectionEnd : currentValue.length;
+  const merged = sanitizeJoinCode(currentValue.slice(0, start) + pasted + currentValue.slice(end));
+  setValue(merged);
+  queueMicrotask(() => {
+    try {
+      const caret = merged.length;
+      el.setSelectionRange(caret, caret);
+    } catch {
+      /* Safari / some webviews may throw if input lost focus */
+    }
+  });
+}
+
 function DropsDotGrid() {
   return (
     <div
@@ -55,12 +87,20 @@ function DropsDotGrid() {
 
 function GateCard() {
   const router = useRouter();
+  const pathname = usePathname();
   const [gateCode, setGateCode] = useState('');
+
+  useEffect(() => {
+    if (pathname === '/drops') {
+      setGateCode('');
+    }
+  }, [pathname]);
 
   const handleGateJoin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const code = gateCode.trim().toUpperCase();
+    const code = sanitizeJoinCode(gateCode);
     if (code.length < 4) return;
+    setGateCode('');
     router.push(`/drops/join/${code}`);
   };
 
@@ -93,11 +133,16 @@ function GateCard() {
         </p>
         <form onSubmit={handleGateJoin} className="mt-4 flex gap-3">
           <Input
+            type="text"
+            name="join-code"
             value={gateCode}
-            onChange={(e) => setGateCode(e.target.value.toUpperCase())}
+            onChange={(e) => setGateCode(sanitizeJoinCode(e.target.value))}
+            onPaste={(e) => handleJoinCodePaste(e, gateCode, setGateCode)}
             placeholder="ENTER TOKEN"
             inputMode="text"
-            autoCapitalize="characters"
+            enterKeyHint="go"
+            autoCapitalize="none"
+            autoCorrect="off"
             autoComplete="off"
             spellCheck={false}
             className="h-12 flex-1 rounded-sm border-[3px] border-tok-black bg-white px-5 font-passion text-base font-bold tracking-[2px] text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -197,6 +242,7 @@ function PageSkeleton() {
 
 export default function DropsPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const mounted = useMounted();
   const { user, dbUser, loading, isReady } = useAuth();
   const {
@@ -216,6 +262,13 @@ export default function DropsPage() {
   const [joinCode, setJoinCode] = useState('');
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [isJoiningNavigation, setIsJoiningNavigation] = useState(false);
+
+  useEffect(() => {
+    if (pathname === '/drops') {
+      setJoinCode('');
+      setIsJoiningNavigation(false);
+    }
+  }, [pathname]);
 
   const { activeDrops, completedDrops, focusDrop, upcomingCount, pastCount } = useMemo(() => {
     const current = drops
@@ -238,8 +291,9 @@ export default function DropsPage() {
 
   const handleJoin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const code = joinCode.trim().toUpperCase();
+    const code = sanitizeJoinCode(joinCode);
     if (code.length < 4 || isJoiningNavigation) return;
+    setJoinCode('');
     setIsJoiningNavigation(true);
     router.push(`/drops/join/${code}`);
   };
@@ -298,14 +352,19 @@ export default function DropsPage() {
               className="flex h-12 w-full items-center rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto"
             >
               <Input
+                type="text"
+                name="access-code"
                 value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                onChange={(e) => setJoinCode(sanitizeJoinCode(e.target.value))}
+                onPaste={(e) => handleJoinCodePaste(e, joinCode, setJoinCode)}
                 placeholder="ACCESS CODE"
                 inputMode="text"
-                autoCapitalize="characters"
+                enterKeyHint="go"
+                autoCapitalize="none"
+                autoCorrect="off"
                 autoComplete="off"
                 spellCheck={false}
-                className="h-full flex-1 border-0 bg-transparent px-4 font-passion text-xs font-bold tracking-[2px] text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-32 sm:flex-none"
+                className="h-full min-h-12 flex-1 border-0 bg-transparent px-4 font-passion text-xs font-bold tracking-[2px] text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-32 sm:flex-none"
               />
               <button
                 type="submit"

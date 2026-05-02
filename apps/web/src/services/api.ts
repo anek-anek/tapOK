@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 
 import { getApiUrl } from '@/lib/config';
 import { applyIdTokenToAxiosAndSessionCookie } from '@/lib/auth/session-cookie';
@@ -21,9 +21,13 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retried) {
+    if (
+      typeof window !== 'undefined' &&
+      error.response?.status === 401 &&
+      !originalRequest._retried
+    ) {
       originalRequest._retried = true;
-      const currentUser = auth.currentUser;
+      const currentUser = getFirebaseAuth().currentUser;
       if (currentUser) {
         const freshToken = await currentUser.getIdToken(true);
         await applyIdTokenToAxiosAndSessionCookie(freshToken);

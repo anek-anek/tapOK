@@ -64,6 +64,59 @@ function getCrewMemberDisplay(member: CrewMember) {
   return { firstName, lastName, avatar, initials, fullName };
 }
 
+/** Overlapping crew faces only — same stacking as HeroDropCard / list cards (no count copy). */
+export function CrewAvatarIconsOnly({
+  crew,
+  maxDisplayed = 4,
+  className,
+}: {
+  crew: CrewMember[];
+  maxDisplayed?: number;
+  className?: string;
+}) {
+  if (!crew.length) return null;
+
+  const visible = crew.slice(0, maxDisplayed);
+  const overflow = crew.length - maxDisplayed;
+
+  return (
+    <div
+      className={cn('flex items-center', className)}
+      role="group"
+      aria-label={`${crew.length} ${crew.length === 1 ? 'member' : 'members'} tapped in`}
+    >
+      <div className="flex items-center">
+        {visible.map((member, i) => {
+          const display = getCrewMemberDisplay(member);
+          return (
+            <div
+              key={member.id}
+              className={cn(
+                'relative h-8 w-8 shrink-0 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden',
+                i > 0 && '-ml-4',
+              )}
+              title={display.fullName}
+            >
+              {display.avatar ? (
+                <Image src={display.avatar} alt="" width={32} height={32} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center font-passion text-[10px] text-tok-teal">
+                  {display.initials}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {overflow > 0 ? (
+          <div className="relative -ml-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion text-[10px] font-bold text-tok-black">
+            +{overflow}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 /** The dark teal "Next Up" hero card pinned at the top of the board */
 export function HeroDropCard({
   drop,

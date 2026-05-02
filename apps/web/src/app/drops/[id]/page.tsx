@@ -19,6 +19,7 @@ import {
   Clock as IconClock,
   UserCheck as IconUserCheck,
   Lock as IconLock,
+  Martini as IconMartini,
 } from 'lucide-react';
 import { useDrop, useMyCrewStatus, useDropCrew, useDropActivityLogs } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -37,6 +38,7 @@ import { SparkButton } from '@/components/drops/spark-button';
 import { toast } from 'react-hot-toast';
 import type { DropStatus } from '@/types/drop';
 import { coverPhotoSrcForNextImage } from '@/lib/config';
+import { evaluateDropMinimumAgeEligibility, getJoinDropErrorMessage } from '@/lib/drop-minimum-age';
 import { cn } from '@/lib/utils';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
@@ -531,6 +533,12 @@ function DropDetailContent({ id }: { id: string }) {
   };
 
   const handleJoin = () => {
+    if (!drop) return;
+    const ageCheck = evaluateDropMinimumAgeEligibility(dbUser?.birthday, drop.minimumAge);
+    if (!ageCheck.ok) {
+      toast.error(ageCheck.message.toUpperCase());
+      return;
+    }
     joinDrop(undefined, {
       onSuccess: (data) => {
         setJoinModalOpen(false);
@@ -541,8 +549,7 @@ function DropDetailContent({ id }: { id: string }) {
         }
       },
       onError: (err: unknown) => {
-        const msg = err instanceof Error ? err.message : 'FAILED TO JOIN DROP';
-        toast.error(String(msg).toUpperCase());
+        toast.error(getJoinDropErrorMessage(err).toUpperCase());
       }
     });
   };
@@ -656,6 +663,12 @@ function DropDetailContent({ id }: { id: string }) {
                         : "border-emerald-400 bg-emerald-400 text-white"
                     )}>
                       {drop.isLocked ? "Approval Required" : "Instant Join"}
+                    </span>
+                  )}
+                  {drop.category === 'party' && drop.minimumAge != null && (
+                    <span className="inline-flex items-center gap-1 rounded-sm border-2 border-tok-cream/80 bg-tok-black/35 px-2 py-0.5 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-cream shadow-[2px_2px_0px_rgba(0,0,0,0.2)] backdrop-blur-[2px]">
+                      <IconMartini size={12} strokeWidth={2.5} className="opacity-90" aria-hidden />
+                      Ages {drop.minimumAge}+
                     </span>
                   )}
                 </div>

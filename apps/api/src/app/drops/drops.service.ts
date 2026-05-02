@@ -9,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
 import { UsersService } from '../users/users.service';
+import { User } from '../users/entities/user.entity';
 import { DropsRepository } from './drops.repository';
 import { DropsCronService } from './drops-cron.service';
 import { Drop } from './entities/drop.entity';
@@ -39,6 +40,7 @@ const PUBLIC_ACTIVITY_CHANGED_FIELDS = new Set([
   'isPublic',
   'status',
   'category',
+  'minimumAge',
   'overview',
   'coverPhoto',
 ]);
@@ -72,6 +74,7 @@ export class DropsService {
       coverPhoto: row.coverPhoto ?? null,
       status: row.status,
       category: row.category ?? null,
+      minimumAge: row.minimumAge ?? null,
       isPublic: row.isPublic,
       isLocked: row.isLocked,
       organiserId: row.organiserId,
@@ -192,6 +195,9 @@ export class DropsService {
       const baseUrl = webUrlEnv.split(',')[0]?.trim() || 'http://localhost:4200';
       const shareUrl = `${baseUrl}/drops/join/${joinCode}`;
 
+      const minimumAge =
+        dto.category === DropCategory.PARTY && dto.minimumAge != null ? dto.minimumAge : null;
+
       const drop = await this.dropsRepository.create({
         name: dto.name,
         scheduledAt: new Date(dto.scheduledAt),
@@ -202,6 +208,7 @@ export class DropsService {
         isPublic: dto.isPublic ?? true,
         status: DropStatus.ACTIVE,
         category: dto.category,
+        minimumAge,
         joinCode,
         shareUrl,
         organiserId: organiser.id,
@@ -304,6 +311,7 @@ export class DropsService {
       }
     }
 
+    drop.crew = await this.dropsRepository.findActiveInCrewWithUsers(drop.id);
     return drop;
   }
 
@@ -330,6 +338,17 @@ export class DropsService {
     if (dto.category !== undefined) changedFields['category'] = dto.category;
     if (dto.overview !== undefined) changedFields['overview'] = dto.overview;
 
+    const nextCategory = dto.category !== undefined ? dto.category : drop.category;
+    let nextMinimumAge: number | null | undefined = undefined;
+    if (dto.category !== undefined && dto.category !== DropCategory.PARTY) {
+      nextMinimumAge = null;
+    } else if (dto.minimumAge !== undefined && nextCategory === DropCategory.PARTY) {
+      nextMinimumAge = dto.minimumAge;
+    }
+    if (nextMinimumAge !== undefined) {
+      changedFields['minimumAge'] = nextMinimumAge;
+    }
+
     await this.dropsRepository.update(id, {
       ...(dto.name !== undefined && { name: dto.name }),
       ...(dto.scheduledAt !== undefined && { scheduledAt: new Date(dto.scheduledAt) }),
@@ -340,6 +359,7 @@ export class DropsService {
       ...(dto.status !== undefined && { status: dto.status }),
       ...(dto.category !== undefined && { category: dto.category }),
       ...(dto.overview !== undefined && { overview: dto.overview }),
+      ...(nextMinimumAge !== undefined && { minimumAge: nextMinimumAge }),
     });
     
     // If the drop is manually marked as completed, clean up non-featured photos
@@ -452,6 +472,8 @@ export class DropsService {
       if (!drop.isPublic && (!existing || existing.status !== DropCrewStatus.INVITED)) {
         throw new ForbiddenException('This drop is private and you have not been invited');
       }
+
+      this.assertUserMeetsDropMinimumAge(user, drop);
 
       const memberStatus = drop.isLocked ? DropCrewStatus.PENDING : DropCrewStatus.IN;
       const isPresent = !drop.isLocked;
@@ -996,6 +1018,40 @@ export class DropsService {
       throw new BadRequestException('Invalid image data');
     }
     return { buffer: Buffer.from(base64Data, 'base64'), mimeType };
+  }
+
+  private getCalendarAge(birthDate: Date, ref: Date): number {
+    let age = ref.getFullYear() - birthDate.getFullYear();
+    const monthDiff = ref.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && ref.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  private assertUserMeetsDropMinimumAge(user: User, drop: Drop): void {
+    const min = drop.minimumAge;
+    if (min == null || min < 1) return;
+
+    if (!user.birthday) {
+      throw new ForbiddenException(
+        'Add your birthday in your profile to join this drop.',
+      );
+    }
+
+    const birth = user.birthday instanceof Date ? user.birthday : new Date(user.birthday);
+    if (Number.isNaN(birth.getTime())) {
+      throw new ForbiddenException(
+        'Add your birthday in your profile to join this drop.',
+      );
+    }
+
+    const age = this.getCalendarAge(birth, new Date());
+    if (age < min) {
+      throw new ForbiddenException(
+        `You must be at least ${min} years old to join this drop.`,
+      );
+    }
   }
 
   private async generateUniqueJoinCode(): Promise<string> {
