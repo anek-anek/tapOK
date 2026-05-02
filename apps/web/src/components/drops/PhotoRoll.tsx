@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, type MouseEvent, type DragEvent } from 'react';
+import { useState, useRef, useEffect, useMemo, type MouseEvent, type DragEvent } from 'react';
 import NextImage from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -84,9 +84,9 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
     try {
       const base64 = await compressImage(file);
       await uploadMutation.mutateAsync(base64);
-      toast.success('PHOTO ADDED TO ROLL');
+      toast.success('POSTED A NEW SHOT TO THE ROLL');
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'FAILED TO UPLOAD PHOTO';
+      const msg = err.response?.data?.message || 'FAILED TO POST SHOT TO THE ROLL';
       toast.error(Array.isArray(msg) ? msg[0].toUpperCase() : String(msg).toUpperCase());
     } finally {
       setIsCompressing(false);
@@ -99,15 +99,15 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
     const isUnfeaturing = photo?.isFeatured;
 
     if (!isUnfeaturing && reachedFeaturedLimit) {
-      toast.error('MAX 5 HIGHLIGHTS ALLOWED');
+      toast.error('MAX 5 SPOTLIGHTS ON THE ROLL');
       return;
     }
 
     try {
       await featureMutation.mutateAsync(photoId);
-      toast.success(isUnfeaturing ? 'MOMENT UNFEATURED' : 'MOMENT HIGHLIGHTED');
+      toast.success(isUnfeaturing ? 'CLEARED THE SPOTLIGHT' : 'SPOTLIGHTED A MOMENT');
     } catch {
-      toast.error(isUnfeaturing ? 'FAILED TO UNFEATURE' : 'FAILED TO FEATURE');
+      toast.error(isUnfeaturing ? 'FAILED TO CLEAR THE SPOTLIGHT' : 'FAILED TO SPOTLIGHT');
     }
   };
 
@@ -120,11 +120,16 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
   const userPhotos = photos.filter((p: any) => p.userId === userId);
   const reachedUserLimit = userPhotos.length >= 3;
   const reachedTotalLimit = photos.length >= 10;
-
   const featuredPhotos = photos.filter((p: any) => p.isFeatured);
   const reachedFeaturedLimit = featuredPhotos.length >= 5;
-
-  const displayedPhotos = isCompleted ? featuredPhotos : photos;
+  const displayedPhotos = useMemo(() => {
+    if (isCompleted) {
+      return photos.filter((p) => p.isFeatured);
+    }
+    const featured = photos.filter((p) => p.isFeatured);
+    const nonFeatured = photos.filter((p) => !p.isFeatured);
+    return [...featured, ...nonFeatured];
+  }, [photos, isCompleted]);
 
   // Hide the section if viewer is neither organiser nor crew.
   if (!isOrganiser && !isCrewMember) {

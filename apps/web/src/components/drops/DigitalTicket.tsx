@@ -6,6 +6,7 @@ import {
   Copy as IconCopy,
   CheckCheck as IconCheckCheck,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type DigitalTicketProps = {
   drop: {
@@ -51,28 +52,28 @@ export function DigitalTicket({ drop, className = '', footer }: DigitalTicketPro
 
         <div className="space-y-4">
           {/* Join Code Stub */}
-          <div className="rounded-[4px] border-2 border-tok-black bg-tok-cream p-4">
+          <div className="min-w-0 rounded-[4px] border-2 border-tok-black bg-tok-cream p-4">
             <p className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
               ACCESS CODE
             </p>
-            <div className="mt-2 flex items-center justify-between">
-              <p className="font-passion text-3xl font-bold tracking-[0.2em] text-tok-black">
+            <div className="mt-2 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <p className="min-w-0 max-w-full font-passion text-2xl font-bold tracking-[0.12em] text-tok-black break-all sm:text-3xl sm:tracking-[0.2em]">
                 {drop.joinCode}
               </p>
-              <CopyButton text={drop.joinCode} />
+              <CopyButton text={drop.joinCode} className="w-full justify-center sm:w-auto sm:justify-start" />
             </div>
           </div>
 
           {/* Share Link Stub */}
-          <div className="rounded-[4px] border-2 border-tok-black bg-white p-4">
+          <div className="min-w-0 rounded-[4px] border-2 border-tok-black bg-white p-4">
             <p className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
               SHARE URL
             </p>
-            <div className="mt-2 flex items-center gap-3">
-              <span className="min-w-0 flex-1 truncate font-mono text-[10px] font-medium text-tok-black/60">
+            <div className="mt-2 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+              <span className="min-w-0 w-full break-all font-mono text-[10px] font-medium leading-snug text-tok-black/60 sm:flex-1 sm:break-normal sm:truncate">
                 {shareUrl}
               </span>
-              <CopyButton text={shareUrl} />
+              <CopyButton text={shareUrl} className="w-full shrink-0 justify-center sm:w-auto sm:justify-start" />
             </div>
           </div>
         </div>
@@ -96,7 +97,7 @@ export function DigitalTicket({ drop, className = '', footer }: DigitalTicketPro
   );
 }
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, className }: { text: string; className?: string }) {
   const [copied, setCopied] = useState(false);
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -115,7 +116,10 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex shrink-0 items-center gap-2 rounded-sm border-2 border-tok-black bg-white px-3 py-1.5 font-passion text-[10px] font-bold uppercase tracking-[1px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+      className={cn(
+        'inline-flex shrink-0 items-center gap-2 rounded-sm border-2 border-tok-black bg-white px-3 py-1.5 font-passion text-[10px] font-bold uppercase tracking-[1px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none',
+        className,
+      )}
     >
       {copied ? <IconCheckCheck size={14} strokeWidth={2.5} /> : <IconCopy size={14} strokeWidth={2.5} />}
       {copied ? 'Copied' : 'Copy'}

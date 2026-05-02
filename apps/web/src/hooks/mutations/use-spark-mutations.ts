@@ -18,12 +18,24 @@ export function useSparkDrop(dropId: string, userId: string | undefined) {
 
         const updateSparks = (sparks: any[]) => [...(sparks || []), spark];
 
+        const bumpMineDrop = (d: any) => {
+          if (!d || d.id !== dropId) return d;
+          const prevCount =
+            typeof d.sparkCount === 'number' ? d.sparkCount : (d.sparks?.length ?? 0);
+          return {
+            ...d,
+            sparks: updateSparks(d.sparks),
+            sparkCount: prevCount + 1,
+            sparkedByViewer: true,
+          };
+        };
+
         if (old.id === dropId) {
-          return { ...old, sparks: updateSparks(old.sparks) };
+          return bumpMineDrop(old);
         }
 
         if (Array.isArray(old)) {
-          return old.map(d => d.id === dropId ? { ...d, sparks: updateSparks(d.sparks) } : d);
+          return old.map(bumpMineDrop);
         }
 
         if (old.featured !== undefined || old.allPublic !== undefined) {
@@ -56,6 +68,7 @@ export function useSparkDrop(dropId: string, userId: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drops'] });
+      toast.success('YOU SPARKED THIS DROP');
     },
     onError: (err: any, _, context) => {
       if (context?.previousQueries) {
@@ -64,7 +77,7 @@ export function useSparkDrop(dropId: string, userId: string | undefined) {
         });
       }
       
-      const rawMsg = err.response?.data?.message || 'FAILED TO SPARK DROP';
+      const rawMsg = err.response?.data?.message || 'FAILED TO SPARK THIS DROP';
       const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
       toast.error(String(msg).toUpperCase());
     },
@@ -86,14 +99,27 @@ export function useUnsparkDrop(dropId: string, userId: string | undefined) {
 
         const filterSparks = (sparks: any[]) => (sparks || []).filter((s: any) => s.userId !== userId);
 
+        const lowerMineDrop = (d: any) => {
+          if (!d || d.id !== dropId) return d;
+          const filtered = filterSparks(d.sparks);
+          const prevCount =
+            typeof d.sparkCount === 'number' ? d.sparkCount : (d.sparks?.length ?? 0);
+          return {
+            ...d,
+            sparks: filtered,
+            sparkCount: Math.max(0, prevCount - 1),
+            sparkedByViewer: false,
+          };
+        };
+
         // 1. Single Drop
         if (old.id === dropId) {
-          return { ...old, sparks: filterSparks(old.sparks) };
+          return lowerMineDrop(old);
         }
 
         // 2. Array of Drops
         if (Array.isArray(old)) {
-          return old.map(d => d.id === dropId ? { ...d, sparks: filterSparks(d.sparks) } : d);
+          return old.map(lowerMineDrop);
         }
 
         // 3. Discover Data Object
@@ -127,6 +153,7 @@ export function useUnsparkDrop(dropId: string, userId: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drops'] });
+      toast.success('YOU UNSPARKED THIS DROP');
     },
     onError: (err: any, _, context) => {
       if (context?.previousQueries) {
@@ -135,7 +162,7 @@ export function useUnsparkDrop(dropId: string, userId: string | undefined) {
         });
       }
       
-      const rawMsg = err.response?.data?.message || 'FAILED TO UNSPARK DROP';
+      const rawMsg = err.response?.data?.message || 'FAILED TO UNSPARK THIS DROP';
       const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
       toast.error(String(msg).toUpperCase());
     },

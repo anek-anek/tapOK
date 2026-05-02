@@ -697,6 +697,8 @@ export interface components {
             organiserId: string;
             organiser: components["schemas"]["User"];
             sparks: components["schemas"]["DropSpark"][];
+            sparkCount?: number;
+            sparkedByViewer?: boolean;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */

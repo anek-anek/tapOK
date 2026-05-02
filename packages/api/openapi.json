@@ -2038,6 +2038,12 @@
               "$ref": "#/components/schemas/DropSpark"
             }
           },
+          "sparkCount": {
+            "type": "number"
+          },
+          "sparkedByViewer": {
+            "type": "boolean"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"

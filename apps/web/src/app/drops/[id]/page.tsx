@@ -28,8 +28,8 @@ import { DropShareModal } from '@/components/drops/DropShareModal';
 import { DeleteDropModal } from '@/components/drops/DeleteDropModal';
 import { DigitalTicket } from '@/components/drops/DigitalTicket';
 import { PhotoRoll } from '@/components/drops/PhotoRoll';
-import { CrewRoster } from '@/components/drops/CrewRoster';
-import { ActivityLedger } from '@/components/drops/ActivityLedger';
+import { CrewRoster, CrewRosterSkeleton } from '@/components/drops/CrewRoster';
+import { ActivityLedger, ActivityLedgerSkeleton } from '@/components/drops/ActivityLedger';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
@@ -295,69 +295,128 @@ function JoinConfirmModal({
 
 function PageSkeleton() {
   return (
-    <div className="min-h-screen bg-tok-cream text-[#1C1C1A]">
+    <div className="relative min-h-screen bg-tok-cream font-inter text-[#1C1C1A]">
+      <div
+        className="pointer-events-none fixed inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, #000 1px, transparent 0)',
+          backgroundSize: '24px 24px',
+        }}
+      />
       <TapokNavbar />
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10">
-        <Skeleton className="mb-8 h-4 w-32 rounded-sm bg-black/5" />
-
-        {/* Billboard Skeleton */}
-        <div className="mb-10 rounded-[4px] border-[3px] border-tok-black/10 bg-tok-teal/10 p-6 sm:p-10 lg:p-12 shadow-[8px_8px_0px_rgba(0,0,0,0.05)]">
-          <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-            <div className="flex-1 space-y-4">
-              <Skeleton className="h-6 w-32 rounded-sm bg-black/10" />
-              <Skeleton className="h-16 w-3/4 rounded-sm bg-black/5 sm:h-20" />
-              <div className="flex gap-6">
-                <Skeleton className="h-4 w-40 rounded-sm bg-black/10" />
-                <Skeleton className="h-4 w-40 rounded-sm bg-black/10" />
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Skeleton className="h-12 w-32 rounded-sm bg-black/5 border-[3px] border-black/5" />
-              <Skeleton className="h-12 w-32 rounded-sm bg-black/5 border-[3px] border-black/5" />
-            </div>
-          </div>
+      <main className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10 pb-24">
+        <div className="mb-8 flex items-center gap-2">
+          <Skeleton className="h-3.5 w-3.5 shrink-0 rounded-sm bg-tok-black/15" />
+          <Skeleton className="h-4 w-24 rounded-sm bg-tok-black/10" />
         </div>
 
-        {/* Content Grid Skeleton */}
+        {/* Billboard — matches teal hero + pills + spark + title + meta + action row */}
+        <section className="relative mb-10 overflow-hidden rounded-[4px] border-[3px] border-tok-black bg-tok-teal p-6 shadow-[8px_8px_0px_#1C1C1A] sm:p-10 lg:p-12">
+          <div className="pointer-events-none absolute inset-0 z-0 bg-linear-to-r from-tok-teal via-tok-teal/85 to-tok-teal/55" />
+          <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+            <div className="min-w-0 flex-1">
+              <div className="mb-4 flex flex-wrap items-start gap-x-2 gap-y-2 sm:gap-x-3">
+                <Skeleton className="h-8 w-28 rounded-sm border-2 border-tok-black bg-amber-400/85 shadow-[2px_2px_0px_#1C1C1A]" />
+                <Skeleton className="h-8 w-36 rounded-sm border-2 border-tok-black bg-emerald-400/75 shadow-[2px_2px_0px_#1C1C1A]" />
+                <div className="ml-auto shrink-0 pl-1">
+                  <Skeleton className="h-11 w-11 rounded-md border-[3px] border-tok-black bg-tok-cream shadow-[3px_3px_0px_#1C1C1A]" />
+                </div>
+              </div>
+              <Skeleton className="mb-3 h-[clamp(36px,6vw,52px)] max-w-3xl rounded-sm bg-tok-cream/35" />
+              <Skeleton className="mb-2 h-[clamp(36px,6vw,52px)] max-w-2xl rounded-sm bg-tok-cream/28" />
+              <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
+                <div className="flex items-center gap-2.5">
+                  <Skeleton className="h-4 w-4 rounded-sm bg-tok-cream/45" />
+                  <Skeleton className="h-4 w-48 max-w-[70vw] rounded-sm bg-tok-cream/35" />
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Skeleton className="h-4 w-4 rounded-sm bg-tok-cream/45" />
+                  <Skeleton className="h-4 w-40 max-w-[60vw] rounded-sm bg-tok-cream/35" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
+              <Skeleton className="h-12 min-w-[100px] flex-1 rounded-[4px] border-[3px] border-tok-black bg-white sm:flex-none sm:min-w-[104px]" />
+              <Skeleton className="h-12 min-w-[120px] flex-1 rounded-[4px] border-[3px] border-tok-black bg-tok-teal/45 sm:flex-none sm:min-w-[132px]" />
+              <Skeleton className="h-12 min-w-[104px] rounded-[4px] border-[3px] border-tok-black bg-tok-cream/55 sm:w-[112px]" />
+              <Skeleton className="h-12 w-12 rounded-[4px] border-[3px] border-tok-black bg-white" />
+            </div>
+          </div>
+        </section>
+
         <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-          <div className="space-y-10">
-            {/* Presence Placeholder */}
-            <div className="rounded-[4px] border-[3px] border-tok-black/5 bg-white p-6 shadow-[6px_6px_0px_rgba(0,0,0,0.03)]">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-32 rounded-sm bg-black/10" />
-                  <Skeleton className="h-6 w-56 rounded-sm bg-black/5" />
+          <div className="order-2 min-w-0 lg:order-1">
+            {/* Mission Overview */}
+            <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
+              <Skeleton className="h-3 w-44 rounded-sm bg-tok-teal/30" />
+              <div className="mt-3 space-y-2.5">
+                <Skeleton className="h-4 w-full rounded-sm bg-tok-black/8" />
+                <Skeleton className="h-4 w-full rounded-sm bg-tok-black/8" />
+                <Skeleton className="h-4 max-w-xl rounded-sm bg-tok-black/8" />
+              </div>
+            </div>
+
+            {/* Attendance (Tap In / Out) */}
+            <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[6px_6px_0px_#1C1C1A] sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="hidden h-3 w-40 rounded-sm bg-tok-teal/25 sm:block" />
+                  <Skeleton className="h-8 max-w-xs rounded-sm bg-tok-black/10 sm:h-9 sm:max-w-md" />
                 </div>
-                <div className="flex gap-3">
-                  <Skeleton className="h-12 w-28 rounded-sm bg-black/5 border-[3px] border-black/5" />
-                  <Skeleton className="h-12 w-28 rounded-sm bg-black/5 border-[3px] border-black/5" />
+                <div className="flex shrink-0 flex-row items-center gap-2 sm:gap-3">
+                  <Skeleton className="h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black bg-tok-teal/35 sm:min-w-[120px]" />
+                  <Skeleton className="h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black bg-red-500/35 sm:min-w-[120px]" />
                 </div>
               </div>
             </div>
 
-            {/* Log Placeholder */}
-            <div className="rounded-[4px] border-[3px] border-tok-black/10 bg-white shadow-[6px_6px_0px_rgba(0,0,0,0.05)]">
-              <div className="border-b-[3px] border-black/5 bg-black/5 px-6 py-5">
-                <Skeleton className="h-6 w-40 rounded-sm bg-black/10" />
+            {/* Photo Roll strip */}
+            <div className="mb-10 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-[18px] w-[18px] rounded-sm bg-tok-black/15" />
+                  <Skeleton className="h-6 w-36 rounded-sm bg-tok-black/12" />
+                </div>
+                <Skeleton className="hidden h-9 w-28 rounded-sm border-[3px] border-tok-black bg-tok-yellow/40 sm:block" />
               </div>
-              <div className="divide-y divide-black/5">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-start gap-5 px-6 py-5">
-                    <Skeleton className="h-10 w-10 shrink-0 rounded-sm bg-black/5 border-2 border-black/5" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-2/3 rounded-sm bg-black/5" />
-                      <Skeleton className="h-2 w-24 rounded-sm bg-black/10" />
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A]">
+                <div className="flex gap-2 overflow-hidden sm:gap-3">
+                  {[0, 1, 2, 3].map((k) => (
+                    <Skeleton
+                      key={k}
+                      className="aspect-square h-24 w-24 shrink-0 rounded-[4px] border-2 border-tok-black/15 bg-tok-teal/12 sm:h-28 sm:w-28"
+                    />
+                  ))}
+                </div>
               </div>
             </div>
+
+            <CrewRosterSkeleton />
+            <ActivityLedgerSkeleton />
           </div>
 
-          {/* Sidebar Placeholder */}
-          <div className="hidden lg:block space-y-6">
-            <Skeleton className="h-[520px] rounded-[4px] border-[3px] border-tok-black/10 bg-white/40 shadow-[6px_6px_0px_rgba(0,0,0,0.05)]" />
-          </div>
+          {/* Digital ticket — QR + join code / URL blocks */}
+          <aside className="order-1 hidden lg:order-2 lg:block lg:self-start">
+            <div className="relative overflow-hidden rounded-[4px] border-[3px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]">
+              <div className="h-2 w-full bg-tok-teal" />
+              <div className="p-6">
+                <Skeleton className="mb-6 h-3 w-40 rounded-sm bg-tok-teal/25" />
+                <div className="relative mx-auto mb-8 flex aspect-square w-full max-w-[180px] justify-center overflow-hidden rounded-[4px] border-2 border-tok-black bg-tok-cream/40 p-6">
+                  <Skeleton className="h-full w-full max-h-[140px] max-w-[140px] rounded-sm bg-tok-black/8" />
+                </div>
+                <div className="my-8 flex items-center gap-2">
+                  <div className="h-px flex-1 border-t-2 border-dashed border-tok-black/20" />
+                  <div className="h-3 w-3 shrink-0 rounded-full border-2 border-tok-black bg-tok-cream" />
+                  <div className="h-px flex-1 border-t-2 border-dashed border-tok-black/20" />
+                </div>
+                <div className="space-y-4">
+                  <Skeleton className="min-h-22 w-full rounded-[4px] border-2 border-tok-black bg-tok-cream/60" />
+                  <Skeleton className="min-h-18 w-full rounded-[4px] border-2 border-tok-black bg-white" />
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
       </main>
     </div>

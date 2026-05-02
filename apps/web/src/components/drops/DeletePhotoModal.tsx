@@ -21,11 +21,11 @@ export function DeletePhotoModal({ dropId, photo, onClose }: DeletePhotoModalPro
     setIsDeleting(true);
     try {
       await deletePhoto.mutateAsync(photo.id);
-      toast.success('PHOTO REMOVED');
+      toast.success('REMOVED A SHOT FROM THE ROLL');
       close();
       setTimeout(() => onClose(true), CLOSE_DURATION);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'FAILED TO REMOVE PHOTO';
+      const msg = err instanceof Error ? err.message : 'FAILED TO REMOVE SHOT FROM THE ROLL';
       toast.error(String(msg).toUpperCase());
     } finally {
       setIsDeleting(false);
