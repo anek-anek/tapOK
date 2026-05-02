@@ -15,41 +15,47 @@ interface Profile {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const idToken: string | undefined = body?.idToken;
+  const sync: boolean = body?.sync ?? false;
+  const payload: any = body?.payload;
+
   if (!idToken || typeof idToken !== 'string') {
     return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
   }
 
   const apiUrl = getApiUrl();
-  let check: Response;
+  let dbUserResponse: Response;
+
   try {
-    check = await fetch(`${apiUrl}/users/me`, {
-      headers: { Authorization: `Bearer ${idToken}` },
+    const endpoint = sync ? '/users/sync' : '/users/me';
+    const method = sync ? 'POST' : 'GET';
+    
+    dbUserResponse = await fetch(`${apiUrl}${endpoint}`, {
+      method,
+      headers: { 
+        Authorization: `Bearer ${idToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: sync ? JSON.stringify(payload ?? {}) : undefined,
       cache: 'no-store',
     });
   } catch (cause) {
-    const code =
-      typeof cause === 'object' &&
-      cause !== null &&
-      'code' in cause &&
-      typeof (cause as { code?: unknown }).code === 'string'
-        ? (cause as { code: string }).code
-        : undefined;
-    console.error('[api/auth/session] upstream fetch failed', { apiUrl, code, cause });
+    console.error('[api/auth/session] upstream fetch failed', { apiUrl, cause });
     return NextResponse.json(
-      {
-        error: 'API_UNAVAILABLE',
-        message:
-          'Cannot reach the backend API.',
-      },
+      { error: 'API_UNAVAILABLE', message: 'Cannot reach the backend API.' },
       { status: 503 },
     );
   }
 
-  if (!check.ok) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+  if (!dbUserResponse.ok) {
+    const errorData = await dbUserResponse.json().catch(() => ({}));
+    return NextResponse.json(
+      { error: 'Invalid token or user fetch failed', upstream: errorData },
+      { status: dbUserResponse.status },
+    );
   }
 
-  const res = NextResponse.json({ ok: true });
+  const dbUser = await dbUserResponse.json();
+  const res = NextResponse.json({ ok: true, dbUser });
 
   const cookieOptions = {
     path: '/',
@@ -61,17 +67,21 @@ export async function POST(req: NextRequest) {
 
   res.cookies.set(SESSION_COOKIE, idToken, cookieOptions);
 
-  const profile: Profile | undefined = body?.profile;
-  if (profile && typeof profile === 'object') {
-    const encoded = encodeURIComponent(JSON.stringify(profile));
-    res.cookies.set(PROFILE_COOKIE, encoded, {
-      ...cookieOptions,
-      httpOnly: false,
-    });
-  }
+  const profile = {
+    firstName: dbUser.firstName,
+    lastName: dbUser.lastName,
+    email: dbUser.email,
+    avatar: dbUser.avatar,
+  };
+  
+  res.cookies.set(PROFILE_COOKIE, encodeURIComponent(JSON.stringify(profile)), {
+    ...cookieOptions,
+    httpOnly: false,
+  });
 
   return res;
 }
+
 
 export async function DELETE() {
   const res = NextResponse.json({ ok: true });

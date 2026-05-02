@@ -28,55 +28,24 @@ export async function finalizeSession(
     const token = await firebaseUser.getIdToken();
     setAuthToken(token);
 
-    let dbUser: DbUser;
-
-    if (options.sync) {
-      const { data } = await api.post<DbUser>('/users/sync', options.payload ?? {});
-      dbUser = data;
-    } else {
-      const res = await api.get<DbUser>('/users/me');
-      dbUser = res.data;
-    }
-
-    const freshToken = await firebaseUser.getIdToken(true);
-    setAuthToken(freshToken);
-
-    const sessionOk = await postSessionCookie(freshToken, {
-      firstName: dbUser.firstName,
-      lastName: dbUser.lastName,
-      email: dbUser.email,
-      avatar: dbUser.avatar,
+    // Consolidated: One network call from client to Next.js API, which then proxies to external API.
+    const result = await postSessionCookie(token, {
+      sync: options.sync,
+      payload: options.payload,
     });
 
-    if (!sessionOk) {
+    if (!result.ok || !result.dbUser) {
       await clearSession();
-      return { ok: false, reason: 'error', message: 'Something went wrong. Please try again.' };
+      return { ok: false, reason: 'error', message: 'Auth synchronization failed. Please try again.' };
     }
 
-    return { ok: true, dbUser };
+    return { ok: true, dbUser: result.dbUser };
   } catch (error: unknown) {
-    const err = error as {
-      status?: number;
-      response?: { status?: number; data?: { message?: string | string[]; error?: string } };
-    };
-    const response = err.response;
-    const status = response?.status ?? err.status;
-    const rawMessage = response?.data?.message;
-    const message = Array.isArray(rawMessage) ? rawMessage[0] : rawMessage;
-    const errorLabel = String(response?.data?.error ?? '').toLowerCase();
-    const normalizedMessage = String(message ?? '').toLowerCase();
-    const looksLikeMissingAccount =
-      errorLabel.includes('not found') ||
-      normalizedMessage.includes('not found') ||
-      normalizedMessage.includes('no account') ||
-      normalizedMessage.includes('user does not exist');
+    const err = error as any;
+    const status = err.status ?? err.response?.status;
+    const looksLikeMissingAccount = status === 404;
 
-    const shouldTreatAsNoAccount =
-      status === 404 ||
-      (!options.sync && (status === 401 || status === 403)) ||
-      ((status === 401 || status === 403) && looksLikeMissingAccount);
-
-    if (shouldTreatAsNoAccount) {
+    if (looksLikeMissingAccount) {
       await clearSession();
       return {
         ok: false,
@@ -89,7 +58,8 @@ export async function finalizeSession(
     return {
       ok: false,
       reason: 'error',
-      message: message || 'Something went wrong. Please try again.',
+      message: 'Something went wrong. Please try again.',
     };
   }
 }
+

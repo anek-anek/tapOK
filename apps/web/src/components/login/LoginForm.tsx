@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -30,10 +30,11 @@ function getFirebaseError(code: string): string {
 }
 
 interface LoginFormProps {
-  redirectTo: string;
+  searchParams: Promise<{ redirectTo?: string }>;
 }
 
-export default function LoginForm({ redirectTo }: LoginFormProps) {
+export default function LoginForm({ searchParams }: LoginFormProps) {
+  const { redirectTo = '/drops' } = use(searchParams);
   const router = useRouter();
   const { user, dbUser, setSession } = useAuth();
 
@@ -153,9 +154,9 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
 
   return (
     <AuthPageShell>
-      <div className="animate-fade-up mb-6">
+      <div className="mb-6">
         <div
-          className="mb-3 inline-flex items-center gap-2"
+          className="auth-panel-in mb-3 inline-flex items-center gap-2"
           style={{
             background: '#006666',
             color: 'var(--color-tok-cream)',
@@ -172,12 +173,12 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           WELCOME BACK
         </div>
         <h1
-          className="font-passion font-bold uppercase leading-none text-black"
-          style={{ fontSize: 'clamp(32px, 4vw, 48px)', letterSpacing: '-0.01em' }}
+          className="auth-panel-in font-passion font-bold uppercase leading-none text-black"
+          style={{ fontSize: 'clamp(32px, 4vw, 48px)', letterSpacing: '-0.01em', animationDelay: '0.05s' }}
         >
           TAP BACK IN.
         </h1>
-        <p className="mt-2 font-inter text-sm text-black/50">
+        <p className="auth-panel-in mt-2 font-inter text-sm text-black/50" style={{ animationDelay: '0.1s' }}>
           Don&apos;t have an account?{' '}
           <Link
             href={`/register${redirectTo !== '/' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`}
@@ -193,8 +194,8 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={googleLoading || isSubmitting}
-        className="animate-fade-up-2 mb-5 flex w-full items-center justify-center gap-3 border-2 border-black bg-white px-5 py-3 font-inter text-sm font-medium text-black transition-all duration-150 ease-in-out disabled:cursor-not-allowed disabled:opacity-50"
-        style={{ boxShadow: '4px 4px 0 #000', borderRadius: 0 }}
+        className="auth-panel-in mb-5 flex w-full items-center justify-center gap-3 border-2 border-black bg-white px-5 py-3 font-inter text-sm font-medium text-black transition-all duration-150 ease-in-out disabled:cursor-not-allowed disabled:opacity-50"
+        style={{ boxShadow: '4px 4px 0 #000', borderRadius: 0, animationDelay: '0.15s' }}
         onMouseEnter={(e) => {
           if (!googleLoading && !isSubmitting) {
             (e.currentTarget as HTMLElement).style.transform = 'translate(-2px,-2px)';
@@ -220,7 +221,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       </button>
 
       {/* Divider */}
-      <div className="animate-fade-up-3 mb-5 flex items-center gap-3">
+      <div className="auth-panel-in mb-5 flex items-center gap-3" style={{ animationDelay: '0.2s' }}>
         <div className="h-[2px] flex-1 bg-black/10" />
         <span className="font-passion text-xs uppercase tracking-[0.12em] text-black/30">Or continue with</span>
         <div className="h-[2px] flex-1 bg-black/10" />
@@ -228,7 +229,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-        <AuthFormField label="Email address" error={errors.email?.message} animClass="animate-fade-up-3">
+        <AuthFormField label="Email address" error={errors.email?.message} animClass="auth-panel-in" style={{ animationDelay: '0.25s' }}>
           <input
             {...register('email')}
             type="email"
@@ -239,7 +240,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           />
         </AuthFormField>
 
-        <AuthFormField label="Password" error={errors.password?.message} animClass="animate-fade-up-4">
+        <AuthFormField label="Password" error={errors.password?.message} animClass="auth-panel-in" style={{ animationDelay: '0.3s' }}>
           <div className="relative">
             <input
               {...register('password')}
@@ -264,7 +265,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           </div>
         </AuthFormField>
 
-        <div className="animate-fade-up-5 flex justify-end">
+        <div className="auth-panel-in flex justify-end" style={{ animationDelay: '0.35s' }}>
           <Link
             href="/forgot-password"
             className="font-inter text-xs font-semibold uppercase tracking-wider text-black/40 transition-colors duration-150 hover:text-tok-teal"
@@ -277,8 +278,8 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         <button
           type="submit"
           disabled={isSubmitting || googleLoading}
-          className="animate-fade-up-6 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-tok-black bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white shadow-[6px_6px_0px_0px_#262624] active:translate-y-0 active:shadow-none"
-          style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease', opacity: isSubmitting || googleLoading ? 0.6 : 1, cursor: isSubmitting || googleLoading ? 'not-allowed' : 'pointer' }}
+          className="auth-panel-in flex w-full items-center justify-center gap-2 rounded-lg border-2 border-tok-black bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white shadow-[6px_6px_0px_0px_#262624] active:translate-y-0 active:shadow-none"
+          style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease', opacity: isSubmitting || googleLoading ? 0.6 : 1, cursor: isSubmitting || googleLoading ? 'not-allowed' : 'pointer', animationDelay: '0.4s' }}
           onMouseEnter={(e) => {
             if (!isSubmitting && !googleLoading) {
               (e.currentTarget as HTMLElement).style.transform = 'translate(-2px,-2px)';
@@ -302,7 +303,8 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           )}
         </button>
 
-        <p className="animate-fade-up-7 text-center font-inter text-xs text-black/30">
+        <p className="auth-panel-in text-center font-inter text-xs text-black/30" style={{ animationDelay: '0.45s' }}>
+
           By signing in, you agree to our{' '}
           <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-black/60">
             Terms &amp; Conditions
