@@ -3,14 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { UsersController } from './app/users/users.controller';
-import { OrganizationsController } from './app/organizations/organizations.controller';
 import { UsersService } from './app/users/users.service';
 import { UsersRepository } from './app/users/users.repository';
-import { OrganizationsService } from './app/organizations/organizations.service';
-import { OrganizationsRepository } from './app/organizations/organizations.repository';
 import { User } from './app/users/entities/user.entity';
-import { Organization } from './app/organizations/entities/organization.entity';
-import { OrganizationMember } from './app/organizations/entities/organization-member.entity';
 import { DropsController } from './app/drops/drops.controller';
 import { DropsService } from './app/drops/drops.service';
 import { DropsCronService } from './app/drops/drops-cron.service';
@@ -39,15 +34,11 @@ function stub<T>(token: T): { provide: T; useValue: object } {
       { name: 'strict', ...THROTTLE_STRICT },
     ]),
   ],
-  controllers: [UsersController, OrganizationsController, DropsController],
+  controllers: [UsersController, DropsController],
   providers: [
     stub(UsersService),
     stub(UsersRepository),
-    stub(OrganizationsService),
-    stub(OrganizationsRepository),
     stub(getRepositoryToken(User)),
-    stub(getRepositoryToken(Organization)),
-    stub(getRepositoryToken(OrganizationMember)),
     stub(DropsService),
     stub(DropsCronService),
     stub(DropsRepository),

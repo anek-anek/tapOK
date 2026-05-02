@@ -47,6 +47,7 @@ export function CrewRoster({
     id: `chief-${organiserId}`,
     dropId,
     userId: organiserId,
+    memberRole: 'chief',
     status: 'in',
     isPresent: true,
     joinedAt: dropCreatedAt,

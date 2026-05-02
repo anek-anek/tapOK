@@ -102,10 +102,13 @@ export interface DropSpark {
 
 export type DropCrewStatus = 'in' | 'pending' | 'rejected' | 'removed' | 'invited';
 
+export type DropCrewMemberRole = 'chief' | 'crew' | 'co_chief';
+
 export interface DropCrew {
   id: string;
   dropId: string;
   userId: string;
+  memberRole: DropCrewMemberRole;
   status: DropCrewStatus;
   isPresent: boolean;
   joinedAt: string;
@@ -115,6 +118,7 @@ export interface CrewMember {
   id: string;
   dropId: string;
   userId: string;
+  memberRole: DropCrewMemberRole;
   status: DropCrewStatus;
   isPresent: boolean;
   joinedAt: string;

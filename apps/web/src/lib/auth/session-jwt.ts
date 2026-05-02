@@ -8,7 +8,7 @@ export const firebaseJwks = createRemoteJWKSet(
   ),
 );
 
-export type SessionRole = 'admin' | 'photographer' | 'participant';
+export type SessionRole = 'admin' | 'participant';
 
 export type VerifiedFirebaseSession = {
   uid: string;
@@ -25,7 +25,7 @@ export async function verifyFirebaseSessionToken(token: string): Promise<Verifie
 
     const roleRaw = (payload as Record<string, unknown>)['role'];
     const role: SessionRole | null =
-      roleRaw === 'admin' || roleRaw === 'photographer' || roleRaw === 'participant' ? roleRaw : null;
+      roleRaw === 'admin' || roleRaw === 'participant' ? roleRaw : null;
 
     return {
       uid: payload.sub!,

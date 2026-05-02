@@ -7,7 +7,7 @@ export * from './enums/drop-category.enum';
 export * from './enums/drop-crew-status.enum';
 export * from './enums/drop-status.enum';
 export * from './enums/gender.enum';
-export * from './enums/org-role.enum';
+export * from './enums/drop-crew-member-role.enum';
 export * from './enums/user-role.enum';
 export * from './firebase/firebase.module';
 export * from './guards/cron.guard';

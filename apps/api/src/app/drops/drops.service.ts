@@ -14,7 +14,13 @@ import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
 import { DropPhoto } from './entities/drop-photo.entity';
-import { DropCategory, DropCrewStatus, DropStatus, SupabaseStorageService } from '../../common';
+import {
+  DropCategory,
+  DropCrewMemberRole,
+  DropCrewStatus,
+  DropStatus,
+  SupabaseStorageService,
+} from '../../common';
 import { CreateDropDto } from './dto/create-drop.dto';
 import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
 import { DiscoverDropsResponseDto } from './dto/discover-drops-response.dto';
@@ -179,6 +185,17 @@ export class DropsService {
         userId: organiser.id,
         action: 'created',
       });
+
+      const existingChiefRow = await this.dropsRepository.findCrewMember(drop.id, organiser.id);
+      if (!existingChiefRow) {
+        await this.dropsRepository.addCrewMember(
+          drop.id,
+          organiser.id,
+          DropCrewStatus.IN,
+          !(drop.isLocked ?? false),
+          DropCrewMemberRole.CHIEF,
+        );
+      }
 
       if (dto.coverPhotoBase64?.trim()) {
         const { buffer, mimeType } = this.coverBufferFromDataUrl(dto.coverPhotoBase64);
