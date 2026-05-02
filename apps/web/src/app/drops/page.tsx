@@ -36,6 +36,10 @@ function sortRecent(a: Drop, b: Drop) {
   return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
 }
 
+function sortByScheduledAtAsc(a: Drop, b: Drop) {
+  return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
+}
+
 function DropsDotGrid() {
   return (
     <div
@@ -214,9 +218,9 @@ export default function DropsPage() {
   const [isJoiningNavigation, setIsJoiningNavigation] = useState(false);
 
   const { activeDrops, completedDrops, focusDrop, upcomingCount, pastCount } = useMemo(() => {
-    const current = drops.filter(
-      (d) => d.status === 'active' || d.status === 'ongoing'
-    );
+    const current = drops
+      .filter((d) => d.status === 'active' || d.status === 'ongoing')
+      .sort(sortByScheduledAtAsc);
     const focus = current[0] ?? null;
     const upcoming = current.filter((d) => d.id !== focus?.id);
     const past = drops.filter((d) => d.status === 'completed').sort(sortRecent);
