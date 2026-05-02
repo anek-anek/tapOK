@@ -62,16 +62,13 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FFF4BD]">
-        <Loader2 className="h-6 w-6 animate-spin text-tok-teal" />
-      </div>
-    );
-  }
-
   return (
     <AuthPageShell>
+      {loading && !user && (
+        <p className="mb-4 text-center font-inter text-xs text-black/45" aria-live="polite">
+          Connecting…
+        </p>
+      )}
           {sentTo ? (
             <div className="animate-fade-up flex flex-col gap-5">
               <div

@@ -223,7 +223,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   const mounted = useMounted();
 
   const { data: drop, isError: isDropError, isLoading: isDropLoading } = useDropByJoinCode(joinCode);
-  const { dbUser, loading: authLoading } = useAuth();
+  const { user, dbUser, loading: authLoading } = useAuth();
 
   const { data: crewStatus, isError: isCrewError, error: crewError } = useMyCrewStatus(
     drop?.id ?? '',
@@ -261,7 +261,54 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
     if (crewStatus?.status === 'in') track('crew_tapped_in', { dropId: drop?.id });
   }, [crewStatus?.status, drop?.id]);
 
-  if (!mounted || isDropLoading) {
+  if (!mounted || authLoading) {
+    return (
+      <div className="flex min-h-screen flex-col bg-tok-cream">
+        <TapokNavbar />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <Skeleton className="mx-auto h-2 w-24 bg-tok-black/10" />
+            <p className="mt-6 font-passion text-xs font-bold uppercase tracking-[3px] text-tok-black/20">Establishing connection…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen flex-col bg-tok-cream">
+        <TapokNavbar />
+        <div className="flex flex-1 items-center justify-center px-4">
+          <div className="w-full max-w-sm rounded-2xl border-[3px] border-tok-black bg-white p-8 text-center shadow-[12px_12px_0px_#1C1C1A]">
+            <p className="font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal">Crew invite</p>
+            <p className="mt-4 font-passion text-lg font-bold uppercase tracking-tight text-tok-black">Sign in to view this drop</p>
+            <p className="mt-2 font-inter text-sm text-tok-black/60">
+              Use your TapOK account to load mission details and tap into the crew.
+            </p>
+            <div className="mt-8 flex flex-col gap-3">
+              <Link
+                href={`/login?redirectTo=${encodeURIComponent(`/drops/join/${joinCode}`)}`}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-white px-6 py-4 font-passion text-[13px] font-bold uppercase tracking-[2px] text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]"
+              >
+                <IconLogIn size={16} strokeWidth={2.5} />
+                Log in
+              </Link>
+              <Link
+                href={`/register?redirectTo=${encodeURIComponent(`/drops/join/${joinCode}`)}`}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-teal px-6 py-4 font-passion text-[13px] font-bold uppercase tracking-[2px] text-[#F7E9B2] shadow-[6px_6px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_#1C1C1A]"
+              >
+                <IconUserPlus size={16} strokeWidth={2.5} />
+                Sign up to Tap In
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isDropLoading) {
     return (
       <div className="flex min-h-screen flex-col bg-tok-cream">
         <TapokNavbar />
@@ -282,22 +329,11 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
         <div className="flex flex-1 items-center justify-center px-4">
           <div className="w-full max-w-sm rounded-2xl border-[3px] border-tok-black bg-white p-8 text-center shadow-[12px_12px_0px_#1C1C1A]">
             <p className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black">Drop Disconnected</p>
-            <p className="mt-2 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black/40">Link expired or invalid token.</p>
+            <p className="mt-2 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black/40">Link expired or invalid join code.</p>
             <Link href="/" className="mt-8 inline-block font-passion text-xs font-bold uppercase tracking-[2px] text-tok-teal underline underline-offset-4">
               Return Home
             </Link>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen flex-col bg-tok-cream">
-        <TapokNavbar />
-        <div className="flex flex-1 items-center justify-center">
-          <Skeleton className="mx-auto h-2 w-24 bg-tok-black/10" />
         </div>
       </div>
     );

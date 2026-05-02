@@ -62,6 +62,9 @@ export function AuthProvider({
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        const bootstrapToken = await firebaseUser.getIdToken();
+        setAuthToken(bootstrapToken);
+
         setUser(firebaseUser);
 
         if (prevUidRef.current !== null && prevUidRef.current !== firebaseUser.uid) {

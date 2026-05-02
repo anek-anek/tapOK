@@ -377,7 +377,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 function DropDetailContent({ id }: { id: string }) {
   const router = useRouter();
   const mounted = useMounted();
-  const { dbUser, loading: authLoading, isReady } = useAuth();
+  const { user, dbUser, loading: authLoading, isReady } = useAuth();
   const { data: drop, isError, isLoading: dropLoading } = useDrop(id);
 
   // Initial loading is handled by Suspense
@@ -488,7 +488,34 @@ function DropDetailContent({ id }: { id: string }) {
   };
 
   const pendingMembers = crew?.filter((m) => m.status === 'pending') ?? [];
-  if (!mounted || !isReady || (authLoading && !dbUser) || dropLoading) return <PageSkeleton />;
+  if (!mounted || !isReady || authLoading) return <PageSkeleton />;
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-tok-cream text-tok-black">
+        <TapokNavbar />
+        <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-10">
+          <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-8 shadow-[8px_8px_0px_#1C1C1A] sm:p-12">
+            <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+              Members only
+            </p>
+            <h2 className="mt-4 font-passion text-[clamp(28px,4vw,48px)] font-bold uppercase tracking-tight text-tok-black">
+              Sign in to view this drop.
+            </h2>
+            <p className="mt-4 max-w-xl font-inter text-base leading-relaxed text-tok-black/60">
+              Mission details and crew tools require a TapOK account. Sign in with the same account you used to create or join this drop.
+            </p>
+            <Link
+              href={`/login?redirectTo=${encodeURIComponent(`/drops/${id}`)}`}
+              className="mt-8 inline-flex items-center gap-2.5 rounded-[4px] border-[3px] border-tok-black bg-tok-teal px-6 py-3.5 font-passion text-sm font-bold uppercase tracking-[2px] text-white transition-all hover:-translate-y-1 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+            >
+              Sign in
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+  if (dropLoading) return <PageSkeleton />;
 
   if (isError || !drop) {
     return (
