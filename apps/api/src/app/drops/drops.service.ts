@@ -229,6 +229,17 @@ export class DropsService {
         const { buffer, mimeType } = this.coverBufferFromDataUrl(dto.coverPhotoBase64);
         const publicUrl = await this.storageService.uploadDropCover(drop.id, buffer, mimeType);
         await this.dropsRepository.update(drop.id, { coverPhoto: publicUrl });
+      } else {
+        const origin = baseUrl.replace(/\/$/, '');
+        const defaultCover =
+          dto.category === DropCategory.HANGOUT
+            ? '/tapok-hangout.png'
+            : dto.category === DropCategory.PARTY
+              ? '/tapok-party.png'
+              : null;
+        if (defaultCover) {
+          await this.dropsRepository.update(drop.id, { coverPhoto: defaultCover });
+        }
       }
 
       return this.dropsRepository.findById(drop.id) as Promise<Drop>;
