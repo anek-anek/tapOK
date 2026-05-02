@@ -25,7 +25,16 @@ import type { Request } from 'express';
 
 import { Throttle } from '@nestjs/throttler';
 import type { DecodedIdToken } from 'firebase-admin/auth';
-import { FirebaseAuthGuard, RolesGuard, Roles, UserRole, AuthUser, THROTTLE_STRICT } from '../../common';
+import {
+  FirebaseAuthGuard,
+  RolesGuard,
+  Roles,
+  UserRole,
+  AuthUser,
+  Public,
+  THROTTLE_STRICT,
+} from '../../common';
+import { CheckAuthProviderDto } from './dto/check-auth-provider.dto';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SyncUserDto } from './dto/sync-user.dto';
@@ -71,6 +80,30 @@ export class UsersController {
   @ApiResponse({ status: 200, type: [FrequentCrewDto] })
   getFrequentCrew(@Req() request: RequestWithUser): Promise<FrequentCrewDto[]> {
     return this.usersService.getFrequentCrew(request.user.uid);
+  }
+
+  @Post('auth-provider-check')
+  @Public()
+  @Throttle({ strict: THROTTLE_STRICT })
+  @ApiOperation({ summary: 'Check whether an email already belongs to an existing auth provider' })
+  @ApiResponse({
+    status: 201,
+    schema: {
+      example: {
+        exists: true,
+        authProvider: 'password',
+      },
+    },
+  })
+  async checkAuthProvider(@Body() dto: CheckAuthProviderDto): Promise<{
+    exists: boolean;
+    authProvider: 'password' | 'google' | null;
+  }> {
+    const authProvider = await this.usersService.findExistingAuthProviderByEmail(dto.email);
+    return {
+      exists: authProvider !== null,
+      authProvider,
+    };
   }
 
   @Get(':id')

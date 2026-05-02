@@ -7,6 +7,7 @@ import { getFirebaseAuth } from '@/lib/firebase';
 import { setAuthToken } from '@/services/api';
 import { finalizeSession } from '@/lib/auth/finalize-session';
 import { applyIdTokenToAxiosAndSessionCookie } from '@/lib/auth/session-cookie';
+import { isAuthRoute } from '@/lib/constants/routes';
 
 export type UserRole = 'admin' | 'participant';
 export type AuthProvider = 'password' | 'google';
@@ -75,7 +76,7 @@ export function AuthProvider({
         prevUidRef.current = firebaseUser.uid;
 
         // Login/Registration handle their own finalization/sync logic to avoid race conditions.
-        if (window.location.pathname === '/register' || window.location.pathname === '/login') {
+        if (isAuthRoute(window.location.pathname)) {
           setLoading(false);
           setIsReady(true);
           return;
