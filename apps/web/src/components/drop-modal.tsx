@@ -37,6 +37,11 @@ import { ModalShell } from '@/components/modal-shell';
 import type { Drop } from '@/types/drop';
 import { cn } from '@/lib/utils';
 
+const DROP_DEFAULT_COVER_PATH: Record<'hangout' | 'party', string> = {
+  hangout: '/tapok-hangout.png',
+  party: '/tapok-party.png',
+};
+
 const expectedHeadcountSchema = z.coerce
   .number()
   .int()
@@ -395,12 +400,24 @@ export function DropModal({
     },
   });
 
-  const [name, scheduledAt, location, overview] = watch([
+  const [name, scheduledAt, location, overview, category] = watch([
     'name',
     'scheduledAt',
     'location',
     'overview',
+    'category',
   ]);
+
+  useEffect(() => {
+    if (isEdit || pendingCoverFile) return;
+    if (category === 'hangout') {
+      setCoverPreview(DROP_DEFAULT_COVER_PATH.hangout);
+    } else if (category === 'party') {
+      setCoverPreview(DROP_DEFAULT_COVER_PATH.party);
+    } else {
+      setCoverPreview(null);
+    }
+  }, [category, isEdit, pendingCoverFile]);
 
   const [isSubmittingInternal, setIsSubmittingInternal] = useState(false);
   const isBusy = createDrop.isPending || updateDrop.isPending || uploadCoverPhoto.isPending || deleteCoverPhoto.isPending || isSubmitting || isSubmittingInternal;

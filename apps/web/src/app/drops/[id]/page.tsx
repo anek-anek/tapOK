@@ -36,6 +36,7 @@ import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCre
 import { SparkButton } from '@/components/drops/spark-button';
 import { toast } from 'react-hot-toast';
 import type { DropStatus } from '@/types/drop';
+import { coverPhotoSrcForNextImage } from '@/lib/config';
 import { cn } from '@/lib/utils';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
@@ -630,7 +631,14 @@ function DropDetailContent({ id }: { id: string }) {
         <section className="relative mb-10 overflow-hidden rounded-[4px] border-[3px] border-tok-black bg-tok-teal p-6 shadow-[8px_8px_0px_#1C1C1A] sm:p-10 lg:p-12">
           {drop.coverPhoto && (
             <div className="pointer-events-none absolute inset-0 z-0">
-              <Image src={drop.coverPhoto} alt="" fill className="object-cover opacity-25" sizes="100vw" loading="eager" priority />
+              <Image
+                src={coverPhotoSrcForNextImage(drop.coverPhoto)}
+                alt=""
+                fill
+                className="object-cover opacity-25"
+                sizes="100vw"
+                priority
+              />
               <div className="absolute inset-0 bg-linear-to-r from-tok-teal via-tok-teal/80 to-transparent" />
             </div>
           )}

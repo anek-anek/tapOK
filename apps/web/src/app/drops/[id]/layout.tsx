@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getApiUrl } from '@/lib/config';
+import { absoluteUrlForMetadata, getApiUrl } from '@/lib/config';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     const drop = await res.json();
-    const ogImage = drop.coverPhoto || '/tapok.png';
+    const ogImage = absoluteUrlForMetadata(drop.coverPhoto || '/tapok.png');
 
     return {
       title: `${drop.name} | TapOK`,

@@ -1,7 +1,7 @@
 'use client';
 
 import { Mail, Phone, Calendar as IconCalendar, Pencil, X, Check, User, ChevronDown, Camera } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { useCurrentUser, useFrequentCrew } from '@/hooks/queries/use-users';
@@ -57,6 +57,28 @@ const formatDateForDisplay = (dateStr?: string | Date) => {
   }
 };
 
+/** PH mobile national significant number: 10 digits, first digit 9 (+63 is separate in the UI). */
+const PH_MOBILE_TEN_DIGITS = /^9\d{9}$/;
+
+function parsePhoneToTenDigits(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('63')) {
+    return digits.slice(2, 12);
+  }
+  if (digits.startsWith('0')) {
+    return digits.slice(1, 11);
+  }
+  if (digits.startsWith('9')) {
+    return digits.slice(0, 10);
+  }
+  return digits.slice(0, 10);
+}
+
+function tenDigitsToE164(ten: string): string {
+  return ten ? `+63${ten}` : '';
+}
+
 export default function ProfilePage() {
   const mounted = useMounted();
   const { dbUser, refreshUser } = useAuth();
@@ -73,24 +95,28 @@ export default function ProfilePage() {
     gender: '',
     avatar: ''
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateUser = useUpdateUser(profile?.id ?? '');
   const { data: myDrops = [], isLoading: dropsLoading } = useMyDrops();
   const { data: frequentCrew = [] } = useFrequentCrew();
 
+  const masonryCoverPriorityIds = useMemo(() => {
+    const orchestrated = myDrops.filter((d) => d.organiserId === profile?.id);
+    const active = orchestrated.filter((d) => d.status !== 'completed');
+    return new Set(active.slice(0, 2).map((d) => d.id));
+  }, [myDrops, profile?.id]);
+
   function startEdit() {
     setForm({
       firstName: profile?.firstName ?? '',
       lastName: profile?.lastName ?? '',
-      phone: profile?.phone ?? '',
+      phone: parsePhoneToTenDigits(profile?.phone ?? ''),
       userHandle: profile?.userHandle ?? '',
       birthday: formatDateForInput(profile?.birthday ?? ''),
       gender: (profile?.gender as string) ?? '',
       avatar: profile?.avatar ?? '',
     });
-    setErrors({});
     setEditing(true);
   }
 
@@ -111,19 +137,20 @@ export default function ProfilePage() {
 
   function saveEdit() {
     if (!profile) return;
-    // Validation
-    const phPhoneRegex = /^(09|\+639|639)\d{9}$/;
-    const cleanPhone = form.phone.replace(/[\s-]/g, '');
+    const tenDigits = form.phone.replace(/\D/g, '').slice(0, 10);
+    const profileTen = parsePhoneToTenDigits(profile.phone ?? '');
 
-    if (form.phone && !phPhoneRegex.test(cleanPhone)) {
-      setErrors({ phone: 'MUST BE A VALID PH NUMBER (09XX...)' });
+    if (tenDigits && !PH_MOBILE_TEN_DIGITS.test(tenDigits)) {
+      toast.error('ENTER 10 DIGITS STARTING WITH 9');
       return;
     }
 
     const dto: Record<string, unknown> = {};
     if (form.firstName !== profile.firstName) dto.firstName = form.firstName;
     if (form.lastName !== profile.lastName) dto.lastName = form.lastName;
-    if (form.phone !== (profile.phone ?? '')) dto.phone = form.phone || undefined;
+    if (tenDigits !== profileTen) {
+      dto.phone = tenDigits ? tenDigitsToE164(tenDigits) : undefined;
+    }
     if (form.userHandle !== (profile.userHandle ?? '')) dto.userHandle = form.userHandle || undefined;
     if (form.birthday !== formatDateForInput(profile?.birthday ?? '')) dto.birthday = form.birthday || undefined;
     if (form.gender !== (profile.gender ?? '')) dto.gender = form.gender || undefined;
@@ -146,7 +173,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-tok-cream">
         <TapokNavbar />
-        <main className="mx-auto max-w-2xl px-6 py-12">
+        <main className="mx-auto max-w-2xl px-3 py-12 sm:px-6">
           {/* Header Skeleton */}
           <div className="mb-10 flex items-end justify-between border-b-4 border-tok-black/10 pb-4">
             <Skeleton className="h-16 w-48 rounded-none border-2 border-tok-black/10 bg-tok-black/5" />
@@ -168,15 +195,18 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Grid Skeleton */}
-            <div className="grid gap-6 sm:grid-cols-2">
+            {/* Grid Skeleton — 2×2 at all breakpoints */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-6">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="border-2 border-tok-black/10 bg-tok-white p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)]">
-                  <div className="mb-4 flex items-center gap-3">
-                    <Skeleton className="h-8 w-8 rounded-none bg-tok-black/5" />
-                    <Skeleton className="h-6 w-32 rounded-none bg-tok-black/5" />
+                <div
+                  key={i}
+                  className="min-w-0 border-2 border-tok-black/10 bg-tok-white p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)] sm:p-6"
+                >
+                  <div className="mb-3 flex min-w-0 items-center gap-2 sm:mb-4 sm:gap-3">
+                    <Skeleton className="h-7 w-7 shrink-0 rounded-none bg-tok-black/5 sm:h-8 sm:w-8" />
+                    <Skeleton className="h-5 min-w-0 flex-1 rounded-none bg-tok-black/5 sm:h-6" />
                   </div>
-                  <Skeleton className="h-4 w-48 rounded-none bg-tok-black/5" />
+                  <Skeleton className="h-4 w-full max-w-48 rounded-none bg-tok-black/5" />
                 </div>
               ))}
             </div>
@@ -240,7 +270,7 @@ export default function ProfilePage() {
 
       <TapokNavbar />
 
-      <main className="relative mx-auto max-w-2xl px-6 py-12">
+      <main className="relative mx-auto max-w-2xl px-3 py-12 sm:px-6">
         {/* Page Header — stack on narrow viewports so title never overlaps actions */}
         <div className="mb-10 flex flex-col gap-4 border-b-4 border-tok-black pb-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
           <h1 className="min-w-0 shrink font-passion text-[clamp(2.5rem,12vw,3.75rem)] leading-none tracking-tighter text-tok-black uppercase sm:text-6xl">
@@ -317,32 +347,35 @@ export default function ProfilePage() {
 
               <div className="flex-1 text-center sm:text-left">
                 {editing ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid w-full grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-1 text-left">
-                      <label className="font-passion text-xs text-tok-black/40 uppercase">First Name</label>
+                      <label className="font-passion text-sm text-tok-black/40 uppercase">First Name</label>
                       <input
                         value={form.firstName}
                         onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-                        className="w-full border-2 border-tok-black bg-tok-cream px-3 py-2 font-inter text-sm font-bold outline-none focus:bg-tok-white"
+                        className="w-full min-w-0 border-2 border-tok-black bg-tok-cream px-2 py-2 font-inter text-base font-bold outline-none focus:bg-tok-white sm:px-3"
                       />
                     </div>
                     <div className="space-y-1 text-left">
-                      <label className="font-passion text-xs text-tok-black/40 uppercase">Last Name</label>
+                      <label className="font-passion text-sm text-tok-black/40 uppercase">Last Name</label>
                       <input
                         value={form.lastName}
                         onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
-                        className="w-full border-2 border-tok-black bg-tok-cream px-3 py-2 font-inter text-sm font-bold outline-none focus:bg-tok-white"
+                        className="w-full min-w-0 border-2 border-tok-black bg-tok-cream px-2 py-2 font-inter text-base font-bold outline-none focus:bg-tok-white sm:px-3"
                       />
                     </div>
-                    <div className="space-y-1 text-left sm:col-span-2">
-                      <label className="font-passion text-xs text-tok-black/40 uppercase">User Handle</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-inter text-sm font-black text-tok-black/40">@</span>
+                    <div className="col-span-2 flex w-full flex-col items-center space-y-1">
+                      <label className="font-passion text-sm text-tok-black/40 uppercase">User Handle</label>
+                      <div className="flex w-full max-w-md border-2 border-tok-black bg-tok-cream shadow-[2px_2px_0px_0px_#262624] focus-within:bg-tok-white">
+                        <span className="flex shrink-0 items-center border-r-2 border-tok-black px-2 font-inter text-base font-black text-tok-black/40 sm:px-3">
+                          @
+                        </span>
                         <input
                           value={form.userHandle}
                           onChange={(e) => setForm((f) => ({ ...f, userHandle: e.target.value }))}
-                          className="w-full border-2 border-tok-black bg-tok-cream pl-8 pr-3 py-2 font-inter text-sm font-bold outline-none focus:bg-tok-white"
+                          className="min-w-0 flex-1 border-0 bg-transparent px-2 py-2 text-center font-inter text-base font-bold outline-none sm:px-3"
                           placeholder="yourhandle"
+                          aria-label="User handle"
                         />
                       </div>
                     </div>
@@ -353,11 +386,13 @@ export default function ProfilePage() {
                       {fullName}
                     </h2>
                     {profile?.userHandle && (
-                      <div className="mt-2 flex items-center gap-2">
-                        <div className="h-[2px] w-4 bg-tok-teal/40" />
-                        <span className="font-inter text-[12px] font-black uppercase tracking-[3px] text-tok-teal">
-                          @{profile.userHandle}
-                        </span>
+                      <div className="mt-2 flex w-full justify-center">
+                        <div className="flex items-center gap-2">
+                          <div className="h-[2px] w-4 bg-tok-teal/40" />
+                          <span className="font-inter text-sm font-black uppercase tracking-[3px] text-tok-teal">
+                            @{profile.userHandle}
+                          </span>
+                        </div>
                       </div>
                     )}
                   </>
@@ -382,68 +417,76 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          {/* Contact Details Grid */}
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
-            <div className="border-2 border-tok-black bg-tok-white p-6 shadow-[4px_4px_0px_0px_#262624]">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="border-2 border-tok-black bg-tok-teal p-1.5 text-tok-white">
-                  <Mail size={18} />
+          {/* Contact Details Grid — 2×2 at all breakpoints */}
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-6">
+            <div className="min-w-0 border-2 border-tok-black bg-tok-white p-4 shadow-[4px_4px_0px_0px_#262624] sm:p-6">
+              <div className="mb-3 flex min-w-0 items-center gap-2 sm:mb-4 sm:gap-3">
+                <div className="shrink-0 border-2 border-tok-black bg-tok-teal p-1 text-tok-white sm:p-1.5">
+                  <Mail className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
                 </div>
-                <h3 className="font-passion text-xl uppercase tracking-tight">Email Address</h3>
+                <h3 className="min-w-0 font-passion text-sm uppercase leading-tight tracking-tight sm:text-xl">
+                  Email Address
+                </h3>
               </div>
-              <p className="font-inter text-sm font-bold text-tok-black/60 break-all">
+              <p className="break-all font-inter text-sm font-bold text-tok-black/60 sm:text-base">
                 {displayUser.email}
               </p>
             </div>
 
-            <div className="border-2 border-tok-black bg-tok-white p-6 shadow-[4px_4px_0px_0px_#262624]">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="border-2 border-tok-black bg-tok-teal p-1.5 text-tok-white">
-                  <Phone size={18} />
+            <div className="min-w-0 border-2 border-tok-black bg-tok-white p-4 shadow-[4px_4px_0px_0px_#262624] sm:p-6">
+              <div className="mb-3 flex min-w-0 items-center gap-2 sm:mb-4 sm:gap-3">
+                <div className="shrink-0 border-2 border-tok-black bg-tok-teal p-1 text-tok-white sm:p-1.5">
+                  <Phone className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
                 </div>
-                <h3 className="font-passion text-xl uppercase tracking-tight">Phone Number</h3>
+                <h3 className="min-w-0 font-passion text-sm uppercase leading-tight tracking-tight sm:text-xl">
+                  Phone Number
+                </h3>
               </div>
               {editing ? (
-                <div className="space-y-2">
+                <div className="flex w-full border-2 border-tok-black bg-tok-cream shadow-[2px_2px_0px_0px_#262624] focus-within:bg-tok-white">
+                  <span className="flex shrink-0 items-center border-r-2 border-tok-black px-2 font-inter text-base font-black text-tok-black/40 sm:px-3">
+                    +63
+                  </span>
                   <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    maxLength={10}
                     value={form.phone}
                     onChange={(e) => {
-                      setForm((f) => ({ ...f, phone: e.target.value }));
-                      if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setForm((f) => ({ ...f, phone: v }));
                     }}
-                    placeholder="+63 9XX XXX XXXX"
-                    className={cn(
-                      "w-full border-2 border-tok-black bg-tok-cream px-3 py-2 font-inter text-sm font-bold outline-none focus:bg-tok-white",
-                      errors.phone && "border-red-600 bg-red-50 text-red-600"
-                    )}
+                    placeholder="9XX XXX XXXX"
+                    className="min-w-0 flex-1 border-0 bg-transparent px-2 py-2 text-center font-inter text-base font-bold outline-none sm:px-3"
+                    aria-label="Phone number (10 digits, starting with 9)"
                   />
-                  {errors.phone && (
-                    <p className="font-inter text-[10px] font-black text-red-600 uppercase italic">
-                      {errors.phone}
-                    </p>
-                  )}
                 </div>
               ) : (
-                <p className="font-inter text-sm font-bold text-tok-black/60">
+                <p className="font-inter text-sm font-bold text-tok-black/60 sm:text-base">
                   {profile?.phone || 'NOT SET'}
                 </p>
               )}
             </div>
 
-            <div className="border-2 border-tok-black bg-tok-white p-6 shadow-[4px_4px_0px_0px_#262624]">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="border-2 border-tok-black bg-tok-teal p-1.5 text-tok-white">
-                  <IconCalendar size={18} />
+            <div className="min-w-0 border-2 border-tok-black bg-tok-white p-4 shadow-[4px_4px_0px_0px_#262624] sm:p-6">
+              <div className="mb-3 flex min-w-0 items-center gap-2 sm:mb-4 sm:gap-3">
+                <div className="shrink-0 border-2 border-tok-black bg-tok-teal p-1 text-tok-white sm:p-1.5">
+                  <IconCalendar className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
                 </div>
-                <h3 className="font-passion text-xl uppercase tracking-tight">Birthday</h3>
+                <h3 className="min-w-0 font-passion text-sm uppercase leading-tight tracking-tight sm:text-xl">
+                  Birthday
+                </h3>
               </div>
               {editing ? (
                 <Popover>
                   <PopoverTrigger
-                    className="flex h-10 w-full items-center justify-between border-2 border-tok-black bg-tok-cream px-3 py-2 font-inter text-sm font-bold outline-none focus:bg-tok-white"
+                    className="flex h-10 min-h-0 w-full min-w-0 items-center justify-between gap-1 border-2 border-tok-black bg-tok-cream px-2 py-2 font-inter text-sm font-bold outline-none focus:bg-tok-white sm:px-3 sm:text-base"
                   >
-                    {form.birthday ? format(new Date(form.birthday), 'PPP') : <span className="text-tok-black/20 italic">SELECT BIRTHDAY</span>}
-                    <ChevronDown size={16} className="text-tok-black/40" />
+                    <span className="min-w-0 truncate text-left">
+                      {form.birthday ? format(new Date(form.birthday), 'PPP') : <span className="text-tok-black/20 italic">SELECT BIRTHDAY</span>}
+                    </span>
+                    <ChevronDown size={16} className="shrink-0 text-tok-black/40" />
                   </PopoverTrigger>
                   <PopoverContent className="w-auto border-2 border-tok-black p-0 shadow-[4px_4px_0px_0px_#262624]" align="start">
                     <Calendar
@@ -458,24 +501,26 @@ export default function ProfilePage() {
                   </PopoverContent>
                 </Popover>
               ) : (
-                <p className="font-inter text-sm font-bold text-tok-black/60 uppercase">
+                <p className="font-inter text-sm font-bold text-tok-black/60 uppercase sm:text-base">
                   {formatDateForDisplay(displayUser.birthday)}
                 </p>
               )}
             </div>
 
-            <div className="border-2 border-tok-black bg-tok-white p-6 shadow-[4px_4px_0px_0px_#262624]">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="border-2 border-tok-black bg-tok-teal p-1.5 text-tok-white">
-                  <User size={18} />
+            <div className="min-w-0 border-2 border-tok-black bg-tok-white p-4 shadow-[4px_4px_0px_0px_#262624] sm:p-6">
+              <div className="mb-3 flex min-w-0 items-center gap-2 sm:mb-4 sm:gap-3">
+                <div className="shrink-0 border-2 border-tok-black bg-tok-teal p-1 text-tok-white sm:p-1.5">
+                  <User className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
                 </div>
-                <h3 className="font-passion text-xl uppercase tracking-tight">Gender</h3>
+                <h3 className="min-w-0 font-passion text-sm uppercase leading-tight tracking-tight sm:text-xl">
+                  Gender
+                </h3>
               </div>
               {editing ? (
                 <select
                   value={form.gender}
                   onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
-                  className="w-full border-2 border-tok-black bg-tok-cream px-3 py-2 font-inter text-sm font-bold outline-none focus:bg-tok-white appearance-none"
+                  className="w-full min-w-0 border-2 border-tok-black bg-tok-cream px-2 py-2 font-inter text-sm font-bold outline-none focus:bg-tok-white appearance-none sm:px-3 sm:text-base"
                 >
                   <option value="">SELECT GENDER</option>
                   <option value="male">MALE</option>
@@ -483,7 +528,7 @@ export default function ProfilePage() {
                   <option value="other">OTHER</option>
                 </select>
               ) : (
-                <p className="font-inter text-sm font-bold text-tok-black/60 uppercase">
+                <p className="font-inter text-sm font-bold text-tok-black/60 uppercase sm:text-base">
                   {displayUser.gender || 'NOT SET'}
                 </p>
               )}
@@ -522,10 +567,35 @@ export default function ProfilePage() {
                   <h3 className="font-passion text-3xl uppercase tracking-tighter">Active Missions</h3>
                   <span className="font-passion text-sm text-tok-black/40">{activeDrops.length} ONGOING</span>
                 </div>
-                <div className="space-y-4">
-                  {activeDrops.map(drop => (
-                    <ListDropCard key={drop.id} drop={drop} viewerId={profile?.id} />
-                  ))}
+                <div className="mt-2 flex gap-2 sm:gap-4">
+                  <div className="flex min-w-0 flex-1 flex-col gap-2 sm:gap-3">
+                    {activeDrops
+                      .filter((_, i) => i % 2 === 0)
+                      .map((drop) => (
+                        <div key={drop.id} className="min-w-0">
+                          <ListDropCard
+                            drop={drop}
+                            viewerId={profile?.id}
+                            layout="masonry"
+                            coverPriority={masonryCoverPriorityIds.has(drop.id)}
+                          />
+                        </div>
+                      ))}
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col gap-2 sm:gap-3">
+                    {activeDrops
+                      .filter((_, i) => i % 2 === 1)
+                      .map((drop) => (
+                        <div key={drop.id} className="min-w-0">
+                          <ListDropCard
+                            drop={drop}
+                            viewerId={profile?.id}
+                            layout="masonry"
+                            coverPriority={masonryCoverPriorityIds.has(drop.id)}
+                          />
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </div>
             )}

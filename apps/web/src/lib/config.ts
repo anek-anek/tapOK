@@ -27,3 +27,24 @@ export function getApiUrl(): string {
 
 export const PRIMARY_DOMAIN = getBaseUrl();
 export const API_URL = getApiUrl();
+
+export function absoluteUrlForMetadata(pathOrUrl: string): string {
+  if (pathOrUrl.startsWith('/')) {
+    const base = getBaseUrl().replace(/\/$/, '');
+    return `${base}${pathOrUrl}`;
+  }
+  return pathOrUrl;
+}
+
+const DEFAULT_COVER_PATHS = new Set(['/tapok-hangout.png', '/tapok-party.png']);
+
+export function coverPhotoSrcForNextImage(url: string): string {
+  if (url.startsWith('/') && DEFAULT_COVER_PATHS.has(url)) return url;
+  try {
+    const { pathname } = new URL(url);
+    if (DEFAULT_COVER_PATHS.has(pathname)) return pathname;
+  } catch {
+    /* relative or invalid */
+  }
+  return url;
+}
