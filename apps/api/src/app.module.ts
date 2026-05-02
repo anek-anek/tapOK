@@ -10,7 +10,6 @@ import { FirebaseAuthGuard, FirebaseModule, THROTTLE_DEFAULT, THROTTLE_STRICT } 
 import { AppController } from './app.controller';
 import { HealthModule } from './app/health/health.module';
 import { UsersModule } from './app/users/users.module';
-import { OrganizationsModule } from './app/organizations/organizations.module';
 import { DropsModule } from './app/drops/drops.module';
 
 @Module({
@@ -20,7 +19,7 @@ import { DropsModule } from './app/drops/drops.module';
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       { name: 'default', ...THROTTLE_DEFAULT },
-      { name: 'strict',  ...THROTTLE_STRICT },
+      { name: 'strict', ...THROTTLE_STRICT },
     ]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -41,7 +40,6 @@ import { DropsModule } from './app/drops/drops.module';
     FirebaseModule,
     HealthModule,
     UsersModule,
-    OrganizationsModule,
     DropsModule,
   ],
   providers: [

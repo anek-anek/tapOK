@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { DropCrewStatus } from '../../../common';
+import { DropCrewMemberRole, DropCrewStatus } from '../../../common';
 
 export class CrewMemberUserDto {
   @ApiProperty()
@@ -24,6 +24,9 @@ export class CrewMemberDto {
 
   @ApiProperty()
   userId: string;
+
+  @ApiProperty({ enum: DropCrewMemberRole })
+  memberRole: DropCrewMemberRole;
 
   @ApiProperty({ enum: DropCrewStatus })
   status: DropCrewStatus;

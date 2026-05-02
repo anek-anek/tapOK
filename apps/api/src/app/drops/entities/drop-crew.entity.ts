@@ -9,7 +9,7 @@ import {
   Unique,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { DropCrewStatus } from '../../../common';
+import { DropCrewMemberRole, DropCrewStatus } from '../../../common';
 import { User } from '../../users/entities/user.entity';
 import { Drop } from './drop.entity';
 
@@ -32,6 +32,10 @@ export class DropCrew {
   @Column()
   userId: string;
 
+  @ApiProperty({ enum: DropCrewMemberRole, default: DropCrewMemberRole.CREW })
+  @Column({ type: 'enum', enum: DropCrewMemberRole, default: DropCrewMemberRole.CREW })
+  memberRole: DropCrewMemberRole;
+
   @ApiProperty({ enum: DropCrewStatus })
   @Column({ type: 'enum', enum: DropCrewStatus, default: DropCrewStatus.IN })
   status: DropCrewStatus;
@@ -43,7 +47,6 @@ export class DropCrew {
   @ApiProperty()
   @CreateDateColumn({ type: 'timestamptz' })
   joinedAt: Date;
-
 
   @ManyToOne(() => Drop, (drop) => drop.crew, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'dropId' })

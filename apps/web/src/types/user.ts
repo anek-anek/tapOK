@@ -1,5 +1,7 @@
-export type UserRole = 'admin' | 'photographer' | 'participant';
+export type UserRole = 'admin' | 'participant';
 export type GenderEnum = 'male' | 'female' | 'other';
+
+export type DropCrewMemberRole = 'chief' | 'crew' | 'co_chief';
 
 export interface User {
   id: string;
@@ -18,7 +20,6 @@ export interface User {
   updatedAt: string;
   gender?: GenderEnum;
   birthday?: string;
-  organizationId?: string;
   userHandle?: string;
   privacyPolicyAcceptedDate?: string;
 }
@@ -51,7 +52,6 @@ export interface CreateUserDto {
   phone?: string;
 }
 
-/** Matches PATCH /users/:id — excludes email, firebaseUid, role. */
 export type UpdateUserDto = Partial<
   Pick<CreateUserDto, 'firstName' | 'lastName' | 'avatar' | 'gender' | 'birthday' | 'userHandle' | 'phone'>
 >;

@@ -92,96 +92,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/organizations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List organizations you belong to (platform admins: all organizations) */
-        get: operations["OrganizationsController_findAll"];
-        put?: never;
-        /** Create an organization (caller becomes owner) */
-        post: operations["OrganizationsController_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/organizations/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List organizations the current user belongs to */
-        get: operations["OrganizationsController_findMyOrgs"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/organizations/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get an organization by id (members only; platform admins: any) */
-        get: operations["OrganizationsController_findOne"];
-        put?: never;
-        post?: never;
-        /** Delete an organization (owner only) */
-        delete: operations["OrganizationsController_remove"];
-        options?: never;
-        head?: never;
-        /** Update an organization (owner/admin only) */
-        patch: operations["OrganizationsController_update"];
-        trace?: never;
-    };
-    "/organizations/{id}/members": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List members (organization members only; platform admins: any org) */
-        get: operations["OrganizationsController_findMembers"];
-        put?: never;
-        /** Add a member to an organization (owner/admin only) */
-        post: operations["OrganizationsController_addMember"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/organizations/{id}/members/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Remove a member from an organization */
-        delete: operations["OrganizationsController_removeMember"];
-        options?: never;
-        head?: never;
-        /** Update a member role (owner/admin only) */
-        patch: operations["OrganizationsController_updateMemberRole"];
-        trace?: never;
-    };
     "/drops/cron/transition": {
         parameters: {
             query?: never;
@@ -599,7 +509,7 @@ export interface components {
             lastName: string;
             avatar?: string;
             /** @enum {string} */
-            role: "admin" | "photographer" | "participant";
+            role: "admin" | "participant";
             phone?: string;
             /** @enum {string} */
             gender?: "male" | "female" | "other";
@@ -655,7 +565,7 @@ export interface components {
              * @default participant
              * @enum {string}
              */
-            role: "admin" | "photographer" | "participant";
+            role: "admin" | "participant";
             /** @enum {string} */
             gender?: "male" | "female" | "other";
             /**
@@ -686,67 +596,6 @@ export interface components {
             userHandle?: string;
             /** @example +639123456789 */
             phone?: string;
-        };
-        Organization: {
-            id: string;
-            name: string;
-            slug?: string;
-            logoUrl?: string;
-            isActive: boolean;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        OrganizationMember: {
-            id: string;
-            organizationId: string;
-            userId: string;
-            /** @enum {string} */
-            role: "owner" | "admin" | "member";
-            /** Format: date-time */
-            joinedAt: string;
-        };
-        OrganizationMemberUserPublicDto: {
-            id: string;
-            firstName: string;
-            lastName: string;
-            avatar?: string;
-            userHandle?: string;
-        };
-        OrganizationMemberPublicDto: {
-            id: string;
-            organizationId: string;
-            userId: string;
-            /** @enum {string} */
-            role: "owner" | "admin" | "member";
-            /** Format: date-time */
-            joinedAt: string;
-            user: components["schemas"]["OrganizationMemberUserPublicDto"];
-        };
-        CreateOrganizationDto: {
-            /** @example Acme Corp */
-            name: string;
-            /** @example acme-corp */
-            slug?: string;
-            /** @example https://example.com/logo.png */
-            logoUrl?: string;
-        };
-        UpdateOrganizationDto: {
-            /** @example Acme Corp */
-            name?: string;
-            /** @example acme-corp */
-            slug?: string;
-            /** @example https://example.com/logo.png */
-            logoUrl?: string;
-        };
-        AddMemberDto: {
-            userId: string;
-            /**
-             * @default member
-             * @enum {string}
-             */
-            role: "owner" | "admin" | "member";
         };
         DropOrganiserPublicDto: {
             id: string;
@@ -933,6 +782,8 @@ export interface components {
             id: string;
             dropId: string;
             userId: string;
+            /** @enum {string} */
+            memberRole: "chief" | "crew" | "co_chief";
             /** @enum {string} */
             status: "in" | "pending" | "rejected" | "removed" | "invited";
             /** @default false */
@@ -1199,253 +1050,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["User"];
                 };
-            };
-        };
-    };
-    OrganizationsController_findAll: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Organization"][];
-                };
-            };
-        };
-    };
-    OrganizationsController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateOrganizationDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Organization"];
-                };
-            };
-        };
-    };
-    OrganizationsController_findMyOrgs: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OrganizationMember"][];
-                };
-            };
-        };
-    };
-    OrganizationsController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Organization"];
-                };
-            };
-            /** @description Organization not found or no access. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    OrganizationsController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Insufficient organization permissions. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    OrganizationsController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateOrganizationDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Organization"];
-                };
-            };
-            /** @description Insufficient organization permissions. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    OrganizationsController_findMembers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OrganizationMemberPublicDto"][];
-                };
-            };
-            /** @description Organization not found or no access. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    OrganizationsController_addMember: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AddMemberDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OrganizationMember"];
-                };
-            };
-            /** @description User is already a member. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    OrganizationsController_removeMember: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    OrganizationsController_updateMemberRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };

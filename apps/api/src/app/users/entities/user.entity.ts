@@ -2,13 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { GenderEnum, UserRole } from '../../../common';
 import { ApiProperty } from '@nestjs/swagger';
-import { OrganizationMember } from '../../organizations/entities/organization-member.entity';
 
 @Entity('users')
 export class User {
@@ -75,9 +73,6 @@ export class User {
   @ApiProperty({ required: false })
   @Column({ type: 'date', nullable: true })
   birthday?: Date;
-
-  @OneToMany(() => OrganizationMember, (member) => member.user)
-  memberships: OrganizationMember[];
 
   @ApiProperty({ required: false })
   @Column({ nullable: true, unique: true })

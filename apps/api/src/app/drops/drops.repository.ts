@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { DropCategory, DropCrewStatus, DropStatus } from '../../common';
+import { DropCategory, DropCrewMemberRole, DropCrewStatus, DropStatus } from '../../common';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
@@ -143,8 +143,14 @@ export class DropsRepository {
     });
   }
 
-  async addCrewMember(dropId: string, userId: string, status: DropCrewStatus, isPresent: boolean = false): Promise<DropCrew> {
-    const record = this.crewRepo.create({ dropId, userId, status, isPresent });
+  async addCrewMember(
+    dropId: string,
+    userId: string,
+    status: DropCrewStatus,
+    isPresent: boolean = false,
+    memberRole: DropCrewMemberRole = DropCrewMemberRole.CREW,
+  ): Promise<DropCrew> {
+    const record = this.crewRepo.create({ dropId, userId, status, isPresent, memberRole });
     return this.crewRepo.save(record);
   }
 

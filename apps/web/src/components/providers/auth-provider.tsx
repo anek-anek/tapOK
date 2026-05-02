@@ -8,7 +8,7 @@ import { setAuthToken } from '@/services/api';
 import { finalizeSession } from '@/lib/auth/finalize-session';
 import { applyIdTokenToAxiosAndSessionCookie } from '@/lib/auth/session-cookie';
 
-export type UserRole = 'admin' | 'photographer' | 'participant';
+export type UserRole = 'admin' | 'participant';
 
 export interface DbUser {
   id: string;
