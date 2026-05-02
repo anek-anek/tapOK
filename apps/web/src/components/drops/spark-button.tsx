@@ -106,9 +106,9 @@ export function SparkButton({
 
   const heroIconClasses = cn(
     "transition-all duration-300",
-    localSparked 
-      ? "fill-tok-black text-tok-black" 
-      : "text-tok-cream/40 group-hover:text-tok-cream/60"
+    localSparked
+      ? "fill-tok-black text-tok-black"
+      : "text-tok-teal/45 group-hover:text-tok-teal",
   );
 
   const compactIconClasses = cn(
@@ -137,7 +137,14 @@ export function SparkButton({
           className={variant === 'hero' ? heroIconClasses : variant === 'compact' ? compactIconClasses : iconClasses} 
         />
       </motion.div>
-      <span className={cn("pt-0.5", variant === 'compact' ? "text-[11px]" : "text-[10px]")}>
+      <span
+        className={cn(
+          "pt-0.5",
+          variant === 'compact' ? "text-[11px]" : "text-[10px]",
+          variant === 'hero' &&
+            (localSparked ? "text-tok-black" : "text-tok-teal"),
+        )}
+      >
         {localCount}
       </span>
 
@@ -163,20 +170,21 @@ export function SparkButton({
         disabled={!dbUser}
         className={cn(
           "group relative flex h-10 min-w-[70px] items-center justify-center gap-2 rounded-sm border-2 font-passion text-xs font-bold uppercase tracking-[2px] transition-all active:scale-95",
+          "shadow-[3px_3px_0px_#1C1C1A]",
           localSparked
-            ? "bg-amber-400 border-tok-black text-tok-black shadow-[3px_3px_0px_#1C1C1A]"
-            : "bg-tok-cream/10 border-tok-cream/20 text-tok-cream hover:bg-tok-cream/20",
-          className
+            ? "border-tok-black bg-amber-400 text-tok-black hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A]"
+            : "border-tok-black bg-tok-cream text-tok-teal hover:-translate-y-0.5 hover:bg-tok-cream-dim hover:shadow-[4px_4px_0px_#1C1C1A]",
+          "disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0px_#1C1C1A]",
+          className,
         )}
       >
         {buttonContent}
-        
-        {/* Constant Glow when sparked */}
+
         {localSparked && (
-          <motion.span 
+          <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 z-[-1] rounded-full bg-amber-400/20 blur-xl" 
+            className="pointer-events-none absolute inset-0 z-[-1] rounded-sm bg-amber-400/25 blur-lg"
           />
         )}
       </button>

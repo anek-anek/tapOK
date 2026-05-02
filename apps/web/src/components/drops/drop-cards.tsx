@@ -83,7 +83,7 @@ export function HeroDropCard({
 
   return (
     <div className="group relative">
-      <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal shadow-[8px_8px_0px_#1C1C1A] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[12px_12px_0px_#1C1C1A] md:flex-row">
+      <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal shadow-[8px_8px_0px_#1C1C1A] transition-all group-hover:-translate-x-1 group-hover:-translate-y-1 group-hover:shadow-[12px_12px_0px_#1C1C1A] md:flex-row">
 
         {/* Visual Section */}
         <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px]">
@@ -222,14 +222,14 @@ export function HeroDropCard({
 
       {/* Absolute Quick Actions */}
       <div className="absolute right-3 top-3 z-20 flex flex-col gap-2 transition-all duration-300 group-hover:-translate-x-1 group-hover:-translate-y-1">
-        <SparkButton drop={drop} variant="hero" className="shadow-[3px_3px_0px_#1C1C1A]" />
+        <SparkButton drop={drop} variant="hero" />
       </div>
 
       <div className="absolute left-4 top-4 z-20 flex gap-2 transition-all duration-300 group-hover:-translate-x-1 group-hover:-translate-y-1">
         {onShare && isShareableDrop(drop) && (
           <button
             onClick={handleShare}
-            className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream/90 active:translate-y-0 active:shadow-none"
+            className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream-dim active:translate-y-0 active:shadow-none"
             title="Share Drop"
           >
             <Share size={18} strokeWidth={3} />
@@ -294,7 +294,7 @@ export function ListDropCard({
         )}
       >
         {/* Visual Element */}
-        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
+        <div className="relative aspect-5/2 w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
           {drop.coverPhoto ? (
             <Image
               src={drop.coverPhoto}
@@ -534,7 +534,7 @@ export function ListCardSkeleton() {
   return (
     <div className="group relative mt-4">
       <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] sm:flex-row">
-        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
+        <div className="relative aspect-5/2 w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
           <Skeleton className="absolute inset-0 h-full w-full rounded-none bg-tok-teal/15" />
           <div className="pointer-events-none absolute bottom-2 left-2 sm:bottom-2 sm:left-2">
             <Skeleton className="h-5 w-16 rounded-sm border border-tok-black/30 bg-amber-400/60" />
