@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 export const authInputClass =
   'w-full border-2 border-black bg-tok-cream px-4 py-3 text-base text-black placeholder-black/30 outline-hidden transition-all duration-150 ease-in-out focus:bg-white focus:shadow-[4px_4px_0_#000] focus:ring-0 hover:border-tok-teal font-inter rounded-none';
@@ -10,12 +10,13 @@ type AuthFormFieldProps = {
   label: string;
   error?: string;
   animClass?: string;
+  style?: CSSProperties;
   children: ReactNode;
 };
 
-export function AuthFormField({ label, error, animClass = '', children }: AuthFormFieldProps) {
+export function AuthFormField({ label, error, animClass = '', style, children }: AuthFormFieldProps) {
   return (
-    <div className={`flex w-full flex-col gap-1.5 ${animClass}`}>
+    <div className={`flex w-full flex-col gap-1.5 ${animClass}`} style={style}>
       <label
         className="font-passion text-xs uppercase tracking-[0.12em] text-black/60"
       >
@@ -47,11 +48,11 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
     <div className="flex min-h-dvh bg-tok-cream lg:min-h-screen">
       <style>{`
         @keyframes authFadeUp {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(12px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         @keyframes authSlideIn {
-          from { opacity: 0; transform: translateX(24px); }
+          from { opacity: 0; transform: translateX(16px); }
           to   { opacity: 1; transform: translateX(0); }
         }
         @keyframes authPulse {
@@ -59,11 +60,12 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
           50%       { opacity: 0.4; }
         }
         .auth-panel-in {
-          animation: authFadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+          animation: authFadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         .auth-right-in {
-          animation: authSlideIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+          animation: authSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
         }
+
         .auth-live-dot {
           animation: authPulse 2s ease-in-out infinite;
         }
@@ -86,13 +88,13 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
       `}</style>
 
       {/* ── LEFT: Form panel ── */}
-      <div className="auth-panel-in flex w-full flex-col justify-between bg-tok-cream px-5 py-6 sm:px-8 sm:py-8 lg:w-[48%] lg:px-14 lg:py-10 border-r-0 lg:border-r-2 lg:border-black">
+      <div className="flex w-full flex-col justify-between bg-tok-cream px-5 py-6 sm:px-8 sm:py-8 lg:w-[48%] lg:px-14 lg:py-10 border-r-0 lg:border-r-2 lg:border-black">
 
         {/* Logo */}
         <Link
           href="/"
-          className="inline-flex shrink-0 items-center gap-1.5 font-passion text-xl leading-none tracking-tight text-black sm:text-2xl"
-          style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease' }}
+          className="auth-panel-in inline-flex shrink-0 items-center gap-1.5 font-passion text-xl leading-none tracking-tight text-black sm:text-2xl"
+          style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease' } as any}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px) scale(1.04)';
             (e.currentTarget as HTMLElement).style.opacity = '0.85';
@@ -113,7 +115,7 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
           {children}
         </div>
 
-        <p className={`${footerClassName} font-inter text-xs text-black/25`}>
+        <p className={`${footerClassName} auth-panel-in font-inter text-xs text-black/25`} style={{ animationDelay: '0.55s' }}>
           © 2026 TapOK. Plans that actually happen.
         </p>
       </div>

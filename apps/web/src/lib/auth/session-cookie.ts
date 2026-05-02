@@ -13,13 +13,14 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Sets httpOnly `__session` (Firebase ID token) and optional `user_profile` on the Next.js host. */
+/** Sets httpOnly `__session` (Firebase ID token) and optional `user_profile` on the Next.js host. Returns dbUser. */
 export async function postSessionCookie(
   idToken: string,
-  profile?: SessionProfilePayload,
-): Promise<boolean> {
-  const body = JSON.stringify(profile ? { idToken, profile } : { idToken });
+  options: { sync?: boolean; payload?: any } = {},
+): Promise<{ ok: boolean; dbUser?: any }> {
+  const body = JSON.stringify({ idToken, ...options });
   const attempts = 3;
+
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       const res = await fetch('/api/auth/session', {
@@ -27,26 +28,34 @@ export async function postSessionCookie(
         headers: { 'Content-Type': 'application/json' },
         body,
       });
-      if (res.ok) return true;
+
+      if (res.ok) {
+        const data = await res.json();
+        return { ok: true, dbUser: data.dbUser };
+      }
+
       const retryable = res.status >= 500 && res.status !== 503;
       if (retryable && attempt < attempts - 1) {
         await delay(250 * (attempt + 1));
         continue;
       }
-      return false;
+      return { ok: false };
     } catch {
       if (attempt < attempts - 1) {
         await delay(250 * (attempt + 1));
         continue;
       }
-      return false;
+      return { ok: false };
     }
   }
-  return false;
+  return { ok: false };
 }
+
 
 /** Updates axios Authorization and persists the token to the session cookie (proxy / full navigation). */
 export async function applyIdTokenToAxiosAndSessionCookie(idToken: string): Promise<boolean> {
   setAuthToken(idToken);
-  return postSessionCookie(idToken);
+  const res = await postSessionCookie(idToken);
+  return res.ok;
 }
+

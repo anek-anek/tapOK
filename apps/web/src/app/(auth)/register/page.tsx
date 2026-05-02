@@ -6,18 +6,7 @@ interface RegisterPageProps {
   searchParams: Promise<{ redirectTo?: string }>;
 }
 
-export default async function RegisterPage({ searchParams }: RegisterPageProps) {
-  const { redirectTo = '/drops' } = await searchParams;
-
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-tok-cream">
-          <Loader2 className="h-6 w-6 animate-spin text-tok-teal" />
-        </div>
-      }
-    >
-      <RegisterForm redirectTo={redirectTo} />
-    </Suspense>
-  );
+export default function RegisterPage({ searchParams }: RegisterPageProps) {
+  return <RegisterForm searchParams={searchParams} />;
 }
+
