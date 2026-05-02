@@ -6,8 +6,16 @@ import { TapokNavbar } from '@/components/tapok-navbar';
 import { CurrentYear } from '@/components/CurrentYear';
 import { ShieldCheck, Headphones, Smartphone } from 'lucide-react';
 import { HeroActions } from '@/components/landing/hero-actions';
-import { HowItWorks } from '@/components/landing/how-it-works';
-import { WhyTapokFeatureCards } from '@/components/landing/why-tapok-feature-cards';
+
+const WhyTapokFeatureCards = dynamic(() => import('@/components/landing/why-tapok-feature-cards').then(mod => mod.WhyTapokFeatureCards), {
+  ssr: true,
+  loading: () => <div className="h-96 w-full animate-pulse bg-tok-teal/10" />
+});
+
+const HowItWorks = dynamic(() => import('@/components/landing/how-it-works').then(mod => mod.HowItWorks), {
+  ssr: true,
+  loading: () => <div className="h-96 w-full animate-pulse bg-tok-cream" />
+});
 
 const FeatureTour = dynamic(() => import('@/components/landing/feature-tour').then(mod => mod.FeatureTour), {
   ssr: true,
@@ -90,10 +98,11 @@ export default function LandingClient() {
                 src="/hero-illustration.png"
                 alt="People enjoying events"
                 fill
-                sizes="(max-width: 768px) 100vw, 58vw"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
                 className="select-none object-contain object-center"
                 style={{ mixBlendMode: 'multiply' }}
                 priority
+                fetchPriority="high"
               />
             </div>
           </div>

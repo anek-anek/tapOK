@@ -77,7 +77,7 @@ function FlipCard({
 
   return (
     <div
-      className="flip-card-wrapper"
+      className="flip-card-wrapper animate-card-entrance"
       style={{ animationDelay: `${delay}ms`, perspective: '1200px', cursor: 'pointer' }}
       onClick={onToggle}
       role="button"
@@ -253,13 +253,8 @@ export function HowItWorks() {
   return (
     <section className="bg-tok-cream px-5 py-12 md:px-10 lg:px-20">
       <style>{`
-        @keyframes cardEntrance {
-          from { opacity: 0; transform: translateY(32px) rotate(-1deg); }
-          to   { opacity: 1; transform: translateY(0) rotate(0deg); }
-        }
         .flip-card-wrapper {
           height: 300px;
-          animation: cardEntrance 0.55s ease both;
           outline: none;
         }
         .flip-card-wrapper:focus-visible {
