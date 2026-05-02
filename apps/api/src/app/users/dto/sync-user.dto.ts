@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, MaxLength, IsDateString } from 'class-validator';
-import { GenderEnum } from '../../../common';
+import { AuthProvider, GenderEnum } from '../../../common';
 
 export enum SyncAuthMode {
   LOGIN = 'login',
@@ -38,4 +38,9 @@ export class SyncUserDto {
   @IsOptional()
   @IsEnum(SyncAuthMode)
   authMode?: SyncAuthMode;
+
+  @ApiPropertyOptional({ enum: AuthProvider })
+  @IsOptional()
+  @IsEnum(AuthProvider)
+  authProvider?: AuthProvider;
 }

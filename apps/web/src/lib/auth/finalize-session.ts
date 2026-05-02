@@ -12,6 +12,8 @@ export type AuthProvider = 'password' | 'google';
 export type FinalizeFailureReason =
   | 'no_account'
   | 'link_denied'
+  | 'auth_provider_mismatch'
+  | 'email_not_verified'
   | 'backend_unavailable'
   | 'invalid_credentials'
   | 'session_invalid'
@@ -33,6 +35,14 @@ interface SyncPayload {
   gender?: string;
   birthday?: string;
   userHandle?: string;
+  authMode?: AuthMode;
+  authProvider?: AuthProvider;
+}
+
+function detectAuthProvider(firebaseUser: FirebaseUser): AuthProvider {
+  return firebaseUser.providerData.some((provider) => provider.providerId === 'google.com')
+    ? 'google'
+    : 'password';
 }
 
 async function clearSessionCookie() {
@@ -47,7 +57,7 @@ function delay(ms: number): Promise<void> {
 async function waitForDeletedEmail(email?: string | null) {
   if (!email) return;
 
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
     try {
       const methods = await fetchSignInMethodsForEmail(getFirebaseAuth(), email);
       if (methods.length === 0) return;
@@ -55,7 +65,7 @@ async function waitForDeletedEmail(email?: string | null) {
       return;
     }
 
-    await delay(250);
+    await delay(500);
   }
 }
 
@@ -68,10 +78,9 @@ async function cleanupFailedAuth(
   if (options.deleteCreatedUser) {
     try {
       const auth = getFirebaseAuth();
-      if (auth.currentUser?.uid === firebaseUser.uid) {
-        await deleteUser(auth.currentUser);
-        await waitForDeletedEmail(firebaseUser.email);
-      }
+      const userToDelete = auth.currentUser?.uid === firebaseUser.uid ? auth.currentUser : firebaseUser;
+      await deleteUser(userToDelete);
+      await waitForDeletedEmail(firebaseUser.email);
     } catch {
       // Best effort cleanup — sign-out below still clears client state.
     }
@@ -98,9 +107,27 @@ function mapSessionError(error: SessionCookieError): Omit<Extract<FinalizeResult
     };
   }
 
+  if (error.code === 'AUTH_PROVIDER_MISMATCH') {
+    return {
+      reason: 'auth_provider_mismatch',
+      message,
+      status: error.status,
+      code: error.code,
+    };
+  }
+
   if (error.code === 'ACCOUNT_LINK_DENIED' || error.status === 403) {
     return {
       reason: 'link_denied',
+      message,
+      status: error.status,
+      code: error.code,
+    };
+  }
+
+  if (error.code === 'EMAIL_NOT_VERIFIED') {
+    return {
+      reason: 'email_not_verified',
       message,
       status: error.status,
       code: error.code,
@@ -153,11 +180,12 @@ export async function finalizeSession(
 ): Promise<FinalizeResult> {
   try {
     const token = await firebaseUser.getIdToken();
+    const authProvider = options.provider ?? detectAuthProvider(firebaseUser);
     setAuthToken(token);
 
     const result = await postSessionCookie(token, {
       sync: true,
-      payload: { ...(options.payload ?? {}), authMode: options.mode },
+      payload: { ...(options.payload ?? {}), authMode: options.mode, authProvider },
     });
 
     if (!result.ok) {

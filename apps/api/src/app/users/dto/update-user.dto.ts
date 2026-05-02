@@ -6,5 +6,5 @@ import { CreateUserDto } from './create-user.dto';
  * PATCH cannot change email, firebaseUid, or role (sync/Firebase claims follow DB role).
  */
 export class UpdateUserDto extends PartialType(
-  OmitType(CreateUserDto, ['email', 'firebaseUid', 'role'] as const),
+  OmitType(CreateUserDto, ['email', 'firebaseUid', 'role', 'authProvider'] as const),
 ) {}

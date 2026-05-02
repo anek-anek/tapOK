@@ -1,6 +1,8 @@
 import * as admin from 'firebase-admin';
 import { Client } from 'pg';
 
+type DbAuthProvider = 'password' | 'google';
+
 let firebaseApp: admin.app.App | undefined;
 
 function getFirebaseApp(): admin.app.App {
@@ -110,6 +112,7 @@ export async function createUnlinkedVerifiedUser(
   email: string,
   password: string,
   profile: { firstName: string; lastName: string },
+  options: { dbAuthProvider?: DbAuthProvider } = {},
 ): Promise<string> {
   const app = getFirebaseApp();
   const record = await admin.auth(app).createUser({
@@ -122,10 +125,16 @@ export async function createUnlinkedVerifiedUser(
   await withDbClient(async (client) => {
     await client.query(
       `
-        INSERT INTO "users" (email, "firstName", "lastName", "isEmailVerified")
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO "users" (email, "authProvider", "firstName", "lastName", "isEmailVerified")
+        VALUES ($1, $2, $3, $4, $5)
       `,
-      [email, profile.firstName, profile.lastName, true],
+      [
+        email,
+        options.dbAuthProvider ?? 'password',
+        profile.firstName,
+        profile.lastName,
+        true,
+      ],
     );
   });
 

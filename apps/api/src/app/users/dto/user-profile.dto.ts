@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { GenderEnum, UserRole } from '../../../common';
+import { AuthProvider, GenderEnum, UserRole } from '../../../common';
 
 export class UserProfileDto {
   @ApiProperty()
@@ -7,6 +7,9 @@ export class UserProfileDto {
 
   @ApiProperty()
   email: string;
+
+  @ApiProperty({ enum: AuthProvider })
+  authProvider: AuthProvider;
 
   @ApiProperty()
   firstName: string;

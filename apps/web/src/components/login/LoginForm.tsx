@@ -1,38 +1,22 @@
 'use client';
 
-import { use, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signInWithEmailAndPassword, getRedirectResult } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { getFirebaseAuth } from '@/lib/firebase';
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { finalizeSession } from '@/lib/auth/finalize-session';
+import { getLoginFirebaseError } from '@/lib/auth/firebase-auth-errors';
+import { resolveGoogleRedirectSession } from '@/lib/auth/google-redirect';
 import { signInWithGoogleInteractive } from '@/lib/auth/google-signin';
 import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { toast } from 'react-hot-toast';
-
-const GENERIC_AUTH_ERROR = 'No TapOK account found. Please sign up first.';
-
-const FIREBASE_ERRORS: Record<string, string> = {
-  'auth/user-not-found': 'No TapOK account found. Please sign up first.',
-  'auth/invalid-credential': 'No TapOK account found. Please sign up first.',
-  'auth/invalid-login-credentials': 'No TapOK account found. Please sign up first.',
-  'auth/too-many-requests': 'Too many attempts. Please try again later.',
-  'auth/network-request-failed': 'Network error. Check your connection and try again.',
-};
-
-function getFirebaseError(code: string): string {
-  return FIREBASE_ERRORS[code] ?? GENERIC_AUTH_ERROR;
-}
-
-function getFinalizeMessage(message: string | string[]) {
-  return String(Array.isArray(message) ? message[0] : message).toUpperCase();
-}
 
 interface LoginFormProps {
   searchParams: Promise<{ redirectTo?: string }>;
@@ -55,9 +39,17 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleRedirectResolved, setGoogleRedirectResolved] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
 
+  const showError = useCallback((message: string) => {
+    setServerError(message);
+    toast.error(message.toUpperCase());
+  }, []);
+
   useEffect(() => {
+    if (!googleRedirectResolved) return;
+
     if (user && dbUser && !googleLoading && !isSubmitting) {
       router.replace(
         resolveAuthSuccessRedirect({
@@ -68,10 +60,10 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
         }),
       );
     }
-  }, [user, dbUser, googleLoading, isSubmitting, router, redirectTo]);
+  }, [user, dbUser, googleLoading, googleRedirectResolved, isSubmitting, router, redirectTo]);
 
   useEffect(() => {
-    if (!user || dbUser || googleLoading || isSubmitting) return;
+    if (!googleRedirectResolved || !user || dbUser || googleLoading || isSubmitting) return;
 
     let cancelled = false;
 
@@ -79,7 +71,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       const finalized = await finalizeSession(user, { mode: 'login' });
       if (cancelled || !finalized.ok) {
         if (!cancelled && !finalized.ok) {
-          toast.error(getFinalizeMessage(finalized.message));
+          showError(finalized.message);
         }
         return;
       }
@@ -98,7 +90,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
     return () => {
       cancelled = true;
     };
-  }, [user, dbUser, googleLoading, isSubmitting, redirectTo, router, setSession]);
+  }, [user, dbUser, googleLoading, googleRedirectResolved, isSubmitting, redirectTo, router, setSession, showError]);
 
   useEffect(() => {
     if (serverError && errorRef.current) {
@@ -109,43 +101,40 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   }, [serverError]);
 
   useEffect(() => {
-    const checkRedirect = async () => {
-      try {
-        const result = await getRedirectResult(getFirebaseAuth());
-        if (result) {
-          setGoogleLoading(true);
-          const finalized = await finalizeSession(result.user, {
+    let cancelled = false;
+
+    void (async () => {
+      const resolution = await resolveGoogleRedirectSession('login');
+      if (cancelled) return;
+
+      if (resolution.status === 'success') {
+        toast.success('WELCOME BACK');
+        setSession(resolution.user, resolution.finalized.dbUser);
+        router.replace(
+          resolveAuthSuccessRedirect({
             mode: 'login',
-            provider: 'google',
-          });
-
-          if (!finalized.ok) {
-            toast.error(getFinalizeMessage(finalized.message));
-            setGoogleLoading(false);
-            return;
-          }
-
-          toast.success('WELCOME BACK');
-          setSession(result.user, finalized.dbUser);
-          router.replace(
-            resolveAuthSuccessRedirect({
-              mode: 'login',
-              redirectTo,
-              firstName: finalized.dbUser.firstName,
-              shouldOnboard: false,
-            }),
-          );
-        }
-      } catch (error: unknown) {
-        const code = (error as { code?: string }).code ?? '';
-        if (code === 'auth/popup-closed-by-user') return;
-        toast.error(String(getFirebaseError(code)).toUpperCase());
-        setGoogleLoading(false);
+            redirectTo,
+            firstName: resolution.finalized.dbUser.firstName,
+            shouldOnboard: false,
+          }),
+        );
+      } else if (resolution.status === 'finalize_error') {
+        showError(resolution.finalized.message);
+      } else if (
+        resolution.status === 'firebase_error' &&
+        resolution.code !== 'auth/popup-closed-by-user'
+      ) {
+        showError(getLoginFirebaseError(resolution.code));
       }
-    };
 
-    void checkRedirect();
-  }, [router, redirectTo, setSession]);
+      setGoogleLoading(false);
+      setGoogleRedirectResolved(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router, redirectTo, setSession, showError]);
 
   const handleGoogleSignIn = async () => {
     setServerError(null);
@@ -160,7 +149,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       });
 
       if (!finalized.ok) {
-        toast.error(getFinalizeMessage(finalized.message));
+        showError(finalized.message);
         return;
       }
 
@@ -177,7 +166,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
       if (code === 'auth/popup-closed-by-user') return;
-      toast.error(String(getFirebaseError(code)).toUpperCase());
+      showError(getLoginFirebaseError(code));
     } finally {
       setGoogleLoading(false);
     }
@@ -197,7 +186,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       });
 
       if (!finalized.ok) {
-        toast.error(getFinalizeMessage(finalized.message));
+        showError(finalized.message);
         return;
       }
 
@@ -213,7 +202,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       );
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
-      toast.error(String(getFirebaseError(code)).toUpperCase());
+      showError(getLoginFirebaseError(code));
     }
   };
 
@@ -338,6 +327,18 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
             Forgot password?
           </Link>
         </div>
+
+        {serverError && (
+          <div
+            ref={errorRef}
+            className="auth-panel-in border-2 border-red-600 bg-red-50 px-4 py-3 shadow-[3px_3px_0px_0px_#dc2626]"
+            aria-live="assertive"
+          >
+            <p className="font-inter text-xs font-medium uppercase tracking-[0.08em] text-red-700">
+              {serverError}
+            </p>
+          </div>
+        )}
 
 
         <button

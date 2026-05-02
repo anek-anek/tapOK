@@ -35,7 +35,7 @@ export default defineConfig({
   webServer: [
     {
       // Bypass turbo TUI by invoking the workspace script directly.
-      command: 'npm run dev --workspace=api',
+      command: 'npm run migration:run && npm run dev --workspace=api',
       url: `${API_URL}/health`,
       cwd: path.resolve(__dirname, '../..'),
       reuseExistingServer: true,

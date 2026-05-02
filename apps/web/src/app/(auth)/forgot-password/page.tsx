@@ -14,6 +14,7 @@ import {
   authInputClass,
 } from '@/components/auth/AuthPageShell';
 import { useAuth } from '@/components/providers/auth-provider';
+import { getForgotPasswordError } from '@/lib/auth/firebase-auth-errors';
 import { getFirebaseAuth } from '@/lib/firebase';
 
 const forgotSchema = z.object({
@@ -22,30 +23,23 @@ const forgotSchema = z.object({
 
 type ForgotFormValues = z.infer<typeof forgotSchema>;
 
-const FIREBASE_ERRORS: Record<string, string> = {
-  'auth/user-not-found': 'No account found with this email.',
-  'auth/invalid-email': 'Invalid email address.',
-  'auth/network-request-failed':
-    'Network error. Check your connection and try again.',
-  'auth/too-many-requests': 'Too many attempts. Please try again later.',
-};
-
 const recoverySteps = [
   {
     id: '01',
-    title: 'Use your TapOK sign-in email',
-    copy: 'Reset links only land in the inbox already tied to your account.',
+    title: 'Use your email/password sign-in email',
+    copy: 'If an email/password TapOK account exists for this inbox, we will send a reset link there.',
   },
   {
     id: '02',
+    title: 'Google sign-in does not use password reset',
+    copy: 'If you normally continue with Google, head back and use Google sign-in instead of requesting a reset link.',
+  },
+  {
+    id: '03',
     title: 'Check spam before retrying',
     copy: 'Recovery emails can get filtered into promotions, updates, or junk folders.',
   },
 ];
-
-function getFirebaseError(code: string): string {
-  return FIREBASE_ERRORS[code] ?? 'Something went wrong. Please try again.';
-}
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -76,7 +70,11 @@ export default function ForgotPasswordPage() {
       setSentTo(values.email);
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
-      setServerError(getFirebaseError(code));
+      if (code === 'auth/user-not-found') {
+        setSentTo(values.email);
+        return;
+      }
+      setServerError(getForgotPasswordError(code));
     }
   };
 
@@ -127,9 +125,9 @@ export default function ForgotPasswordPage() {
               className="mt-3 max-w-sm font-inter text-sm leading-relaxed text-black/55"
               aria-live="polite"
             >
-              We sent a password reset link to{' '}
+              If an email/password TapOK account exists for{' '}
               <span className="font-semibold text-black/75">{sentTo}</span>. If
-              you do not see it in a minute, check spam or request another link.
+              it matches an account, the reset link should arrive within a minute.
             </p>
           </div>
 
@@ -214,7 +212,7 @@ export default function ForgotPasswordPage() {
               className="auth-panel-in mt-3 max-w-sm font-inter text-sm leading-relaxed text-black/55"
               style={{ animationDelay: '0.15s' }}
             >
-              Enter your email for a reset link.
+              Enter your email and we&apos;ll send a reset link if an email/password account exists for it.
             </p>
 
             <p
@@ -317,7 +315,7 @@ export default function ForgotPasswordPage() {
               className="auth-panel-in text-center font-inter text-[11px] uppercase tracking-[0.16em] leading-relaxed text-black/30"
               style={{ animationDelay: '0.4s' }}
             >
-              Password reset emails usually arrive within a minute.
+              Password reset emails usually arrive within a minute when the inbox belongs to an email/password account.
             </p>
           </form>
         </>

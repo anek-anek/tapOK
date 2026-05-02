@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -32,26 +31,12 @@ export class UsersRepository {
     return this.repo.findOneBy({ email });
   }
 
-  create(dto: CreateUserDto): Promise<User> {
-    const user = this.repo.create(dto);
+  create(data: Partial<User>): Promise<User> {
+    const user = this.repo.create(data);
     return this.repo.save(user);
   }
 
-  async upsertByFirebaseUid(
-    firebaseUid: string,
-    data: Partial<User>,
-  ): Promise<User> {
-    let existing = await this.findByFirebaseUid(firebaseUid);
-
-    if (!existing && data.email && data.isEmailVerified) {
-      existing = await this.repo.findOneBy({ email: data.email });
-    }
-
-    if (existing) {
-      await this.repo.update(existing.id, { ...data, firebaseUid });
-      return this.findById(existing.id) as Promise<User>;
-    }
-    const user = this.repo.create({ ...data, firebaseUid });
+  save(user: User): Promise<User> {
     return this.repo.save(user);
   }
 

@@ -43,6 +43,10 @@ async function logoutFromNavbar(page: Page) {
   await page.getByRole('button', { name: /log out/i }).click();
 }
 
+function inlineAuthError(page: Page) {
+  return page.locator('[aria-live="assertive"]');
+}
+
 // ── Journey 1: Happy-path register → sign out → login ─────────────────────
 
 test.describe('Happy-path auth journey', () => {
@@ -113,7 +117,7 @@ test.describe('Rejection journey — Firebase-only account', () => {
     // App stays on /login and shows the rejection message
     await expect(page).toHaveURL('/login', { timeout: 20_000 });
     await expect(
-      page.getByText(/No TapOK account found|Please sign up first/i),
+      inlineAuthError(page).getByText(/No TapOK account found|Please sign up first/i),
     ).toBeVisible({ timeout: 15_000 });
 
     // No session cookie should have been set
@@ -123,9 +127,9 @@ test.describe('Rejection journey — Firebase-only account', () => {
   });
 });
 
-// ── Journey 3: Verified email auto-links an existing TapOK account ────────
+// ── Journey 3: Cross-provider login is rejected for existing DB user ──────
 
-test.describe('Auto-link journey — existing DB user', () => {
+test.describe('Provider mismatch journey — existing DB user', () => {
   const user = generateTestUser();
   let firebaseUid: string;
 
@@ -133,6 +137,8 @@ test.describe('Auto-link journey — existing DB user', () => {
     firebaseUid = await createUnlinkedVerifiedUser(user.email, user.password, {
       firstName: user.firstName,
       lastName: user.lastName,
+    }, {
+      dbAuthProvider: 'google',
     });
   });
 
@@ -141,16 +147,19 @@ test.describe('Auto-link journey — existing DB user', () => {
     await deleteFirebaseUserByUid(firebaseUid);
   });
 
-  test('login auto-links verified email and respects redirectTo', async ({ page, context }) => {
+  test('password login is rejected when the email belongs to a Google TapOK account', async ({ page, context }) => {
     await page.goto('/login?redirectTo=%2Factivity');
     await fillLoginForm(page, user);
     await page.getByRole('button', { name: /tap back in/i }).click();
 
-    await expect(page).toHaveURL('/activity', { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/login/, { timeout: 20_000 });
+    await expect(
+      inlineAuthError(page).getByText(/registered with Google|continue with Google sign-in/i),
+    ).toBeVisible({ timeout: 15_000 });
 
     const cookies = await context.cookies();
     const sessionCookie = cookies.find((c) => c.name === '__session');
-    expect(sessionCookie?.value).toBeTruthy();
+    expect(sessionCookie?.value ?? '').toBeFalsy();
   });
 });
 
@@ -183,7 +192,42 @@ test.describe('Route-protection sanity check', () => {
   });
 });
 
-// ── Journey 5: Failed signup cleanup allows retry with same email ──────────
+// ── Journey 5: Re-registering keeps the user on sign-up with a clear error ─
+
+test.describe('Duplicate signup journey — existing email/password account', () => {
+  const user = generateTestUser();
+
+  test.afterAll(async () => {
+    await cleanupTestUser(user.email);
+  });
+
+  test('signup with an existing email shows sign-in guidance instead of auto-login', async ({ page, context }) => {
+    await page.goto('/register?redirectTo=%2Fdrops');
+    await fillRegisterForm(page, user);
+    await page.getByRole('button', { name: /^tap in$/i }).click();
+
+    await skipOnboarding(page);
+    await expect(page).toHaveURL('/drops', { timeout: 20_000 });
+
+    await logoutFromNavbar(page);
+    await expect(page).toHaveURL('/login', { timeout: 20_000 });
+
+    await page.goto('/register?redirectTo=%2Fdrops');
+    await fillRegisterForm(page, user);
+    await page.getByRole('button', { name: /^tap in$/i }).click();
+
+    await expect(page).toHaveURL(/\/register/, { timeout: 20_000 });
+    await expect(
+      inlineAuthError(page).getByText(/This email is already registered\. Sign in instead\./i),
+    ).toBeVisible({ timeout: 15_000 });
+
+    const cookies = await context.cookies();
+    const sessionCookie = cookies.find((c) => c.name === '__session');
+    expect(sessionCookie?.value ?? '').toBeFalsy();
+  });
+});
+
+// ── Journey 6: Failed signup cleanup allows retry with same email ──────────
 
 test.describe('Recovery journey — failed signup session finalization', () => {
   const user = generateTestUser();

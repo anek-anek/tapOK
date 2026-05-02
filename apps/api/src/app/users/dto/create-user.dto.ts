@@ -9,12 +9,17 @@ import {
   MaxDate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { GenderEnum, UserRole } from '../../../common';
+import { AuthProvider, GenderEnum, UserRole } from '../../../common';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
   email: string;
+
+  @ApiPropertyOptional({ enum: AuthProvider, default: AuthProvider.PASSWORD })
+  @IsOptional()
+  @IsEnum(AuthProvider)
+  authProvider?: AuthProvider;
 
   @ApiProperty({ example: 'Jane' })
   @IsString()
