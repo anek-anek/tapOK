@@ -294,7 +294,7 @@ export function ListDropCard({
         )}
       >
         {/* Visual Element */}
-        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
+        <div className="relative aspect-5/2 w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
           {drop.coverPhoto ? (
             <Image
               src={drop.coverPhoto}
@@ -534,7 +534,7 @@ export function ListCardSkeleton() {
   return (
     <div className="group relative mt-4">
       <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] sm:flex-row">
-        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
+        <div className="relative aspect-5/2 w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
           <Skeleton className="absolute inset-0 h-full w-full rounded-none bg-tok-teal/15" />
           <div className="pointer-events-none absolute bottom-2 left-2 sm:bottom-2 sm:left-2">
             <Skeleton className="h-5 w-16 rounded-sm border border-tok-black/30 bg-amber-400/60" />
