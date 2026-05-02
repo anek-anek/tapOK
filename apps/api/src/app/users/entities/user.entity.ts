@@ -51,6 +51,10 @@ export class User {
   emailVerificationSentAt?: Date;
 
   @ApiProperty({ required: false })
+  @Column({ type: 'timestamptz', nullable: true })
+  passwordResetSentAt?: Date;
+
+  @ApiProperty({ required: false })
   @Column({ nullable: true })
   googleId?: string;
 

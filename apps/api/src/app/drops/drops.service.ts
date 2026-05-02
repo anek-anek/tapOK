@@ -160,6 +160,15 @@ export class DropsService {
     this.logger.log(`Drop activity: ${JSON.stringify(meta)}`);
   }
 
+  private assertUserIsVerified(user: User, action: string) {
+    if (!user.isEmailVerified) {
+      throw new ForbiddenException({
+        message: `Please verify your email to ${action}.`,
+        code: 'EMAIL_NOT_VERIFIED',
+      });
+    }
+  }
+
   private logDropAction(
     action: string,
     dropId: string,
@@ -172,6 +181,8 @@ export class DropsService {
   async create(dto: CreateDropDto, firebaseUid: string): Promise<Drop> {
     const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!organiser) throw new NotFoundException('Authenticated user not found in database');
+
+    this.assertUserIsVerified(organiser, 'create a drop');
 
     // 1. If idempotencyKey is provided, check if we've already created this drop
     if (dto.idempotencyKey) {
@@ -417,6 +428,10 @@ export class DropsService {
       throw new ForbiddenException('Only the organiser can invite people');
     }
 
+    if (organiser) {
+      this.assertUserIsVerified(organiser, 'invite people to a drop');
+    }
+
     const existing = await this.dropsRepository.findCrewMember(dropId, userId);
     if (existing) {
       if (existing.status === DropCrewStatus.REMOVED || existing.status === DropCrewStatus.REJECTED) {
@@ -471,6 +486,10 @@ export class DropsService {
 
       if (!drop.isPublic && (!existing || existing.status !== DropCrewStatus.INVITED)) {
         throw new ForbiddenException('This drop is private and you have not been invited');
+      }
+
+      if (drop.isLocked) {
+        this.assertUserIsVerified(user, 'join a drop that requires approval');
       }
 
       this.assertUserMeetsDropMinimumAge(user, drop);
@@ -549,6 +568,8 @@ export class DropsService {
       throw new ForbiddenException('Only the organiser can reject join requests');
     }
 
+    this.assertUserIsVerified(organiser, 'reject join requests');
+
     const member = await this.dropsRepository.findCrewMember(dropId, targetUserId);
     if (!member) throw new NotFoundException('User is not a crew member of this drop');
 
@@ -576,6 +597,8 @@ export class DropsService {
     if (drop.organiserId !== organiser.id) {
       throw new ForbiddenException('Only the organiser can approve join requests');
     }
+
+    this.assertUserIsVerified(organiser, 'approve join requests');
 
     const member = await this.dropsRepository.findCrewMember(dropId, targetUserId);
     if (!member) throw new NotFoundException('User is not a crew member of this drop');
@@ -770,6 +793,8 @@ export class DropsService {
   async uploadPhoto(dropId: string, firebaseUid: string, base64: string): Promise<DropPhoto> {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('User not found');
+
+    this.assertUserIsVerified(user, 'upload photos');
 
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException('Drop not found');
