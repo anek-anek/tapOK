@@ -5,16 +5,9 @@ import { useMounted } from '@/hooks/use-mounted';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowRight,
   CalendarDays,
-  ClipboardCopy,
-  Edit3,
   LogIn,
-  MapPin,
   Plus,
-  Lock,
-  Ticket,
-  Users,
 } from 'lucide-react';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { DropModal } from '@/components/drop-modal';
@@ -30,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { Drop, DropStatus } from '@/types/drop';
+import type { Drop } from '@/types/drop';
 
 import {
   HeroDropCard,
@@ -308,8 +301,6 @@ export default function DropsPage() {
                 drop={focusDrop}
                 viewerId={dbUser?.id}
                 onShare={handleShare}
-                onEdit={setEditDrop}
-                onDelete={setDeleteDrop}
               />
             )}
 
@@ -374,7 +365,7 @@ export default function DropsPage() {
                   />
                 ) : activeDrops.length === 0 ? (
                   <p className="py-6 text-center font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
-                    That's your only upcoming drop — shown above
+                    That&apos;s your only upcoming drop — shown above
                   </p>
                 ) : (
                   activeDrops.map((drop) => (
@@ -395,7 +386,7 @@ export default function DropsPage() {
                 />
               ) : completedDrops.length === 0 ? (
                 <p className="py-6 text-center font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
-                  That's your focus drop — shown above
+                  That&apos;s your focus drop — shown above
                 </p>
               ) : (
                 completedDrops.map((drop) => (

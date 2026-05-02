@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect } from 'react';
+import { use } from 'react';
 import { notFound } from 'next/navigation';
 import { Calendar, User as UserIcon } from 'lucide-react';
 import { TapokNavbar } from '@/components/tapok-navbar';

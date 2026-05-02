@@ -184,20 +184,6 @@ function FeedItemSkeleton() {
   );
 }
 
-function ListCardSkeleton() {
-  return (
-    <div className="flex items-center gap-4 rounded-[16px] border border-tok-black/5 bg-tok-white/40 px-4 py-3.5">
-      <Skeleton className="h-10 w-10 rounded-full bg-tok-black/5" />
-      <div className="flex-1 space-y-1.5">
-        <Skeleton className="h-2.5 w-16 rounded-full bg-tok-black/5" />
-        <Skeleton className="h-4 w-40 rounded bg-tok-black/5" />
-        <Skeleton className="h-2.5 w-52 rounded-full bg-tok-black/5" />
-      </div>
-      <Skeleton className="h-7 w-16 rounded-full bg-tok-black/5" />
-    </div>
-  );
-}
-
 function FeedSkeleton() {
   return (
     <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden">
@@ -237,7 +223,7 @@ function Feed({
             Ledger Error
           </h2>
           <p className="mt-4 text-[16px] font-medium text-tok-black/60 leading-relaxed">
-            We couldn't retrieve the activity stream. This usually means the connection was interrupted.
+            We couldn&apos;t retrieve the activity stream. This usually means the connection was interrupted.
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -269,7 +255,7 @@ function Feed({
         </div>
       ) : (
         <div className="bg-tok-white border-4 border-tok-black/80 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden">
-          {grouped.map((group, gi) => (
+          {grouped.map((group) => (
             <div key={group.label} className="relative">
               <div className="px-6 py-3 bg-tok-black/90 border-b-2 border-tok-black/80 sticky top-0 z-10 flex justify-between items-center">
                 <span className="font-passion text-[12px] font-black uppercase tracking-[3px] text-tok-cream">

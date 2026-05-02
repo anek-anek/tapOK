@@ -61,9 +61,28 @@ export async function finalizeSession(
 
     return { ok: true, dbUser };
   } catch (error: unknown) {
-    const status = (error as { response?: { status?: number } }).response?.status;
+    const err = error as {
+      status?: number;
+      response?: { status?: number; data?: { message?: string | string[]; error?: string } };
+    };
+    const response = err.response;
+    const status = response?.status ?? err.status;
+    const rawMessage = response?.data?.message;
+    const message = Array.isArray(rawMessage) ? rawMessage[0] : rawMessage;
+    const errorLabel = String(response?.data?.error ?? '').toLowerCase();
+    const normalizedMessage = String(message ?? '').toLowerCase();
+    const looksLikeMissingAccount =
+      errorLabel.includes('not found') ||
+      normalizedMessage.includes('not found') ||
+      normalizedMessage.includes('no account') ||
+      normalizedMessage.includes('user does not exist');
 
-    if (status === 404) {
+    const shouldTreatAsNoAccount =
+      status === 404 ||
+      (!options.sync && (status === 401 || status === 403)) ||
+      ((status === 401 || status === 403) && looksLikeMissingAccount);
+
+    if (shouldTreatAsNoAccount) {
       const { creationTime, lastSignInTime } = firebaseUser.metadata;
       if (creationTime && creationTime === lastSignInTime) {
         await deleteUser(firebaseUser).catch(() => undefined);

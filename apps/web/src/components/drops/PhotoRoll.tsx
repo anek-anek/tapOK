@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type MouseEvent, type DragEvent } from 'react';
+import NextImage from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import {
   Camera as IconCamera,
@@ -35,10 +36,18 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
   const [photoToDelete, setPhotoToDelete] = useState<DropPhoto | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const blockImageContextMenu = (event: MouseEvent) => {
+    event.preventDefault();
+  };
+
+  const blockImageDrag = (event: DragEvent) => {
+    event.preventDefault();
+  };
+
   const { data: photos = [], isLoading } = useQuery({
     queryKey: ['drops', drop.id, 'photos'],
     queryFn: () => dropsService.getPhotos(drop.id),
-    enabled: !!drop.id,
+    enabled: !!drop.id && (isOrganiser || isCrewMember),
   });
 
   useEffect(() => {
@@ -46,6 +55,17 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
       setCurrentIndex(photos.length - 1);
     }
   }, [photos.length, currentIndex]);
+
+  useEffect(() => {
+    const handleSaveShortcut = (event: KeyboardEvent) => {
+      const isSaveShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's';
+      if (!isSaveShortcut) return;
+      event.preventDefault();
+    };
+
+    window.addEventListener('keydown', handleSaveShortcut);
+    return () => window.removeEventListener('keydown', handleSaveShortcut);
+  }, []);
 
   const uploadMutation = useUploadPhoto(drop.id);
   const featureMutation = useFeaturePhoto(drop.id);
@@ -106,6 +126,11 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
 
   const displayedPhotos = isCompleted ? featuredPhotos : photos;
 
+  // Hide the section if viewer is neither organiser nor crew.
+  if (!isOrganiser && !isCrewMember) {
+    return null;
+  }
+
   if (isLoading) {
     return (
       <div className="flex h-40 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white/50">
@@ -115,7 +140,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mb-10 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <IconCamera size={18} className="text-tok-black" strokeWidth={2.5} />
@@ -129,7 +154,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
           )}
         </div>
 
-        {canUpload && !reachedTotalLimit && (
+        {canUpload && !reachedTotalLimit && displayedPhotos.length > 0 && (
           <button
             onClick={() => !reachedUserLimit && fileInputRef.current?.click()}
             disabled={isCompressing || uploadMutation.isPending || reachedUserLimit}
@@ -164,45 +189,69 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
         onChange={handleFileSelect}
       />
 
-      {photos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-sm border-[3px] border-dashed border-tok-black/20 bg-tok-black/5 py-12 text-center">
-          <IconCamera size={48} className="mb-3 text-tok-black/10" strokeWidth={1} />
-          <p className="font-passion text-xs font-bold uppercase tracking-widest text-tok-black/30">
-            No moments captured yet
-          </p>
-          {canUpload && (
-            <p className="mt-1 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/20">
-              Be the first to upload!
-            </p>
-          )}
+      {displayedPhotos.length === 0 ? (
+        <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border-2 border-tok-black bg-white">
+              <IconCamera size={16} className="text-tok-black/40" strokeWidth={2.5} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-passion text-[12px] font-bold uppercase tracking-[1.8px] text-tok-black">
+                {isCompleted ? 'No highlights yet' : 'Photo roll is empty'}
+              </p>
+              <p className="mt-0.5 font-inter text-[11px] text-tok-black/45">
+                {isCompleted ? 'No featured moments were saved.' : 'Be the first to capture one.'}
+              </p>
+            </div>
+            {canUpload && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isCompressing || uploadMutation.isPending || reachedUserLimit || reachedTotalLimit}
+                className="flex h-9 shrink-0 items-center gap-1.5 rounded-[4px] border-[3px] border-tok-black bg-tok-yellow px-3 font-passion text-[10px] font-bold uppercase tracking-[1.2px] text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isCompressing || uploadMutation.isPending ? (
+                  <IconLoader size={12} className="animate-spin" />
+                ) : (
+                  <IconPlus size={12} strokeWidth={3} />
+                )}
+                <span>Add</span>
+              </button>
+            )}
+          </div>
         </div>
       ) : (
-        <>
-          {/* Desktop View - Horizontal Scroll */}
-          <div className="no-scrollbar hidden sm:flex gap-4 overflow-x-auto pb-4 pt-1 px-1">
-            {displayedPhotos.map((photo: any) => {
-              const isOwner = photo.userId === userId;
-              const displayUrl = photo.url || photo.base64;
+      <>
+        {/* Desktop View - Horizontal Scroll */}
+        <div className="no-scrollbar hidden sm:flex gap-4 overflow-x-auto pb-4 pt-1 px-1">
+          {displayedPhotos.map((photo: any) => {
+            const isOwner = photo.userId === userId;
+            const displayUrl = photo.url || photo.base64;
 
-              return (
-                <div
-                  key={photo.id}
-                  onClick={() => setSelectedPhoto(photo)}
-                  className="group relative h-48 w-40 shrink-0 cursor-pointer overflow-hidden rounded-sm border-[3px] border-tok-black bg-tok-black/10 shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:shadow-[5px_5px_0px_#1C1C1A] sm:shadow-[4px_4px_0px_#1C1C1A]"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={displayUrl}
-                    alt="Drop moment"
-                    className="h-full w-full object-cover"
-                  />
+            return (
+              <div
+                key={photo.id}
+                onClick={() => setSelectedPhoto(photo)}
+                className="group relative h-48 w-40 shrink-0 cursor-pointer overflow-hidden rounded-sm border-[3px] border-tok-black bg-tok-black/10 shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:shadow-[5px_5px_0px_#1C1C1A] sm:shadow-[4px_4px_0px_#1C1C1A]"
+              >
+                { }
+                <NextImage
+                  src={displayUrl}
+                  alt="Drop moment"
+                  fill
+                  className="object-cover"
+                  sizes="160px"
+                  draggable={false}
+                  onContextMenu={blockImageContextMenu}
+                  onDragStart={blockImageDrag}
+                />
 
                   {/* Attribution Overlay */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-tok-black/80 to-transparent p-2 pt-6">
+                  <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-tok-black/80 to-transparent p-2 pt-6">
                     <div className="flex items-center gap-2">
                       <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 font-passion text-[6px] font-bold text-white">
                         {photo.user?.avatar ? (
-                          <img src={photo.user.avatar} alt="" className="h-full w-full object-cover" />
+                          <NextImage src={photo.user.avatar} alt="" width={16} height={16} className="h-full w-full object-cover" />
                         ) : (
                           (photo.user?.firstName?.[0] || '') + (photo.user?.lastName?.[0] || '')
                         )}
@@ -255,13 +304,13 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
                       </button>
                     )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
+        </div>
 
           {/* Mobile View - Stacked Album/Flipbook Style */}
-          <div className="relative flex flex-col items-center sm:hidden pt-4 pb-8">
+        <div className="relative flex flex-col items-center sm:hidden pt-4 pb-8">
             <div className="relative h-[320px] w-[260px]">
               <AnimatePresence mode="popLayout">
                 {displayedPhotos.slice().reverse().map((photo: any, index: number) => {
@@ -289,23 +338,28 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
                       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                       onClick={() => isTop && setSelectedPhoto(photo)}
                       className={cn(
-                        "absolute inset-0 cursor-pointer overflow-hidden rounded-sm border-[4px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]",
+                        "absolute inset-0 cursor-pointer overflow-hidden rounded-sm border-4 border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]",
                         !isTop && "pointer-events-none"
                       )}
                     >
-                      <img
+                      <NextImage
                         src={photo.url || photo.base64}
                         alt="Drop moment"
-                        className="h-full w-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="260px"
+                        draggable={false}
+                        onContextMenu={blockImageContextMenu}
+                        onDragStart={blockImageDrag}
                       />
 
                       {isTop && (
                         <>
-                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-tok-black/80 to-transparent p-3 pt-8">
+                          <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-tok-black/80 to-transparent p-3 pt-8">
                             <div className="flex items-center gap-2">
                               <div className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 font-passion text-[8px] font-bold text-white">
                                 {photo.user?.avatar ? (
-                                  <img src={photo.user.avatar} alt="" className="h-full w-full object-cover" />
+                                  <NextImage src={photo.user.avatar} alt="" width={20} height={20} className="h-full w-full object-cover" />
                                 ) : (
                                   (photo.user?.firstName?.[0] || '') + (photo.user?.lastName?.[0] || '')
                                 )}
@@ -392,8 +446,8 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
                 <IconChevronRight size={24} strokeWidth={3} />
               </button>
             </div>
-          </div>
-        </>
+        </div>
+      </>
       )}
 
       {reachedUserLimit && canUpload && !isOrganiser && (
@@ -406,7 +460,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
       {selectedPhoto && (
         <ModalShell onClose={() => setSelectedPhoto(null)}>
           {(close) => (
-            <div className="relative max-w-4xl overflow-hidden rounded-sm border-[4px] border-tok-black bg-tok-black shadow-[12px_12px_0px_#1C1C1A]">
+            <div className="relative max-w-4xl overflow-hidden rounded-sm border-4 border-tok-black bg-tok-black shadow-[12px_12px_0px_#1C1C1A]">
               <button
                 onClick={close}
                 className="absolute right-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"
@@ -415,19 +469,24 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
               </button>
 
               <div className="flex flex-col">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                { }
+                <NextImage
                   src={selectedPhoto.url || selectedPhoto.base64 || ''}
                   alt="Full moment"
+                  width={1200}
+                  height={800}
                   className="max-h-[80vh] w-full object-contain bg-tok-black/20"
+                  draggable={false}
+                  onContextMenu={blockImageContextMenu}
+                  onDragStart={blockImageDrag}
                 />
 
-                <div className="border-t-[4px] border-tok-black bg-tok-yellow p-4">
+                <div className="border-t-4 border-tok-black bg-tok-yellow p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-white font-passion text-xs font-bold text-tok-black">
                         {selectedPhoto.user.avatar ? (
-                          <img src={selectedPhoto.user.avatar} alt="" className="h-full w-full object-cover" />
+                          <NextImage src={selectedPhoto.user.avatar} alt="" width={40} height={40} className="h-full w-full object-cover" />
                         ) : (
                           (selectedPhoto.user.firstName?.[0] || '') + (selectedPhoto.user.lastName?.[0] || '')
                         )}

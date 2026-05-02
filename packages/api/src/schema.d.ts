@@ -815,6 +815,8 @@ export interface components {
             category?: "hangout" | "party";
             /** @example uuid-string */
             idempotencyKey?: string;
+            /** @description Optional JPG/PNG cover as data URL; max 5MB decoded size. */
+            coverPhotoBase64?: string;
         };
         DropSpark: {
             id: string;

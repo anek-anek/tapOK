@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useMounted } from '@/hooks/use-mounted';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { useDiscoverData } from '@/hooks/queries/use-drops';
@@ -14,7 +14,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { DropCategory } from '@/types/drop';
-import { ChevronLeft, ChevronRight, Compass, Sparkles, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, Users } from 'lucide-react';
 
 function DiscoverSkeleton() {
   return (
@@ -60,7 +60,7 @@ export default function DiscoverPage() {
         <TapokNavbar />
         <main className="mx-auto max-w-4xl px-4 py-20 text-center">
           <h1 className="font-passion text-4xl uppercase">Failed to load discovery</h1>
-          <p className="mt-4 text-tok-black/60">We couldn't fetch the latest drops. Please try again later.</p>
+          <p className="mt-4 text-tok-black/60">We couldn&apos;t fetch the latest drops. Please try again later.</p>
         </main>
       </div>
     );

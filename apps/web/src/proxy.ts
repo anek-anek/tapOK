@@ -11,9 +11,9 @@ const JWKS = createRemoteJWKSet(
   ),
 );
 
-async function getSessionRole(request: NextRequest): Promise<UserRole | null> {
+async function getSessionAuth(request: NextRequest): Promise<{ isAuthenticated: boolean; role: UserRole | null }> {
   const token = request.cookies.get('__session')?.value;
-  if (!token) return null;
+  if (!token) return { isAuthenticated: false, role: null };
 
   try {
     const { payload } = await jwtVerify(token, JWKS, {
@@ -23,18 +23,18 @@ async function getSessionRole(request: NextRequest): Promise<UserRole | null> {
 
     const role = (payload as Record<string, unknown>)['role'];
     if (role === 'admin' || role === 'photographer' || role === 'participant') {
-      return role as UserRole;
+      return { isAuthenticated: true, role: role as UserRole };
     }
-    return null;
+    // A verified session token without a custom role is still authenticated.
+    return { isAuthenticated: true, role: null };
   } catch {
-    return null;
+    return { isAuthenticated: false, role: null };
   }
 }
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const role = await getSessionRole(request);
-  const isAuthenticated = role !== null;
+  const { isAuthenticated, role } = await getSessionAuth(request);
 
   if (isProtectedRoute(pathname) && !isAuthenticated) {
     const loginUrl = new URL('/login', request.url);
@@ -50,7 +50,7 @@ export async function proxy(request: NextRequest) {
   if (isAuthenticated && isProtectedRoute(pathname)) {
     const allowedRoles = PAGE_PERMISSIONS[pathname];
 
-    if (allowedRoles && !allowedRoles.includes(role!)) {
+    if (allowedRoles && (!role || !allowedRoles.includes(role))) {
       const forbiddenUrl = new URL('/forbidden', request.url);
       forbiddenUrl.searchParams.set('from', pathname);
       return NextResponse.redirect(forbiddenUrl);

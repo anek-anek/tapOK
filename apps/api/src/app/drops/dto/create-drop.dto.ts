@@ -56,4 +56,11 @@ export class CreateDropDto {
   @IsOptional()
   @IsString()
   idempotencyKey?: string;
+
+  @ApiPropertyOptional({
+    description: 'Optional JPG/PNG cover as data URL; max 5MB decoded size.',
+  })
+  @IsOptional()
+  @IsString()
+  coverPhotoBase64?: string;
 }

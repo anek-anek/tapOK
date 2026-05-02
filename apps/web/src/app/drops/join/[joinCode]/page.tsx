@@ -7,7 +7,6 @@ import axios from 'axios';
 import {
   Calendar as IconCalendar,
   MapPin as IconMapPin,
-  Users as IconUsers,
   Lock as IconLock,
   CheckCircle2 as IconCheckCircle,
   Clock as IconClock,
@@ -35,17 +34,6 @@ function formatDateTime(iso: string) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(iso));
-}
-
-function getInitials(name: string) {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('') || 'D'
-  );
 }
 
 type JoinCtaProps = {
@@ -254,9 +242,8 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
           toast.success('YOU ARE LOCKED IN!');
         }
       },
-      onError: (err: any) => {
-        const rawMsg = err.response?.data?.message || 'FAILED TO JOIN DROP';
-        const msg = Array.isArray(rawMsg) ? rawMsg[0] : rawMsg;
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'FAILED TO JOIN DROP';
         toast.error(String(msg).toUpperCase());
       }
     });

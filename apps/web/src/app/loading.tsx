@@ -1,12 +1,22 @@
 'use client';
 
-import { TapokNavbar } from '@/components/tapok-navbar';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Loading() {
   return (
     <div className="min-h-screen bg-tok-cream">
-      <TapokNavbar />
+      <div className="h-[60px] border-b border-tok-black/5 bg-tok-cream">
+        <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-8">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-9 rounded-lg bg-tok-black/10" />
+            <Skeleton className="h-5 w-16 rounded-sm bg-tok-black/10" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-16 rounded-md bg-tok-black/10" />
+            <Skeleton className="h-8 w-16 rounded-md bg-tok-black/10" />
+          </div>
+        </div>
+      </div>
       
       {/* Top Progress Bar */}
       <div className="fixed top-[80px] sm:top-[88px] left-0 right-0 z-50 h-1.5 overflow-hidden bg-tok-cream border-y-2 border-tok-black/5">

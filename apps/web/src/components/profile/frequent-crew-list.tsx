@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useFrequentCrew } from '@/hooks/queries/use-users';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -40,9 +41,11 @@ export function FrequentCrewList() {
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden border-2 border-tok-black bg-tok-teal-pale font-passion text-xl font-bold text-tok-teal shadow-[2px_2px_0px_0px_#262624]">
                 {member.avatar ? (
-                  <img
+                  <Image
                     src={member.avatar}
                     alt={member.firstName}
+                    width={56}
+                    height={56}
                     className="h-full w-full object-cover"
                   />
                 ) : (

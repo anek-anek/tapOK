@@ -1,7 +1,7 @@
 'use client';
 
 import { type FormEvent, useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight as IconArrowRight,
@@ -14,9 +14,8 @@ import {
   ExternalLink as IconExternalLink,
   Loader2 as IconLoader,
 } from 'lucide-react';
-import { useAuth } from '@/components/providers/auth-provider';
 import { track } from '@/lib/analytics';
-import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
+import { AuthPageShell } from '@/components/auth/AuthPageShell';
 import { toast } from 'react-hot-toast';
 import type { Drop } from '@/types/drop';
 import { DropModal } from '@/components/drop-modal';
@@ -151,8 +150,8 @@ function JoinModal({ onClose }: { onClose: () => void }) {
       track('crew_code_submitted', { code: trimmed, dropId: drop.id });
       toast.success('DROP FOUND! TAPPING YOU IN...');
       router.push(`/drops/join/${trimmed}`);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'INVALID JOIN CODE';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'INVALID JOIN CODE';
       toast.error(String(msg).toUpperCase());
       setIsChecking(false);
     }
@@ -392,8 +391,6 @@ function DropLive({ drop }: { drop: Drop }) {
 
 export function OnboardingWizard() {
   const router = useRouter();
-  const params = useSearchParams();
-  const { dbUser } = useAuth();
 
   const [step, setStep] = useState(0);
   const [path, setPath] = useState<'chief' | 'crew' | null>(null);
@@ -434,7 +431,7 @@ export function OnboardingWizard() {
               Initializing Drop...
             </h2>
             <p className="mt-2 font-inter text-sm text-black/40">
-              Wait for the Chief's terminal to open.
+              Wait for the Chief&apos;s terminal to open.
             </p>
 
             {showModal && (
@@ -459,7 +456,7 @@ export function OnboardingWizard() {
               Syncing Crew...
             </h2>
             <p className="mt-2 font-inter text-sm text-black/40">
-              Connecting to the Chief's mission.
+              Connecting to the Chief&apos;s mission.
             </p>
 
             {showModal && (

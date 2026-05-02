@@ -2490,6 +2490,10 @@
           "idempotencyKey": {
             "type": "string",
             "example": "uuid-string"
+          },
+          "coverPhotoBase64": {
+            "type": "string",
+            "description": "Optional JPG/PNG cover as data URL; max 5MB decoded size."
           }
         },
         "required": [

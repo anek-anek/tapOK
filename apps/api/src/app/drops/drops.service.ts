@@ -180,6 +180,12 @@ export class DropsService {
         action: 'created',
       });
 
+      if (dto.coverPhotoBase64?.trim()) {
+        const { buffer, mimeType } = this.coverBufferFromDataUrl(dto.coverPhotoBase64);
+        const publicUrl = await this.storageService.uploadDropCover(drop.id, buffer, mimeType);
+        await this.dropsRepository.update(drop.id, { coverPhoto: publicUrl });
+      }
+
       return this.dropsRepository.findById(drop.id) as Promise<Drop>;
     } finally {
       this._createInFlight.delete(inFlightKey);
@@ -311,7 +317,8 @@ export class DropsService {
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
     const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
-    if (drop.organiserId !== organiser?.id) {
+    const organiserId = organiser?.id;
+    if (drop.organiserId !== organiserId) {
       throw new ForbiddenException('Only the organiser can invite people');
     }
 
@@ -329,7 +336,7 @@ export class DropsService {
 
     await this.dropsRepository.writeLog({
       dropId,
-      userId: organiser.id,
+      userId: organiserId!,
       action: 'invited_member',
       changedFields: { invitedUserId: userId },
     });
@@ -579,42 +586,48 @@ export class DropsService {
     limit = 6,
     category?: DropCategory,
   ): Promise<DiscoverDropsResponseDto> {
-    // 1. Parallel: featured drop + user lookup
-    const [featuredResult, user] = await Promise.all([
+    // 1. Parallel: featured drop + user lookup + public list + chief IDs
+    // We fetch the public list without exclusion to allow parallelization, then filter in memory
+    const [featuredResult, user, allPublicPaginated, chiefIds] = await Promise.all([
       this.dropsRepository.findPublicDrops(1, 1),
       firebaseUid ? this.usersService.findByFirebaseUid(firebaseUid) : Promise.resolve(null),
+      this.dropsRepository.findPublicDrops(page, limit, category),
+      firebaseUid ? (async () => {
+        const u = await this.usersService.findByFirebaseUid(firebaseUid);
+        return u ? this.dropsRepository.findRecentJoinedChiefIds(u.id) : [];
+      })() : Promise.resolve([]),
     ]);
 
     const featuredRow = featuredResult.data[0] ?? null;
-    const excludeIds = featuredRow ? [featuredRow.id] : [];
-
-    // 2. Parallel: all public paginated + chiefIds (if user exists)
-    const [allPublicPaginated, chiefIds] = await Promise.all([
-      this.dropsRepository.findPublicDrops(page, limit, category, excludeIds),
-      user ? this.dropsRepository.findRecentJoinedChiefIds(user.id) : Promise.resolve([]),
-    ]);
-
-    // 3. Parallel: upcoming drops by chiefs + spark state
-    // First, collect all IDs we need to check sparks for
-    let recentChiefsRows: Drop[] = [];
-    if (chiefIds.length > 0) {
-      recentChiefsRows = await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, category);
+    
+    // Filter out the featured drop from the public list if it exists there
+    if (featuredRow) {
+      allPublicPaginated.data = allPublicPaginated.data.filter(d => d.id !== featuredRow.id);
+      // If we filtered one out, we might have limit-1 items. For UX this is usually fine, 
+      // or we could have fetched limit+1 to be safe.
     }
 
-    const ids = new Set<string>();
-    if (featuredRow) ids.add(featuredRow.id);
-    for (const r of recentChiefsRows) ids.add(r.id);
-    for (const r of allPublicPaginated.data) ids.add(r.id);
-    const dropIdList = [...ids];
+    // 2. Fetch upcoming drops by chiefs
+    const recentChiefsRows = chiefIds.length > 0 
+      ? await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, category)
+      : [];
 
-    let viewerSparkedDropIds: Set<string> | undefined;
-    if (user && dropIdList.length > 0) {
-      const sparked = await this.dropsRepository.findDropIdsSparkedByUser(user.id, dropIdList);
-      viewerSparkedDropIds = new Set(sparked);
+    // 3. Fetch spark state for all visible drops in one go
+    let sparks: Set<string> | undefined;
+    if (user) {
+      const dropIdList = new Set<string>();
+      if (featuredRow) dropIdList.add(featuredRow.id);
+      allPublicPaginated.data.forEach(r => dropIdList.add(r.id));
+      recentChiefsRows.forEach(r => dropIdList.add(r.id));
+
+      if (dropIdList.size > 0) {
+        const sparked = await this.dropsRepository.findDropIdsSparkedByUser(user.id, [...dropIdList]);
+        sparks = new Set(sparked);
+      }
     }
 
     const map = (row: Drop & { sparkCount?: number }) =>
-      this.mapRowToDiscoverSummary(row, viewerSparkedDropIds);
+      this.mapRowToDiscoverSummary(row, sparks);
 
     return {
       featured: featuredRow ? map(featuredRow as Drop & { sparkCount?: number }) : null,
@@ -876,6 +889,24 @@ export class DropsService {
     if (sizeBytes > 5 * 1024 * 1024) {
       throw new BadRequestException('Image size exceeds 5MB limit');
     }
+  }
+
+  /** Parses a validated data-URL image for storage upload (same rules as photo roll base64). */
+  private coverBufferFromDataUrl(dataUrl: string): { buffer: Buffer; mimeType: string } {
+    this.validateImageBase64(dataUrl);
+    const mimeMatch = dataUrl.match(/^data:([^;]+);base64,/);
+    if (!mimeMatch?.[1]) {
+      throw new BadRequestException('Invalid image format: Missing data URI prefix');
+    }
+    let mimeType = mimeMatch[1];
+    if (mimeType === 'image/jpg') {
+      mimeType = 'image/jpeg';
+    }
+    const base64Data = dataUrl.split(',')[1];
+    if (!base64Data) {
+      throw new BadRequestException('Invalid image data');
+    }
+    return { buffer: Buffer.from(base64Data, 'base64'), mimeType };
   }
 
   private async generateUniqueJoinCode(): Promise<string> {
