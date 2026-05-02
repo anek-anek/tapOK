@@ -77,12 +77,6 @@ export async function finalizeSession(
       ((status === 401 || status === 403) && looksLikeMissingAccount);
 
     if (shouldTreatAsNoAccount) {
-      const { creationTime, lastSignInTime } = firebaseUser.metadata;
-      if (creationTime && creationTime === lastSignInTime) {
-        await deleteUser(firebaseUser).catch(() => undefined);
-      } else {
-        await signOut(getFirebaseAuth()).catch(() => undefined);
-      }
       await clearSession();
       return {
         ok: false,
@@ -95,7 +89,7 @@ export async function finalizeSession(
     return {
       ok: false,
       reason: 'error',
-      message: 'Something went wrong. Please try again.',
+      message: message || 'Something went wrong. Please try again.',
     };
   }
 }

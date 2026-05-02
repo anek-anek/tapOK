@@ -97,10 +97,17 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
 
           const isCrewJoin = redirectTo.startsWith('/drops/join/');
           handledSuccessRedirectRef.current = true;
+
           if (isCrewJoin) {
             router.replace(redirectTo);
           } else {
-            router.replace(`/onboarding?name=${encodeURIComponent(finalized.dbUser.firstName)}`);
+            // If the user already has a handle, they are likely not new, send to /drops
+            const isNewUser = !finalized.dbUser.userHandle;
+            if (isNewUser) {
+              router.replace(`/onboarding?name=${encodeURIComponent(finalized.dbUser.firstName)}`);
+            } else {
+              router.replace('/drops');
+            }
           }
         }
       } catch (error: unknown) {
@@ -137,7 +144,12 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       if (isCrewJoin) {
         router.replace(redirectTo);
       } else {
-        router.replace(`/onboarding?name=${encodeURIComponent(finalized.dbUser.firstName)}`);
+        const isNewUser = !finalized.dbUser.userHandle;
+        if (isNewUser) {
+          router.replace(`/onboarding?name=${encodeURIComponent(finalized.dbUser.firstName)}`);
+        } else {
+          router.replace('/drops');
+        }
       }
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
@@ -176,7 +188,12 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       if (isCrewJoin) {
         router.replace(redirectTo);
       } else {
-        router.replace(`/onboarding?name=${encodeURIComponent(values.firstName.trim())}`);
+        const isNewUser = !finalized.dbUser.userHandle;
+        if (isNewUser) {
+          router.replace(`/onboarding?name=${encodeURIComponent(values.firstName.trim())}`);
+        } else {
+          router.replace('/drops');
+        }
       }
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';

@@ -133,14 +133,12 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       const finalized = await finalizeSession(user, { sync: false });
 
       if (!finalized.ok) {
-        const isNoAccount =
-          finalized.reason === 'no_account' ||
-          String(finalized.message).toLowerCase().includes('no tapok account');
-        const msg = isNoAccount
-          ? 'No TapOK account found. Please sign up first.'
-          : finalized.message;
-        const displayMsg = Array.isArray(msg) ? msg[0] : msg;
-        toast.error(String(displayMsg).toUpperCase());
+        if (finalized.reason === 'no_account') {
+          toast.error('NO TAPOK ACCOUNT FOUND. PLEASE SIGN UP FIRST.');
+        } else {
+          const displayMsg = Array.isArray(finalized.message) ? finalized.message[0] : finalized.message;
+          toast.error(String(displayMsg).toUpperCase());
+        }
         return;
       }
 
