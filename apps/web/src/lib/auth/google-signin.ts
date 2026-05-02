@@ -2,7 +2,7 @@
 
 import { signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import type { UserCredential } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { getFirebaseAuth, getGoogleAuthProvider } from '@/lib/firebase';
 
 export function prefersGoogleRedirectFlow(): boolean {
   if (typeof window === 'undefined') return false;
@@ -18,20 +18,23 @@ export function prefersGoogleRedirectFlow(): boolean {
 export type GoogleSignInOutcome = UserCredential | 'redirect';
 
 export async function signInWithGoogleInteractive(): Promise<GoogleSignInOutcome> {
+  const auth = getFirebaseAuth();
+  const provider = getGoogleAuthProvider();
+
   if (prefersGoogleRedirectFlow()) {
-    await signInWithRedirect(auth, googleProvider);
+    await signInWithRedirect(auth, provider);
     return 'redirect';
   }
 
   try {
-    return await signInWithPopup(auth, googleProvider);
+    return await signInWithPopup(auth, provider);
   } catch (error: unknown) {
     const code = (error as { code?: string }).code ?? '';
     if (
       code === 'auth/popup-blocked' ||
       code === 'auth/operation-not-supported-in-this-environment'
     ) {
-      await signInWithRedirect(auth, googleProvider);
+      await signInWithRedirect(auth, provider);
       return 'redirect';
     }
     throw error;

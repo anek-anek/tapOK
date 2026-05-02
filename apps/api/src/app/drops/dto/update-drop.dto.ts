@@ -1,5 +1,16 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+  Max,
+  ValidateIf,
+} from 'class-validator';
 import { DropCategory, DropStatus } from '../../../common';
 
 export class UpdateDropDto {
@@ -50,4 +61,16 @@ export class UpdateDropDto {
   @IsOptional()
   @IsEnum(DropCategory)
   category?: DropCategory;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    type: Number,
+    description: 'Minimum attendee age for party drops; null clears the restriction.',
+  })
+  @IsOptional()
+  @ValidateIf((o) => o.minimumAge != null)
+  @IsInt()
+  @Min(1)
+  @Max(99)
+  minimumAge?: number | null;
 }

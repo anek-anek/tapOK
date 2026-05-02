@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signInWithEmailAndPassword, getRedirectResult } from 'firebase/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { finalizeSession } from '@/lib/auth/finalize-session';
@@ -68,7 +68,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   useEffect(() => {
     const checkRedirect = async () => {
       try {
-        const result = await getRedirectResult(auth);
+        const result = await getRedirectResult(getFirebaseAuth());
         if (result) {
           setGoogleLoading(true);
           const finalized = await finalizeSession(result.user, { sync: false });
@@ -125,7 +125,11 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   const onSubmit = async (values: LoginFormValues) => {
     setServerError(null);
     try {
-      const { user } = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const { user } = await signInWithEmailAndPassword(
+        getFirebaseAuth(),
+        values.email,
+        values.password,
+      );
       const finalized = await finalizeSession(user, { sync: false });
 
       if (!finalized.ok) {

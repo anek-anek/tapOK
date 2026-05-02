@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,5 +12,21 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+let authInstance: Auth | undefined;
+let googleProviderInstance: GoogleAuthProvider | undefined;
+
+export function getFirebaseAuth(): Auth {
+  if (typeof window === 'undefined') {
+    throw new Error('getFirebaseAuth() is only available in the browser');
+  }
+  authInstance ??= getAuth(app);
+  return authInstance;
+}
+
+export function getGoogleAuthProvider(): GoogleAuthProvider {
+  if (typeof window === 'undefined') {
+    throw new Error('getGoogleAuthProvider() is only available in the browser');
+  }
+  googleProviderInstance ??= new GoogleAuthProvider();
+  return googleProviderInstance;
+}

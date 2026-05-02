@@ -7,7 +7,9 @@ import {
   IsOptional,
   IsString,
   Min,
+  Max,
   IsEnum,
+  ValidateIf,
 } from 'class-validator';
 import { DropCategory } from '../../../common';
 
@@ -51,6 +53,18 @@ export class CreateDropDto {
   @IsOptional()
   @IsEnum(DropCategory)
   category?: DropCategory;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    type: Number,
+    description: 'Minimum attendee age (≥). Only stored when category is party.',
+  })
+  @IsOptional()
+  @ValidateIf((o) => o.category === DropCategory.PARTY && o.minimumAge != null)
+  @IsInt()
+  @Min(1)
+  @Max(99)
+  minimumAge?: number | null;
 
   @ApiPropertyOptional({ example: 'uuid-string' })
   @IsOptional()

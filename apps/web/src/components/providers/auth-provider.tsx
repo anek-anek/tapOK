@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { useQueryClient } from '@tanstack/react-query';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { setAuthToken } from '@/services/api';
 import { finalizeSession } from '@/lib/auth/finalize-session';
 import { applyIdTokenToAxiosAndSessionCookie } from '@/lib/auth/session-cookie';
@@ -60,7 +60,7 @@ export function AuthProvider({
   const prevUidRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), async (firebaseUser) => {
       if (firebaseUser) {
         const bootstrapToken = await firebaseUser.getIdToken();
         setAuthToken(bootstrapToken);

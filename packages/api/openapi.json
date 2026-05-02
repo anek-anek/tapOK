@@ -1789,6 +1789,11 @@
             ],
             "nullable": true
           },
+          "minimumAge": {
+            "type": "number",
+            "nullable": true,
+            "description": "Minimum age when category is party; null if unrestricted."
+          },
           "isPublic": {
             "type": "boolean"
           },
@@ -1926,6 +1931,11 @@
             ],
             "example": "hangout"
           },
+          "minimumAge": {
+            "type": "number",
+            "nullable": true,
+            "description": "Minimum attendee age (≥). Only stored when category is party."
+          },
           "idempotencyKey": {
             "type": "string",
             "example": "uuid-string"
@@ -2007,6 +2017,10 @@
               "hangout",
               "party"
             ]
+          },
+          "minimumAge": {
+            "type": "number",
+            "nullable": true
           },
           "joinCode": {
             "type": "string"
@@ -2292,6 +2306,11 @@
               "party"
             ],
             "example": "hangout"
+          },
+          "minimumAge": {
+            "type": "number",
+            "nullable": true,
+            "description": "Minimum attendee age for party drops; null clears the restriction."
           }
         }
       },

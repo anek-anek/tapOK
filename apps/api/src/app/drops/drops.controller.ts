@@ -231,7 +231,11 @@ export class DropsController {
   @ApiOperation({ summary: 'Join a drop' })
   @ApiResponse({ status: 201, type: JoinDropResponseDto })
   @ApiResponse({ status: 400, description: 'Drop is completed.' })
-  @ApiResponse({ status: 403, description: 'Organiser cannot join their own drop.' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Organiser cannot join their own drop, age requirement not met, or birthday missing for an age-restricted drop.',
+  })
   @ApiResponse({ status: 404, description: 'Drop or user not found.' })
   @ApiResponse({ status: 409, description: 'Already joined this drop.' })
   joinDrop(

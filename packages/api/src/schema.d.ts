@@ -617,6 +617,8 @@ export interface components {
             status: "active" | "ongoing" | "completed";
             /** @enum {string|null} */
             category?: "hangout" | "party" | null;
+            /** @description Minimum age when category is party; null if unrestricted. */
+            minimumAge?: number | null;
             isPublic: boolean;
             isLocked: boolean;
             organiserId: string;
@@ -662,6 +664,8 @@ export interface components {
              * @enum {string}
              */
             category?: "hangout" | "party";
+            /** @description Minimum attendee age (≥). Only stored when category is party. */
+            minimumAge?: number | null;
             /** @example uuid-string */
             idempotencyKey?: string;
             /** @description Optional JPG/PNG cover as data URL; max 5MB decoded size. */
@@ -687,6 +691,7 @@ export interface components {
             status: "active" | "ongoing" | "completed";
             /** @enum {string} */
             category?: "hangout" | "party";
+            minimumAge?: number | null;
             joinCode: string;
             shareUrl: string;
             /** @default true */
@@ -779,6 +784,8 @@ export interface components {
              * @enum {string}
              */
             category?: "hangout" | "party";
+            /** @description Minimum attendee age for party drops; null clears the restriction. */
+            minimumAge?: number | null;
         };
         CrewMemberDto: {
             id: string;

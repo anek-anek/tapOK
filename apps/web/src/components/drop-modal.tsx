@@ -57,6 +57,7 @@ const dropFormSchema = z.object({
   isLocked: z.boolean().optional(),
   isPublic: z.boolean().optional(),
   category: z.enum(['hangout', 'party']).optional().nullable(),
+  minimumAge: z.union([z.number().int().min(1).max(99), z.null()]).optional(),
   overview: z.string().optional(),
 });
 
@@ -76,6 +77,7 @@ type FormValues = {
   isLocked?: boolean;
   isPublic?: boolean;
   category?: 'hangout' | 'party';
+  minimumAge?: number | null;
   overview?: string;
 };
 
@@ -384,6 +386,7 @@ export function DropModal({
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -396,6 +399,7 @@ export function DropModal({
       isLocked: drop?.isLocked ?? false,
       isPublic: drop?.isPublic ?? true,
       category: drop?.category ?? undefined,
+      minimumAge: drop?.minimumAge ?? null,
       overview: drop?.overview ?? '',
     },
   });
@@ -418,6 +422,12 @@ export function DropModal({
       setCoverPreview(null);
     }
   }, [category, isEdit, pendingCoverFile]);
+
+  useEffect(() => {
+    if (category !== 'party') {
+      setValue('minimumAge', null);
+    }
+  }, [category, setValue]);
 
   const [isSubmittingInternal, setIsSubmittingInternal] = useState(false);
   const isBusy = createDrop.isPending || updateDrop.isPending || uploadCoverPhoto.isPending || deleteCoverPhoto.isPending || isSubmitting || isSubmittingInternal;
@@ -446,6 +456,10 @@ export function DropModal({
         if (values.isPublic !== drop.isPublic) dto.isPublic = values.isPublic;
         if (values.category !== drop.category) dto.category = values.category ?? undefined;
         if (values.overview !== drop.overview) dto.overview = values.overview;
+        const effectiveMinAge = values.category === 'party' ? values.minimumAge ?? null : null;
+        if (effectiveMinAge !== (drop.minimumAge ?? null)) {
+          dto.minimumAge = effectiveMinAge;
+        }
 
         if (Object.keys(dto).length > 0) {
           try {
@@ -489,6 +503,7 @@ export function DropModal({
           isLocked: values.isLocked ?? false,
           isPublic: values.isPublic ?? true,
           category: values.category ?? undefined,
+          minimumAge: values.category === 'party' ? values.minimumAge ?? null : null,
           overview: values.overview,
           idempotencyKey: idempotencyKeyRef.current,
           ...(coverPhotoBase64 ? { coverPhotoBase64 } : {}),
@@ -784,10 +799,66 @@ export function DropModal({
                         </div>
                       )}
                     />
+                    {category === 'party' && (
+                      <div className="mt-3 space-y-2 border-t-2 border-dashed border-tok-black/20 pt-3">
+                        <div className="flex items-center gap-2">
+                          <Label
+                            htmlFor="drop-modal-headcount"
+                            className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
+                          >
+                            Age floor <span className="normal-case opacity-40 font-normal">— Optional</span>
+                          </Label>
+                        </div>
+                        <Controller
+                          name="minimumAge"
+                          control={control}
+                          render={({ field }) => {
+                            const restricted = field.value != null;
+                            return (
+                              <div className="my-1 flex flex-wrap items-stretch gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange(restricted ? null : 20)}
+                                  className={cn(
+                                    'h-11 min-w-0 flex-1 rounded-sm border-[3px] border-tok-black px-2 font-passion text-[10px] font-bold uppercase tracking-[1px] transition-all sm:max-w-[9.5rem] sm:flex-none sm:px-3 sm:text-xs',
+                                    restricted
+                                      ? 'bg-tok-black text-tok-cream shadow-none'
+                                      : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]',
+                                  )}
+                                >
+                                  {restricted ? 'Min age set' : 'Any age'}
+                                </button>
+                                {restricted && (
+                                  <div className="flex min-w-0 items-center gap-1.5 rounded-sm border-[3px] border-tok-black bg-white px-2 py-0.5">
+                                    <span className="font-passion text-sm font-bold text-tok-black/50" aria-hidden>
+                                      ≥
+                                    </span>
+                                    <Input
+                                      type="number"
+                                      min={1}
+                                      max={99}
+                                      value={field.value ?? 20}
+                                      onChange={(e) => {
+                                        const n = Number.parseInt(e.target.value, 10);
+                                        if (!Number.isFinite(n)) return;
+                                        field.onChange(Math.min(99, Math.max(1, n)));
+                                      }}
+                                      onWheel={(e) => e.currentTarget.blur()}
+                                      className="h-6 w-11 min-w-0 border-0 bg-transparent p-0 text-center font-passion text-base font-bold text-tok-black shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                      aria-label="Minimum age"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
+                  <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4">
+                    <div className="min-w-0 space-y-1.5">
                       <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
                         Security
                       </Label>
@@ -816,7 +887,7 @@ export function DropModal({
                       />
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="min-w-0 space-y-1.5">
                       <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
                         Visibility
                       </Label>

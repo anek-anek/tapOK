@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { Loader2, MailCheck } from 'lucide-react';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { useAuth } from '@/components/providers/auth-provider';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 
@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (values: ForgotFormValues) => {
     setServerError(null);
     try {
-      await sendPasswordResetEmail(auth, values.email);
+      await sendPasswordResetEmail(getFirebaseAuth(), values.email);
       setSentTo(values.email);
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
