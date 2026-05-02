@@ -72,8 +72,8 @@ export function AuthProvider({
         }
         prevUidRef.current = firebaseUser.uid;
 
-        // Registration creates a Firebase user before POST /users/sync; finalization runs from RegisterForm.
-        if (window.location.pathname === '/register') {
+        // Login/Registration handle their own finalization/sync logic to avoid race conditions.
+        if (window.location.pathname === '/register' || window.location.pathname === '/login') {
           setLoading(false);
           setIsReady(true);
           return;
