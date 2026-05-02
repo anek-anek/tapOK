@@ -13,7 +13,6 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 let authInstance: Auth | undefined;
-let googleProviderInstance: GoogleAuthProvider | undefined;
 
 export function getFirebaseAuth(): Auth {
   if (typeof window === 'undefined') {
@@ -23,10 +22,14 @@ export function getFirebaseAuth(): Auth {
   return authInstance;
 }
 
-export function getGoogleAuthProvider(): GoogleAuthProvider {
+export function createGoogleAuthProvider(loginHint?: string): GoogleAuthProvider {
   if (typeof window === 'undefined') {
-    throw new Error('getGoogleAuthProvider() is only available in the browser');
+    throw new Error('createGoogleAuthProvider() is only available in the browser');
   }
-  googleProviderInstance ??= new GoogleAuthProvider();
-  return googleProviderInstance;
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({
+    prompt: 'select_account',
+    ...(loginHint ? { login_hint: loginHint } : {}),
+  });
+  return provider;
 }

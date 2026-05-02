@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -17,13 +17,17 @@ import {
   shouldDeleteGoogleUserOnFinalizeFailure,
   signInWithGoogleInteractive,
 } from '@/lib/auth/google-signin';
+import { lookupExistingAuthProvider } from '@/lib/auth/provider-check';
 import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
+import { useAuthFormReset } from '@/lib/auth/use-auth-form-reset';
 import { toast } from 'react-hot-toast';
 
 interface LoginFormProps {
   searchParams: Promise<{ redirectTo?: string }>;
 }
+
+const LOGIN_DEFAULT_VALUES: LoginFormValues = { email: '', password: '' };
 
 export default function LoginForm({ searchParams }: LoginFormProps) {
   const { redirectTo = '/drops' } = use(searchParams);
@@ -33,22 +37,28 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   const {
     register,
     handleSubmit,
+    getValues,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: LOGIN_DEFAULT_VALUES,
   });
 
-  const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleRedirectResolved, setGoogleRedirectResolved] = useState(false);
-  const errorRef = useRef<HTMLDivElement>(null);
 
   const showError = useCallback((message: string) => {
-    setServerError(message);
     toast.error(message.toUpperCase());
   }, []);
+
+  const resetFormState = useCallback(() => {
+    reset(LOGIN_DEFAULT_VALUES);
+    setShowPassword(false);
+  }, [reset]);
+
+  const { formRef, clearForm } = useAuthFormReset(resetFormState);
 
   useEffect(() => {
     if (!googleRedirectResolved) return;
@@ -96,14 +106,6 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   }, [user, dbUser, googleLoading, googleRedirectResolved, isSubmitting, redirectTo, router, setSession, showError]);
 
   useEffect(() => {
-    if (serverError && errorRef.current) {
-      errorRef.current.classList.remove('animate-shake');
-      void errorRef.current.offsetWidth;
-      errorRef.current.classList.add('animate-shake');
-    }
-  }, [serverError]);
-
-  useEffect(() => {
     let cancelled = false;
 
     void (async () => {
@@ -140,10 +142,27 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   }, [router, redirectTo, setSession, showError]);
 
   const handleGoogleSignIn = async () => {
-    setServerError(null);
+    const normalizedEmail = getValues('email').trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      showError('Enter your email first to continue with Google.');
+      return;
+    }
+
+    try {
+      const existingAuthProvider = await lookupExistingAuthProvider(normalizedEmail);
+      if (existingAuthProvider === 'password') {
+        showError(getLoginFirebaseError('auth/account-exists-with-different-credential'));
+        return;
+      }
+    } catch {
+      showError('Unable to verify this email right now. Please try again.');
+      return;
+    }
+
     setGoogleLoading(true);
     try {
-      const outcome = await signInWithGoogleInteractive();
+      const outcome = await signInWithGoogleInteractive(normalizedEmail);
       if (outcome === 'redirect') return;
 
       const finalized = await finalizeSession(outcome.user, {
@@ -158,6 +177,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       }
 
       toast.success('WELCOME BACK');
+      clearForm();
       setSession(outcome.user, finalized.dbUser);
       router.replace(
         resolveAuthSuccessRedirect({
@@ -177,7 +197,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   };
 
   const onSubmit = async (values: LoginFormValues) => {
-    setServerError(null);
+    clearForm();
     try {
       const { user } = await signInWithEmailAndPassword(
         getFirebaseAuth(),
@@ -212,9 +232,9 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
 
   return (
     <AuthPageShell>
-      <div className="mb-6">
+      <div className="mb-5 lg:mb-3">
         <div
-          className="auth-panel-in mb-3 inline-flex items-center gap-2"
+          className="auth-panel-in mb-3 inline-flex items-center gap-2 lg:mb-2"
           style={{
             background: '#006666',
             color: 'var(--color-tok-cream)',
@@ -224,19 +244,19 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
             padding: '4px 10px',
-            border: '2px solid #000',
-            boxShadow: '3px 3px 0 #000',
+            border: '2px solid var(--color-tok-black)',
+            boxShadow: '3px 3px 0 #262624',
           }}
         >
           WELCOME BACK
         </div>
         <h1
-          className="auth-panel-in font-passion font-bold uppercase leading-none text-black"
+          className="auth-panel-in font-passion font-bold uppercase leading-none text-tok-black"
           style={{ fontSize: 'clamp(32px, 4vw, 48px)', letterSpacing: '-0.01em', animationDelay: '0.05s' }}
         >
           TAP BACK IN.
         </h1>
-        <p className="auth-panel-in mt-2 font-inter text-sm text-black/50" style={{ animationDelay: '0.1s' }}>
+        <p className="auth-panel-in mt-2 font-inter text-sm text-tok-black/55 lg:mt-1.5" style={{ animationDelay: '0.1s' }}>
           Don&apos;t have an account?{' '}
           <Link
             href={buildAuthPageHref('/register', redirectTo)}
@@ -252,17 +272,17 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={googleLoading || isSubmitting}
-        className="auth-panel-in mb-5 flex w-full items-center justify-center gap-3 border-2 border-black bg-white px-5 py-3 font-inter text-sm font-medium text-black transition-all duration-150 ease-in-out disabled:cursor-not-allowed disabled:opacity-50"
-        style={{ boxShadow: '4px 4px 0 #000', borderRadius: 0, animationDelay: '0.15s' }}
+        className="auth-panel-in mb-5 flex w-full items-center justify-center gap-3 border-2 border-tok-black bg-white px-5 py-3 font-inter text-sm font-medium text-tok-black transition-all duration-150 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 lg:mb-3.5 lg:py-2.5"
+        style={{ boxShadow: '4px 4px 0 #262624', borderRadius: 0, animationDelay: '0.15s' }}
         onMouseEnter={(e) => {
           if (!googleLoading && !isSubmitting) {
             (e.currentTarget as HTMLElement).style.transform = 'translate(-2px,-2px)';
-            (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0 #000';
+            (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0 #262624';
           }
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.transform = '';
-          (e.currentTarget as HTMLElement).style.boxShadow = '4px 4px 0 #000';
+          (e.currentTarget as HTMLElement).style.boxShadow = '4px 4px 0 #262624';
         }}
       >
         {googleLoading ? (
@@ -279,19 +299,25 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       </button>
 
       {/* Divider */}
-      <div className="auth-panel-in mb-5 flex items-center gap-3" style={{ animationDelay: '0.2s' }}>
-        <div className="h-[2px] flex-1 bg-black/10" />
-        <span className="font-passion text-xs uppercase tracking-[0.12em] text-black/30">Or continue with</span>
-        <div className="h-[2px] flex-1 bg-black/10" />
+      <div className="auth-panel-in mb-5 flex items-center gap-3 lg:mb-3.5" style={{ animationDelay: '0.2s' }}>
+        <div className="h-[2px] flex-1 bg-tok-black/12" />
+        <span className="font-passion text-xs uppercase tracking-[0.12em] text-tok-black/35">Or continue with</span>
+        <div className="h-[2px] flex-1 bg-tok-black/12" />
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        autoComplete="off"
+        className="flex flex-col gap-4 lg:gap-3"
+      >
         <AuthFormField label="Email address" error={errors.email?.message} animClass="auth-panel-in" style={{ animationDelay: '0.25s' }}>
           <input
             {...register('email')}
             type="email"
-            autoComplete="email"
+            autoComplete="off"
             placeholder="Enter your email"
             className={authInputClass}
             aria-invalid={!!errors.email}
@@ -303,7 +329,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
             <input
               {...register('password')}
               type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
+              autoComplete="off"
               placeholder="Enter your password"
               className={`${authInputClass} pr-10`}
               aria-invalid={!!errors.password}
@@ -311,7 +337,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-black/30 transition-all duration-150 hover:scale-110 hover:text-black/60"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-tok-black/35 transition-all duration-150 hover:scale-110 hover:text-tok-black/65"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? (
@@ -323,32 +349,19 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
           </div>
         </AuthFormField>
 
-        <div className="auth-panel-in flex justify-end" style={{ animationDelay: '0.35s' }}>
+        <div className="auth-panel-in flex justify-end lg:pt-0.5" style={{ animationDelay: '0.35s' }}>
           <Link
             href="/forgot-password"
-            className="font-inter text-xs font-semibold uppercase tracking-wider text-black/40 transition-colors duration-150 hover:text-tok-teal"
+            className="font-inter text-xs font-semibold uppercase tracking-wider text-tok-black/45 transition-colors duration-150 hover:text-tok-teal"
           >
             Forgot password?
           </Link>
         </div>
 
-        {serverError && (
-          <div
-            ref={errorRef}
-            className="auth-panel-in border-2 border-red-600 bg-red-50 px-4 py-3 shadow-[3px_3px_0px_0px_#dc2626]"
-            aria-live="assertive"
-          >
-            <p className="font-inter text-xs font-medium uppercase tracking-[0.08em] text-red-700">
-              {serverError}
-            </p>
-          </div>
-        )}
-
-
         <button
           type="submit"
           disabled={isSubmitting || googleLoading}
-          className="auth-panel-in flex w-full items-center justify-center gap-2 rounded-lg border-2 border-tok-black bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white shadow-[6px_6px_0px_0px_#262624] active:translate-y-0 active:shadow-none"
+          className="auth-panel-in flex w-full items-center justify-center gap-2 rounded-lg border-2 border-tok-black bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white shadow-[6px_6px_0px_0px_#262624] active:translate-y-0 active:shadow-none lg:py-3 lg:text-[1.35rem]"
           style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease', opacity: isSubmitting || googleLoading ? 0.6 : 1, cursor: isSubmitting || googleLoading ? 'not-allowed' : 'pointer', animationDelay: '0.4s' }}
           onMouseEnter={(e) => {
             if (!isSubmitting && !googleLoading) {
@@ -373,14 +386,14 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
           )}
         </button>
 
-        <p className="auth-panel-in text-center font-inter text-xs text-black/30" style={{ animationDelay: '0.45s' }}>
+        <p className="auth-panel-in text-center font-inter text-xs text-tok-black/35 lg:text-[11px]" style={{ animationDelay: '0.45s' }}>
 
           By signing in, you agree to our{' '}
-          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-black/60">
+          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-tok-black/70">
             Terms &amp; Conditions
           </Link>{' '}
           and{' '}
-          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-black/60">
+          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-tok-black/70">
             Privacy Policy
           </Link>
         </p>

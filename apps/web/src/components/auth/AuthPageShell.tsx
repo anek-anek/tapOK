@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 
 export const authInputClass =
-  'w-full border-2 border-black bg-tok-cream px-4 py-3 text-base text-black placeholder-black/30 outline-hidden transition-all duration-150 ease-in-out focus:bg-white focus:shadow-[4px_4px_0_#000] focus:ring-0 hover:border-tok-teal font-inter rounded-none';
+  'w-full border-2 border-tok-black bg-tok-cream px-4 py-3 text-base text-tok-black placeholder:text-tok-black/35 outline-hidden transition-all duration-150 ease-in-out focus:bg-white focus:shadow-[4px_4px_0_#262624] focus:ring-0 hover:border-tok-teal font-inter rounded-none lg:py-2.5';
 
 type AuthFormFieldProps = {
   label: string;
@@ -18,7 +18,7 @@ export function AuthFormField({ label, error, animClass = '', style, children }:
   return (
     <div className={`flex w-full flex-col gap-1.5 ${animClass}`} style={style}>
       <label
-        className="font-passion text-xs uppercase tracking-[0.12em] text-black/60"
+        className="font-passion text-xs uppercase tracking-[0.12em] text-tok-black/60"
       >
         {label}
       </label>
@@ -45,7 +45,7 @@ const socialProofItems = [
 
 export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }: AuthPageShellProps) {
   return (
-    <div className="flex min-h-dvh bg-tok-cream lg:min-h-screen">
+    <div className="flex min-h-dvh bg-tok-cream lg:h-dvh lg:max-h-dvh lg:overflow-hidden">
       <style>{`
         @keyframes authFadeUp {
           from { opacity: 0; transform: translateY(12px); }
@@ -85,15 +85,35 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
           cursor: not-allowed;
           opacity: 0.6;
         }
+        @media (min-width: 1024px) and (max-height: 920px) {
+          .auth-form-stage {
+            transform: scale(0.95);
+          }
+        }
+        @media (min-width: 1024px) and (max-height: 860px) {
+          .auth-form-stage {
+            transform: scale(0.91);
+          }
+        }
+        @media (min-width: 1024px) and (max-height: 800px) {
+          .auth-form-stage {
+            transform: scale(0.87);
+          }
+        }
+        @media (min-width: 1024px) {
+          .auth-form-stage {
+            transform-origin: center;
+          }
+        }
       `}</style>
 
       {/* ── LEFT: Form panel ── */}
-      <div className="flex w-full flex-col justify-between bg-tok-cream px-5 py-6 sm:px-8 sm:py-8 lg:w-[48%] lg:px-14 lg:py-10 border-r-0 lg:border-r-2 lg:border-black">
+      <div className="flex w-full flex-col justify-between bg-tok-cream px-5 py-6 sm:px-8 sm:py-8 lg:w-[48%] lg:min-h-0 lg:overflow-hidden lg:border-r-2 lg:border-tok-black lg:px-10 lg:py-6 xl:px-14 xl:py-8">
 
         {/* Logo */}
         <Link
           href="/"
-          className="auth-panel-in inline-flex shrink-0 items-center gap-1.5 font-passion text-xl leading-none tracking-tight text-black sm:text-2xl"
+          className="auth-panel-in inline-flex shrink-0 items-center gap-1.5 font-passion text-xl leading-none tracking-tight text-tok-black sm:text-2xl"
           style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease' } as any}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px) scale(1.04)';
@@ -111,18 +131,18 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
         </Link>
 
         {/* Form content */}
-        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-8 sm:max-w-[420px]">
+        <div className="auth-form-stage mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-8 sm:max-w-[420px] lg:min-h-0 lg:max-w-[400px] lg:py-3">
           {children}
         </div>
 
-        <p className={`${footerClassName} auth-panel-in font-inter text-xs text-black/25`} style={{ animationDelay: '0.55s' }}>
+        <p className={`${footerClassName} auth-panel-in font-inter text-xs text-tok-black/30 lg:text-[11px]`} style={{ animationDelay: '0.55s' }}>
           © 2026 TapOK. Plans that actually happen.
         </p>
       </div>
 
       {/* ── RIGHT: Brand panel ── */}
       <div
-        className="auth-right-in hidden lg:flex lg:w-[52%] flex-col justify-between bg-[#1C1C1A] p-12 xl:p-16"
+        className="auth-right-in hidden flex-col justify-between overflow-hidden bg-tok-black lg:flex lg:w-[52%] lg:p-10 xl:p-14"
       >
         {/* Top tag */}
         <div className="flex items-center gap-3">
@@ -149,12 +169,12 @@ export function AuthPageShell({ children, footerClassName = 'animate-fade-in' }:
             <span style={{ color: '#006666' }}>SHOW UP.</span>
           </p>
 
-          <p className="mt-6 font-inter text-sm leading-relaxed text-tok-cream/45 max-w-xs">
+          <p className="mt-5 max-w-xs font-inter text-sm leading-relaxed text-tok-cream/45">
             One Chief. One Drop. Real headcount — no maybes, no ghost replies, no chaos.
           </p>
 
           {/* Step cards */}
-          <div className="mt-10 flex flex-col gap-3">
+          <div className="mt-8 flex flex-col gap-3">
             {socialProofItems.map((item, i) => (
               <div
                 key={item.num}

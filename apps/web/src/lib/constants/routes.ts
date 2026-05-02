@@ -2,8 +2,8 @@ export const PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/
 
 export type PublicRoute = (typeof PUBLIC_ROUTES)[number];
 
-export function isLoginRoute(pathname: string): boolean {
-  return pathname === '/login' || pathname === '/register';
+export function isAuthRoute(pathname: string): boolean {
+  return pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
 }
 
 export function isProtectedRoute(pathname: string): boolean {

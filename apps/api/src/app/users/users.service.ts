@@ -40,6 +40,14 @@ export class UsersService {
     return this.usersRepository.findByFirebaseUid(firebaseUid);
   }
 
+  async findExistingAuthProviderByEmail(email: string): Promise<AuthProvider | null> {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) return null;
+
+    const user = await this.usersRepository.findByEmail(normalizedEmail);
+    return user?.authProvider ?? null;
+  }
+
   async findMe(firebaseUid: string): Promise<UserProfileDto> {
     const user = await this.usersRepository.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('No account found for this user.');

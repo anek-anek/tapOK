@@ -20,8 +20,10 @@ import {
   shouldDeleteGoogleUserOnFinalizeFailure,
   signInWithGoogleInteractive,
 } from '@/lib/auth/google-signin';
+import { lookupExistingAuthProvider } from '@/lib/auth/provider-check';
 import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
+import { useAuthFormReset } from '@/lib/auth/use-auth-form-reset';
 import { toast } from 'react-hot-toast';
 
 interface RegisterFormProps {
@@ -29,6 +31,13 @@ interface RegisterFormProps {
 }
 
 const PENDING_SIGNUP_CLEANUP_KEY = 'tapok:pending-signup-cleanup';
+const SIGN_UP_DEFAULT_VALUES: SignUpFormValues = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+};
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -43,29 +52,30 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
   const {
     register,
     handleSubmit,
+    getValues,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
+    defaultValues: SIGN_UP_DEFAULT_VALUES,
   });
 
-  const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleRedirectResolved, setGoogleRedirectResolved] = useState(false);
-  const errorRef = useRef<HTMLDivElement>(null);
 
   const showError = useCallback((message: string) => {
-    setServerError(message);
     toast.error(message.toUpperCase());
   }, []);
+
+  const resetFormState = useCallback(() => {
+    reset(SIGN_UP_DEFAULT_VALUES);
+    setShowPassword(false);
+    setShowConfirm(false);
+  }, [reset]);
+
+  const { formRef, clearForm } = useAuthFormReset(resetFormState);
 
   const completeSuccessfulSignUp = (
     firebaseUser: Parameters<typeof setSession>[0],
@@ -164,14 +174,6 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
   }, [user, dbUser, googleLoading, googleRedirectResolved, isSubmitting, redirectTo, router, setSession, showError]);
 
   useEffect(() => {
-    if (serverError && errorRef.current) {
-      errorRef.current.classList.remove('animate-shake');
-      void errorRef.current.offsetWidth;
-      errorRef.current.classList.add('animate-shake');
-    }
-  }, [serverError]);
-
-  useEffect(() => {
     let cancelled = false;
 
     void (async () => {
@@ -209,10 +211,27 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
   }, [router, redirectTo, setSession, showError]);
 
   const handleGoogleSignUp = async () => {
-    setServerError(null);
+    const normalizedEmail = getValues('email').trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      showError('Enter your email first to continue with Google.');
+      return;
+    }
+
+    try {
+      const existingAuthProvider = await lookupExistingAuthProvider(normalizedEmail);
+      if (existingAuthProvider === 'password') {
+        showError(getRegisterFirebaseError('auth/account-exists-with-different-credential'));
+        return;
+      }
+    } catch {
+      showError('Unable to verify this email right now. Please try again.');
+      return;
+    }
+
     setGoogleLoading(true);
     try {
-      const outcome = await signInWithGoogleInteractive();
+      const outcome = await signInWithGoogleInteractive(normalizedEmail);
       if (outcome === 'redirect') return;
 
       const finalized = await finalizeSession(outcome.user, {
@@ -227,6 +246,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       }
 
       toast.success('WELCOME TO TAPOK');
+      clearForm();
       setSession(outcome.user, finalized.dbUser);
       handledSuccessRedirectRef.current = true;
       router.replace(
@@ -248,7 +268,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
   };
 
   const onSubmit = async (values: SignUpFormValues) => {
-    setServerError(null);
+    clearForm();
     try {
       const { user } = await createUserWithEmailAndPassword(
         getFirebaseAuth(),
@@ -313,11 +333,11 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
 
   return (
     <AuthPageShell>
-      <div className="mb-6">
+      <div className="mb-5 lg:mb-3">
         <div
-          className="auth-panel-in mb-3 inline-flex items-center gap-2"
+          className="auth-panel-in mb-3 inline-flex items-center gap-2 lg:mb-2"
           style={{
-            background: '#000',
+            background: 'var(--color-tok-black)',
             color: 'var(--color-tok-cream)',
             fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
             fontSize: '10px',
@@ -325,19 +345,19 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
             padding: '4px 10px',
-            border: '2px solid #000',
+            border: '2px solid var(--color-tok-black)',
             boxShadow: '3px 3px 0 #006666',
           }}
         >
           NEW HERE
         </div>
         <h1
-          className="auth-panel-in font-passion font-bold uppercase leading-none text-black"
+          className="auth-panel-in font-passion font-bold uppercase leading-none text-tok-black"
           style={{ fontSize: 'clamp(32px, 4vw, 48px)', letterSpacing: '-0.01em', animationDelay: '0.05s' }}
         >
           TAP IN.
         </h1>
-        <p className="auth-panel-in mt-2 font-inter text-sm text-black/50" style={{ animationDelay: '0.1s' }}>
+        <p className="auth-panel-in mt-2 font-inter text-sm text-tok-black/55 lg:mt-1.5" style={{ animationDelay: '0.1s' }}>
           Already have an account?{' '}
           <Link
             href={buildAuthPageHref('/login', redirectTo)}
@@ -353,17 +373,17 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
         type="button"
         onClick={handleGoogleSignUp}
         disabled={googleLoading || isSubmitting}
-        className="auth-panel-in mb-5 flex w-full items-center justify-center gap-3 border-2 border-black bg-white px-5 py-3 font-inter text-sm font-medium text-black transition-all duration-150 ease-in-out disabled:cursor-not-allowed disabled:opacity-50"
-        style={{ boxShadow: '4px 4px 0 #000', borderRadius: 0, animationDelay: '0.15s' }}
+        className="auth-panel-in mb-5 flex w-full items-center justify-center gap-3 border-2 border-tok-black bg-white px-5 py-3 font-inter text-sm font-medium text-tok-black transition-all duration-150 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 lg:mb-3.5 lg:py-2.5"
+        style={{ boxShadow: '4px 4px 0 #262624', borderRadius: 0, animationDelay: '0.15s' }}
         onMouseEnter={(e) => {
           if (!googleLoading && !isSubmitting) {
             (e.currentTarget as HTMLElement).style.transform = 'translate(-2px,-2px)';
-            (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0 #000';
+            (e.currentTarget as HTMLElement).style.boxShadow = '6px 6px 0 #262624';
           }
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.transform = '';
-          (e.currentTarget as HTMLElement).style.boxShadow = '4px 4px 0 #000';
+          (e.currentTarget as HTMLElement).style.boxShadow = '4px 4px 0 #262624';
         }}
       >
         {googleLoading ? (
@@ -380,20 +400,26 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       </button>
 
       {/* Divider */}
-      <div className="auth-panel-in mb-5 flex items-center gap-3" style={{ animationDelay: '0.2s' }}>
-        <div className="h-[2px] flex-1 bg-black/10" />
-        <span className="font-passion text-xs uppercase tracking-[0.12em] text-black/30">Or continue with</span>
-        <div className="h-[2px] flex-1 bg-black/10" />
+      <div className="auth-panel-in mb-5 flex items-center gap-3 lg:mb-3.5" style={{ animationDelay: '0.2s' }}>
+        <div className="h-[2px] flex-1 bg-tok-black/12" />
+        <span className="font-passion text-xs uppercase tracking-[0.12em] text-tok-black/35">Or continue with</span>
+        <div className="h-[2px] flex-1 bg-tok-black/12" />
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-        <div className="auth-panel-in flex flex-col gap-4 sm:flex-row sm:gap-3" style={{ animationDelay: '0.25s' }}>
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        autoComplete="off"
+        className="flex flex-col gap-4 lg:gap-3"
+      >
+        <div className="auth-panel-in flex flex-col gap-4 sm:flex-row sm:gap-3 lg:gap-2.5" style={{ animationDelay: '0.25s' }}>
           <AuthFormField label="First name" error={errors.firstName?.message}>
             <input
               {...register('firstName')}
               type="text"
-              autoComplete="given-name"
+              autoComplete="off"
               placeholder="Enter your first name"
               className={authInputClass}
               aria-invalid={!!errors.firstName}
@@ -403,7 +429,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             <input
               {...register('lastName')}
               type="text"
-              autoComplete="family-name"
+              autoComplete="off"
               placeholder="Enter your last name"
               className={authInputClass}
               aria-invalid={!!errors.lastName}
@@ -415,7 +441,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
           <input
             {...register('email')}
             type="email"
-            autoComplete="email"
+            autoComplete="off"
             placeholder="Enter your email"
             className={authInputClass}
             aria-invalid={!!errors.email}
@@ -427,7 +453,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             <input
               {...register('password')}
               type={showPassword ? 'text' : 'password'}
-              autoComplete="new-password"
+              autoComplete="off"
               placeholder="Create a password"
               className={`${authInputClass} pr-10`}
               aria-invalid={!!errors.password}
@@ -435,7 +461,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-black/30 transition-all duration-150 hover:scale-110 hover:text-black/60"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-tok-black/35 transition-all duration-150 hover:scale-110 hover:text-tok-black/65"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? (
@@ -452,7 +478,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             <input
               {...register('confirmPassword')}
               type={showConfirm ? 'text' : 'password'}
-              autoComplete="new-password"
+              autoComplete="off"
               placeholder="Confirm your password"
               className={`${authInputClass} pr-10`}
               aria-invalid={!!errors.confirmPassword}
@@ -460,7 +486,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             <button
               type="button"
               onClick={() => setShowConfirm((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-black/30 transition-all duration-150 hover:scale-110 hover:text-black/60"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-tok-black/35 transition-all duration-150 hover:scale-110 hover:text-tok-black/65"
               aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
             >
               {showConfirm ? (
@@ -472,23 +498,10 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
           </div>
         </AuthFormField>
 
-        {serverError && (
-          <div
-            ref={errorRef}
-            className="auth-panel-in border-2 border-red-600 bg-red-50 px-4 py-3 shadow-[3px_3px_0px_0px_#dc2626]"
-            aria-live="assertive"
-          >
-            <p className="font-inter text-xs font-medium uppercase tracking-[0.08em] text-red-700">
-              {serverError}
-            </p>
-          </div>
-        )}
-
-
         <button
           type="submit"
           disabled={isSubmitting || googleLoading}
-          className="auth-panel-in mt-1 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-tok-black bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white shadow-[6px_6px_0px_0px_#262624] active:translate-y-0 active:shadow-none"
+          className="auth-panel-in mt-1 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-tok-black bg-tok-teal px-8 py-3.5 font-passion text-2xl uppercase tracking-wider text-white shadow-[6px_6px_0px_0px_#262624] active:translate-y-0 active:shadow-none lg:py-3 lg:text-[1.35rem]"
           style={{ transition: 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, background-color 0.18s ease', opacity: isSubmitting || googleLoading ? 0.6 : 1, cursor: isSubmitting || googleLoading ? 'not-allowed' : 'pointer', animationDelay: '0.45s' }}
           onMouseEnter={(e) => {
             if (!isSubmitting && !googleLoading) {
@@ -513,13 +526,13 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
           )}
         </button>
 
-        <p className="auth-panel-in text-center font-inter text-xs text-black/30" style={{ animationDelay: '0.5s' }}>
+        <p className="auth-panel-in text-center font-inter text-xs text-tok-black/35 lg:text-[11px]" style={{ animationDelay: '0.5s' }}>
           By signing up, you agree to our{' '}
-          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-black/60">
+          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-tok-black/70">
             Terms &amp; Conditions
           </Link>{' '}
           and{' '}
-          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-black/60">
+          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-tok-black/70">
             Privacy Policy
           </Link>
         </p>

@@ -1,6 +1,12 @@
 'use client';
 
-import { deleteUser, fetchSignInMethodsForEmail, signOut, type User as FirebaseUser } from 'firebase/auth';
+import {
+  deleteUser,
+  fetchSignInMethodsForEmail,
+  signOut,
+  unlink,
+  type User as FirebaseUser,
+} from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
 import { setAuthToken } from '@/services/api';
 import type { DbUser } from '@/components/providers/auth-provider';
@@ -45,6 +51,10 @@ function detectAuthProvider(firebaseUser: FirebaseUser): AuthProvider {
     : 'password';
 }
 
+function hasProvider(firebaseUser: FirebaseUser, providerId: string): boolean {
+  return firebaseUser.providerData.some((provider) => provider.providerId === providerId);
+}
+
 async function clearSessionCookie() {
   setAuthToken(null);
   await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => undefined);
@@ -71,13 +81,33 @@ async function waitForDeletedEmail(email?: string | null) {
 
 async function cleanupFailedAuth(
   firebaseUser: FirebaseUser,
-  options: { deleteCreatedUser?: boolean } = {},
+  options: {
+    attemptedProvider?: AuthProvider;
+    deleteCreatedUser?: boolean;
+    failureReason?: FinalizeFailureReason;
+  } = {},
 ) {
   setAuthToken(null);
+  const auth = getFirebaseAuth();
+  const currentUser = auth.currentUser?.uid === firebaseUser.uid ? auth.currentUser : firebaseUser;
+  const passwordLinked = hasProvider(currentUser, 'password');
+  const googleLinked = hasProvider(currentUser, 'google.com');
 
-  if (options.deleteCreatedUser) {
+  if (
+    options.attemptedProvider === 'google' &&
+    options.failureReason === 'auth_provider_mismatch' &&
+    passwordLinked &&
+    googleLinked
+  ) {
     try {
-      const auth = getFirebaseAuth();
+      await unlink(currentUser, 'google.com');
+    } catch {
+      // Best effort rollback — sign-out below still clears local auth state.
+    }
+  }
+
+  if (options.deleteCreatedUser && !(options.attemptedProvider === 'google' && passwordLinked)) {
+    try {
       const userToDelete = auth.currentUser?.uid === firebaseUser.uid ? auth.currentUser : firebaseUser;
       await deleteUser(userToDelete);
       await waitForDeletedEmail(firebaseUser.email);
@@ -191,14 +221,18 @@ export async function finalizeSession(
     if (!result.ok) {
       const failure = mapSessionError(result.error);
       await cleanupFailedAuth(firebaseUser, {
+        attemptedProvider: authProvider,
         deleteCreatedUser: options.deleteCreatedUserOnFailure,
+        failureReason: failure.reason,
       });
       return { ok: false, ...failure };
     }
 
     if (!result.dbUser) {
       await cleanupFailedAuth(firebaseUser, {
+        attemptedProvider: authProvider,
         deleteCreatedUser: options.deleteCreatedUserOnFailure,
+        failureReason: 'error',
       });
       return {
         ok: false,
@@ -214,7 +248,9 @@ export async function finalizeSession(
     };
   } catch {
     await cleanupFailedAuth(firebaseUser, {
+      attemptedProvider: options.provider ?? detectAuthProvider(firebaseUser),
       deleteCreatedUser: options.deleteCreatedUserOnFailure,
+      failureReason: 'error',
     });
     return {
       ok: false,
