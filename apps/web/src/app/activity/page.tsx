@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { LogIn, ArrowRight, Activity as ActivityIcon } from 'lucide-react';
 import { useMounted } from '@/hooks/use-mounted';
 import { TapokNavbar } from '@/components/tapok-navbar';
+import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
 import { ActivePanel } from './_components/active-panel';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMyActivity } from '@/hooks/queries/use-drops';
@@ -440,7 +441,7 @@ export default function ActivityPage() {
   }
 
   return (
-    <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal selection:text-tok-cream">
+    <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal selection:text-tok-cream">
       {/* Background patterns */}
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.03]"
@@ -452,13 +453,9 @@ export default function ActivityPage() {
 
 
       <TapokNavbar />
-      <div className="pointer-events-none absolute top-[20%] right-0 select-none overflow-hidden opacity-[0.05]">
-        <span className="font-passion block translate-x-1/4 text-[clamp(100px,32vw,280px)] font-black leading-none tracking-tighter text-tok-teal">
-          ACTIVITY
-        </span>
-      </div>
+      <PageBackdropWatermark label="ACTIVITY" />
 
-      <main className="relative mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10 pb-24">
+      <main className="relative z-1 mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10 pb-24">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-16 animate-fade-up">
           <div>
             <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">

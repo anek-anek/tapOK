@@ -1,4 +1,9 @@
-import { useQuery, useSuspenseQuery, type UseQueryResult } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useQuery,
+  useSuspenseQuery,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import axios from 'axios';
 import { dropsService } from '@/services/drops.service';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -21,6 +26,7 @@ export function useDiscoverData(page = 1, category?: string): UseQueryResult<Dis
   return useQuery({
     queryKey: dropKeys.discover(page, category),
     queryFn: () => dropsService.getDiscoverData(page, 6, category === 'all' ? undefined : category),
+    placeholderData: keepPreviousData,
     refetchInterval: 60_000,
     staleTime: 60_000,
   });

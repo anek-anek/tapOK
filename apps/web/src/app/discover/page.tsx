@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useMounted } from '@/hooks/use-mounted';
 import { TapokNavbar } from '@/components/tapok-navbar';
+import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
 import { useDiscoverData } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import {
@@ -16,27 +17,115 @@ import { cn } from '@/lib/utils';
 import type { DropCategory } from '@/types/drop';
 import { ChevronLeft, ChevronRight, Sparkles, Users } from 'lucide-react';
 
+function DiscoverDotGrid() {
+  return (
+    <div
+      className="pointer-events-none fixed inset-0 opacity-[0.03]"
+      style={{
+        backgroundImage:
+          'radial-gradient(circle at 1px 1px, var(--color-tok-black) 1px, transparent 0)',
+        backgroundSize: '32px 32px',
+      }}
+    />
+  );
+}
+
+function DiscoverHeroStatus({
+  isPlaceholderData,
+  publicTotal,
+}: {
+  isPlaceholderData: boolean;
+  publicTotal: number;
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-3 self-start rounded-sm border-[3px] border-tok-black bg-white px-5 py-2.5 font-passion text-[14px] font-black uppercase tracking-wider text-tok-black shadow-[4px_4px_0px_#1C1C1A] sm:self-auto">
+      <span className="relative flex h-3 w-3">
+        {isPlaceholderData ? (
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tok-teal opacity-75" />
+        ) : null}
+        <span className="relative inline-flex h-3 w-3 rounded-full bg-tok-teal" />
+      </span>
+      {isPlaceholderData
+        ? 'Updating feed…'
+        : publicTotal > 0
+          ? `${publicTotal} public drop${publicTotal === 1 ? '' : 's'}`
+          : 'Public feed'}
+    </div>
+  );
+}
+
 function DiscoverSkeleton() {
   return (
-    <div className="min-h-screen bg-tok-cream text-tok-black">
+    <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
+      <DiscoverDotGrid />
       <TapokNavbar />
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-        <div className="mb-10 space-y-4">
-          <Skeleton className="h-4 w-32 rounded-sm bg-tok-black/10" />
-          <Skeleton className="h-14 w-64 rounded-sm bg-tok-black/5" />
-          <Skeleton className="h-6 w-full max-w-lg rounded-sm bg-tok-black/5" />
+      <PageBackdropWatermark label="DISCOVER" />
+      <main className="relative z-1 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
+        {/* Hero — mirrors headline + status pill */}
+        <div className="mb-12 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <Skeleton className="h-3 w-36 rounded-sm bg-tok-black/10" />
+            <Skeleton className="mt-4 h-[clamp(52px,11vw,84px)] w-[min(92vw,340px)] rounded-sm bg-tok-black/10" />
+          </div>
+          <Skeleton className="h-[52px] w-full max-w-[240px] shrink-0 rounded-sm border-[3px] border-tok-black/15 bg-white shadow-[4px_4px_0px_rgba(28,28,26,0.12)] sm:max-w-[280px]" />
         </div>
 
-        <HeroCardSkeleton />
+        {/* Featured Today — same header row as loaded state */}
+        <div className="mb-16">
+          <div className="mb-4 flex items-center gap-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
+            <Sparkles size={12} className="text-amber-500" />
+            Featured Today
+          </div>
+          <HeroCardSkeleton />
+        </div>
 
-        <div className="mt-16 space-y-6">
-          <Skeleton className="h-8 w-48 rounded-sm bg-tok-black/10" />
+        {/* From Recent Chiefs — 2×2 grid like slice(0, 4) */}
+        <div className="mb-16">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black/40">
+              <Users size={14} />
+              From Recent Chiefs
+            </div>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <ListCardSkeleton />
-            <ListCardSkeleton />
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="[&_.mt-4]:mt-0">
+                <ListCardSkeleton />
+              </div>
+            ))}
           </div>
         </div>
+
+        {/* Public Drops + category filters */}
+        <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black/40">
+            <Sparkles size={14} />
+            Public Drops
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-10 min-w-[52px] rounded-sm border-[3px] border-tok-black/25 bg-white shadow-[2px_2px_0px_rgba(28,28,26,0.15)]" />
+            <Skeleton className="h-10 min-w-[84px] rounded-sm border-[3px] border-tok-black/25 bg-white shadow-[2px_2px_0px_rgba(28,28,26,0.15)]" />
+            <Skeleton className="h-10 min-w-[68px] rounded-sm border-[3px] border-tok-black/25 bg-white shadow-[2px_2px_0px_rgba(28,28,26,0.15)]" />
+          </div>
+        </div>
+
+        {/* Single-column list — matches allPublic list (space-y-4) */}
+        <div className="space-y-4">
+          <ListCardSkeleton />
+          <ListCardSkeleton />
+          <ListCardSkeleton />
+        </div>
       </main>
+    </div>
+  );
+}
+
+function PublicDropsListSkeleton() {
+  return (
+    <div className="space-y-4" aria-busy="true" aria-label="Loading public drops">
+      <ListCardSkeleton />
+      <ListCardSkeleton />
+      <ListCardSkeleton />
     </div>
   );
 }
@@ -46,19 +135,23 @@ export default function DiscoverPage() {
   const { dbUser, isReady } = useAuth();
   const [page, setPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<DropCategory | 'all'>('all');
-  const { data, isLoading, isError } = useDiscoverData(page, selectedCategory);
+  const { data, isPending, isPlaceholderData, isError } = useDiscoverData(page, selectedCategory);
 
   useEffect(() => {
     setPage(1);
   }, [selectedCategory]);
 
-  if (!mounted || !isReady || isLoading) return <DiscoverSkeleton />;
+  const showFullPageSkeleton = !mounted || !isReady || (isPending && data === undefined);
+
+  if (showFullPageSkeleton) return <DiscoverSkeleton />;
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-tok-cream text-tok-black">
+      <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
+        <DiscoverDotGrid />
         <TapokNavbar />
-        <main className="mx-auto max-w-4xl px-4 py-20 text-center">
+        <PageBackdropWatermark label="DISCOVER" />
+        <main className="relative z-1 mx-auto max-w-4xl px-4 py-20 text-center">
           <h1 className="font-passion text-4xl uppercase">Failed to load discovery</h1>
           <p className="mt-4 text-tok-black/60">We couldn&apos;t fetch the latest drops. Please try again later.</p>
         </main>
@@ -73,24 +166,30 @@ export default function DiscoverPage() {
   } = data || {};
 
   return (
-    <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
+    <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
+      <DiscoverDotGrid />
       <TapokNavbar />
+      <PageBackdropWatermark label="DISCOVER" />
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
-        {/* Hero Text */}
-        <div className="mb-12">
-          <h1 className="mt-4 font-passion text-[clamp(56px,15vw,100px)] font-black uppercase leading-[0.8] tracking-tighter text-tok-black">
-            EXPLORE.
-          </h1>
-          <p className="mt-6 max-w-md text-[15px] font-bold uppercase tracking-[1px] text-tok-black/40 leading-relaxed">
-            FIND YOUR NEXT CREW. JOIN A HANGOUT, HIT A PARTY, OR FOLLOW YOUR FAVORITE CHIEFS.
-          </p>
+      <main className="relative z-1 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
+        {/* Hero — headline + status pill (matches activity / drops hero rhythm) */}
+        <div className="mb-12 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between animate-fade-up">
+          <div className="min-w-0 flex-1">
+            <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+              FIND YOUR DROP
+            </p>
+            <h1 className="mt-3 font-passion text-[clamp(52px,11vw,84px)] font-black uppercase leading-[0.85] tracking-tight text-tok-black">
+              WHAT&apos;S{' '}
+              <span className="text-tok-teal">LIVE.</span>
+            </h1>
+          </div>
+          <DiscoverHeroStatus isPlaceholderData={isPlaceholderData} publicTotal={allPublic.total} />
         </div>
 
         {/* Featured Drop */}
         {featured && (
           <div className="mb-16">
-            <div className="mb-4 flex items-center gap-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
+            <div className="my-4 flex items-center gap-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
               <Sparkles size={12} className="text-amber-500" />
               Featured Today
             </div>
@@ -143,7 +242,9 @@ export default function DiscoverPage() {
         </div>
 
         <div className="space-y-4">
-          {allPublic.data.length === 0 && recentChiefsDrops.length === 0 ? (
+          {isPlaceholderData ? (
+            <PublicDropsListSkeleton />
+          ) : allPublic.data.length === 0 && recentChiefsDrops.length === 0 ? (
             <div className="py-20 text-center">
               <p className="font-passion text-xl uppercase text-tok-black/40">No drops found in this category</p>
             </div>
@@ -155,7 +256,7 @@ export default function DiscoverPage() {
         </div>
 
         {/* Pagination */}
-        {allPublic.totalPages > 1 && (
+        {allPublic.totalPages > 1 && !isPlaceholderData && (
           <div className="mt-12 flex items-center justify-center gap-4">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}

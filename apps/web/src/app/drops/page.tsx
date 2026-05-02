@@ -10,6 +10,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { TapokNavbar } from '@/components/tapok-navbar';
+import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
 import { DropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -45,16 +46,6 @@ function DropsDotGrid() {
         backgroundSize: '32px 32px',
       }}
     />
-  );
-}
-
-function DropsWatermark() {
-  return (
-    <div className="pointer-events-none absolute top-[20%] right-0 select-none overflow-hidden opacity-[0.05]">
-      <span className="font-passion block translate-x-1/4 text-[clamp(140px,38vw,300px)] font-black leading-none tracking-tighter text-tok-teal">
-        DROPS
-      </span>
-    </div>
   );
 }
 
@@ -192,7 +183,7 @@ function PageSkeleton() {
     <div className="relative min-h-screen bg-tok-cream text-tok-black">
       <DropsDotGrid />
       <TapokNavbar />
-      <DropsWatermark />
+      <PageBackdropWatermark label="DROPS" />
       <main className="relative z-1 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
         <DropsBoardSkeleton />
       </main>
@@ -256,7 +247,7 @@ export default function DropsPage() {
       <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
         <DropsDotGrid />
         <TapokNavbar />
-        <DropsWatermark />
+        <PageBackdropWatermark label="DROPS" />
         <main className="relative z-1 mx-auto flex min-h-[calc(100vh-88px)] max-w-5xl items-center px-4 py-8 sm:px-6 lg:px-10">
           <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]">
             <div>
@@ -282,7 +273,7 @@ export default function DropsPage() {
     <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
       <DropsDotGrid />
       <TapokNavbar />
-      <DropsWatermark />
+      <PageBackdropWatermark label="DROPS" />
 
       <main className="relative z-1 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
         {/* Page header row */}
@@ -291,9 +282,8 @@ export default function DropsPage() {
             <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
               YOUR DROP BOARD
             </p>
-            <h1 className="font-passion text-[clamp(52px,11vw,84px)] font-black uppercase leading-[0.8] tracking-tight text-tok-black">
-              START YOUR{' '}
-              <span className="text-tok-teal">DROP.</span>
+            <h1 className="font-passion whitespace-nowrap text-[clamp(26px,7vw,72px)] font-black uppercase leading-[0.85] tracking-tight text-tok-black">
+              THE <span className="text-tok-teal">BOARD.</span>
             </h1>
           </div>
 
