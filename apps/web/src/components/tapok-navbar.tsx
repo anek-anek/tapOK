@@ -164,7 +164,7 @@ export function TapokNavbar() {
                     Log In
                   </Link>
                   <Link
-                    href="/login"
+                    href="/register"
                     className={`${passionOne.className} rounded-lg border-2 border-tok-black bg-tok-teal px-5 py-1.5 text-base uppercase tracking-[1.5px] text-white shadow-[4px_4px_0px_0px_#262624] transition-all hover:-translate-y-0.5 hover:bg-tok-teal-mid hover:shadow-[5px_5px_0px_0px_#262624] active:translate-y-0 active:shadow-none`}
                   >
                     Sign Up
@@ -291,7 +291,7 @@ export function TapokNavbar() {
                     Log In
                   </Link>
                   <Link
-                    href="/login"
+                    href="/register"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`${passionOne.className} flex h-14 items-center justify-center rounded border-[3px] border-tok-black bg-tok-teal text-xl uppercase tracking-[1.5px] text-white shadow-[5px_5px_0_#000] transition-[transform,box-shadow,background-color] duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#005555] hover:shadow-[7px_7px_0_#000] active:translate-x-0 active:translate-y-0 active:shadow-[5px_5px_0_#000]`}
                   >

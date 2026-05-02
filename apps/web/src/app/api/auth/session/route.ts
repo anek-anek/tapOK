@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const idToken: string | undefined = body?.idToken;
   const sync: boolean = body?.sync ?? false;
-  const payload: any = body?.payload;
+  const payload = body?.payload ?? {};
 
   if (!idToken || typeof idToken !== 'string') {
     return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
@@ -49,7 +49,13 @@ export async function POST(req: NextRequest) {
   if (!dbUserResponse.ok) {
     const errorData = await dbUserResponse.json().catch(() => ({}));
     return NextResponse.json(
-      { error: 'Invalid token or user fetch failed', upstream: errorData },
+      {
+        ok: false,
+        error: errorData?.error ?? 'SESSION_FINALIZE_FAILED',
+        message: errorData?.message ?? 'Unable to finalize your session.',
+        code: errorData?.code,
+        upstream: errorData,
+      },
       { status: dbUserResponse.status },
     );
   }

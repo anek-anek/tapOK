@@ -1,8 +1,9 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { generateTestUser } from '../support/test-user';
 import {
   cleanupTestUser,
   createFirebaseOnlyUser,
+  createUnlinkedVerifiedUser,
   deleteFirebaseUserByUid,
 } from '../support/cleanup';
 
@@ -17,11 +18,11 @@ async function fillRegisterForm(
   page: Page,
   user: { firstName: string; lastName: string; email: string; password: string },
 ) {
-  await page.getByPlaceholder('Sean').fill(user.firstName);
-  await page.getByPlaceholder('Aguilar').fill(user.lastName);
-  await page.getByPlaceholder('you@example.com').fill(user.email);
-  await page.getByPlaceholder('Enter your password').fill(user.password);
-  await page.getByPlaceholder('Repeat your password').fill(user.password);
+  await page.getByPlaceholder('Enter your first name').fill(user.firstName);
+  await page.getByPlaceholder('Enter your last name').fill(user.lastName);
+  await page.getByPlaceholder('Enter your email').fill(user.email);
+  await page.getByPlaceholder('Create a password').fill(user.password);
+  await page.getByPlaceholder('Confirm your password').fill(user.password);
 }
 
 async function fillLoginForm(
@@ -32,23 +33,14 @@ async function fillLoginForm(
   await page.getByPlaceholder('Enter your password').fill(user.password);
 }
 
-/**
- * Clear all browser-side auth state mid-test (sign-out path).
- * Cookies are cleared via the context API; IndexedDB is deleted by name
- * instead of using indexedDB.databases() which hangs in some Chromium builds.
- */
-async function clearAuthState(context: BrowserContext, page: Page) {
-  await context.clearCookies();
-  // Must be on the origin before we can touch its storage
-  await page.goto('/');
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-    // Firebase JS SDK stores auth tokens in this named IndexedDB database
-    indexedDB.deleteDatabase('firebaseLocalStorageDb');
-  });
-  // Brief pause for the IDB delete to flush before the next navigation
-  await page.waitForTimeout(300);
+async function skipOnboarding(page: Page) {
+  await expect(page).toHaveURL(/\/onboarding/, { timeout: 20_000 });
+  await page.getByRole('button', { name: /skip for now/i }).click();
+}
+
+async function logoutFromNavbar(page: Page) {
+  await page.getByRole('button', { name: /account menu/i }).click();
+  await page.getByRole('button', { name: /log out/i }).click();
 }
 
 // ── Journey 1: Happy-path register → sign out → login ─────────────────────
@@ -62,14 +54,14 @@ test.describe('Happy-path auth journey', () => {
 
   test('register, sign out, and log back in', async ({ page, context }) => {
     // ── 1. Register ──
-    await page.goto('/register');
-    await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible();
+    await page.goto('/register?redirectTo=%2Fdrops');
+    await expect(page.getByRole('heading', { name: /tap in/i })).toBeVisible();
 
     await fillRegisterForm(page, user);
-    await page.getByRole('button', { name: 'Tap In' }).click();
+    await page.getByRole('button', { name: /^tap in$/i }).click();
 
-    // Successful registration redirects away from /register (default redirectTo is "/")
-    await expect(page).not.toHaveURL('/register', { timeout: 20_000 });
+    await skipOnboarding(page);
+    await expect(page).toHaveURL('/drops', { timeout: 20_000 });
 
     const cookies = await context.cookies();
     const sessionCookie = cookies.find((c) => c.name === '__session');
@@ -77,17 +69,18 @@ test.describe('Happy-path auth journey', () => {
     expect(sessionCookie?.httpOnly).toBe(true);
 
     // ── 2. Sign out ──
-    await clearAuthState(context, page);
+    await logoutFromNavbar(page);
+    await expect(page).toHaveURL('/login', { timeout: 20_000 });
 
     // A protected route should now redirect to /login
-    await page.goto('/dashboard');
-    await expect(page).toHaveURL(/\/login\?redirectTo=%2Fdashboard/, { timeout: 10_000 });
+    await page.goto('/drops');
+    await expect(page).toHaveURL(/\/login\?redirectTo=%2Fdrops/, { timeout: 10_000 });
 
     // ── 3. Log back in ──
     await fillLoginForm(page, user);
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await page.getByRole('button', { name: /tap back in/i }).click();
 
-    await expect(page).toHaveURL('/dashboard', { timeout: 20_000 });
+    await expect(page).toHaveURL('/drops', { timeout: 20_000 });
 
     const cookiesAfterLogin = await context.cookies();
     const sessionAfterLogin = cookiesAfterLogin.find((c) => c.name === '__session');
@@ -115,7 +108,7 @@ test.describe('Rejection journey — Firebase-only account', () => {
     await expect(page).toHaveURL('/login');
 
     await fillLoginForm(page, user);
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await page.getByRole('button', { name: /tap back in/i }).click();
 
     // App stays on /login and shows the rejection message
     await expect(page).toHaveURL('/login', { timeout: 20_000 });
@@ -130,7 +123,38 @@ test.describe('Rejection journey — Firebase-only account', () => {
   });
 });
 
-// ── Journey 3: Route-protection sanity check ──────────────────────────────
+// ── Journey 3: Verified email auto-links an existing TapOK account ────────
+
+test.describe('Auto-link journey — existing DB user', () => {
+  const user = generateTestUser();
+  let firebaseUid: string;
+
+  test.beforeAll(async () => {
+    firebaseUid = await createUnlinkedVerifiedUser(user.email, user.password, {
+      firstName: user.firstName,
+      lastName: user.lastName,
+    });
+  });
+
+  test.afterAll(async () => {
+    await cleanupTestUser(user.email);
+    await deleteFirebaseUserByUid(firebaseUid);
+  });
+
+  test('login auto-links verified email and respects redirectTo', async ({ page, context }) => {
+    await page.goto('/login?redirectTo=%2Factivity');
+    await fillLoginForm(page, user);
+    await page.getByRole('button', { name: /tap back in/i }).click();
+
+    await expect(page).toHaveURL('/activity', { timeout: 20_000 });
+
+    const cookies = await context.cookies();
+    const sessionCookie = cookies.find((c) => c.name === '__session');
+    expect(sessionCookie?.value).toBeTruthy();
+  });
+});
+
+// ── Journey 4: Route-protection redirect survives onboarding ───────────────
 
 test.describe('Route-protection sanity check', () => {
   const user = generateTestUser();
@@ -143,15 +167,65 @@ test.describe('Route-protection sanity check', () => {
     page,
   }) => {
     // ── 1. Hit a protected route while logged out ──
-    await page.goto('/dashboard');
-    await expect(page).toHaveURL(/\/login\?redirectTo=%2Fdashboard/, { timeout: 10_000 });
+    await page.goto('/activity');
+    await expect(page).toHaveURL(/\/login\?redirectTo=%2Factivity/, { timeout: 10_000 });
 
     // ── 2. Register a fresh account with the intended redirectTo preserved ──
-    await page.goto('/register?redirectTo=%2Fdashboard');
+    await page.goto('/register?redirectTo=%2Factivity');
     await fillRegisterForm(page, user);
-    await page.getByRole('button', { name: 'Tap In' }).click();
+    await page.getByRole('button', { name: /^tap in$/i }).click();
 
-    // Registration should land directly on /dashboard
-    await expect(page).toHaveURL('/dashboard', { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/onboarding\?/, { timeout: 20_000 });
+    await page.getByRole('button', { name: /skip for now/i }).click();
+
+    // Registration should resume the original protected route after onboarding
+    await expect(page).toHaveURL('/activity', { timeout: 20_000 });
+  });
+});
+
+// ── Journey 5: Failed signup cleanup allows retry with same email ──────────
+
+test.describe('Recovery journey — failed signup session finalization', () => {
+  const user = generateTestUser();
+
+  test.afterAll(async () => {
+    await cleanupTestUser(user.email);
+  });
+
+  test('signup failure clears partial auth and allows retry', async ({ page, context }) => {
+    let sessionAttempts = 0;
+    await page.route('**/api/auth/session', async (route) => {
+      sessionAttempts += 1;
+      if (sessionAttempts === 1) {
+        await route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: false,
+            error: 'API_UNAVAILABLE',
+            message: 'Cannot reach the backend API.',
+            code: 'API_UNAVAILABLE',
+          }),
+        });
+        return;
+      }
+
+      await route.continue();
+    });
+
+    await page.goto('/register?redirectTo=%2Fdrops');
+    await fillRegisterForm(page, user);
+    await page.getByRole('button', { name: /^tap in$/i }).click();
+
+    await expect(page).toHaveURL(/\/register/, { timeout: 20_000 });
+    const cookiesAfterFailure = await context.cookies();
+    const failedSessionCookie = cookiesAfterFailure.find((c) => c.name === '__session');
+    expect(failedSessionCookie?.value ?? '').toBeFalsy();
+
+    await page.goto('/register?redirectTo=%2Fdrops');
+    await fillRegisterForm(page, user);
+    await page.getByRole('button', { name: /^tap in$/i }).click();
+
+    await expect(page).toHaveURL(/\/onboarding/, { timeout: 20_000 });
   });
 });

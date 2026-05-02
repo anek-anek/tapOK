@@ -55,6 +55,23 @@ async function deleteDbUser(email: string): Promise<void> {
   }
 }
 
+async function withDbClient<T>(run: (client: Client) => Promise<T>): Promise<T> {
+  const client = new Client({
+    host: process.env.E2E_DB_HOST ?? 'localhost',
+    port: Number(process.env.E2E_DB_PORT ?? 5432),
+    database: process.env.E2E_DB_NAME,
+    user: process.env.E2E_DB_USER,
+    password: process.env.E2E_DB_PASSWORD,
+  });
+
+  await client.connect();
+  try {
+    return await run(client);
+  } finally {
+    await client.end();
+  }
+}
+
 /**
  * Delete a test user from both Firebase and the database.
  * Safe to call even if the user doesn't exist in one or both systems.
@@ -87,4 +104,30 @@ export async function deleteFirebaseUserByUid(uid: string): Promise<void> {
     const code = (err as { code?: string }).code;
     if (code !== 'auth/user-not-found') throw err;
   }
+}
+
+export async function createUnlinkedVerifiedUser(
+  email: string,
+  password: string,
+  profile: { firstName: string; lastName: string },
+): Promise<string> {
+  const app = getFirebaseApp();
+  const record = await admin.auth(app).createUser({
+    email,
+    password,
+    emailVerified: true,
+    displayName: `${profile.firstName} ${profile.lastName}`.trim(),
+  });
+
+  await withDbClient(async (client) => {
+    await client.query(
+      `
+        INSERT INTO "users" (email, "firstName", "lastName", "isEmailVerified")
+        VALUES ($1, $2, $3, $4)
+      `,
+      [email, profile.firstName, profile.lastName, true],
+    );
+  });
+
+  return record.uid;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { type FormEvent, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight as IconArrowRight,
@@ -19,6 +19,7 @@ import { AuthPageShell } from '@/components/auth/AuthPageShell';
 import { toast } from 'react-hot-toast';
 import type { Drop } from '@/types/drop';
 import { DropModal } from '@/components/drop-modal';
+import { sanitizeRedirectTo } from '@/lib/auth/redirects';
 
 const slide = {
   enter: { opacity: 0, y: 15 },
@@ -391,6 +392,8 @@ function DropLive({ drop }: { drop: Drop }) {
 
 export function OnboardingWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = sanitizeRedirectTo(searchParams.get('redirectTo'));
 
   const [step, setStep] = useState(0);
   const [path, setPath] = useState<'chief' | 'crew' | null>(null);
@@ -418,7 +421,7 @@ export function OnboardingWizard() {
           <OutcomeSplash
             onChief={handleChiefStart}
             onCrew={() => { setPath('crew'); setStep(1); setShowModal(true); }}
-            onSkip={() => router.push('/')}
+            onSkip={() => router.push(redirectTo)}
           />
         )}
 

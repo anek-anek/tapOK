@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRolesRequiredForPath } from '@/lib/auth/route-permissions';
-import { isLoginRoute, isProtectedRoute } from '@/lib/constants/routes';
+import { isProtectedRoute } from '@/lib/constants/routes';
 import type { UserRole } from '@/components/providers/auth-provider';
 import { verifyFirebaseSessionToken } from '@/lib/auth/session-jwt';
 
@@ -22,13 +22,11 @@ export async function proxy(request: NextRequest) {
 
   if (isProtectedRoute(pathname) && !isAuthenticated) {
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirectTo', pathname);
+    loginUrl.searchParams.set(
+      'redirectTo',
+      `${pathname}${request.nextUrl.search}${request.nextUrl.hash}`,
+    );
     return NextResponse.redirect(loginUrl);
-  }
-
-  if (isLoginRoute(pathname) && isAuthenticated) {
-    const redirectTo = request.nextUrl.searchParams.get('redirectTo') || '/';
-    return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
   if (isAuthenticated && isProtectedRoute(pathname)) {

@@ -12,6 +12,7 @@ import { loginSchema, type LoginFormValues } from '@/lib/validations/auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { finalizeSession } from '@/lib/auth/finalize-session';
 import { signInWithGoogleInteractive } from '@/lib/auth/google-signin';
+import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { toast } from 'react-hot-toast';
 
@@ -27,6 +28,10 @@ const FIREBASE_ERRORS: Record<string, string> = {
 
 function getFirebaseError(code: string): string {
   return FIREBASE_ERRORS[code] ?? GENERIC_AUTH_ERROR;
+}
+
+function getFinalizeMessage(message: string | string[]) {
+  return String(Array.isArray(message) ? message[0] : message).toUpperCase();
 }
 
 interface LoginFormProps {
@@ -54,9 +59,46 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
 
   useEffect(() => {
     if (user && dbUser && !googleLoading && !isSubmitting) {
-      router.replace(redirectTo);
+      router.replace(
+        resolveAuthSuccessRedirect({
+          mode: 'login',
+          redirectTo,
+          firstName: dbUser.firstName,
+          shouldOnboard: false,
+        }),
+      );
     }
   }, [user, dbUser, googleLoading, isSubmitting, router, redirectTo]);
+
+  useEffect(() => {
+    if (!user || dbUser || googleLoading || isSubmitting) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      const finalized = await finalizeSession(user, { mode: 'login' });
+      if (cancelled || !finalized.ok) {
+        if (!cancelled && !finalized.ok) {
+          toast.error(getFinalizeMessage(finalized.message));
+        }
+        return;
+      }
+
+      setSession(user, finalized.dbUser);
+      router.replace(
+        resolveAuthSuccessRedirect({
+          mode: 'login',
+          redirectTo,
+          firstName: finalized.dbUser.firstName,
+          shouldOnboard: false,
+        }),
+      );
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, dbUser, googleLoading, isSubmitting, redirectTo, router, setSession]);
 
   useEffect(() => {
     if (serverError && errorRef.current) {
@@ -72,18 +114,27 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
         const result = await getRedirectResult(getFirebaseAuth());
         if (result) {
           setGoogleLoading(true);
-          const finalized = await finalizeSession(result.user, { sync: false });
+          const finalized = await finalizeSession(result.user, {
+            mode: 'login',
+            provider: 'google',
+          });
 
           if (!finalized.ok) {
-            const msg = Array.isArray(finalized.message) ? finalized.message[0] : finalized.message;
-            toast.error(String(msg).toUpperCase());
+            toast.error(getFinalizeMessage(finalized.message));
             setGoogleLoading(false);
             return;
           }
 
           toast.success('WELCOME BACK');
           setSession(result.user, finalized.dbUser);
-          router.replace(redirectTo);
+          router.replace(
+            resolveAuthSuccessRedirect({
+              mode: 'login',
+              redirectTo,
+              firstName: finalized.dbUser.firstName,
+              shouldOnboard: false,
+            }),
+          );
         }
       } catch (error: unknown) {
         const code = (error as { code?: string }).code ?? '';
@@ -103,17 +154,26 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       const outcome = await signInWithGoogleInteractive();
       if (outcome === 'redirect') return;
 
-      const finalized = await finalizeSession(outcome.user, { sync: false });
+      const finalized = await finalizeSession(outcome.user, {
+        mode: 'login',
+        provider: 'google',
+      });
 
       if (!finalized.ok) {
-        const msg = Array.isArray(finalized.message) ? finalized.message[0] : finalized.message;
-        toast.error(String(msg).toUpperCase());
+        toast.error(getFinalizeMessage(finalized.message));
         return;
       }
 
       toast.success('WELCOME BACK');
       setSession(outcome.user, finalized.dbUser);
-      router.replace(redirectTo);
+      router.replace(
+        resolveAuthSuccessRedirect({
+          mode: 'login',
+          redirectTo,
+          firstName: finalized.dbUser.firstName,
+          shouldOnboard: false,
+        }),
+      );
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
       if (code === 'auth/popup-closed-by-user') return;
@@ -131,21 +191,26 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
         values.email,
         values.password,
       );
-      const finalized = await finalizeSession(user, { sync: false });
+      const finalized = await finalizeSession(user, {
+        mode: 'login',
+        provider: 'password',
+      });
 
       if (!finalized.ok) {
-        if (finalized.reason === 'no_account') {
-          toast.error('NO TAPOK ACCOUNT FOUND. PLEASE SIGN UP FIRST.');
-        } else {
-          const displayMsg = Array.isArray(finalized.message) ? finalized.message[0] : finalized.message;
-          toast.error(String(displayMsg).toUpperCase());
-        }
+        toast.error(getFinalizeMessage(finalized.message));
         return;
       }
 
       toast.success('WELCOME BACK');
       setSession(user, finalized.dbUser);
-      router.replace(redirectTo);
+      router.replace(
+        resolveAuthSuccessRedirect({
+          mode: 'login',
+          redirectTo,
+          firstName: finalized.dbUser.firstName,
+          shouldOnboard: false,
+        }),
+      );
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
       toast.error(String(getFirebaseError(code)).toUpperCase());
@@ -181,7 +246,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
         <p className="auth-panel-in mt-2 font-inter text-sm text-black/50" style={{ animationDelay: '0.1s' }}>
           Don&apos;t have an account?{' '}
           <Link
-            href={`/register${redirectTo !== '/' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`}
+            href={buildAuthPageHref('/register', redirectTo)}
             className="font-semibold text-tok-teal underline-offset-4 transition-colors duration-150 hover:underline"
           >
             Sign up
