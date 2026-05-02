@@ -26,6 +26,7 @@ export async function signInWithGoogleInteractive(loginHint?: string): Promise<G
   const provider = createGoogleAuthProvider(loginHint);
 
   if (prefersGoogleRedirectFlow()) {
+    if (loginHint) sessionStorage.setItem('tapok_auth_email_hint', loginHint);
     await signInWithRedirect(auth, provider);
     return 'redirect';
   }
@@ -38,6 +39,7 @@ export async function signInWithGoogleInteractive(loginHint?: string): Promise<G
       code === 'auth/popup-blocked' ||
       code === 'auth/operation-not-supported-in-this-environment'
     ) {
+      if (loginHint) sessionStorage.setItem('tapok_auth_email_hint', loginHint);
       await signInWithRedirect(auth, provider);
       return 'redirect';
     }

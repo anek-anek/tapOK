@@ -44,8 +44,26 @@ export class UsersService {
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail) return null;
 
+    // 1. Check our database first
     const user = await this.usersRepository.findByEmail(normalizedEmail);
-    return user?.authProvider ?? null;
+    if (user) return user.authProvider;
+
+    // 2. Fallback: Check Firebase Auth directly (for accounts not yet synced to DB)
+    try {
+      const userRecord = await admin.auth().getUserByEmail(normalizedEmail);
+      const firstProvider = userRecord.providerData?.[0];
+      
+      if (firstProvider) {
+        const providerId = firstProvider.providerId;
+        if (providerId === 'google.com') return AuthProvider.GOOGLE;
+        if (providerId === 'password') return AuthProvider.PASSWORD;
+      }
+    } catch (err) {
+      // User not found in Firebase or other error
+      this.logger.debug(`Firebase lookup failed for ${normalizedEmail}: ${err}`);
+    }
+
+    return null;
   }
 
   async findMe(firebaseUid: string): Promise<UserProfileDto> {
@@ -127,7 +145,30 @@ export class UsersService {
 
   async syncFromFirebase(token: DecodedIdToken, dto: SyncUserDto = {}): Promise<User> {
     const firebaseUid = token.uid;
-    const email = token.email ?? '';
+    let tokenEmail = (
+      token.email ||
+      token.firebase?.identities?.['email']?.[0] ||
+      ''
+    )
+      .trim()
+      .toLowerCase();
+
+    if (!tokenEmail) {
+      try {
+        const userRecord = await admin.auth().getUser(firebaseUid);
+        tokenEmail = (userRecord.email ?? '').trim().toLowerCase();
+
+        // If primary email is missing, check provider-specific data
+        if (!tokenEmail && userRecord.providerData) {
+          const providerEmail = userRecord.providerData.find((p) => p.email)?.email;
+          if (providerEmail) tokenEmail = providerEmail.trim().toLowerCase();
+        }
+      } catch (err) {
+        this.logger.warn(`Failed to fetch user record for ${firebaseUid}: ${err}`);
+      }
+    }
+
+    const email = tokenEmail || (dto.email ?? '').trim().toLowerCase();
     const isEmailVerified = token.email_verified ?? false;
     const authMode = dto.authMode ?? SyncAuthMode.LOGIN;
     const tokenAuthProvider = this.getAuthProviderFromToken(token);
@@ -168,9 +209,16 @@ export class UsersService {
       return user;
     }
 
+    if (existingByEmail && existingByEmail.authProvider !== requestedAuthProvider) {
+      throw new ForbiddenException({
+        message: this.getProviderMismatchMessage(existingByEmail.authProvider),
+        code: 'AUTH_PROVIDER_MISMATCH',
+      });
+    }
+
     if (!email) {
       throw new BadRequestException({
-        message: 'Your sign-in provider did not return an email address.',
+        message: 'Google did not share your email address. Please enter your email in the field to continue.',
         code: 'INVALID_CREDENTIALS',
       });
     }
@@ -196,13 +244,6 @@ export class UsersService {
       }
 
       return user;
-    }
-
-    if (existingByEmail.authProvider !== requestedAuthProvider) {
-      throw new ForbiddenException({
-        message: this.getProviderMismatchMessage(existingByEmail.authProvider),
-        code: 'AUTH_PROVIDER_MISMATCH',
-      });
     }
 
     if (existingByEmail.firebaseUid && existingByEmail.firebaseUid !== firebaseUid) {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -28,7 +28,9 @@ export class UsersRepository {
   }
 
   findByEmail(email: string): Promise<User | null> {
-    return this.repo.findOneBy({ email });
+    return this.repo.findOne({
+      where: { email: ILike(email.trim()) },
+    });
   }
 
   create(data: Partial<User>): Promise<User> {

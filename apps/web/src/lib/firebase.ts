@@ -27,6 +27,8 @@ export function createGoogleAuthProvider(loginHint?: string): GoogleAuthProvider
     throw new Error('createGoogleAuthProvider() is only available in the browser');
   }
   const provider = new GoogleAuthProvider();
+  provider.addScope('email');
+  provider.addScope('profile');
   provider.setCustomParameters({
     prompt: 'select_account',
     ...(loginHint ? { login_hint: loginHint } : {}),

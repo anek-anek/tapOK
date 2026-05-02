@@ -38,6 +38,7 @@ export type FinalizeResult =
 interface SyncPayload {
   firstName?: string;
   lastName?: string;
+  email?: string;
   gender?: string;
   birthday?: string;
   userHandle?: string;
