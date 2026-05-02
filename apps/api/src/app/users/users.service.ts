@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dto/create-user.dto';
-import { SyncUserDto } from './dto/sync-user.dto';
+import { SyncAuthMode, SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { FrequentCrewDto } from './dto/frequent-crew.dto';
@@ -72,23 +72,36 @@ export class UsersService {
     const firebaseUid = token.uid;
     const email = token.email ?? '';
     const isEmailVerified = token.email_verified ?? false;
+    const authMode = dto.authMode ?? SyncAuthMode.LOGIN;
 
     // Security check: prevent claiming existing accounts with unverified emails
     const existingByUid = await this.usersRepository.findByFirebaseUid(firebaseUid);
+    const existingByEmail = !existingByUid && email
+      ? await this.usersRepository.findByEmail(email)
+      : null;
+
+    if (!existingByUid && authMode === SyncAuthMode.LOGIN && !existingByEmail) {
+      throw new NotFoundException({
+        message: 'No TapOK account found. Please sign up first.',
+        code: 'NO_ACCOUNT',
+      });
+    }
+
     if (!existingByUid && email) {
-      const existingByEmail = await this.usersRepository.findByEmail(email);
       if (existingByEmail) {
         if (!isEmailVerified) {
-          throw new ForbiddenException(
-            'An account with this email already exists. Please verify your email in Firebase to link your account.',
-          );
+          throw new ForbiddenException({
+            message: 'An account with this email already exists. Please verify your email in Firebase to link your account.',
+            code: 'ACCOUNT_LINK_DENIED',
+          });
         }
 
         // For privileged accounts, prevent auto-linking if not already linked
         if (existingByEmail.role === UserRole.ADMIN && !existingByEmail.firebaseUid) {
-          throw new ForbiddenException(
-            'This is a privileged account. Please contact a platform administrator to link your Firebase account.',
-          );
+          throw new ForbiddenException({
+            message: 'This is a privileged account. Please contact a platform administrator to link your Firebase account.',
+            code: 'ACCOUNT_LINK_DENIED',
+          });
         }
       }
     }
@@ -96,16 +109,25 @@ export class UsersService {
     const [tokenFirst = '', ...rest] = (token.name ?? '').split(' ');
     const tokenLast = rest.join(' ');
 
+    const firstName = dto.firstName?.trim() || existingByUid?.firstName || existingByEmail?.firstName || tokenFirst;
+    const lastName = dto.lastName?.trim() || existingByUid?.lastName || existingByEmail?.lastName || tokenLast;
+    const avatar = token.picture || existingByUid?.avatar || existingByEmail?.avatar;
+    const gender = dto.gender ?? existingByUid?.gender ?? existingByEmail?.gender;
+    const birthday = dto.birthday
+      ? new Date(dto.birthday)
+      : existingByUid?.birthday ?? existingByEmail?.birthday;
+    const userHandle = dto.userHandle?.trim() || existingByUid?.userHandle || existingByEmail?.userHandle;
+
     const user = await this.usersRepository.upsertByFirebaseUid(firebaseUid, {
       email,
-      firstName: dto.firstName ?? tokenFirst,
-      lastName: dto.lastName ?? tokenLast,
-      avatar: token.picture,
+      firstName,
+      lastName,
+      avatar,
       googleId: token.firebase.sign_in_provider === 'google.com' ? firebaseUid : undefined,
       isEmailVerified,
-      gender: dto.gender,
-      birthday: dto.birthday ? new Date(dto.birthday) : undefined,
-      userHandle: dto.userHandle,
+      gender,
+      birthday,
+      userHandle,
     });
 
     try {

@@ -2,6 +2,11 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, MaxLength, IsDateString } from 'class-validator';
 import { GenderEnum } from '../../../common';
 
+export enum SyncAuthMode {
+  LOGIN = 'login',
+  SIGNUP = 'signup',
+}
+
 export class SyncUserDto {
   @ApiPropertyOptional({ example: 'John', maxLength: 100 })
   @IsOptional()
@@ -28,4 +33,9 @@ export class SyncUserDto {
   @IsOptional()
   @IsString()
   userHandle?: string;
+
+  @ApiPropertyOptional({ enum: SyncAuthMode })
+  @IsOptional()
+  @IsEnum(SyncAuthMode)
+  authMode?: SyncAuthMode;
 }

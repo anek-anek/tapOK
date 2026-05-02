@@ -79,7 +79,7 @@ export function AuthProvider({
           return;
         }
 
-        const result = await finalizeSession(firebaseUser, { sync: false });
+        const result = await finalizeSession(firebaseUser, { mode: 'login' });
         if (result.ok) {
           setDbUser(result.dbUser);
           setUser(firebaseUser);
@@ -132,7 +132,7 @@ export function AuthProvider({
 
   const refreshUser = useCallback(async () => {
     if (!user) return;
-    const result = await finalizeSession(user, { sync: false });
+    const result = await finalizeSession(user, { mode: 'login' });
     if (result.ok) {
       setDbUser(result.dbUser);
     }

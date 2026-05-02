@@ -24,7 +24,10 @@ export class FirebaseAuthGuard implements CanActivate {
 
     if (!token) {
       if (isPublic) return true;
-      throw new UnauthorizedException('Missing bearer token');
+      throw new UnauthorizedException({
+        message: 'Missing bearer token',
+        code: 'INVALID_OR_EXPIRED_TOKEN',
+      });
     }
 
     try {
@@ -32,7 +35,10 @@ export class FirebaseAuthGuard implements CanActivate {
       request.user = decoded;
     } catch {
       if (isPublic) return true;
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException({
+        message: 'Invalid or expired token',
+        code: 'INVALID_OR_EXPIRED_TOKEN',
+      });
     }
 
     return true;

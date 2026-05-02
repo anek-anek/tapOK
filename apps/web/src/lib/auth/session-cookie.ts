@@ -9,6 +9,14 @@ export type SessionProfilePayload = {
   avatar?: string;
 };
 
+export interface SessionCookieError {
+  status?: number;
+  error?: string;
+  message: string;
+  code?: string;
+  upstream?: unknown;
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -17,7 +25,7 @@ function delay(ms: number): Promise<void> {
 export async function postSessionCookie(
   idToken: string,
   options: { sync?: boolean; payload?: any } = {},
-): Promise<{ ok: boolean; dbUser?: any }> {
+): Promise<{ ok: true; dbUser: any } | { ok: false; error: SessionCookieError }> {
   const body = JSON.stringify({ idToken, ...options });
   const attempts = 3;
 
@@ -34,21 +42,47 @@ export async function postSessionCookie(
         return { ok: true, dbUser: data.dbUser };
       }
 
-      const retryable = res.status >= 500 && res.status !== 503;
+      const errorData = await res.json().catch(() => null);
+      const retryable = res.status >= 500;
       if (retryable && attempt < attempts - 1) {
         await delay(250 * (attempt + 1));
         continue;
       }
-      return { ok: false };
+      return {
+        ok: false,
+        error: {
+          status: res.status,
+          error: errorData?.error,
+          message: errorData?.message ?? 'Unable to finalize your session.',
+          code: errorData?.code,
+          upstream: errorData?.upstream,
+        },
+      };
     } catch {
       if (attempt < attempts - 1) {
         await delay(250 * (attempt + 1));
         continue;
       }
-      return { ok: false };
+      return {
+        ok: false,
+        error: {
+          status: 503,
+          error: 'API_UNAVAILABLE',
+          message: 'Cannot reach the backend API.',
+          code: 'API_UNAVAILABLE',
+        },
+      };
     }
   }
-  return { ok: false };
+  return {
+    ok: false,
+    error: {
+      status: 500,
+      error: 'UNKNOWN_SESSION_ERROR',
+      message: 'Unable to finalize your session.',
+      code: 'UNKNOWN_SESSION_ERROR',
+    },
+  };
 }
 
 
@@ -58,4 +92,3 @@ export async function applyIdTokenToAxiosAndSessionCookie(idToken: string): Prom
   const res = await postSessionCookie(idToken);
   return res.ok;
 }
-
