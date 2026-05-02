@@ -22,7 +22,10 @@ export const dropKeys = {
   discover: (page: number, category?: string) => ['drops', 'discover', page, category] as const,
 };
 
-export function useDiscoverData(page = 1, category?: string): UseQueryResult<DiscoverDropsPayload> {
+export function useDiscoverDrops(options?: { page?: number; category?: string }): UseQueryResult<DiscoverDropsPayload> {
+  const page = options?.page ?? 1;
+  const category = options?.category;
+  
   return useQuery({
     queryKey: dropKeys.discover(page, category),
     queryFn: () => dropsService.getDiscoverData(page, 6, category === 'all' ? undefined : category),

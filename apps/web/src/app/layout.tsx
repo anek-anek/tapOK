@@ -38,16 +38,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://tapok.app',
     siteName: 'TapOK',
     title: 'TapOK — Orchestrate Your Mission',
     description: 'TapOk is where a plan becomes real. Orchestrate drops, board your crew, and keep the log in one place.',
     images: [
       {
-        url: '/tapok.png',
+        url: '/tapok-brand.png',
         width: 1200,
         height: 630,
-        alt: 'TapOK Logo',
+        alt: 'TapOK',
       },
     ],
   },
@@ -55,7 +54,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'TapOK — Orchestrate Your Mission',
     description: 'TapOk is where a plan becomes real. Orchestrate drops, board your crew, and keep the log in one place.',
-    images: ['/tapok.png'],
+    images: ['/tapok-brand.png'],
     creator: '@tapok_app',
   },
 };

@@ -128,16 +128,16 @@ export class DropsController {
     return this.dropsService.findByJoinCode(joinCode, request.user.uid);
   }
 
+  @Public()
   @Get(':id')
-  @UseGuards(FirebaseAuthGuard)
-  @ApiOperation({ summary: 'Get a drop by id' })
+  @ApiOperation({ summary: 'Get a drop by id (public access for public drops)' })
   @ApiResponse({ status: 200, type: Drop })
   @ApiResponse({ status: 404, description: 'Drop not found.' })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() request: RequestWithUser,
+    @Req() request: any,
   ): Promise<Drop> {
-    return this.dropsService.findOne(id, request.user.uid);
+    return this.dropsService.findOne(id, request.user?.uid);
   }
 
   @Get(':id/activity')

@@ -32,7 +32,7 @@ interface RegisterFormProps {
 
 export default function RegisterForm({ redirectTo }: RegisterFormProps) {
   const router = useRouter();
-  const { user, dbUser, loading, setSession } = useAuth();
+  const { user, dbUser, setSession } = useAuth();
   const handledSuccessRedirectRef = useRef(false);
 
   const {
@@ -203,11 +203,6 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
 
   return (
     <AuthPageShell>
-      {loading && !user && (
-        <p className="mb-4 text-center font-inter text-xs text-black/45" aria-live="polite">
-          Connecting…
-        </p>
-      )}
       <div className="animate-fade-up mb-6">
         <div
           className="mb-3 inline-flex items-center gap-2"
