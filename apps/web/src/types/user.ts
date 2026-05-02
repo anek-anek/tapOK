@@ -1,11 +1,13 @@
 export type UserRole = 'admin' | 'participant';
 export type GenderEnum = 'male' | 'female' | 'other';
+export type AuthProvider = 'password' | 'google';
 
 export type DropCrewMemberRole = 'chief' | 'crew' | 'co_chief';
 
 export interface User {
   id: string;
   email: string;
+  authProvider: AuthProvider;
   firstName: string;
   lastName: string;
   avatar?: string;
@@ -41,6 +43,7 @@ export interface FrequentCrewMember {
 
 export interface CreateUserDto {
   email: string;
+  authProvider?: AuthProvider;
   firstName: string;
   lastName: string;
   firebaseUid?: string;

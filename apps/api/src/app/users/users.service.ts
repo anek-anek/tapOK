@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import type { DecodedIdToken } from 'firebase-admin/auth';
 import { DataSource } from 'typeorm';
@@ -9,7 +15,7 @@ import { SyncAuthMode, SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { FrequentCrewDto } from './dto/frequent-crew.dto';
-import { UserRole } from '../../common';
+import { AuthProvider, UserRole } from '../../common';
 
 @Injectable()
 export class UsersService {
@@ -68,67 +74,156 @@ export class UsersService {
     await this.usersRepository.remove(id);
   }
 
+  private getAuthProviderFromToken(token: DecodedIdToken): AuthProvider {
+    const signInProvider = token.firebase.sign_in_provider;
+
+    if (signInProvider === 'google.com') return AuthProvider.GOOGLE;
+    if (signInProvider === 'password') return AuthProvider.PASSWORD;
+
+    throw new BadRequestException({
+      message: 'This sign-in method is not supported on TapOK.',
+      code: 'INVALID_CREDENTIALS',
+    });
+  }
+
+  private getProviderMismatchMessage(existingProvider: AuthProvider): string {
+    if (existingProvider === AuthProvider.GOOGLE) {
+      return 'This email is registered with Google. Continue with Google sign-in instead.';
+    }
+
+    return 'This email is registered with email and password. Sign in with your password instead.';
+  }
+
+  private buildSyncedProfile(
+    token: DecodedIdToken,
+    dto: SyncUserDto,
+    existingUser: User | null,
+    authProvider: AuthProvider,
+  ): Partial<User> {
+    const [tokenFirst = '', ...rest] = (token.name ?? '').split(' ');
+    const tokenLast = rest.join(' ');
+
+    return {
+      email: token.email ?? existingUser?.email ?? '',
+      authProvider,
+      firstName: dto.firstName?.trim() || existingUser?.firstName || tokenFirst,
+      lastName: dto.lastName?.trim() || existingUser?.lastName || tokenLast,
+      avatar: token.picture || existingUser?.avatar,
+      googleId: authProvider === AuthProvider.GOOGLE ? token.uid : existingUser?.googleId,
+      isEmailVerified: token.email_verified ?? existingUser?.isEmailVerified ?? false,
+      gender: dto.gender ?? existingUser?.gender,
+      birthday: dto.birthday ? new Date(dto.birthday) : existingUser?.birthday,
+      userHandle: dto.userHandle?.trim() || existingUser?.userHandle,
+    };
+  }
+
   async syncFromFirebase(token: DecodedIdToken, dto: SyncUserDto = {}): Promise<User> {
     const firebaseUid = token.uid;
     const email = token.email ?? '';
     const isEmailVerified = token.email_verified ?? false;
     const authMode = dto.authMode ?? SyncAuthMode.LOGIN;
+    const tokenAuthProvider = this.getAuthProviderFromToken(token);
+    const requestedAuthProvider = dto.authProvider ?? tokenAuthProvider;
 
-    // Security check: prevent claiming existing accounts with unverified emails
+    if (requestedAuthProvider !== tokenAuthProvider) {
+      throw new BadRequestException({
+        message: 'This sign-in attempt could not be verified. Please try again.',
+        code: 'INVALID_CREDENTIALS',
+      });
+    }
+
     const existingByUid = await this.usersRepository.findByFirebaseUid(firebaseUid);
     const existingByEmail = !existingByUid && email
       ? await this.usersRepository.findByEmail(email)
       : null;
 
-    if (!existingByUid && authMode === SyncAuthMode.LOGIN && !existingByEmail) {
-      throw new NotFoundException({
-        message: 'No TapOK account found. Please sign up first.',
-        code: 'NO_ACCOUNT',
+    if (existingByUid) {
+      if (existingByUid.authProvider !== requestedAuthProvider) {
+        throw new ForbiddenException({
+          message: this.getProviderMismatchMessage(existingByUid.authProvider),
+          code: 'AUTH_PROVIDER_MISMATCH',
+        });
+      }
+
+      const syncedUser = Object.assign(
+        existingByUid,
+        this.buildSyncedProfile(token, dto, existingByUid, requestedAuthProvider),
+      );
+      const user = await this.usersRepository.save(syncedUser);
+
+      try {
+        await admin.auth().setCustomUserClaims(token.uid, { role: user.role });
+      } catch (err) {
+        this.logger.warn(`Failed to set custom claims for ${token.uid}: ${err}`);
+      }
+
+      return user;
+    }
+
+    if (!email) {
+      throw new BadRequestException({
+        message: 'Your sign-in provider did not return an email address.',
+        code: 'INVALID_CREDENTIALS',
       });
     }
 
-    if (!existingByUid && email) {
-      if (existingByEmail) {
-        if (!isEmailVerified) {
-          throw new ForbiddenException({
-            message: 'An account with this email already exists. Please verify your email in Firebase to link your account.',
-            code: 'ACCOUNT_LINK_DENIED',
-          });
-        }
-
-        // For privileged accounts, prevent auto-linking if not already linked
-        if (existingByEmail.role === UserRole.ADMIN && !existingByEmail.firebaseUid) {
-          throw new ForbiddenException({
-            message: 'This is a privileged account. Please contact a platform administrator to link your Firebase account.',
-            code: 'ACCOUNT_LINK_DENIED',
-          });
-        }
+    if (!existingByEmail) {
+      if (authMode === SyncAuthMode.LOGIN) {
+        throw new NotFoundException({
+          message: 'No TapOK account found. Please sign up first.',
+          code: 'NO_ACCOUNT',
+        });
       }
+
+      const user = await this.usersRepository.create({
+        ...this.buildSyncedProfile(token, dto, null, requestedAuthProvider),
+        email,
+        firebaseUid,
+      });
+
+      try {
+        await admin.auth().setCustomUserClaims(token.uid, { role: user.role });
+      } catch (err) {
+        this.logger.warn(`Failed to set custom claims for ${token.uid}: ${err}`);
+      }
+
+      return user;
     }
 
-    const [tokenFirst = '', ...rest] = (token.name ?? '').split(' ');
-    const tokenLast = rest.join(' ');
+    if (existingByEmail.authProvider !== requestedAuthProvider) {
+      throw new ForbiddenException({
+        message: this.getProviderMismatchMessage(existingByEmail.authProvider),
+        code: 'AUTH_PROVIDER_MISMATCH',
+      });
+    }
 
-    const firstName = dto.firstName?.trim() || existingByUid?.firstName || existingByEmail?.firstName || tokenFirst;
-    const lastName = dto.lastName?.trim() || existingByUid?.lastName || existingByEmail?.lastName || tokenLast;
-    const avatar = token.picture || existingByUid?.avatar || existingByEmail?.avatar;
-    const gender = dto.gender ?? existingByUid?.gender ?? existingByEmail?.gender;
-    const birthday = dto.birthday
-      ? new Date(dto.birthday)
-      : existingByUid?.birthday ?? existingByEmail?.birthday;
-    const userHandle = dto.userHandle?.trim() || existingByUid?.userHandle || existingByEmail?.userHandle;
+    if (existingByEmail.firebaseUid && existingByEmail.firebaseUid !== firebaseUid) {
+      throw new ForbiddenException({
+        message: 'This email is already connected to a different TapOK account.',
+        code: 'AUTH_PROVIDER_MISMATCH',
+      });
+    }
 
-    const user = await this.usersRepository.upsertByFirebaseUid(firebaseUid, {
-      email,
-      firstName,
-      lastName,
-      avatar,
-      googleId: token.firebase.sign_in_provider === 'google.com' ? firebaseUid : undefined,
-      isEmailVerified,
-      gender,
-      birthday,
-      userHandle,
-    });
+    if (!isEmailVerified) {
+      throw new ForbiddenException({
+        message: 'Please verify your email before continuing.',
+        code: 'EMAIL_NOT_VERIFIED',
+      });
+    }
+
+    if (existingByEmail.role === UserRole.ADMIN && !existingByEmail.firebaseUid) {
+      throw new ForbiddenException({
+        message: 'This account must be linked by a platform administrator.',
+        code: 'AUTH_PROVIDER_MISMATCH',
+      });
+    }
+
+    const syncedUser = Object.assign(
+      existingByEmail,
+      this.buildSyncedProfile(token, dto, existingByEmail, requestedAuthProvider),
+      { firebaseUid },
+    );
+    const user = await this.usersRepository.save(syncedUser);
 
     try {
       await admin.auth().setCustomUserClaims(token.uid, { role: user.role });

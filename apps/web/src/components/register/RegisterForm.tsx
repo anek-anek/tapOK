@@ -1,38 +1,34 @@
 'use client';
 
-import { use, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createUserWithEmailAndPassword, getRedirectResult, signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { getFirebaseAuth } from '@/lib/firebase';
 import { signUpSchema, type SignUpFormValues } from '@/lib/validations/auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { finalizeSession } from '@/lib/auth/finalize-session';
+import { getRegisterFirebaseError } from '@/lib/auth/firebase-auth-errors';
+import { resolveGoogleRedirectSession } from '@/lib/auth/google-redirect';
 import { signInWithGoogleInteractive } from '@/lib/auth/google-signin';
 import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { toast } from 'react-hot-toast';
 
-const FIREBASE_ERRORS: Record<string, string> = {
-  'auth/email-already-in-use': 'An account with this email already exists.',
-  'auth/weak-password': 'Password is too weak. Use at least 8 characters.',
-  'auth/invalid-email': 'Invalid email address.',
-  'auth/network-request-failed': 'Network error. Check your connection and try again.',
-};
-
-function getFirebaseError(code: string): string {
-  return FIREBASE_ERRORS[code] ?? 'Something went wrong. Please try again.';
-}
-
-function getFinalizeMessage(message: string | string[]) {
-  return String(Array.isArray(message) ? message[0] : message).toUpperCase();
-}
-
 interface RegisterFormProps {
   searchParams: Promise<{ redirectTo?: string }>;
+}
+
+const PENDING_SIGNUP_CLEANUP_KEY = 'tapok:pending-signup-cleanup';
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export default function RegisterForm({ searchParams }: RegisterFormProps) {
@@ -60,7 +56,13 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleRedirectResolved, setGoogleRedirectResolved] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
+
+  const showError = useCallback((message: string) => {
+    setServerError(message);
+    toast.error(message.toUpperCase());
+  }, []);
 
   const completeSuccessfulSignUp = (
     firebaseUser: Parameters<typeof setSession>[0],
@@ -80,8 +82,32 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
     );
   };
 
+  const rememberPendingSignupCleanup = useCallback((email: string) => {
+    sessionStorage.setItem(
+      PENDING_SIGNUP_CLEANUP_KEY,
+      JSON.stringify({ email, timestamp: Date.now() }),
+    );
+  }, []);
+
+  const clearPendingSignupCleanup = useCallback(() => {
+    sessionStorage.removeItem(PENDING_SIGNUP_CLEANUP_KEY);
+  }, []);
+
+  const hasRecentPendingSignupCleanup = useCallback((email: string) => {
+    const raw = sessionStorage.getItem(PENDING_SIGNUP_CLEANUP_KEY);
+    if (!raw) return false;
+
+    try {
+      const parsed = JSON.parse(raw) as { email?: string; timestamp?: number };
+      return parsed.email === email && typeof parsed.timestamp === 'number' && Date.now() - parsed.timestamp < 5 * 60_000;
+    } catch {
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     if (handledSuccessRedirectRef.current) return;
+    if (!googleRedirectResolved) return;
 
     if (user && dbUser && !googleLoading && !isSubmitting) {
       router.replace(
@@ -93,10 +119,19 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
         }),
       );
     }
-  }, [user, dbUser, googleLoading, isSubmitting, router, redirectTo]);
+  }, [user, dbUser, googleLoading, googleRedirectResolved, isSubmitting, router, redirectTo]);
 
   useEffect(() => {
-    if (handledSuccessRedirectRef.current || !user || dbUser || googleLoading || isSubmitting) return;
+    if (
+      handledSuccessRedirectRef.current ||
+      !googleRedirectResolved ||
+      !user ||
+      dbUser ||
+      googleLoading ||
+      isSubmitting
+    ) {
+      return;
+    }
 
     let cancelled = false;
 
@@ -104,7 +139,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       const finalized = await finalizeSession(user, { mode: 'login' });
       if (cancelled || !finalized.ok) {
         if (!cancelled && !finalized.ok) {
-          toast.error(getFinalizeMessage(finalized.message));
+          showError(finalized.message);
         }
         return;
       }
@@ -123,7 +158,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
     return () => {
       cancelled = true;
     };
-  }, [user, dbUser, googleLoading, isSubmitting, redirectTo, router, setSession]);
+  }, [user, dbUser, googleLoading, googleRedirectResolved, isSubmitting, redirectTo, router, setSession, showError]);
 
   useEffect(() => {
     if (serverError && errorRef.current) {
@@ -134,44 +169,41 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
   }, [serverError]);
 
   useEffect(() => {
-    const checkRedirect = async () => {
-      try {
-        const result = await getRedirectResult(getFirebaseAuth());
-        if (result) {
-          setGoogleLoading(true);
-          const finalized = await finalizeSession(result.user, {
+    let cancelled = false;
+
+    void (async () => {
+      const resolution = await resolveGoogleRedirectSession('signup');
+      if (cancelled) return;
+
+      if (resolution.status === 'success') {
+        toast.success('WELCOME TO TAPOK');
+        setSession(resolution.user, resolution.finalized.dbUser);
+        handledSuccessRedirectRef.current = true;
+        router.replace(
+          resolveAuthSuccessRedirect({
             mode: 'signup',
-            provider: 'google',
-          });
-
-          if (!finalized.ok) {
-            toast.error(getFinalizeMessage(finalized.message));
-            setGoogleLoading(false);
-            return;
-          }
-
-          toast.success('WELCOME TO TAPOK');
-          setSession(result.user, finalized.dbUser);
-          handledSuccessRedirectRef.current = true;
-          router.replace(
-            resolveAuthSuccessRedirect({
-              mode: 'signup',
-              redirectTo,
-              firstName: finalized.dbUser.firstName,
-              shouldOnboard: finalized.shouldOnboard,
-            }),
-          );
-        }
-      } catch (error: unknown) {
-        const code = (error as { code?: string }).code ?? '';
-        if (code === 'auth/popup-closed-by-user') return;
-        toast.error(String(getFirebaseError(code)).toUpperCase());
-        setGoogleLoading(false);
+            redirectTo,
+            firstName: resolution.finalized.dbUser.firstName,
+            shouldOnboard: resolution.finalized.shouldOnboard,
+          }),
+        );
+      } else if (resolution.status === 'finalize_error') {
+        showError(resolution.finalized.message);
+      } else if (
+        resolution.status === 'firebase_error' &&
+        resolution.code !== 'auth/popup-closed-by-user'
+      ) {
+        showError(getRegisterFirebaseError(resolution.code));
       }
-    };
 
-    void checkRedirect();
-  }, [router, redirectTo, setSession]);
+      setGoogleLoading(false);
+      setGoogleRedirectResolved(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router, redirectTo, setSession, showError]);
 
   const handleGoogleSignUp = async () => {
     setServerError(null);
@@ -186,7 +218,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       });
 
       if (!finalized.ok) {
-        toast.error(getFinalizeMessage(finalized.message));
+        showError(finalized.message);
         return;
       }
 
@@ -204,7 +236,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
       if (code !== 'auth/popup-closed-by-user') {
-        toast.error(String(getFirebaseError(code)).toUpperCase());
+        showError(getRegisterFirebaseError(code));
       }
     } finally {
       setGoogleLoading(false);
@@ -227,40 +259,51 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       });
 
       if (!finalized.ok) {
-        toast.error(getFinalizeMessage(finalized.message));
+        rememberPendingSignupCleanup(values.email);
+        showError(finalized.message);
         return;
       }
 
+      clearPendingSignupCleanup();
       completeSuccessfulSignUp(user, finalized, values.firstName.trim());
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
 
       if (code === 'auth/email-already-in-use') {
         try {
-          const recovered = await signInWithEmailAndPassword(
-            getFirebaseAuth(),
-            values.email,
-            values.password,
-          );
-          const finalized = await finalizeSession(recovered.user, {
-            mode: 'signup',
-            provider: 'password',
-            payload: { firstName: values.firstName.trim(), lastName: values.lastName.trim() },
-          });
+          if (hasRecentPendingSignupCleanup(values.email)) {
+            await delay(500);
 
-          if (!finalized.ok) {
-            toast.error(getFinalizeMessage(finalized.message));
+            const recovered = await signInWithEmailAndPassword(
+              getFirebaseAuth(),
+              values.email,
+              values.password,
+            );
+            const finalized = await finalizeSession(recovered.user, {
+              mode: 'signup',
+              provider: 'password',
+              payload: { firstName: values.firstName.trim(), lastName: values.lastName.trim() },
+              deleteCreatedUserOnFailure: true,
+            });
+
+            if (!finalized.ok) {
+              rememberPendingSignupCleanup(values.email);
+              showError(finalized.message);
+              return;
+            }
+
+            clearPendingSignupCleanup();
+            completeSuccessfulSignUp(recovered.user, finalized, values.firstName.trim());
             return;
           }
-
-          completeSuccessfulSignUp(recovered.user, finalized, values.firstName.trim());
+        } catch (retryError: unknown) {
+          const retryCode = (retryError as { code?: string }).code ?? '';
+          showError(getRegisterFirebaseError(retryCode || code));
           return;
-        } catch {
-          // Fall back to the normal Firebase error copy below.
         }
       }
 
-      toast.error(String(getFirebaseError(code)).toUpperCase());
+      showError(getRegisterFirebaseError(code));
     }
   };
 
@@ -424,6 +467,18 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             </button>
           </div>
         </AuthFormField>
+
+        {serverError && (
+          <div
+            ref={errorRef}
+            className="auth-panel-in border-2 border-red-600 bg-red-50 px-4 py-3 shadow-[3px_3px_0px_0px_#dc2626]"
+            aria-live="assertive"
+          >
+            <p className="font-inter text-xs font-medium uppercase tracking-[0.08em] text-red-700">
+              {serverError}
+            </p>
+          </div>
+        )}
 
 
         <button

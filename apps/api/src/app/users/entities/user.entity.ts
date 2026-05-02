@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { GenderEnum, UserRole } from '../../../common';
+import { AuthProvider, GenderEnum, UserRole } from '../../../common';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Entity('users')
@@ -17,6 +17,10 @@ export class User {
   @ApiProperty()
   @Column({ unique: true })
   email: string;
+
+  @ApiProperty({ enum: AuthProvider })
+  @Column({ type: 'enum', enum: AuthProvider, default: AuthProvider.PASSWORD })
+  authProvider: AuthProvider;
 
   @ApiProperty()
   @Column()

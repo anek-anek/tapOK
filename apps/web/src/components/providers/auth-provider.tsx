@@ -9,10 +9,12 @@ import { finalizeSession } from '@/lib/auth/finalize-session';
 import { applyIdTokenToAxiosAndSessionCookie } from '@/lib/auth/session-cookie';
 
 export type UserRole = 'admin' | 'participant';
+export type AuthProvider = 'password' | 'google';
 
 export interface DbUser {
   id: string;
   email: string;
+  authProvider: AuthProvider;
   firstName: string;
   lastName: string;
   avatar?: string;

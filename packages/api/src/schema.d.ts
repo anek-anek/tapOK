@@ -201,7 +201,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a drop by id */
+        /** Get a drop by id (public access for public drops) */
         get: operations["DropsController_findOne"];
         put?: never;
         post?: never;
@@ -462,6 +462,8 @@ export interface components {
         User: {
             id: string;
             email: string;
+            /** @enum {string} */
+            authProvider: "password" | "google";
             firstName: string;
             lastName: string;
             avatar?: string;
@@ -505,6 +507,8 @@ export interface components {
         UserProfileDto: {
             id: string;
             email: string;
+            /** @enum {string} */
+            authProvider: "password" | "google";
             firstName: string;
             lastName: string;
             avatar?: string;
@@ -549,10 +553,19 @@ export interface components {
             birthday?: string;
             /** @example jane_doe */
             userHandle?: string;
+            /** @enum {string} */
+            authMode?: "login" | "signup";
+            /** @enum {string} */
+            authProvider?: "password" | "google";
         };
         CreateUserDto: {
             /** @example user@example.com */
             email: string;
+            /**
+             * @default password
+             * @enum {string}
+             */
+            authProvider: "password" | "google";
             /** @example Jane */
             firstName: string;
             /** @example Doe */
@@ -1490,7 +1503,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Organiser cannot join their own drop. */
+            /** @description Organiser cannot join their own drop, age requirement not met, or birthday missing for an age-restricted drop. */
             403: {
                 headers: {
                     [name: string]: unknown;
