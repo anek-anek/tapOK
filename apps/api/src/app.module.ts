@@ -11,11 +11,16 @@ import { AppController } from './app.controller';
 import { HealthModule } from './app/health/health.module';
 import { UsersModule } from './app/users/users.module';
 import { DropsModule } from './app/drops/drops.module';
+import { EmailModule } from './common/email/email.module';
+import { AuthEmailModule } from './app/auth-email/auth-email.module';
 
 @Module({
   controllers: [AppController],
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ 
+      isGlobal: true,
+      envFilePath: ['.env', 'apps/api/.env'],
+    }),
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       { name: 'default', ...THROTTLE_DEFAULT },
@@ -38,6 +43,8 @@ import { DropsModule } from './app/drops/drops.module';
       }),
     }),
     FirebaseModule,
+    EmailModule,
+    AuthEmailModule,
     HealthModule,
     UsersModule,
     DropsModule,

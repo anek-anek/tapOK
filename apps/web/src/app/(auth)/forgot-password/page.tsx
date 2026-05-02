@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { sendPasswordResetEmail } from 'firebase/auth';
 import { ArrowLeft, Loader2, MailCheck, ShieldCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { z } from 'zod';
@@ -82,21 +81,25 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (values: ForgotFormValues) => {
     try {
-      await sendPasswordResetEmail(getFirebaseAuth(), values.email);
+      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const apiUrl = (rawApiUrl.split(',')[0] || '').trim();
+
+      const response = await fetch(`${apiUrl}/auth/email/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: values.email }),
+      });
+
+      if (!response.ok) throw new Error('Failed to send');
+
       setSentTo(values.email);
       reset(DEFAULT_VALUES);
       toast.success('RESET LINK SENT');
     } catch (error: unknown) {
-      const code = (error as { code?: string }).code ?? '';
-
-      if (code === 'auth/user-not-found') {
-        setSentTo(values.email);
-        reset(DEFAULT_VALUES);
-        toast.success('IF AN ACCOUNT EXISTS, A LINK IS ON THE WAY');
-        return;
-      }
-
-      toast.error(getForgotPasswordError(code).toUpperCase());
+      console.error('Email reset error:', error);
+      setSentTo(values.email);
+      reset(DEFAULT_VALUES);
+      toast.success('IF AN ACCOUNT EXISTS, A LINK IS ON THE WAY');
     }
   };
 
@@ -217,7 +220,7 @@ export default function ForgotPasswordPage() {
                 animationDelay: '0.1s',
               }}
             >
-              RESET PASSWORD.
+              FORGOT PASSWORD.
             </h1>
 
             <p

@@ -1,6 +1,6 @@
 'use client';
 
-import { Mail, Phone, Calendar as IconCalendar, Pencil, X, Check, User, ChevronDown, Camera } from 'lucide-react';
+import { Mail, Phone, Calendar as IconCalendar, Pencil, X, Check, User, ChevronDown, Camera, ShieldCheck, LockKeyhole, AlertCircle } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { TapokNavbar } from '@/components/tapok-navbar';
@@ -100,6 +100,19 @@ export default function ProfilePage() {
   const updateUser = useUpdateUser(profile?.id ?? '');
   const { data: myDrops = [], isLoading: dropsLoading } = useMyDrops();
   const { data: frequentCrew = [] } = useFrequentCrew();
+
+  const memberSince = useMemo(() => {
+    if (!displayUser?.createdAt) return 'JUNE 2024';
+    try {
+      const d = new Date(displayUser.createdAt);
+      return isNaN(d.getTime()) ? 'JUNE 2024' : d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
+    } catch { return 'JUNE 2024'; }
+  }, [displayUser?.createdAt]);
+
+  const dropCount = profile?.dropCount ?? 0;
+  const orchestratedDrops = useMemo(() => myDrops.filter(d => d.organiserId === profile?.id), [myDrops, profile?.id]);
+  const activeDrops = useMemo(() => orchestratedDrops.filter(d => d.status !== 'completed'), [orchestratedDrops]);
+  const pastDrops = useMemo(() => orchestratedDrops.filter(d => d.status === 'completed'), [orchestratedDrops]);
 
   const masonryCoverPriorityIds = useMemo(() => {
     const orchestrated = myDrops.filter((d) => d.organiserId === profile?.id);
@@ -243,19 +256,8 @@ export default function ProfilePage() {
   const lastName = editing ? form.lastName : displayUser.lastName;
   const initials = getInitials(firstName || displayUser.firstName, lastName || displayUser.lastName);
   const fullName = `${firstName} ${lastName}`.trim();
-  const dropCount = profile?.dropCount ?? 0;
-  const memberSince = displayUser.createdAt
-    ? (function () {
-      try {
-        const d = new Date(displayUser.createdAt);
-        return isNaN(d.getTime()) ? 'JUNE 2024' : d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
-      } catch { return 'JUNE 2024'; }
-    })()
-    : 'JUNE 2024';
 
-  const orchestratedDrops = myDrops.filter(d => d.organiserId === profile?.id);
-  const activeDrops = orchestratedDrops.filter(d => d.status !== 'completed');
-  const pastDrops = orchestratedDrops.filter(d => d.status === 'completed');
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/20">
@@ -506,7 +508,6 @@ export default function ProfilePage() {
                 </p>
               )}
             </div>
-
             <div className="min-w-0 border-2 border-tok-black bg-tok-white p-4 shadow-[4px_4px_0px_0px_#262624] sm:p-6">
               <div className="mb-3 flex min-w-0 items-center gap-2 sm:mb-4 sm:gap-3">
                 <div className="shrink-0 border-2 border-tok-black bg-tok-teal p-1 text-tok-white sm:p-1.5">
@@ -534,6 +535,109 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
+
+          {/* Security & Verification */}
+          <section className="mt-8 border-2 border-tok-black bg-tok-white p-6 shadow-[4px_4px_0px_0px_#262624] sm:p-8">
+            <div className="mb-6 flex items-center gap-3 border-b-2 border-tok-black/10 pb-3">
+              <ShieldCheck className="h-5 w-5 text-tok-teal" />
+              <h3 className="font-passion text-2xl uppercase tracking-tight text-tok-black">
+                Account Security
+              </h3>
+            </div>
+
+            {!displayUser.isEmailVerified && (
+              <div className="mb-6 flex flex-row items-center justify-between gap-2 border-b-2 border-dashed border-tok-black/10 pb-6">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-tok-black bg-[#FFD700] text-tok-black shadow-[2px_2px_0px_0px_#262624]">
+                    <AlertCircle className="h-6 w-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-passion text-base uppercase leading-none text-tok-black sm:text-lg">
+                      Email Verification
+                    </p>
+                    <p className="mt-1 hidden font-inter text-[10px] font-black tracking-wider text-tok-black/40 uppercase sm:block">
+                      Action Required to unlock all features
+                    </p>
+                    <p className="mt-1 block font-inter text-[9px] font-black tracking-wider text-tok-black/40 uppercase sm:hidden">
+                      ACTION REQUIRED
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+                      const apiUrl = (rawApiUrl.split(',')[0] || '').trim();
+
+                      const response = await fetch(`${apiUrl}/auth/email/verify-email`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: displayUser.email }),
+                      });
+                      
+                      if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || 'FAILED TO SEND EMAIL');
+                      }
+
+                      toast.success('VERIFICATION EMAIL SENT');
+                    } catch (err: any) {
+                      toast.error(err.message || 'FAILED TO SEND EMAIL');
+                    }
+                  }}
+                  className="shrink-0 flex items-center gap-2 border-2 border-tok-black bg-tok-black px-3 py-2 font-passion text-sm text-tok-cream shadow-[3px_3px_0px_0px_#006666] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#006666] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:px-4 sm:text-base"
+                >
+                  <Mail size={14} className="sm:size-4" />
+                  <span className="uppercase">SEND LINK</span>
+                </button>
+              </div>
+            )}
+
+            <div className="flex flex-row items-center justify-between gap-4">
+              <div className="space-y-1 min-w-0">
+                <p className="font-passion text-base uppercase leading-none text-tok-black sm:text-lg">
+                  Sign-in Method
+                </p>
+                <p className="font-inter text-[10px] font-black tracking-wide text-tok-black/40 uppercase sm:text-sm sm:font-bold sm:text-tok-black/50">
+                  {displayUser.authProvider === 'google' ? 'Connected via Google' : 'Email & Password'}
+                </p>
+              </div>
+
+              <div className="shrink-0">
+                {displayUser.authProvider === 'password' && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+                        const apiUrl = (rawApiUrl.split(',')[0] || '').trim();
+
+                        const response = await fetch(`${apiUrl}/auth/email/reset-password`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ email: displayUser.email }),
+                        });
+
+                        if (!response.ok) {
+                          const errorData = await response.json().catch(() => ({}));
+                          throw new Error(errorData.message || 'FAILED TO SEND RESET LINK');
+                        }
+
+                        toast.success('RESET LINK SENT TO YOUR EMAIL');
+                      } catch (err: any) {
+                        toast.error(err.message || 'FAILED TO SEND RESET LINK');
+                      }
+                    }}
+                    className="flex items-center gap-2 border-2 border-tok-black bg-tok-white px-3 py-2 font-passion text-sm text-tok-black shadow-[3px_3px_0px_0px_#262624] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-tok-cream hover:shadow-[2px_2px_0px_0px_#262624] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:px-4 sm:text-base"
+                  >
+                    <LockKeyhole size={14} className="sm:size-4" />
+                    <span className="uppercase">RESET PASSWORD</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
 
           {/* Activity Section */}
           <section className="mt-6 relative overflow-visible border-2 border-tok-black bg-tok-teal p-8 shadow-[6px_6px_0px_0px_#262624]">

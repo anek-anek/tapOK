@@ -129,6 +129,24 @@ export class UsersService {
     const [tokenFirst = '', ...rest] = (token.name ?? '').split(' ');
     const tokenLast = rest.join(' ');
 
+    const isEmailVerified = token.email_verified ?? existingUser?.isEmailVerified ?? false;
+    
+    // Logic to set emailVerifiedAt if it wasn't set before and user is now verified
+    let emailVerifiedAt = existingUser?.emailVerifiedAt;
+    if (isEmailVerified && !existingUser?.isEmailVerified) {
+      const sentAt = existingUser?.emailVerificationSentAt;
+      const EXPIRY_MS = 10 * 60 * 1000;
+      
+      if (sentAt && (new Date().getTime() - new Date(sentAt).getTime() > EXPIRY_MS)) {
+        return {
+          ...existingUser,
+          isEmailVerified: false,
+        } as any;
+      }
+      
+      emailVerifiedAt = new Date();
+    }
+
     return {
       email: token.email ?? existingUser?.email ?? '',
       authProvider,
@@ -136,11 +154,23 @@ export class UsersService {
       lastName: dto.lastName?.trim() || existingUser?.lastName || tokenLast,
       avatar: token.picture || existingUser?.avatar,
       googleId: authProvider === AuthProvider.GOOGLE ? token.uid : existingUser?.googleId,
-      isEmailVerified: token.email_verified ?? existingUser?.isEmailVerified ?? false,
+      isEmailVerified,
+      emailVerifiedAt,
       gender: dto.gender ?? existingUser?.gender,
       birthday: dto.birthday ? new Date(dto.birthday) : existingUser?.birthday,
       userHandle: dto.userHandle?.trim() || existingUser?.userHandle,
     };
+  }
+
+  async isLinkExpired(email: string, type: 'reset' | 'verify'): Promise<boolean> {
+    const user = await this.usersRepository.findByEmail(email);
+    if (!user) return true;
+
+    const sentAt = type === 'reset' ? user.passwordResetSentAt : user.emailVerificationSentAt;
+    if (!sentAt) return true;
+
+    const EXPIRY_MS = 10 * 60 * 1000;
+    return (new Date().getTime() - new Date(sentAt).getTime()) > EXPIRY_MS;
   }
 
   async syncFromFirebase(token: DecodedIdToken, dto: SyncUserDto = {}): Promise<User> {
