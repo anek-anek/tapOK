@@ -248,6 +248,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
           toast.success('REQUEST SENT FOR APPROVAL');
         } else {
           toast.success('YOU ARE LOCKED IN!');
+          router.push(`/drops/${drop?.id}`);
         }
       },
       onError: (err: unknown) => {
@@ -282,8 +283,11 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   }, [drop?.id]);
 
   React.useEffect(() => {
-    if (crewStatus?.status === 'in') track('crew_tapped_in', { dropId: drop?.id });
-  }, [crewStatus?.status, drop?.id]);
+    if (crewStatus?.status === 'in' && drop?.id) {
+      track('crew_tapped_in', { dropId: drop.id });
+      router.replace(`/drops/${drop.id}`);
+    }
+  }, [crewStatus?.status, drop?.id, router]);
 
   if (!mounted || authLoading) {
     return (

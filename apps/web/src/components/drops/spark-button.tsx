@@ -30,11 +30,11 @@ function SparkParticles({ count = 8 }: { count?: number }) {
             }}
             transition={{ duration, ease: "easeOut" }}
             className="absolute left-1/2 top-1/2 rounded-full bg-amber-500 shadow-[0_0_8px_#F59E0B]"
-            style={{ 
-              width: size, 
+            style={{
+              width: size,
               height: size,
               marginLeft: -size / 2,
-              marginTop: -size / 2 
+              marginTop: -size / 2
             }}
           />
         );
@@ -53,7 +53,7 @@ export function SparkButton({
   variant?: 'default' | 'hero' | 'compact';
 }) {
   const { dbUser } = useAuth();
-  
+
   const isSparked =
     'sparkedByViewer' in drop && drop.sparkedByViewer !== undefined
       ? drop.sparkedByViewer
@@ -99,8 +99,8 @@ export function SparkButton({
 
   const iconClasses = cn(
     "transition-all duration-300",
-    localSparked 
-      ? "fill-tok-black text-tok-black" 
+    localSparked
+      ? "fill-tok-black text-tok-black"
       : "text-tok-black/20 group-hover:text-tok-black/40"
   );
 
@@ -113,8 +113,8 @@ export function SparkButton({
 
   const compactIconClasses = cn(
     "transition-all duration-300",
-    localSparked 
-      ? "fill-amber-500" 
+    localSparked
+      ? "fill-amber-500"
       : "text-tok-black/20 group-hover:text-tok-black/40"
   );
 
@@ -131,18 +131,18 @@ export function SparkButton({
         } : { scale: 1, rotate: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Flame 
-          size={variant === 'hero' ? 16 : 14} 
-          strokeWidth={2.5} 
-          className={variant === 'hero' ? heroIconClasses : variant === 'compact' ? compactIconClasses : iconClasses} 
+        <Flame
+          size={variant === 'hero' ? 16 : 14}
+          strokeWidth={2.5}
+          className={variant === 'hero' ? heroIconClasses : variant === 'compact' ? compactIconClasses : iconClasses}
         />
       </motion.div>
       <span
         className={cn(
           "pt-0.5",
-          variant === 'compact' ? "text-[11px]" : "text-[10px]",
+          variant === 'compact' ? "text-xs" : "text-sm",
           variant === 'hero' &&
-            (localSparked ? "text-tok-black" : "text-tok-teal"),
+          (localSparked ? "text-tok-black" : "text-tok-teal"),
         )}
       >
         {localCount}

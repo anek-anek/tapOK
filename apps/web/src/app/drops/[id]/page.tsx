@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState, useMemo } from 'react';
+import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useMounted } from '@/hooks/use-mounted';
@@ -36,6 +36,7 @@ import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
 import { SparkButton } from '@/components/drops/spark-button';
+import { ChiefProfileModal } from '@/components/drops/ChiefProfileModal';
 import { toast } from 'react-hot-toast';
 import type { DropStatus } from '@/types/drop';
 import { coverPhotoSrcForNextImage } from '@/lib/config';
@@ -70,16 +71,24 @@ function StatusPill({ status, scheduledAt }: { status: DropStatus; scheduledAt: 
   const meta = STATUS_META[effectiveStatus];
 
   return (
-    <span className={`inline-flex items-center gap-2 rounded-sm border-2 px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-[1.5px] shadow-[2px_2px_0px_#1C1C1A] ${meta.tone}`}>
+    <span className={cn(
+      "h-8 sm:h-10 inline-flex items-center gap-1.5 rounded-sm border-2 px-2 font-passion text-[10px] font-bold uppercase tracking-[1px] shadow-[2px_2px_0px_#1C1C1A] sm:gap-2 sm:px-3 sm:tracking-[1.5px]",
+      meta.tone
+    )}>
       {meta.pulse ? (
-        <span className="relative flex h-2 w-2 shrink-0">
+        <span className="relative flex h-1.5 w-1.5 shrink-0 sm:h-2 sm:w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-          <span className={`relative inline-flex h-2 w-2 rounded-full ${meta.dot}`} />
+          <span className={`relative inline-flex h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2 ${meta.dot}`} />
         </span>
       ) : (
-        <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+        <span className={`h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2 ${meta.dot}`} />
       )}
-      {meta.label}
+      <span className={cn(
+        "pt-0.5",
+        meta.tone.includes('text-white') && "[text-shadow:0_1px_1px_rgba(0,0,0,0.4)]"
+      )}>
+        {meta.label}
+      </span>
     </span>
   );
 }
@@ -320,11 +329,13 @@ function PageSkeleton() {
           <div className="pointer-events-none absolute inset-0 z-0 bg-linear-to-r from-tok-teal via-tok-teal/85 to-tok-teal/55" />
           <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
             <div className="min-w-0 flex-1">
-              <div className="mb-4 flex flex-wrap items-start gap-x-2 gap-y-2 sm:gap-x-3">
-                <Skeleton className="h-8 w-28 rounded-sm border-2 border-tok-black bg-amber-400/85 shadow-[2px_2px_0px_#1C1C1A]" />
-                <Skeleton className="h-8 w-36 rounded-sm border-2 border-tok-black bg-emerald-400/75 shadow-[2px_2px_0px_#1C1C1A]" />
-                <div className="ml-auto shrink-0 pl-1">
-                  <Skeleton className="h-11 w-11 rounded-md border-[3px] border-tok-black bg-tok-cream shadow-[3px_3px_0px_#1C1C1A]" />
+              <div className="mb-6 flex items-center justify-between gap-3 sm:mb-8 sm:gap-4">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <Skeleton className="h-8 w-24 rounded-sm border-2 border-tok-black bg-amber-400/85 shadow-[2px_2px_0px_#1C1C1A] sm:h-10 sm:w-28" />
+                  <Skeleton className="h-8 w-28 rounded-sm border-2 border-tok-black bg-emerald-400/75 shadow-[2px_2px_0px_#1C1C1A] sm:h-10 sm:w-36" />
+                </div>
+                <div className="shrink-0">
+                  <Skeleton className="h-8 w-[60px] rounded-sm border-2 border-tok-black bg-tok-cream shadow-[3px_3px_0px_#1C1C1A] sm:h-10 sm:w-[80px]" />
                 </div>
               </div>
               <Skeleton className="mb-3 h-[clamp(36px,6vw,52px)] max-w-3xl rounded-sm bg-tok-cream/35" />
@@ -631,9 +642,9 @@ function DropDetailContent({ id }: { id: string }) {
         {/* Back */}
         <button
           onClick={() => router.back()}
-          className="mb-8 inline-flex items-center gap-2 font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-[#1C1C1A]/40 transition-colors hover:text-[#1C1C1A]"
+          className="group mb-6 inline-flex items-center gap-2.5 rounded-sm border-2 border-tok-black/10 bg-white/5 px-3 py-1.5 font-passion text-[10px] font-bold uppercase tracking-[2px] text-[#1C1C1A]/60 transition-all hover:border-tok-black hover:bg-white hover:text-tok-black hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:mb-8 sm:gap-3 sm:px-4 sm:py-2 sm:text-[11px] sm:tracking-[2.5px]"
         >
-          <IconArrowLeft size={14} strokeWidth={2.5} />
+          <IconArrowLeft size={14} strokeWidth={2.5} className="transition-transform group-hover:-translate-x-1" />
           Go Back
         </button>
 
@@ -653,131 +664,148 @@ function DropDetailContent({ id }: { id: string }) {
             </div>
           )}
 
-          {/* Absolute Overlays */}
-          <div className="absolute right-4 top-4 z-20 flex flex-col gap-3 sm:right-6 sm:top-6 lg:right-10 lg:top-10">
-            <SparkButton drop={drop} variant="hero" />
-          </div>
 
-          <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-            <div className="min-w-0 flex-1">
-              <div className="mb-4 flex flex-wrap items-start gap-x-2 gap-y-2 sm:gap-x-3">
-                <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-                  <StatusPill status={drop.status} scheduledAt={drop.scheduledAt} />
-                  {drop.isPublic && (
-                    <span className={cn(
-                      "rounded-sm border-2 px-2 py-0.5 font-passion text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0px_rgba(0,0,0,0.2)]",
-                      drop.isLocked
-                        ? "border-amber-400 bg-amber-400 text-black"
-                        : "border-emerald-400 bg-emerald-400 text-white"
-                    )}>
-                      {drop.isLocked ? "Approval Required" : "Instant Join"}
+          <div className="relative z-10 flex flex-col gap-6 sm:gap-8">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <StatusPill status={drop.status} scheduledAt={drop.scheduledAt} />
+                {drop.isPublic && (
+                  <span className={cn(
+                    "h-8 sm:h-10 inline-flex items-center gap-1.5 rounded-sm border-2 px-2 font-passion text-[10px] font-bold uppercase tracking-[1px] shadow-[2px_2px_0px_#1C1C1A] sm:gap-2 sm:px-3 sm:tracking-[1.5px]",
+                    drop.isLocked
+                      ? "border-tok-black bg-amber-400 text-tok-black"
+                      : "border-tok-black bg-emerald-500 text-white"
+                  )}>
+                    {drop.isLocked ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <IconLock size={12} className="sm:hidden" />
+                        <span className="hidden sm:inline pt-0.5">Approval Required</span>
+                        <span className="sm:hidden pt-0.5">Locked</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 [text-shadow:0_1px_1px_rgba(0,0,0,0.4)]">
+                        <IconUserCheck size={12} className="sm:hidden" />
+                        <span className="hidden sm:inline pt-0.5">Instant Join</span>
+                        <span className="sm:hidden pt-0.5">Instant</span>
+                      </span>
+                    )}
+                  </span>
+                )}
+                {drop.category === 'party' && drop.minimumAge != null && (
+                  <span className="h-8 sm:h-10 inline-flex items-center gap-1.5 rounded-sm border-2 border-tok-black bg-tok-black/35 px-2 font-passion text-[10px] font-bold uppercase tracking-[1px] text-tok-cream shadow-[2px_2px_0px_#1C1C1A] backdrop-blur-[2px] sm:gap-2 sm:px-3 sm:tracking-[1.5px]">
+                    <IconMartini size={12} strokeWidth={2.5} className="opacity-90" aria-hidden />
+                    <span className="pt-0.5 [text-shadow:0_1px_1px_rgba(0,0,0,0.4)]">
+                      <span className="hidden sm:inline">Ages </span>{drop.minimumAge}+
                     </span>
-                  )}
-                  {drop.category === 'party' && drop.minimumAge != null && (
-                    <span className="inline-flex items-center gap-1 rounded-sm border-2 border-tok-cream/80 bg-tok-black/35 px-2 py-0.5 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-cream shadow-[2px_2px_0px_rgba(0,0,0,0.2)] backdrop-blur-[2px]">
-                      <IconMartini size={12} strokeWidth={2.5} className="opacity-90" aria-hidden />
-                      Ages {drop.minimumAge}+
-                    </span>
-                  )}
-                </div>
+                  </span>
+                )}
               </div>
-              <h1
-                className="wrap-break-word font-passion text-[clamp(32px,6vw,72px)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-tok-cream [text-shadow:0_1px_2px_rgba(0,0,0,0.55),0_2px_16px_rgba(0,0,0,0.35)]"
-              >
-                {drop.name}
-              </h1>
-              <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
-                <div className="flex items-center gap-2.5 text-tok-cream/92">
-                  <IconCalendar size={16} className="shrink-0 text-tok-cream/70" strokeWidth={2.5} />
-                  <span className="font-passion text-sm font-bold uppercase tracking-wider [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
-                    {formatDateTime(drop.scheduledAt)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2.5 text-tok-cream/92">
-                  <IconMapPin size={16} className="shrink-0 text-tok-cream/70" strokeWidth={2.5} />
-                  <span className="font-passion text-sm font-bold uppercase tracking-wider [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
-                    {drop.location}
-                  </span>
-                </div>
+              <div className="shrink-0">
+                <SparkButton drop={drop} variant="hero" className="h-8 min-w-[60px] sm:h-10 sm:min-w-[70px]" />
               </div>
             </div>
 
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
-              {!isCompleted && (
-                <button
-                  type="button"
-                  onClick={() => setShareModalOpen(true)}
-                  className="group relative flex h-12 min-w-[100px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6 lg:hidden"
+            {/* Title & Actions Row — Split on Large Screens */}
+            <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+              <div className="min-w-0 flex-1">
+                <h1
+                  className="wrap-break-word font-passion text-[clamp(32px,6vw,72px)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-tok-cream [text-shadow:0_1px_2px_rgba(0,0,0,0.55),0_2px_16px_rgba(0,0,0,0.35)]"
                 >
-                  <IconShare2 size={16} strokeWidth={2.5} />
-                  <span className="pt-0.5">Share</span>
-                </button>
-              )}
-              {/* Primary Action Button (Join/Request/Leave/Awaiting) */}
-              {!isOrganiser && !isCompleted && (
-                <div className="flex-1 sm:flex-none">
-                  {crewStatus?.status === 'pending' ? (
-                    <button
-                      type="button"
-                      onClick={() => setLeaveModalOpen(true)}
-                      className="group relative flex h-12 w-full min-w-[140px] items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-amber-400 px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:px-6"
-                    >
-                      <IconClock size={16} strokeWidth={2.5} />
-                      <span className="pt-0.5">Awaiting Approval</span>
-                    </button>
-                  ) : crewStatus?.status === 'in' ? (
-                    <button
-                      type="button"
-                      onClick={() => setLeaveModalOpen(true)}
-                      className="group relative flex h-12 w-full min-w-[120px] items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-red-500 px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:px-6"
-                    >
-                      <IconLogOut size={16} strokeWidth={2.5} />
-                      <span className="pt-0.5 text-nowrap">Leave Drop</span>
-                    </button>
-                  ) : drop.isPublic ? (
-                    <button
-                      type="button"
-                      onClick={() => setJoinModalOpen(true)}
-                      disabled={isJoining}
-                      className="group relative flex h-12 w-full min-w-[140px] items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-tok-teal px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:px-6"
-                    >
-                      {isJoining ? (
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                      ) : drop.isLocked ? (
-                        <>
-                          <IconLock size={16} strokeWidth={2.5} />
-                          <span className="pt-0.5">Request Join</span>
-                        </>
-                      ) : (
-                        <>
-                          <IconUserCheck size={16} strokeWidth={2.5} />
-                          <span className="pt-0.5">Join Crew</span>
-                        </>
-                      )}
-                    </button>
-                  ) : null}
+                  {drop.name}
+                </h1>
+                <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
+                  <div className="flex items-center gap-2.5 text-tok-cream/92">
+                    <IconCalendar size={16} className="shrink-0 text-tok-cream/70" strokeWidth={2.5} />
+                    <span className="font-passion text-sm font-bold uppercase tracking-wider [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
+                      {formatDateTime(drop.scheduledAt)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-tok-cream/92">
+                    <IconMapPin size={16} className="shrink-0 text-tok-cream/70" strokeWidth={2.5} />
+                    <span className="font-passion text-sm font-bold uppercase tracking-wider [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
+                      {drop.location}
+                    </span>
+                  </div>
                 </div>
-              )}
-              {canEdit && (
-                <div className="flex gap-2 sm:gap-3">
+              </div>
+
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
+                {!isCompleted && (
                   <button
                     type="button"
-                    onClick={() => setEditModalOpen(true)}
-                    className="group relative flex h-12 min-w-[120px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-tok-cream px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
+                    onClick={() => setShareModalOpen(true)}
+                    className="group relative flex h-12 min-w-[100px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6 lg:hidden"
                   >
-                    <IconEdit size={16} strokeWidth={2.5} />
-                    <span className="pt-0.5 text-nowrap">Edit</span>
+                    <IconShare2 size={16} strokeWidth={2.5} />
+                    <span className="pt-0.5">Share</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteModalOpen(true)}
-                    className="group relative flex h-12 w-12 items-center justify-center rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-red-500 transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none"
-                    title="Delete Drop"
-                  >
-                    <IconTrash size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
-              )}
+                )}
+                {/* Primary Action Button (Join/Request/Leave/Awaiting) */}
+                {!isOrganiser && !isCompleted && (
+                  <div className="flex-1 sm:flex-none">
+                    {crewStatus?.status === 'pending' ? (
+                      <button
+                        type="button"
+                        onClick={() => setLeaveModalOpen(true)}
+                        className="group relative flex h-12 w-full min-w-[140px] items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-amber-400 px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:px-6"
+                      >
+                        <IconClock size={16} strokeWidth={2.5} />
+                        <span className="pt-0.5">Awaiting Approval</span>
+                      </button>
+                    ) : crewStatus?.status === 'in' ? (
+                      <button
+                        type="button"
+                        onClick={() => setLeaveModalOpen(true)}
+                        className="group relative flex h-12 w-full min-w-[120px] items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-red-500 px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:px-6"
+                      >
+                        <IconLogOut size={16} strokeWidth={2.5} />
+                        <span className="pt-0.5 text-nowrap">Leave Drop</span>
+                      </button>
+                    ) : drop.isPublic ? (
+                      <button
+                        type="button"
+                        onClick={() => setJoinModalOpen(true)}
+                        disabled={isJoining}
+                        className="group relative flex h-12 w-full min-w-[140px] items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-tok-teal px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:px-6"
+                      >
+                        {isJoining ? (
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                        ) : drop.isLocked ? (
+                          <>
+                            <IconLock size={16} strokeWidth={2.5} />
+                            <span className="pt-0.5">Request Join</span>
+                          </>
+                        ) : (
+                          <>
+                            <IconUserCheck size={16} strokeWidth={2.5} />
+                            <span className="pt-0.5">Join Crew</span>
+                          </>
+                        )}
+                      </button>
+                    ) : null}
+                  </div>
+                )}
+                {canEdit && (
+                  <div className="flex gap-2 sm:gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditModalOpen(true)}
+                      className="group relative flex h-12 min-w-[120px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-tok-cream px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6"
+                    >
+                      <IconEdit size={16} strokeWidth={2.5} />
+                      <span className="pt-0.5 text-nowrap">Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteModalOpen(true)}
+                      className="group relative flex h-12 w-12 items-center justify-center rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-red-500 transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none"
+                      title="Delete Drop"
+                    >
+                      <IconTrash size={16} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           {/* Big decorative background initials */}
@@ -805,9 +833,9 @@ function DropDetailContent({ id }: { id: string }) {
             {/* Presence / Quick Action for Crew */}
             {!isOrganiser && crewStatus?.status === 'in' && !isCompleted && (
               <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[6px_6px_0px_#1C1C1A] sm:p-6">
-                <div className="flex items-center justify-between gap-3 sm:gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <div className="min-w-0 flex-1">
-                    <p className="hidden font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-tok-teal sm:block">
+                    <p className="font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-tok-teal">
                       Your Attendance
                     </p>
                     <h3 className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:mt-1 sm:text-2xl">
@@ -819,7 +847,7 @@ function DropDetailContent({ id }: { id: string }) {
                       type="button"
                       disabled={isUpdatingPresence || crewStatus?.isPresent === true}
                       onClick={() => handleUpdatePresence(true)}
-                      className={`h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black px-3 font-passion text-[11px] font-bold uppercase tracking-[1.5px] transition-all sm:h-12 sm:min-w-[120px] sm:px-4 sm:text-xs sm:tracking-[2px] ${crewStatus?.isPresent
+                      className={`h-11 flex-1 rounded-[4px] border-[3px] border-tok-black px-3 font-passion text-[11px] font-bold uppercase tracking-[1.5px] transition-all sm:h-12 sm:flex-none sm:min-w-[120px] sm:px-4 sm:text-xs sm:tracking-[2px] ${crewStatus?.isPresent
                         ? 'bg-tok-teal text-white shadow-[3px_3px_0px_#1C1C1A]'
                         : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
                         }`}
@@ -830,7 +858,7 @@ function DropDetailContent({ id }: { id: string }) {
                       type="button"
                       disabled={isUpdatingPresence || crewStatus?.isPresent === false}
                       onClick={() => handleUpdatePresence(false)}
-                      className={`h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black px-3 font-passion text-[11px] font-bold uppercase tracking-[1.5px] transition-all sm:h-12 sm:min-w-[120px] sm:px-4 sm:text-xs sm:tracking-[2px] ${!crewStatus?.isPresent
+                      className={`h-11 flex-1 rounded-[4px] border-[3px] border-tok-black px-3 font-passion text-[11px] font-bold uppercase tracking-[1.5px] transition-all sm:h-12 sm:flex-none sm:min-w-[120px] sm:px-4 sm:text-xs sm:tracking-[2px] ${!crewStatus?.isPresent
                         ? 'bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A]'
                         : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
                         }`}
@@ -1157,139 +1185,6 @@ function DropDetailContent({ id }: { id: string }) {
           }}
         />
       )}
-    </div>
-  );
-}
-
-function ChiefProfileModal({ user, onClose }: { user: any; onClose: () => void }) {
-  const memberSince = useMemo(() => {
-    if (!user?.createdAt) return 'JUNE 2024';
-    try {
-      const d = new Date(user.createdAt);
-      return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
-    } catch { return 'JUNE 2024'; }
-  }, [user?.createdAt]);
-
-  const formatDate = (dateStr?: string | Date) => {
-    if (!dateStr) return 'NOT DISCLOSED';
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
-    } catch { return 'NOT DISCLOSED'; }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="absolute inset-0 bg-tok-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="relative w-full max-w-md overflow-hidden rounded-sm border-[4px] border-tok-black bg-tok-cream shadow-[12px_12px_0px_#1C1C1A]"
-      >
-        {/* Tactical Header */}
-        <div className="flex h-14 items-center justify-between border-b-[3px] border-tok-black bg-tok-teal px-6">
-          <div className="flex items-center gap-3">
-            <div className="h-3 w-3 rounded-full bg-white shadow-[2px_2px_0px_#1C1C1A]" />
-            <p className="font-passion text-base font-bold uppercase tracking-[3px] text-white">
-              Tactical Identifier
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
-          >
-            <IconX size={18} strokeWidth={3} />
-          </button>
-        </div>
-
-        <div className="p-8">
-          <div className="flex flex-col items-center">
-            {/* ID Photo */}
-            <div className="group relative mb-6">
-              <div className="relative h-40 w-40 overflow-hidden rounded-sm border-[4px] border-tok-black bg-tok-teal-pale shadow-[8px_8px_0px_#1C1C1A]">
-                {user?.avatar ? (
-                  <Image
-                    src={user.avatar}
-                    alt=""
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center font-passion text-5xl text-tok-teal">
-                    {user?.firstName?.[0]}{user?.lastName?.[0]}
-                  </div>
-                )}
-              </div>
-              {/* Tactical Overlay */}
-              <div className="absolute -right-3 -top-3 h-10 w-10 rounded-full border-[3px] border-tok-black bg-amber-400 p-2 shadow-[3px_3px_0px_#1C1C1A]">
-                <IconUserCheck size={20} className="text-tok-black" strokeWidth={3} />
-              </div>
-            </div>
-
-            <div className="text-center">
-              <h3 className="font-passion text-4xl font-bold uppercase tracking-tight text-tok-black">
-                {user?.firstName} {user?.lastName}
-              </h3>
-              <p className="mt-1 font-passion text-lg font-bold uppercase tracking-[3px] text-tok-teal">
-                @{user?.userHandle || 'unregistered_chief'}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-col gap-3">
-            {/* Intel Section */}
-            <div className="rounded-sm border-2 border-tok-black bg-white p-5 shadow-[4px_4px_0px_#1C1C1A]">
-              <p className="mb-4 font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-black/30">
-                Mission Intel
-              </p>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border-r-2 border-tok-black/10 pr-4">
-                  <p className="font-passion text-3xl font-bold text-tok-teal">{user?.dropCount || 0}</p>
-                  <p className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black/50">Drops</p>
-                </div>
-                <div className="pl-4">
-                  <p className="font-passion text-3xl font-bold text-tok-black">{user?.crewReached || 0}</p>
-                  <p className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black/50">Crew Reached</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Dossier Grid */}
-            <div className="grid grid-cols-1 gap-3">
-              <div className="flex items-center justify-between rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A]">
-                <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">Active Since</span>
-                <span className="font-passion text-sm font-bold text-tok-black">{memberSince}</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A]">
-                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-black/40">Gender</p>
-                  <p className="mt-1 font-passion text-xs font-bold uppercase text-tok-black">{user?.gender || 'NOT SET'}</p>
-                </div>
-                <div className="rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A]">
-                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-black/40">Birthday</p>
-                  <p className="mt-1 font-passion text-xs font-bold uppercase text-tok-black">{formatDate(user?.birthday)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex h-12 items-center justify-center border-t-[3px] border-tok-black bg-tok-black/5">
-          <p className="font-passion text-[10px] font-bold uppercase tracking-[4px] text-tok-black/30">
-            Mission Approved Credentials
-          </p>
-        </div>
-      </motion.div>
     </div>
   );
 }

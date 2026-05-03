@@ -110,8 +110,8 @@ export function CrewRoster({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="truncate font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:text-xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:text-xl">
                   {member.user.firstName} {member.user.lastName}
                 </p>
                 {member.userId === organiserId && (
@@ -124,12 +124,17 @@ export function CrewRoster({
                 Joined {formatLogTime(member.joinedAt)}
               </p>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 sm:gap-6">
               <span className={cn(
-                "rounded-full px-4 py-1.5 font-passion text-[11px] font-bold uppercase tracking-[1.5px] border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A]",
+                "rounded-full px-2.5 py-1 sm:px-4 sm:py-1.5 font-passion text-[10px] sm:text-[11px] font-bold uppercase tracking-[1px] sm:tracking-[1.5px] border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A] min-w-[44px] sm:min-w-[110px] text-center",
                 member.isPresent ? "bg-emerald-500 text-white" : "bg-white text-red-500"
               )}>
-                {member.isPresent ? 'TAPPED IN' : 'TAPPED OUT'}
+                <span className="hidden sm:inline">
+                  {member.isPresent ? 'TAPPED IN' : 'TAPPED OUT'}
+                </span>
+                <span className="sm:hidden">
+                  {member.isPresent ? 'IN' : 'OUT'}
+                </span>
               </span>
               {!isCompleted && isOrganiser && member.userId !== organiserId && (
                 <button
