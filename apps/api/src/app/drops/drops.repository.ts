@@ -377,8 +377,12 @@ export class DropsRepository {
     return { data, total, page, totalPages: Math.ceil(total / limit) || 0 };
   }
 
-  findPhotos(dropId: string): Promise<DropPhoto[]> {
-    return this.photoRepo.find({
+  async findPhotos(
+    dropId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ data: DropPhoto[]; total: number; page: number; totalPages: number }> {
+    const [data, total] = await this.photoRepo.findAndCount({
       where: { dropId },
       order: { createdAt: 'DESC' },
       relations: { user: true },
@@ -387,7 +391,6 @@ export class DropsRepository {
         dropId: true,
         userId: true,
         url: true,
-        base64: true,
         isFeatured: true,
         createdAt: true,
         updatedAt: true,
@@ -398,12 +401,15 @@ export class DropsRepository {
           avatar: true,
         },
       },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  findPhotoById(id: string): Promise<DropPhoto | null> {
+  findPhotoById(photoId: string): Promise<DropPhoto | null> {
     return this.photoRepo.findOne({
-      where: { id },
+      where: { id: photoId },
       relations: { user: true },
     });
   }

@@ -49,6 +49,10 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
     queryKey: ['drops', drop.id, 'photos'],
     queryFn: () => dropsService.getPhotos(drop.id),
     enabled: !!drop.id && (isOrganiser || isCrewMember),
+    staleTime: 600_000,
+    gcTime: 900_000,
+    refetchInterval: 600_000,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {

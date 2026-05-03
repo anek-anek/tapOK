@@ -43,8 +43,8 @@ export const dropsService = {
     return api.delete(`/drops/${id}/crew/me`).then(() => undefined);
   },
 
-  getMyActivity(): Promise<DropActivityLog[]> {
-    return api.get<DropActivityLog[]>('/drops/activity/mine').then((r) => r.data);
+  getMyActivity(page = 1, limit = 15): Promise<DropActivityLog[]> {
+    return api.get<DropActivityLog[]>('/drops/activity/mine', { params: { page, limit } }).then((r) => r.data);
   },
 
   getCrew(id: string): Promise<CrewMember[]> {
@@ -87,8 +87,12 @@ export const dropsService = {
     return api.delete(`/drops/${id}/cover-photo`).then(() => undefined);
   },
 
-  getPhotos(dropId: string): Promise<any[]> {
-    return api.get<any[]>(`/drops/${dropId}/photos`).then((r) => r.data);
+  getPhotos(dropId: string, page = 1, limit = 20): Promise<{ data: any[]; total: number; page: number; totalPages: number }> {
+    return api.get(`/drops/${dropId}/photos`, { params: { page, limit } }).then((r) => r.data);
+  },
+
+  getPhotoDetail(dropId: string, photoId: string): Promise<any> {
+    return api.get(`/drops/${dropId}/photos/${photoId}`).then((r) => r.data);
   },
 
   uploadPhoto(dropId: string, base64: string): Promise<any> {
