@@ -270,28 +270,31 @@ export default function DiscoverClient() {
           <div className="space-y-16">
             {/* Featured Section */}
             {(isLoadingLayout || featuredDrop) && (
-              <section className="animate-fade-up [animation-delay:200ms]">
-                <SectionHeading
-                  icon={Sparkles}
-                  title="Featured Mission"
-                  sub="Current Highlight"
-                />
-                {isLoadingLayout ? (
-                  <HeroCardSkeleton />
-                ) : featuredDrop ? (
-                  <HeroDropCard
-                    drop={featuredDrop as unknown as Drop}
-                    viewerId={dbUser?.id}
-                    onShare={handleShare}
+              <>
+                <section className="animate-fade-up [animation-delay:200ms]">
+                  <SectionHeading
+                    icon={Sparkles}
+                    title="Featured Mission"
+                    sub="Current Highlight"
                   />
-                ) : null}
-              </section>
+                  {isLoadingLayout ? (
+                    <HeroCardSkeleton />
+                  ) : featuredDrop ? (
+                    <HeroDropCard
+                      drop={featuredDrop as unknown as Drop}
+                      viewerId={dbUser?.id}
+                      onShare={handleShare}
+                    />
+                  ) : null}
+                </section>
+
+                <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
+              </>
             )}
 
             {/* SQUAD RECON */}
             {(!!dbUser && (isLoadingLayout || (squadReconDrops?.length ?? 0) > 0)) && (
               <>
-                <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
                 <section className="animate-fade-up [animation-delay:300ms]">
                   <SectionHeading
                     icon={Users}
@@ -319,11 +322,10 @@ export default function DiscoverClient() {
                     </div>
                   )}
                 </section>
+
+                <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
               </>
             )}
-
-            {/* Separator before Stream */}
-            <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
 
             {/* Public Stream */}
             <section className="animate-fade-up [animation-delay:400ms]">

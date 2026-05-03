@@ -465,12 +465,12 @@ export function DropModal({
         if (Object.keys(dto).length > 0) {
           try {
             await updateDrop.mutateAsync(dto);
-          } catch (err: unknown) {
+          } catch (err: any) {
             if (axios.isAxiosError(err) && err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
               toast.error((t) => (
                 <div className="flex flex-col gap-3">
                   <p className="font-passion text-xs font-bold uppercase tracking-wider">{err.response?.data?.message}</p>
-                  <button 
+                  <button
                     onClick={() => {
                       toast.dismiss(t.id);
                       router.push('/profile?verify=true');
@@ -533,12 +533,12 @@ export function DropModal({
           result = await createDrop.mutateAsync(dto);
           createdId = result.id;
           pendingIdRef.current = createdId;
-        } catch (err: unknown) {
+        } catch (err: any) {
           if (axios.isAxiosError(err) && err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
             toast.error((t) => (
               <div className="flex flex-col gap-3">
                 <p className="font-passion text-xs font-bold uppercase tracking-wider">{err.response?.data?.message}</p>
-                <button 
+                <button
                   onClick={() => {
                     toast.dismiss(t.id);
                     router.push('/profile?verify=true');
@@ -801,7 +801,7 @@ export function DropModal({
                           min={1}
                           placeholder="e.g. 20"
                           onWheel={(e) => e.currentTarget.blur()}
-                          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       )}
                     />
@@ -855,7 +855,7 @@ export function DropModal({
                                   type="button"
                                   onClick={() => field.onChange(restricted ? null : 20)}
                                   className={cn(
-                                    'h-11 min-w-0 flex-1 rounded-sm border-[3px] border-tok-black px-2 font-passion text-[10px] font-bold uppercase tracking-[1px] transition-all sm:max-w-[9.5rem] sm:flex-none sm:px-3 sm:text-xs',
+                                    'h-11 min-w-0 flex-1 rounded-sm border-[3px] border-tok-black px-2 font-passion text-[10px] font-bold uppercase tracking-[1px] transition-all sm:px-3 sm:text-xs',
                                     restricted
                                       ? 'bg-tok-black text-tok-cream shadow-none'
                                       : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]',
@@ -961,14 +961,14 @@ export function DropModal({
                       type="button"
                       onClick={close}
                       disabled={isBusy}
-                      className="h-14 min-h-14 flex-1 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-sm font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40 sm:h-11 sm:min-h-11 sm:flex-none sm:px-8 sm:text-xs"
+                      className="h-14 min-h-14 flex-1 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-sm font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40 sm:h-11 sm:min-h-11 sm:px-8 sm:text-xs"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isBusy}
-                      className="flex h-14 min-h-14 flex-1 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal px-4 font-passion text-base font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50 sm:h-11 sm:min-h-11 sm:flex-none sm:px-10 sm:text-sm"
+                      className="flex h-14 min-h-14 flex-1 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal px-4 font-passion text-base font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50 sm:h-11 sm:min-h-11 sm:px-10 sm:text-sm"
                     >
                       {isBusy ? (
                         <>

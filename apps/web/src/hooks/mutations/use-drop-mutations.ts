@@ -174,13 +174,19 @@ export function useFeaturePhoto(dropId: string): UseMutationResult<any, Error, s
       await queryClient.cancelQueries({ queryKey: photoKey });
 
       // Snapshot the previous value
-      const previousPhotos = queryClient.getQueryData<any[]>(photoKey);
+      const previousPhotos = queryClient.getQueryData<any>(photoKey);
 
       // Optimistically update to the new value
-      if (previousPhotos) {
-        queryClient.setQueryData(photoKey, previousPhotos.map(p => 
-          p.id === photoId ? { ...p, isFeatured: !p.isFeatured } : p
-        ));
+      if (previousPhotos?.pages) {
+        queryClient.setQueryData(photoKey, {
+          ...previousPhotos,
+          pages: previousPhotos.pages.map((page: any) => ({
+            ...page,
+            data: page.data.map((p: any) =>
+              p.id === photoId ? { ...p, isFeatured: !p.isFeatured } : p
+            ),
+          })),
+        });
       }
 
       return { previousPhotos };
