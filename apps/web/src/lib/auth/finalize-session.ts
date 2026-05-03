@@ -231,6 +231,7 @@ export async function finalizeSession(
     provider?: AuthProvider;
     payload?: SyncPayload;
     deleteCreatedUserOnFailure?: boolean;
+    sync?: boolean;
   },
 ): Promise<FinalizeResult> {
   try {
@@ -239,7 +240,7 @@ export async function finalizeSession(
     setAuthToken(token);
 
     const result = await postSessionCookie(token, {
-      sync: true,
+      sync: options.sync ?? true,
       payload: { ...(options.payload ?? {}), authMode: options.mode, authProvider },
     });
 
