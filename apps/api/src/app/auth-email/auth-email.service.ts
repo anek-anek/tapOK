@@ -98,6 +98,21 @@ export class AuthEmailService {
     };
 
     try {
+      // Check if user is already verified in Firebase before trying to generate a link
+      if (firebaseUid) {
+        const userRecord = await admin.auth().getUser(firebaseUid);
+        if (userRecord.emailVerified) {
+          console.log(`[AuthEmail] User ${targetEmail} is already verified in Firebase. Updating local DB.`);
+          if (user) {
+            await this.usersRepository.update(user.id, {
+              isEmailVerified: true,
+              emailVerifiedAt: new Date(),
+            } as any);
+          }
+          return; // No need to send link
+        }
+      }
+
       const firebaseLink = await admin.auth().generateEmailVerificationLink(targetEmail, actionCodeSettings);
       
       const url = new URL(firebaseLink);
