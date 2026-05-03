@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, type MouseEvent, type DragEvent } from 'react';
 import NextImage from 'next/image';
+import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import {
   Camera as IconCamera,
@@ -86,8 +87,25 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
       await uploadMutation.mutateAsync(base64);
       toast.success('POSTED A NEW SHOT TO THE ROLL');
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'FAILED TO POST SHOT TO THE ROLL';
-      toast.error(Array.isArray(msg) ? msg[0].toUpperCase() : String(msg).toUpperCase());
+      if (axios.isAxiosError(err) && err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+        toast.error((t) => (
+          <div className="flex flex-col gap-3">
+            <p className="font-passion text-xs font-bold uppercase tracking-wider">{err.response?.data?.message}</p>
+            <button 
+              onClick={() => {
+                toast.dismiss(t.id);
+                window.location.href = '/profile';
+              }}
+              className="rounded-sm border-2 border-white bg-white px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black transition-all hover:bg-white/90"
+            >
+              Go to Profile
+            </button>
+          </div>
+        ), { duration: 6000 });
+      } else {
+        const msg = err.response?.data?.message || 'FAILED TO POST SHOT TO THE ROLL';
+        toast.error(Array.isArray(msg) ? msg[0].toUpperCase() : String(msg).toUpperCase());
+      }
     } finally {
       setIsCompressing(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

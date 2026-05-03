@@ -20,6 +20,7 @@ import {
   UserCheck as IconUserCheck,
   Lock as IconLock,
   Martini as IconMartini,
+  ShieldAlert,
 } from 'lucide-react';
 import { useDrop, useMyCrewStatus, useDropCrew, useDropActivityLogs } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -615,6 +616,26 @@ export default function DropDetailClient({ id }: { id: string }) {
       <TapokNavbar />
 
       <main className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10 pb-24">
+        {dbUser && !dbUser.isEmailVerified && (
+          <div className="mb-8 flex flex-col items-center justify-between gap-4 rounded-sm border-[3px] border-tok-black bg-tok-black p-5 shadow-[6px_6px_0px_#1C1C1A] sm:flex-row">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tok-teal">
+                <ShieldAlert size={20} className="text-tok-black" strokeWidth={2.5} />
+              </div>
+              <div className="min-w-0">
+                <p className="font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal">Account Restricted</p>
+                <p className="font-passion text-sm font-bold uppercase tracking-tight text-tok-cream">Your crew status is pending verification.</p>
+              </div>
+            </div>
+            <Link 
+              href="/profile"
+              className="flex h-10 w-full items-center justify-center rounded-sm border-[3px] border-tok-cream bg-tok-cream px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#14B8A6] sm:w-auto"
+            >
+              Verify Now
+            </Link>
+          </div>
+        )}
+
         {/* Back */}
         <button
           onClick={() => router.back()}

@@ -285,7 +285,7 @@ export class UsersService {
 
     if (!isEmailVerified) {
       throw new ForbiddenException({
-        message: 'Please verify your email before continuing.',
+        message: 'Verification Required: Please verify your email before continuing. You can resend the link from your Profile.',
         code: 'EMAIL_NOT_VERIFIED',
       });
     }
