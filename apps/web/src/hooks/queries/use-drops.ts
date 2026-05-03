@@ -1,5 +1,6 @@
 import {
   keepPreviousData,
+  useInfiniteQuery,
   useQuery,
   useSuspenseQuery,
   type UseQueryResult,
@@ -20,6 +21,7 @@ export const dropKeys = {
   myActivityPrefix: () => ['drops', 'activity', 'mine'] as const,
   activityLogs: (id: string, page: number) => ['drops', id, 'activity', page] as const,
   discover: (page: number, category?: string) => ['drops', 'discover', page, category] as const,
+  discoverInfinite: (category?: string) => ['drops', 'discover', 'infinite', category] as const,
 };
 
 export function useDiscoverDrops(options?: { page?: number; category?: string }): UseQueryResult<DiscoverDropsPayload> {
@@ -29,6 +31,27 @@ export function useDiscoverDrops(options?: { page?: number; category?: string })
   return useQuery({
     queryKey: dropKeys.discover(page, category),
     queryFn: () => dropsService.getDiscoverData(page, 6, category === 'all' ? undefined : category),
+    placeholderData: keepPreviousData,
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+  });
+}
+
+export function useInfiniteDiscoverDrops(options?: { category?: string; limit?: number }) {
+  const category = options?.category;
+  const limit = options?.limit ?? 30;
+
+  return useInfiniteQuery({
+    queryKey: dropKeys.discoverInfinite(category),
+    queryFn: ({ pageParam = 1 }) => 
+      dropsService.getDiscoverData(pageParam as number, limit, category === 'all' ? undefined : category),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.allPublic.page < lastPage.allPublic.totalPages) {
+        return lastPage.allPublic.page + 1;
+      }
+      return undefined;
+    },
     placeholderData: keepPreviousData,
     refetchInterval: 60_000,
     staleTime: 60_000,

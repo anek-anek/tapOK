@@ -105,7 +105,10 @@ export function TapokNavbar() {
   return (
     <>
       <div className="h-[60px]" />
-      <VerificationBanner />
+      <VerificationBanner
+        isNavbarVisible={visible}
+        isMobileMenuOpen={mobileMenuOpen}
+      />
 
       {/* Progress bar visible when navbar is hidden */}
       <div
@@ -116,8 +119,7 @@ export function TapokNavbar() {
       <header
         className={`fixed inset-x-0 top-0 z-50 bg-tok-cream transition-transform duration-300 ease-in-out ${visible ? 'translate-y-0' : '-translate-y-full'}`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-8">
-          {/* Logo */}
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-8 border-b border-black/5">
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}
@@ -136,9 +138,8 @@ export function TapokNavbar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`${passionOne.className} relative shrink-0 px-3.5 py-1.5 text-base font-normal uppercase tracking-[1.8px] transition-colors ${
-                    item.active ? 'text-black' : 'text-black/50 hover:text-black'
-                  }`}
+                  className={`${passionOne.className} relative shrink-0 px-3.5 py-1.5 text-base font-normal uppercase tracking-[1.8px] transition-colors ${item.active ? 'text-black' : 'text-black/50 hover:text-black'
+                    }`}
                 >
                   {item.label}
                   {item.active && (
@@ -151,9 +152,8 @@ export function TapokNavbar() {
               ))}
           </nav>
 
-          {/* Right Area: Desktop Auth + Mobile Toggle */}
+          {/* Right Area */}
           <div className="flex shrink-0 items-center gap-2" ref={dropdownRef}>
-            {/* Desktop Auth */}
             <div className="hidden items-center gap-2 md:flex">
               {!isReady ? (
                 <Skeleton className="h-9 w-20 rounded-full bg-black/10" />
@@ -173,60 +173,30 @@ export function TapokNavbar() {
                   </Link>
                 </>
               ) : (
-                <div className="relative">
+                <div className="relative z-10">
                   <button
                     onClick={() => setOpen((v) => !v)}
-                    aria-label={`${dbUser.firstName} ${dbUser.lastName} — account menu`}
                     className={`${passionOne.className} inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-tok-black bg-white text-[11px] uppercase tracking-[1.5px] text-tok-black shadow-[3px_3px_0px_0px_#262624] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#262624] focus-visible:outline-hidden active:translate-y-0 active:shadow-none`}
                   >
                     {dbUser.avatar ? (
-                      <Image
-                        src={dbUser.avatar}
-                        alt={`${dbUser.firstName} ${dbUser.lastName}`}
-                        width={40}
-                        height={40}
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                    ) : (
-                      initials
-                    )}
+                      <Image src={dbUser.avatar} alt="avatar" width={40} height={40} className="h-full w-full rounded-full object-cover" />
+                    ) : initials}
                   </button>
-
                   <AnimatePresence>
                     {open && (
                       <motion.div
                         initial={{ opacity: 0, y: 8, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                        transition={{ duration: 0.15, ease: [0.34, 1.56, 0.64, 1] }}
                         className="absolute right-0 top-[calc(100%+12px)] z-30 min-w-[220px] overflow-hidden border-2 border-tok-black bg-tok-cream shadow-[6px_6px_0px_0px_#262624]"
                       >
                         <div className="border-b-2 border-tok-black bg-tok-teal/5 px-5 py-4">
-                          <p className={`${passionOne.className} text-sm uppercase tracking-[2px] text-tok-black`}>
-                            {dbUser.firstName} {dbUser.lastName}
-                          </p>
-                          <p className="mt-0.5 font-inter text-[10px] font-bold text-tok-black/40 lowercase">
-                            {dbUser.email}
-                          </p>
+                          <p className={`${passionOne.className} text-sm uppercase tracking-[2px] text-tok-black`}>{dbUser.firstName} {dbUser.lastName}</p>
+                          <p className="mt-0.5 font-inter text-[10px] font-bold text-tok-black/40 lowercase">{dbUser.email}</p>
                         </div>
-
                         <div className="p-1.5">
-                          <Link
-                            href="/profile"
-                            onClick={() => setOpen(false)}
-                            className={`${passionOne.className} flex items-center gap-3 px-3.5 py-2.5 text-[11px] uppercase tracking-[1.5px] text-tok-black transition-all hover:bg-tok-teal hover:text-tok-cream`}
-                          >
-                            <IconUser size={14} strokeWidth={2.5} />
-                            Profile
-                          </Link>
-
-                          <button
-                            onClick={handleLogout}
-                            className={`${passionOne.className} mt-1 flex w-full items-center gap-3 border-t-2 border-tok-black/5 px-3.5 py-2.5 text-[11px] uppercase tracking-[1.5px] text-tok-black transition-all hover:bg-red-500 hover:text-white`}
-                          >
-                            <LogOut size={14} strokeWidth={2.5} />
-                            Log out
-                          </button>
+                          <Link href="/profile" onClick={() => setOpen(false)} className={`${passionOne.className} flex items-center gap-3 px-3.5 py-2.5 text-[11px] uppercase tracking-[1.5px] text-tok-black hover:bg-tok-teal hover:text-tok-cream`}><IconUser size={14} strokeWidth={2.5} />Profile</Link>
+                          <button onClick={handleLogout} className={`${passionOne.className} mt-1 flex w-full items-center gap-3 border-t-2 border-tok-black/5 px-3.5 py-2.5 text-[11px] uppercase tracking-[1.5px] text-tok-black hover:bg-red-500 hover:text-white`}><LogOut size={14} strokeWidth={2.5} />Log out</button>
                         </div>
                       </motion.div>
                     )}
@@ -234,12 +204,9 @@ export function TapokNavbar() {
                 </div>
               )}
             </div>
-
-            {/* Mobile Hamburger Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-black transition-colors hover:bg-black/5 md:hidden"
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-black md:hidden"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -264,9 +231,8 @@ export function TapokNavbar() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`${passionOne.className} flex items-center justify-between text-4xl uppercase tracking-[2px] ${
-                    item.active ? 'text-tok-teal' : 'text-black'
-                  }`}
+                  className={`${passionOne.className} flex items-center justify-between text-4xl uppercase tracking-[2px] ${item.active ? 'text-tok-teal' : 'text-black'
+                    }`}
                 >
                   <span>{item.label}</span>
                   {item.active && (
