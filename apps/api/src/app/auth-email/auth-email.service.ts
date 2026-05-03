@@ -1,8 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'crypto';
 import * as admin from 'firebase-admin';
 import { EmailService } from '../../common/email/email.service';
 import { UsersRepository } from '../users/users.repository';
+
+const TOKEN_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 @Injectable()
 export class AuthEmailService {
@@ -16,12 +19,11 @@ export class AuthEmailService {
     const rawOrigin = this.configService.get<string>('WEB_ORIGIN') || 'http://localhost:4200';
     const firstOrigin = rawOrigin.split(',')[0] || 'http://localhost:4200';
     this.webOrigin = firstOrigin.trim();
-    console.log(`[AuthEmail] Initialized with webOrigin: ${this.webOrigin}`);
   }
 
   private checkCooldown(lastSentAt: Date | undefined, cooldownMs: number = 600000) {
     if (!lastSentAt) return;
-    
+
     const now = new Date().getTime();
     const lastSent = new Date(lastSentAt).getTime();
     const diff = now - lastSent;
@@ -31,7 +33,7 @@ export class AuthEmailService {
       const minutes = Math.floor(remainingSeconds / 60);
       const seconds = remainingSeconds % 60;
       const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-      
+
       throw new BadRequestException({
         message: `Please wait ${timeStr} before requesting another link. Check your inbox (and spam folder) in the meantime!`,
         code: 'COOLDOWN_ACTIVE',
@@ -40,12 +42,11 @@ export class AuthEmailService {
   }
 
   async sendPasswordResetEmail(email: string) {
-    let userRecord;
+    let userRecord: admin.auth.UserRecord;
     try {
       userRecord = await admin.auth().getUserByEmail(email);
-    } catch (error) {
-      console.warn(`[AuthEmail] Password reset requested for non-existent user: ${email}`);
-      return; 
+    } catch {
+      return;
     }
 
     const user = await this.usersRepository.findByEmail(email);
@@ -53,24 +54,21 @@ export class AuthEmailService {
       this.checkCooldown(user.passwordResetSentAt);
     }
 
-    const actionCodeSettings = {
-      url: `${this.webOrigin}/login`,
-    };
-
+    const actionCodeSettings = { url: `${this.webOrigin}/login` };
     const firebaseLink = await admin.auth().generatePasswordResetLink(email, actionCodeSettings);
-    
+
     const url = new URL(firebaseLink);
     const oobCode = url.searchParams.get('oobCode');
     const customLink = `${this.webOrigin}/reset-password?oobCode=${oobCode}&email=${email}`;
 
     await this.emailService.sendPasswordResetEmail(email, customLink);
 
-    // Update DB timestamp
     if (user) {
-      await this.usersRepository.update(user.id, {
-        passwordResetSentAt: new Date(),
-      } as any);
+      await this.usersRepository.update(user.id, { passwordResetSentAt: new Date() } as any);
     }
+
+    // suppress unused-variable warning; userRecord is fetched only to validate existence
+    void userRecord;
   }
 
   async sendVerificationEmail(email: string, firebaseUid?: string) {
@@ -81,62 +79,65 @@ export class AuthEmailService {
     }
 
     let targetEmail = normalizedEmail;
+
+    // Resolve the authoritative email and check if already verified
     if (firebaseUid) {
-      try {
-        const userRecord = await admin.auth().getUser(firebaseUid);
-        if (userRecord.email) {
-          targetEmail = userRecord.email;
-          console.log(`[AuthEmail] Using resolved Firebase email for verification: ${targetEmail}`);
+      const userRecord = await admin.auth().getUser(firebaseUid);
+
+      if (userRecord.emailVerified) {
+        if (user && !user.isEmailVerified) {
+          await this.usersRepository.update(user.id, {
+            isEmailVerified: true,
+            emailVerifiedAt: new Date(),
+          } as any);
         }
-      } catch (err) {
-        console.warn(`[AuthEmail] Failed to fetch user record for UID ${firebaseUid}: ${err}`);
+        return;
+      }
+
+      if (userRecord.email) {
+        targetEmail = userRecord.email;
       }
     }
 
-    const actionCodeSettings = {
-      url: `${this.webOrigin}/profile`,
-    };
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
 
-    try {
-      // Check if user is already verified in Firebase before trying to generate a link
-      if (firebaseUid) {
-        const userRecord = await admin.auth().getUser(firebaseUid);
-        if (userRecord.emailVerified) {
-          console.log(`[AuthEmail] User ${targetEmail} is already verified in Firebase. Updating local DB.`);
-          if (user) {
-            await this.usersRepository.update(user.id, {
-              isEmailVerified: true,
-              emailVerifiedAt: new Date(),
-            } as any);
-          }
-          return; // No need to send link
-        }
+    if (user) {
+      await this.usersRepository.update(user.id, {
+        emailVerificationToken: token,
+        emailVerificationTokenExpiresAt: expiresAt,
+        emailVerificationSentAt: new Date(),
+      } as any);
+    }
+
+    const link = `${this.webOrigin}/verify-email?token=${token}&email=${encodeURIComponent(targetEmail)}`;
+    await this.emailService.sendVerificationEmail(targetEmail, link);
+  }
+
+  async confirmEmailToken(token: string) {
+    const user = await this.usersRepository.findByEmailVerificationToken(token);
+
+    if (!user) {
+      throw new BadRequestException({ message: 'Invalid or expired verification link.', code: 'INVALID_TOKEN' });
+    }
+
+    if (!user.emailVerificationTokenExpiresAt || user.emailVerificationTokenExpiresAt < new Date()) {
+      throw new BadRequestException({ message: 'This verification link has expired. Please request a new one.', code: 'TOKEN_EXPIRED' });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerifiedAt = new Date();
+    user.emailVerificationToken = undefined;
+    user.emailVerificationTokenExpiresAt = undefined;
+    await this.usersRepository.save(user);
+
+    // Keep Firebase in sync
+    if (user.firebaseUid) {
+      try {
+        await admin.auth().updateUser(user.firebaseUid, { emailVerified: true });
+      } catch {
+        // non-fatal — DB is source of truth
       }
-
-      const firebaseLink = await admin.auth().generateEmailVerificationLink(targetEmail, actionCodeSettings);
-      
-      const url = new URL(firebaseLink);
-      const oobCode = url.searchParams.get('oobCode');
-      const customLink = `${this.webOrigin}/reset-password?oobCode=${oobCode}&email=${encodeURIComponent(targetEmail)}`;
-
-      await this.emailService.sendVerificationEmail(targetEmail, customLink);
-
-      // Update DB
-      if (user) {
-        await this.usersRepository.update(user.id, {
-          emailVerificationSentAt: new Date(),
-        } as any);
-      }
-    } catch (error: any) {
-      console.error(`[AuthEmail] Failed to generate verification link for ${targetEmail}:`, error);
-      
-      if (error.code === 'auth/user-not-found') {
-        throw new NotFoundException({
-          message: `There is no user record corresponding to the identifier ${targetEmail}.`,
-          code: 'USER_NOT_FOUND'
-        });
-      }
-      throw error;
     }
   }
 }

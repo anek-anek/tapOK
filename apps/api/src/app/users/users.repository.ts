@@ -47,6 +47,15 @@ export class UsersRepository {
     return this.findById(id);
   }
 
+  findByEmailVerificationToken(token: string): Promise<User | null> {
+    return this.repo
+      .createQueryBuilder('user')
+      .addSelect('user.emailVerificationToken')
+      .addSelect('user.emailVerificationTokenExpiresAt')
+      .where('user.emailVerificationToken = :token', { token })
+      .getOne();
+  }
+
   async remove(id: string): Promise<void> {
     await this.repo.delete(id);
   }

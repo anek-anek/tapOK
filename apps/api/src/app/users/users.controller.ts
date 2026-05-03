@@ -71,7 +71,7 @@ export class UsersController {
   @ApiResponse({ status: 200, type: UserProfileDto })
   @ApiResponse({ status: 404, description: 'User not found.' })
   me(@Req() request: RequestWithUser): Promise<UserProfileDto> {
-    return this.usersService.findMe(request.user.uid);
+    return this.usersService.findMe(request.user);
   }
 
   @Get('me/frequent-crew')
