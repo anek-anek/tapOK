@@ -27,6 +27,7 @@ export async function signInWithGoogleInteractive(loginHint?: string): Promise<G
 
   if (prefersGoogleRedirectFlow()) {
     if (loginHint) sessionStorage.setItem('tapok_auth_email_hint', loginHint);
+    sessionStorage.setItem('tapok_google_redirect_pending', 'true');
     await signInWithRedirect(auth, provider);
     return 'redirect';
   }
@@ -40,6 +41,7 @@ export async function signInWithGoogleInteractive(loginHint?: string): Promise<G
       code === 'auth/operation-not-supported-in-this-environment'
     ) {
       if (loginHint) sessionStorage.setItem('tapok_auth_email_hint', loginHint);
+      sessionStorage.setItem('tapok_google_redirect_pending', 'true');
       await signInWithRedirect(auth, provider);
       return 'redirect';
     }
