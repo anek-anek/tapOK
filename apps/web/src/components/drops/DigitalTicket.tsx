@@ -14,11 +14,12 @@ type DigitalTicketProps = {
     joinCode: string;
     shareUrl: string;
   };
+  isMember: boolean;
   className?: string;
   footer?: string;
 };
 
-export function DigitalTicket({ drop, className = '', footer }: DigitalTicketProps) {
+export function DigitalTicket({ drop, isMember, className = '', footer }: DigitalTicketProps) {
   const shareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/drops/join/${drop.joinCode}`
     : drop.shareUrl;
@@ -30,60 +31,94 @@ export function DigitalTicket({ drop, className = '', footer }: DigitalTicketPro
 
       <div className="p-6">
         <p className="mb-6 font-passion text-[11px] font-bold uppercase tracking-[4px] text-tok-teal/60">
-          DIGITAL TICKET
+          {isMember ? 'DIGITAL TICKET' : 'MISSION RESTRICTED'}
         </p>
 
-        {/* QR Code Container */}
-        <div className="relative mb-8 flex justify-center overflow-hidden rounded-[4px] border-2 border-tok-black bg-tok-cream/30 p-6">
-          {/* Decorative corners for QR */}
-          <div className="absolute top-2 left-2 h-3 w-3 border-t-2 border-l-2 border-tok-black" />
-          <div className="absolute top-2 right-2 h-3 w-3 border-t-2 border-r-2 border-tok-black" />
-          <div className="absolute bottom-2 left-2 h-3 w-3 border-b-2 border-l-2 border-tok-black" />
-          <div className="absolute bottom-2 right-2 h-3 w-3 border-b-2 border-r-2 border-tok-black" />
-          <QRCodeSVG value={shareUrl} size={180} bgColor="transparent" fgColor="#1C1C1A" level="H" />
-        </div>
+        {isMember ? (
+          <>
+            {/* QR Code Container */}
+            <div className="relative flex justify-center overflow-hidden rounded-[4px] border-2 border-tok-black bg-tok-cream/30 p-6">
+              {/* Decorative corners for QR */}
+              <div className="absolute top-2 left-2 h-3 w-3 border-t-2 border-l-2 border-tok-black" />
+              <div className="absolute top-2 right-2 h-3 w-3 border-t-2 border-r-2 border-tok-black" />
+              <div className="absolute bottom-2 left-2 h-3 w-3 border-b-2 border-l-2 border-tok-black" />
+              <div className="absolute bottom-2 right-2 h-3 w-3 border-b-2 border-r-2 border-tok-black" />
+              <QRCodeSVG value={shareUrl} size={180} bgColor="transparent" fgColor="#1C1C1A" level="H" />
+            </div>
 
-        {/* Perforation line decorative separator */}
-        <div className="my-8 flex items-center gap-2">
-          <div className="h-px flex-1 border-t-2 border-dashed border-tok-black/20" />
-          <div className="h-3 w-3 shrink-0 rounded-full border-2 border-tok-black bg-tok-cream" />
-          <div className="h-px flex-1 border-t-2 border-dashed border-tok-black/20" />
-        </div>
+            {/* Perforation line decorative separator */}
+            <div className="my-8 flex items-center gap-2">
+              <div className="h-px flex-1 border-t-2 border-dashed border-tok-black/20" />
+              <div className="h-3 w-3 shrink-0 rounded-full border-2 border-tok-black bg-tok-cream" />
+              <div className="h-px flex-1 border-t-2 border-dashed border-tok-black/20" />
+            </div>
 
-        <div className="space-y-4">
-          {/* Join Code Stub */}
-          <div className="min-w-0 rounded-[4px] border-2 border-tok-black bg-tok-cream p-4">
-            <p className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
-              ACCESS CODE
+            <div className="space-y-4">
+              {/* Join Code Stub */}
+              <div className="min-w-0 rounded-[4px] border-2 border-tok-black bg-tok-cream p-4">
+                <p className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
+                  ACCESS CODE
+                </p>
+                <div className="mt-2 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <p className="min-w-0 max-w-full font-passion text-2xl font-bold tracking-[0.12em] text-tok-black break-all sm:text-3xl sm:tracking-[0.2em]">
+                    {drop.joinCode}
+                  </p>
+                  <CopyButton text={drop.joinCode} className="w-full justify-center sm:w-auto sm:justify-start" />
+                </div>
+              </div>
+
+              {/* Share Link Stub */}
+              <div className="mt-4 min-w-0 rounded-[4px] border-2 border-tok-black bg-white p-4">
+                <p className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
+                  SHARE URL
+                </p>
+                <div className="mt-2 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+                  <span className="min-w-0 w-full break-all font-mono text-[10px] font-medium leading-snug text-tok-black/60 sm:flex-1 sm:break-normal sm:truncate">
+                    {shareUrl}
+                  </span>
+                  <CopyButton text={shareUrl} className="w-full shrink-0 justify-center sm:w-auto sm:justify-start" />
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="py-6 text-center">
+            <div className="mb-8 flex justify-center">
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-tok-teal-pale text-tok-teal">
+                <div className="absolute inset-0 animate-pulse rounded-full border-2 border-tok-teal/20" />
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className="h-10 w-10"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="M9 12l2 2 4-4" />
+                </svg>
+              </div>
+            </div>
+            <h4 className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
+              Boarding Pass Locked
+            </h4>
+            <p className="mt-3 font-inter text-[13px] leading-relaxed text-tok-black/50">
+              Join the crew to unlock your digital ticket, access codes, and mission controls.
             </p>
-            <div className="mt-2 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <p className="min-w-0 max-w-full font-passion text-2xl font-bold tracking-[0.12em] text-tok-black break-all sm:text-3xl sm:tracking-[0.2em]">
-                {drop.joinCode}
+            <div className="mt-4 space-y-3">
+              <div className="h-px border-t-2 border-dashed border-tok-black/10" />
+              <p className="mt-4 font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-black/30">
+                Awaiting Authorization
               </p>
-              <CopyButton text={drop.joinCode} className="w-full justify-center sm:w-auto sm:justify-start" />
             </div>
           </div>
-
-          {/* Share Link Stub */}
-          <div className="min-w-0 rounded-[4px] border-2 border-tok-black bg-white p-4">
-            <p className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
-              SHARE URL
-            </p>
-            <div className="mt-2 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
-              <span className="min-w-0 w-full break-all font-mono text-[10px] font-medium leading-snug text-tok-black/60 sm:flex-1 sm:break-normal sm:truncate">
-                {shareUrl}
-              </span>
-              <CopyButton text={shareUrl} className="w-full shrink-0 justify-center sm:w-auto sm:justify-start" />
-            </div>
-          </div>
-        </div>
+        )}
 
         {footer ? (
-          <p className="mt-8 text-center font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black/40">
+          <p className="text-center font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black/40">
             {footer}
           </p>
         ) : (
-          <p className="mt-6 text-center font-inter text-[10px] font-bold uppercase tracking-widest text-tok-black/20">
+          <p className="mt-4 text-center font-inter text-[10px] font-bold uppercase tracking-widest text-tok-black/20">
             TapOK PROTOCOL v1.0
           </p>
         )}
