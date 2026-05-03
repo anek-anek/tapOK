@@ -47,7 +47,17 @@ export async function POST(req: NextRequest) {
   }
 
   if (!dbUserResponse.ok) {
-    const errorData = await dbUserResponse.json().catch(() => ({}));
+    const rawBody = await dbUserResponse.text().catch(() => '');
+    let errorData: any = {};
+    try {
+      errorData = JSON.parse(rawBody);
+    } catch {
+      console.error('[api/auth/session] Non-JSON error response from upstream', { 
+        status: dbUserResponse.status, 
+        body: rawBody 
+      });
+    }
+
     let message = errorData?.message ?? 'Unable to finalize your session.';
     
     if (dbUserResponse.status === 429) {
@@ -63,12 +73,33 @@ export async function POST(req: NextRequest) {
         message,
         code: errorData?.code,
         upstream: errorData,
+        _debug: {
+          status: dbUserResponse.status,
+          rawBody: rawBody.slice(0, 500)
+        }
       },
       { status: dbUserResponse.status },
     );
   }
 
-  const dbUser = await dbUserResponse.json();
+  const rawSuccessBody = await dbUserResponse.text();
+  let dbUser: any;
+  try {
+    dbUser = JSON.parse(rawSuccessBody);
+  } catch (err) {
+    console.error('[api/auth/session] Success status but invalid JSON', { 
+      status: dbUserResponse.status, 
+      body: rawSuccessBody 
+    });
+    return NextResponse.json(
+      { 
+        ok: false, 
+        error: 'INVALID_UPSTREAM_RESPONSE', 
+        message: 'The backend returned an invalid response.' 
+      },
+      { status: 502 }
+    );
+  }
   const res = NextResponse.json({ ok: true, dbUser });
 
   const cookieOptions = {

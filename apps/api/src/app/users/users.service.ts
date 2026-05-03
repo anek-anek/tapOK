@@ -195,15 +195,26 @@ export class UsersService {
       }
     }
 
-    const email = tokenEmail || (dto.email ?? '').trim().toLowerCase();
+    const email = (tokenEmail || (dto.email ?? '')).trim().toLowerCase();
     const isEmailVerified = token.email_verified ?? false;
     const authMode = dto.authMode ?? SyncAuthMode.LOGIN;
-    const tokenAuthProvider = this.getAuthProviderFromToken(token);
+
+    let tokenAuthProvider: AuthProvider;
+    try {
+      tokenAuthProvider = this.getAuthProviderFromToken(token);
+    } catch (err) {
+      this.logger.error(`Failed to detect auth provider from token: ${err}`);
+      throw new BadRequestException({
+        message: 'Invalid authentication token. Please try signing in again.',
+        code: 'INVALID_CREDENTIALS',
+      });
+    }
+
     const requestedAuthProvider = dto.authProvider ?? tokenAuthProvider;
 
     if (requestedAuthProvider !== tokenAuthProvider) {
       throw new BadRequestException({
-        message: 'This sign-in attempt could not be verified. Please try again.',
+        message: 'Auth provider mismatch between request and token.',
         code: 'INVALID_CREDENTIALS',
       });
     }
