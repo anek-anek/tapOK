@@ -5,7 +5,9 @@ import { useMounted } from '@/hooks/use-mounted';
 import { useRouter } from 'next/navigation';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
-import { useDiscoverDrops } from '@/hooks/queries/use-drops';
+import {
+  useInfiniteDiscoverDrops,
+} from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import { DropShareModal } from '@/components/drops/DropShareModal';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +16,7 @@ import {
   ArrowRight,
   Filter,
   Users,
+  Loader2,
 } from 'lucide-react';
 import {
   HeroDropCard,
@@ -59,23 +62,31 @@ function CategoryFilter({
   );
 }
 
-function SectionHeading({ icon: Icon, title, sub }: { icon: any; title: string; sub?: string }) {
+function SectionHeading({
+  icon: Icon,
+  title,
+  sub,
+  className,
+}: {
+  icon: any;
+  title: string;
+  sub?: string;
+  className?: string;
+}) {
   return (
-    <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-tok-black bg-tok-cream shadow-[3px_3px_0px_#1C1C1A]">
-            <Icon size={18} className="text-tok-black" strokeWidth={2.5} />
-          </div>
-          <h2 className="font-passion text-2xl font-black uppercase tracking-tight text-tok-black">
+    <div className={cn('mb-8 flex flex-col gap-2', className)}>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
+          <Icon size={20} className="text-tok-black" strokeWidth={2.5} />
+        </div>
+        <div>
+          <p className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-teal">
+            {sub || 'System Signal'}
+          </p>
+          <h2 className="font-passion text-3xl font-black uppercase tracking-tight text-tok-black leading-none mt-1">
             {title}
           </h2>
         </div>
-        {sub && (
-          <p className="font-inter text-xs font-medium uppercase tracking-[2px] text-tok-black/40">
-            {sub}
-          </p>
-        )}
       </div>
     </div>
   );
@@ -88,38 +99,68 @@ function PageSkeleton() {
       <PageBackdropWatermark label="DISCOVER" />
       <main className="relative z-1 mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-16 lg:px-10 pb-24">
         {/* Header Skeleton */}
-        <div className="mb-12 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-          <div className="space-y-4">
-            <Skeleton className="h-3 w-40 rounded-sm bg-tok-teal/30" />
-            <Skeleton className="h-[clamp(52px,11vw,84px)] w-[min(100%,320px)] sm:w-[min(100%,480px)] rounded-sm bg-tok-black/10" />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-10 w-32 rounded-sm border-[3px] border-tok-black bg-white" />
-            ))}
-          </div>
+        <div className="mb-16">
+          <Skeleton className="h-3 w-40 rounded-sm bg-tok-teal/30 mb-4" />
+          <Skeleton className="h-[clamp(52px,11vw,84px)] w-[min(100%,480px)] rounded-sm bg-tok-black/10" />
         </div>
 
-        <div className="grid gap-12">
+        <div className="space-y-16">
           {/* Featured */}
           <section>
-            <div className="mb-6 flex items-center gap-3">
-              <Skeleton className="h-9 w-9 rounded-lg border-2 border-tok-black bg-tok-cream" />
-              <Skeleton className="h-7 w-48 rounded-sm bg-tok-black/10" />
+            <div className="mb-8 flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-lg border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]" />
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-24 rounded-sm bg-tok-teal/20" />
+                <Skeleton className="h-6 w-48 rounded-sm bg-tok-black/10" />
+              </div>
             </div>
             <HeroCardSkeleton />
           </section>
 
-          {/* List Skeleton */}
+          {/* Separator */}
+          <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
+
+          {/* Squad Recon */}
           <section>
-            <div className="mb-6 flex items-center gap-3">
-              <Skeleton className="h-9 w-9 rounded-lg border-2 border-tok-black bg-tok-cream" />
-              <Skeleton className="h-7 w-40 rounded-sm bg-tok-black/10" />
+            <div className="mb-8 flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-lg border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]" />
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-28 rounded-sm bg-tok-teal/20" />
+                <Skeleton className="h-6 w-40 rounded-sm bg-tok-black/10" />
+              </div>
             </div>
-            <div className="grid gap-4">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <ListCardSkeleton />
               <ListCardSkeleton />
               <ListCardSkeleton />
+            </div>
+          </section>
+
+          {/* Separator */}
+          <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
+
+          {/* Public Stream */}
+          <section>
+            <div className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-lg border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]" />
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-32 rounded-sm bg-tok-teal/20" />
+                  <Skeleton className="h-6 w-44 rounded-sm bg-tok-black/10" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-10 w-28 rounded-sm border-[3px] border-tok-black bg-white" />
+                ))}
+              </div>
+            </div>
+            <div className="columns-1 gap-6 sm:columns-2 lg:columns-3">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="mb-6 break-inside-avoid">
+                  <ListCardSkeleton />
+                </div>
+              ))}
             </div>
           </section>
         </div>
@@ -138,10 +179,34 @@ export default function DiscoverClient() {
   const [shareModalDrop, setShareModalDrop] = useState<Drop | null>(null);
 
   const {
-    data,
+    data: realData,
     isLoading,
     isError,
-  } = useDiscoverDrops({ category });
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteDiscoverDrops({ category, limit: 15 });
+
+  const data = realData?.pages[0];
+  const allPublicDrops = realData?.pages.flatMap(page => page.allPublic.data) ?? [];
+  const observerTarget = React.useRef(null);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (!mounted || !isReady) return <PageSkeleton />;
 
@@ -163,36 +228,16 @@ export default function DiscoverClient() {
 
       <main className="relative z-1 mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-16 lg:px-10 pb-24">
         {/* Header Row */}
-        <div className="mb-12 flex flex-col lg:flex-row lg:items-end justify-between gap-8 animate-fade-up">
-          <div>
-            <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
-              EXPLORE THE SCENE
-            </p>
-            <h1 className="font-passion text-[clamp(52px,11vw,84px)] font-black uppercase leading-[0.8] tracking-tight text-tok-black">
-              DISCOVER{' '}
-              <span className="text-tok-teal">MISSIONS.</span>
-            </h1>
-          </div>
-
-          <CategoryFilter active={category} onSelect={setCategory} />
+        <div className="mb-16 animate-fade-up">
+          <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+            EXPLORE THE SCENE
+          </p>
+          <h1 className="font-passion text-[clamp(52px,11vw,84px)] font-black uppercase leading-[0.8] tracking-tight text-tok-black">
+            DISCOVER <span className="text-tok-teal">MISSIONS.</span>
+          </h1>
         </div>
 
-        {isLoading ? (
-          <div className="grid gap-12">
-            <section>
-              <SectionHeading icon={Sparkles} title="Featured Drop" sub="Recommended for you" />
-              <HeroCardSkeleton />
-            </section>
-            <section>
-              <SectionHeading icon={Filter} title="All Public Drops" sub="Browse the latest" />
-              <div className="grid gap-4">
-                <ListCardSkeleton />
-                <ListCardSkeleton />
-                <ListCardSkeleton />
-              </div>
-            </section>
-          </div>
-        ) : isError ? (
+        {isError ? (
           <div className="rounded-2xl border-[3px] border-tok-black bg-white p-12 text-center shadow-[12px_12px_0px_#1C1C1A]">
             <h2 className="font-passion text-3xl font-black uppercase text-tok-black">
               System Scan Failed
@@ -208,57 +253,134 @@ export default function DiscoverClient() {
             </button>
           </div>
         ) : (
-          <div className="grid gap-16">
+          <div className="space-y-16">
             {/* Featured Section */}
-            {data?.featured && (
+            {((isLoading && !data) || data?.featured || (data?.allPublic?.data?.length ?? 0) > 0) && (
               <section className="animate-fade-up [animation-delay:200ms]">
-                <SectionHeading icon={Sparkles} title="Featured Mission" sub="System Highlight" />
-                <HeroDropCard
-                  drop={data.featured as unknown as Drop}
-                  viewerId={dbUser?.id}
-                  onShare={handleShare}
+                <SectionHeading
+                  icon={Sparkles}
+                  title="Featured Mission"
+                  sub="Current Highlight"
                 />
+                {isLoading && !data ? (
+                  <HeroCardSkeleton />
+                ) : data?.featured ? (
+                  <HeroDropCard
+                    drop={data.featured as unknown as Drop}
+                    viewerId={dbUser?.id}
+                    onShare={handleShare}
+                  />
+                ) : (data?.allPublic?.data?.length ?? 0) > 0 ? (
+                  <HeroDropCard
+                    drop={data!.allPublic.data[0] as unknown as Drop}
+                    viewerId={dbUser?.id}
+                    onShare={handleShare}
+                  />
+                ) : null}
               </section>
             )}
 
-            {/* Friends/Chiefs Section */}
-            {data?.recentChiefsDrops && data.recentChiefsDrops.length > 0 && (
+            {/* Separator */}
+            {((data?.recentChiefsDrops?.length ?? 0) > 0 || isLoading) && (
+              <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
+            )}
+
+            {/* SQUAD RECON */}
+            {((data?.recentChiefsDrops?.length ?? 0) > 0 || isLoading) && (
               <section className="animate-fade-up [animation-delay:300ms]">
-                <SectionHeading icon={Users} title="From Your Circle" sub="Missions by people you know" />
-                <div className="grid gap-4">
-                  {data.recentChiefsDrops.map((drop) => (
-                    <ListDropCard
-                      key={drop.id}
-                      drop={drop as unknown as Drop}
-                      viewerId={dbUser?.id}
-                      onShare={handleShare}
-                    />
-                  ))}
-                </div>
+                <SectionHeading
+                  icon={Users}
+                  title="Squad Recon"
+                  sub="Active in your network"
+                />
+                {isLoading && !data ? (
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <ListCardSkeleton />
+                    <ListCardSkeleton />
+                    <ListCardSkeleton />
+                  </div>
+                ) : (
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {data?.recentChiefsDrops?.slice(0, 3).map((drop) => (
+                      <ListDropCard
+                        key={drop.id}
+                        drop={drop as unknown as Drop}
+                        viewerId={dbUser?.id}
+                        onShare={handleShare}
+                        layout="masonry"
+                      />
+                    ))}
+                  </div>
+                )}
               </section>
+            )}
+
+            {/* Separator */}
+            {((data?.allPublic?.data?.length ?? 0) > 0 || isLoading) && (
+              <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
             )}
 
             {/* Public Stream */}
             <section className="animate-fade-up [animation-delay:400ms]">
-              <SectionHeading icon={Filter} title="Public Stream" sub="Open missions across the grid" />
-              {data?.allPublic.data.length === 0 ? (
+              <div className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                <SectionHeading
+                  icon={Filter}
+                  title="Public Stream"
+                  sub="Open grid missions"
+                  className="mb-0"
+                />
+                <CategoryFilter active={category} onSelect={setCategory} />
+              </div>
+
+              {isLoading && !data ? (
+                <div className="columns-1 gap-6 sm:columns-2 lg:columns-3">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="mb-6 break-inside-avoid">
+                      <ListCardSkeleton />
+                    </div>
+                  ))}
+                </div>
+              ) : allPublicDrops.length === 0 ? (
                 <div className="flex flex-col items-center py-20 text-center rounded-2xl border-4 border-dashed border-tok-black/10">
                   <p className="font-passion text-lg font-bold uppercase tracking-widest text-tok-black/20">
                     No missions found
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-4">
-                  {data?.allPublic.data.map((drop) => (
-                    <ListDropCard
-                      key={drop.id}
-                      drop={drop as unknown as Drop}
-                      viewerId={dbUser?.id}
-                      onShare={handleShare}
-                    />
+                <div className={cn(
+                  "columns-1 gap-6 sm:columns-2 lg:columns-3 transition-opacity duration-300",
+                  (isLoading) ? "opacity-50" : "opacity-100"
+                )}>
+                  {allPublicDrops.map((drop) => (
+                    <div key={drop.id} className="break-inside-avoid mb-6">
+                      <ListDropCard
+                        drop={drop as unknown as Drop}
+                        viewerId={dbUser?.id}
+                        onShare={handleShare}
+                        layout="masonry"
+                      />
+                    </div>
                   ))}
                 </div>
               )}
+
+              {/* Load More Trigger */}
+              <div ref={observerTarget} className="mt-12 flex justify-center py-8">
+                {isFetchingNextPage || (isLoading && data) ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-tok-teal" />
+                    <p className="font-passion text-xs font-bold uppercase tracking-[2px] text-tok-teal">
+                      Syncing grid...
+                    </p>
+                  </div>
+                ) : hasNextPage ? (
+                  <div className="h-8 w-full" />
+                ) : allPublicDrops.length > 0 ? (
+                  <p className="font-passion text-[10px] font-bold uppercase tracking-[3px] text-tok-black/20">
+                    — End of Signal —
+                  </p>
+                ) : null}
+              </div>
             </section>
           </div>
         )}
