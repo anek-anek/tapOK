@@ -36,11 +36,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate API types
-        run: npm run generate:api -- --cache-dir=".turbo"
-
-      - name: Build dependencies
-        run: npx turbo run build --filter=@repo/api --cache-dir=".turbo"
-
-      - name: Lint & Typecheck
-        run: npx turbo run lint typecheck --cache-dir=".turbo"
+      - name: Run CI Checks (Generate, Build, Lint, Typecheck)
+        run: npx turbo run generate build lint typecheck --cache-dir=".turbo"

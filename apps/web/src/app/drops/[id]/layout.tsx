@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import { absoluteUrlForMetadata, getApiUrl } from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 type Props = {
   params: Promise<{ id: string }>;
 };
@@ -9,8 +11,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
 
   try {
-    // We use a direct fetch here to avoid axios issues in server components if any,
-    // and to benefit from Next.js fetch caching.
     const apiUrl = getApiUrl();
     const res = await fetch(`${apiUrl}/drops/${id}`, { next: { revalidate: 60 } });
 
@@ -49,6 +49,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function DropLayout({ children }: { children: React.ReactNode }) {
+export default async function DropLayout({
+  children,
+  params
+}: {
+  children: React.ReactNode;
+  params: Promise<{ id: string }>;
+}) {
+  await params;
   return <>{children}</>;
 }

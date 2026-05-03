@@ -25,7 +25,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
-  cacheComponents: true,
+  // cacheComponents: true,
 };
 
 export default nextConfig;
