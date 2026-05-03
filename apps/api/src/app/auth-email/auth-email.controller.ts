@@ -29,4 +29,13 @@ export class AuthEmailController {
     await this.authEmailService.sendVerificationEmail(email, user.uid);
     return { success: true, message: 'Verification email sent.' };
   }
+
+  @Public()
+  @Post('confirm-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirm email address using a verification token' })
+  async confirmEmail(@Body('token') token: string) {
+    await this.authEmailService.confirmEmailToken(token);
+    return { success: true };
+  }
 }

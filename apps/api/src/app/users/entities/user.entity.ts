@@ -105,4 +105,10 @@ export class User {
   @ApiProperty({ required: false, description: 'Timestamp when Privacy Policy was accepted' })
   @Column({ type: 'timestamptz', nullable: true })
   privacyPolicyAcceptedAt?: Date;
+
+  @Column({ nullable: true, select: false })
+  emailVerificationToken?: string;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  emailVerificationTokenExpiresAt?: Date;
 }

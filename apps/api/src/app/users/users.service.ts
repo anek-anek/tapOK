@@ -66,9 +66,17 @@ export class UsersService {
     return null;
   }
 
-  async findMe(firebaseUid: string): Promise<UserProfileDto> {
+  async findMe(token: DecodedIdToken): Promise<UserProfileDto> {
+    const firebaseUid = token.uid;
     const user = await this.usersRepository.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('No account found for this user.');
+
+    if (token.email_verified && !user.isEmailVerified) {
+      user.isEmailVerified = true;
+      user.emailVerifiedAt = new Date();
+      await this.usersRepository.save(user);
+      this.logger.log(`[UsersService] Auto-synced verification status for user ${user.id}`);
+    }
 
     const [{ count }] = await this.dataSource.query<[{ count: string }]>(
       `SELECT COUNT(*) AS count FROM drops WHERE "organiserId" = $1`,
