@@ -21,7 +21,14 @@ export function getBaseUrl(): string {
 export function getApiUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!envUrl) return 'http://localhost:3000';
+  
   const urls = envUrl.split(',').map(u => u.trim()).filter(Boolean);
+  
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    const prodUrl = urls.find(u => !u.includes('localhost'));
+    if (prodUrl) return prodUrl;
+  }
+  
   return urls[0] || 'http://localhost:3000';
 }
 
