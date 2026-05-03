@@ -11,6 +11,7 @@ import { getFirebaseAuth } from '@/lib/firebase';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
+import { VerificationBanner } from './verification-banner';
 
 const passionOne = Passion_One({
   weight: ['400', '700'],
@@ -104,6 +105,7 @@ export function TapokNavbar() {
   return (
     <>
       <div className="h-[60px]" />
+      <VerificationBanner />
 
       {/* Progress bar visible when navbar is hidden */}
       <div
