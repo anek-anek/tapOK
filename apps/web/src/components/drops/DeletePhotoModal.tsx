@@ -2,9 +2,11 @@
 
 import { CLOSE_DURATION, ModalShell } from '@/components/modal-shell';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
+import NextImage from 'next/image';
 import { useDeletePhoto } from '@/hooks/mutations/use-drop-mutations';
 import { toast } from 'react-hot-toast';
 import { useState } from 'react';
+import { usePhotoDetail } from '@/hooks/queries/use-drops';
 import type { DropPhoto } from '@/types/drop';
 
 interface DeletePhotoModalProps {
@@ -16,6 +18,12 @@ interface DeletePhotoModalProps {
 export function DeletePhotoModal({ dropId, photo, onClose }: DeletePhotoModalProps) {
   const deletePhoto = useDeletePhoto(dropId);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const { data: detail } = usePhotoDetail(dropId, photo.id, {
+    enabled: !photo.url && !photo.base64,
+  });
+
+  const displaySrc = photo.url || photo.base64 || detail?.base64;
 
   const handleDelete = async (close: () => void) => {
     setIsDeleting(true);
@@ -60,12 +68,16 @@ export function DeletePhotoModal({ dropId, photo, onClose }: DeletePhotoModalPro
           <div className="p-8">
             <div className="flex flex-col gap-6">
               <div className="relative aspect-video w-full overflow-hidden rounded-sm border-[3px] border-tok-black shadow-[6px_6px_0px_#1C1C1A]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={photo.url ?? photo.base64 ?? undefined} 
-                  alt="To be deleted" 
-                  className="h-full w-full object-cover grayscale opacity-60"
-                />
+                {displaySrc ? (
+                  <NextImage
+                    src={displaySrc}
+                    alt="To be deleted"
+                    fill
+                    className="object-cover grayscale opacity-60"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-tok-black/10" />
+                )}
                 <div className="absolute inset-0 flex items-center justify-center bg-red-500/10">
                   <Trash2 size={48} className="text-red-500/40" strokeWidth={1.5} />
                 </div>
