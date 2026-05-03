@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
   }
 
-  const apiUrl = getApiUrl();
+  const apiUrl = getApiUrl().replace(/\/$/, '');
   let dbUserResponse: Response;
 
   try {
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
         upstream: errorData,
         _debug: {
           status: dbUserResponse.status,
+          apiUrl,
           rawBody: rawBody.slice(0, 500)
         }
       },
