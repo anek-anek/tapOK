@@ -138,7 +138,6 @@ function GateCard() {
             name="join-code"
             value={gateCode}
             onChange={(e) => setGateCode(sanitizeJoinCode(e.target.value))}
-            onPaste={(e) => handleJoinCodePaste(e, gateCode, setGateCode)}
             placeholder="ENTER TOKEN"
             inputMode="text"
             enterKeyHint="go"
@@ -376,7 +375,6 @@ export default function DropsClient() {
                 name="access-code"
                 value={joinCode}
                 onChange={(e) => setJoinCode(sanitizeJoinCode(e.target.value))}
-                onPaste={(e) => handleJoinCodePaste(e, joinCode, setJoinCode)}
                 placeholder="ACCESS CODE"
                 inputMode="text"
                 enterKeyHint="go"

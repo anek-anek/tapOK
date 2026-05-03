@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 
 export const authInputClass =
-  'w-full border-2 border-tok-black bg-tok-cream px-4 py-3 text-base text-tok-black placeholder:text-tok-black/35 outline-hidden transition-all duration-150 ease-in-out focus:bg-white focus:shadow-[4px_4px_0_#262624] focus:ring-0 hover:border-tok-teal font-inter rounded-none lg:py-2.5';
+  'w-full border-2 border-tok-black bg-tok-cream px-4 py-3 text-base text-tok-black placeholder:text-tok-black/35 outline-hidden transition-all duration-150 ease-in-out focus:bg-white focus:shadow-[4px_4px_0_#262624] focus:ring-0 hover:border-tok-teal font-inter rounded-none lg:py-2.5 select-text';
 
 type AuthFormFieldProps = {
   label: string;
