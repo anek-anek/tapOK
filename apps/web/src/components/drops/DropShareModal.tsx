@@ -28,6 +28,7 @@ export function DropShareModal({ drop, onClose }: DropShareModalProps) {
           
           <DigitalTicket 
             drop={drop} 
+            isMember={true}
             footer="Share this ticket with your crew"
           />
         </div>

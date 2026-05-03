@@ -925,7 +925,10 @@ export default function DropDetailClient({ id }: { id: string }) {
           {/* Right: Digital Ticket Sidebar (Desktop Only, hidden when completed) */}
           {!isCompleted && (
             <aside className="order-1 hidden lg:block lg:order-2 lg:self-start">
-              <DigitalTicket drop={drop} />
+              <DigitalTicket 
+                drop={drop} 
+                isMember={isOrganiser || crewStatus?.status === 'in'} 
+              />
             </aside>
           )}
         </div>

@@ -6,6 +6,10 @@ on:
       - main
       - staging
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   generate-types:
     name: Generate API Types
@@ -21,14 +25,22 @@ jobs:
           node-version: "22.22.1"
           cache: "npm"
 
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
       - name: Install dependencies
         run: npm ci
 
       - name: Build packages
-        run: npx turbo run build --filter=@repo/api
+        run: npx turbo run build --filter=@repo/api --cache-dir=".turbo"
 
       - name: Generate API types
-        run: npm run generate:api
+        run: npm run generate:api -- --cache-dir=".turbo"
 
       - name: Upload generated types
         uses: actions/upload-artifact@v4
@@ -41,6 +53,7 @@ jobs:
   deploy-api:
     name: Deploy API
     runs-on: ubuntu-latest
+    needs: [generate-types]
     environment: ${{ github.ref_name == 'main' && format('Production – {0}', vars.VERCEL_PROJECT_NAME_API) || format('Preview – {0}', vars.VERCEL_PROJECT_NAME_API) }}
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -56,14 +69,19 @@ jobs:
           node-version: "22.22.1"
           cache: "npm"
 
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
       - name: Pull Vercel environment
-        run: vercel pull --yes --environment=${{ github.ref_name == 'main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel pull --yes --environment=${{ github.ref_name == 'main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Run database migrations
         run: |
@@ -74,7 +92,7 @@ jobs:
           npm run migration:run --workspace=api
 
       - name: Build API
-        run: npx turbo run build --filter=api
+        run: npx turbo run build --filter=api --cache-dir=".turbo"
 
       - name: Build Vercel output
         env:
@@ -82,7 +100,7 @@ jobs:
           VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
           VERCEL_GIT_PROVIDER: github
           VERCEL_GIT_REPO_SLUG: ${{ github.repository }}
-        run: vercel build ${{ github.ref_name == 'main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel build ${{ github.ref_name == 'main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy prebuilt
         env:
@@ -90,7 +108,7 @@ jobs:
           VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
           VERCEL_GIT_PROVIDER: github
           VERCEL_GIT_REPO_SLUG: ${{ github.repository }}
-        run: vercel deploy --prebuilt ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel deploy --prebuilt ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}
 
   deploy-web:
     name: Deploy Web
@@ -111,6 +129,14 @@ jobs:
           node-version: "22.22.1"
           cache: "npm"
 
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
       - name: Install dependencies
         run: npm ci
 
@@ -120,16 +146,24 @@ jobs:
           name: api-types
           path: packages/api
 
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
       - name: Pull Vercel environment
-        run: vercel pull --yes --environment=${{ github.ref_name == 'main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel pull --yes --environment=${{ github.ref_name == 'main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Deploy
+      - name: Build Web
+        run: npx turbo run build --filter=web --cache-dir=".turbo"
+
+      - name: Build Vercel output
         env:
           VERCEL_GIT_COMMIT_REF: ${{ github.ref_name }}
           VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
           VERCEL_GIT_PROVIDER: github
           VERCEL_GIT_REPO_SLUG: ${{ github.repository }}
-        run: vercel deploy ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel build ${{ github.ref_name == 'main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy prebuilt
+        env:
+          VERCEL_GIT_COMMIT_REF: ${{ github.ref_name }}
+          VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
+          VERCEL_GIT_PROVIDER: github
+          VERCEL_GIT_REPO_SLUG: ${{ github.repository }}
+        run: npx vercel deploy --prebuilt ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}

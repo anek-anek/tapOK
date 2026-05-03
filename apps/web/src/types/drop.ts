@@ -8,6 +8,9 @@ export interface DropOrganiser {
   email: string;
   avatar?: string;
   firebaseUid?: string;
+  userHandle?: string;
+  dropCount?: number;
+  crewReached?: number;
 }
 
 export interface DropDiscoverOrganiser {
