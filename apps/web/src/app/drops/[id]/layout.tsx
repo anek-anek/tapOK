@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { absoluteUrlForMetadata, getApiUrl } from '@/lib/config';
+export const dynamic = 'force-dynamic';
 
 type Props = {
   params: Promise<{ id: string }>;
