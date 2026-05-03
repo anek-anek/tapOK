@@ -473,7 +473,7 @@ export function DropModal({
                   <button 
                     onClick={() => {
                       toast.dismiss(t.id);
-                      router.push('/profile');
+                      router.push('/profile?verify=true');
                     }}
                     className="rounded-sm border-2 border-white bg-white px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black transition-all hover:bg-white/90"
                   >
@@ -541,7 +541,7 @@ export function DropModal({
                 <button 
                   onClick={() => {
                     toast.dismiss(t.id);
-                    router.push('/profile');
+                    router.push('/profile?verify=true');
                   }}
                   className="rounded-sm border-2 border-white bg-white px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black transition-all hover:bg-white/90"
                 >

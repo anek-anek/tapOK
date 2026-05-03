@@ -1,7 +1,8 @@
 'use client';
 
 import { Mail, Phone, Calendar as IconCalendar, Pencil, X, Check, User, ChevronDown, Camera, ShieldCheck, LockKeyhole, AlertCircle } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { useCurrentUser, useFrequentCrew } from '@/hooks/queries/use-users';
@@ -82,6 +83,7 @@ function tenDigitsToE164(ten: string): string {
 export default function ProfilePage() {
   const mounted = useMounted();
   const { dbUser, refreshUser } = useAuth();
+  const searchParams = useSearchParams();
   const { data: profile, isLoading } = useCurrentUser();
   const displayUser = profile ?? dbUser;
 
@@ -100,6 +102,20 @@ export default function ProfilePage() {
   const updateUser = useUpdateUser(profile?.id ?? '');
   const { data: myDrops = [], isLoading: dropsLoading } = useMyDrops();
   const { data: frequentCrew = [] } = useFrequentCrew();
+
+  const [highlightVerify, setHighlightVerify] = useState(false);
+  const verifySectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (searchParams.get('verify') === 'true') {
+      const timer = setTimeout(() => {
+        verifySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setHighlightVerify(true);
+        setTimeout(() => setHighlightVerify(false), 3000);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
 
   const memberSince = useMemo(() => {
     if (!displayUser?.createdAt) return 'JUNE 2024';
@@ -546,7 +562,14 @@ export default function ProfilePage() {
             </div>
 
             {!displayUser.isEmailVerified && (
-              <div className="mb-6 flex flex-row items-center justify-between gap-2 border-b-2 border-dashed border-tok-black/10 pb-6">
+              <div 
+                id="verify-email"
+                ref={verifySectionRef}
+                className={cn(
+                  "mb-6 flex flex-row items-center justify-between gap-4 border-b-2 border-dashed border-tok-black/10 pb-6 transition-all duration-700",
+                  highlightVerify && "z-10 relative bg-tok-teal-pale border-2 border-tok-teal border-solid rounded-sm px-4 -mx-4 py-4 shadow-[6px_6px_0px_#14B8A6]"
+                )}
+              >
                 <div className="flex items-center gap-3 text-left">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-tok-black bg-[#FFD700] text-tok-black shadow-[2px_2px_0px_0px_#262624]">
                     <AlertCircle className="h-6 w-6" />
