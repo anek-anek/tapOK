@@ -2,6 +2,8 @@ import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthEmailService } from './auth-email.service';
 import { Public } from '../../common/decorators/public.decorator';
+import { AuthUser } from '../../common/decorators/auth-user.decorator';
+import type { DecodedIdToken } from 'firebase-admin/auth';
 
 @ApiTags('Auth Email')
 @Controller('auth/email')
@@ -17,12 +19,14 @@ export class AuthEmailController {
     return { success: true, message: 'If an account exists, a reset link has been sent.' };
   }
 
-  @Public()
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send email verification via Resend' })
-  async sendVerification(@Body('email') email: string) {
-    await this.authEmailService.sendVerificationEmail(email);
+  async sendVerification(
+    @AuthUser() user: DecodedIdToken,
+    @Body('email') email: string
+  ) {
+    await this.authEmailService.sendVerificationEmail(email, user.uid);
     return { success: true, message: 'Verification email sent.' };
   }
 }

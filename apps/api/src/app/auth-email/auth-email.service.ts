@@ -73,29 +73,55 @@ export class AuthEmailService {
     }
   }
 
-  async sendVerificationEmail(email: string) {
-    const user = await this.usersRepository.findByEmail(email);
+  async sendVerificationEmail(email: string, firebaseUid?: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.usersRepository.findByEmail(normalizedEmail);
     if (user) {
       this.checkCooldown(user.emailVerificationSentAt);
+    }
+
+    let targetEmail = normalizedEmail;
+    if (firebaseUid) {
+      try {
+        const userRecord = await admin.auth().getUser(firebaseUid);
+        if (userRecord.email) {
+          targetEmail = userRecord.email;
+          console.log(`[AuthEmail] Using resolved Firebase email for verification: ${targetEmail}`);
+        }
+      } catch (err) {
+        console.warn(`[AuthEmail] Failed to fetch user record for UID ${firebaseUid}: ${err}`);
+      }
     }
 
     const actionCodeSettings = {
       url: `${this.webOrigin}/profile`,
     };
 
-    const firebaseLink = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
-    
-    const url = new URL(firebaseLink);
-    const oobCode = url.searchParams.get('oobCode');
-    const customLink = `${this.webOrigin}/reset-password?oobCode=${oobCode}&email=${email}`;
+    try {
+      const firebaseLink = await admin.auth().generateEmailVerificationLink(targetEmail, actionCodeSettings);
+      
+      const url = new URL(firebaseLink);
+      const oobCode = url.searchParams.get('oobCode');
+      const customLink = `${this.webOrigin}/reset-password?oobCode=${oobCode}&email=${encodeURIComponent(targetEmail)}`;
 
-    await this.emailService.sendVerificationEmail(email, customLink);
+      await this.emailService.sendVerificationEmail(targetEmail, customLink);
 
-    // Update DB
-    if (user) {
-      await this.usersRepository.update(user.id, {
-        emailVerificationSentAt: new Date(),
-      } as any);
+      // Update DB
+      if (user) {
+        await this.usersRepository.update(user.id, {
+          emailVerificationSentAt: new Date(),
+        } as any);
+      }
+    } catch (error: any) {
+      console.error(`[AuthEmail] Failed to generate verification link for ${targetEmail}:`, error);
+      
+      if (error.code === 'auth/user-not-found') {
+        throw new NotFoundException({
+          message: `There is no user record corresponding to the identifier ${targetEmail}.`,
+          code: 'USER_NOT_FOUND'
+        });
+      }
+      throw error;
     }
   }
 }
