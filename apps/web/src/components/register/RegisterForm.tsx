@@ -61,7 +61,12 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('tapok_google_redirect_pending') === 'true';
+    }
+    return false;
+  });
   const [googleRedirectResolved, setGoogleRedirectResolved] = useState(false);
 
   const showError = useCallback((message: string) => {
@@ -200,6 +205,9 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
         showError(getRegisterFirebaseError(resolution.code));
       }
 
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('tapok_google_redirect_pending');
+      }
       setGoogleLoading(false);
       setGoogleRedirectResolved(true);
     })();
@@ -400,7 +408,11 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
           </svg>
         )}
-        Sign up with Google
+        {googleLoading ? (
+          <span className="animate-fade-in uppercase tracking-wider">Signing up…</span>
+        ) : (
+          'Sign up with Google'
+        )}
       </button>
 
       {/* Divider */}

@@ -1,18 +1,56 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
+import { cn } from '@/lib/utils';
 
-export function VerificationBanner() {
+interface VerificationBannerProps {
+  isNavbarVisible?: boolean;
+  isMobileMenuOpen?: boolean;
+}
+
+export function VerificationBanner({
+  isNavbarVisible = true,
+  isMobileMenuOpen = false
+}: VerificationBannerProps) {
   const { dbUser, isReady, loading } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const checkModals = () => {
+      const hasDialog = !!document.querySelector('[role="dialog"], [data-state="open"]');
+      setIsModalOpen(hasDialog);
+    };
+
+    const observer = new MutationObserver(checkModals);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-state', 'class']
+    });
+
+    checkModals();
+    return () => observer.disconnect();
+  }, []);
 
   if (!isReady || loading || !dbUser || dbUser.isEmailVerified) {
     return null;
   }
 
+  // Hide when mobile menu is open or a modal is active
+  const shouldHide = isMobileMenuOpen || isModalOpen;
+
   return (
-    <div className="relative z-40 w-full px-4 pt-6 sm:px-6 animate-in fade-in slide-in-from-top-4 duration-700">
+    <div
+      className={cn(
+        "sticky z-40 w-full px-4 pt-6 sm:px-6 transition-all duration-300 ease-in-out animate-in fade-in slide-in-from-top-4 duration-700",
+        isNavbarVisible ? "top-[60px]" : "top-0",
+        shouldHide ? "pointer-events-none opacity-0" : "opacity-100"
+      )}
+    >
       <div className="mx-auto max-w-4xl">
         <div className="group flex flex-col items-center justify-between gap-5 rounded-sm border-[3px] border-tok-black bg-[#323230] p-6 shadow-[6px_6px_0px_#262624] transition-all hover:shadow-[8px_8px_0px_#14B8A6] sm:flex-row sm:gap-4">
           <div className="flex items-center gap-4">
@@ -39,3 +77,4 @@ export function VerificationBanner() {
     </div>
   );
 }
+
