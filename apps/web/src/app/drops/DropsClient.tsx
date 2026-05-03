@@ -8,7 +8,6 @@ import {
   CalendarDays,
   LogIn,
   Plus,
-  ShieldAlert,
 } from 'lucide-react';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
@@ -333,25 +332,7 @@ export default function DropsClient() {
       <PageBackdropWatermark label="DROPS" />
 
       <main className="relative z-1 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
-        {dbUser && !dbUser.isEmailVerified && (
-          <div className="mb-8 flex flex-col items-center justify-between gap-4 rounded-sm border-[3px] border-tok-black bg-tok-black p-5 shadow-[6px_6px_0px_#1C1C1A] sm:flex-row">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tok-teal">
-                <ShieldAlert size={20} className="text-tok-black" strokeWidth={2.5} />
-              </div>
-              <div className="min-w-0">
-                <p className="font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal">Account Restricted</p>
-                <p className="font-passion text-sm font-bold uppercase tracking-tight text-tok-cream">Your crew status is pending verification.</p>
-              </div>
-            </div>
-            <Link 
-              href="/profile"
-              className="flex h-10 w-full items-center justify-center rounded-sm border-[3px] border-tok-cream bg-tok-cream px-6 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#14B8A6] sm:w-auto"
-            >
-              Verify Now
-            </Link>
-          </div>
-        )}
+
 
         {/* Page header row */}
         <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
