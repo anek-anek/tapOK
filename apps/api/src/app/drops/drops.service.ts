@@ -7,6 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
@@ -57,6 +58,7 @@ export class DropsService {
     private readonly configService: ConfigService,
     private readonly dropsCronService: DropsCronService,
     private readonly storageService: SupabaseStorageService,
+    private readonly dataSource: DataSource,
   ) {}
 
   private mapRowToDiscoverSummary(
@@ -280,6 +282,23 @@ export class DropsService {
       }
     } else if (!drop.isPublic && !firebaseUid) {
       throw new NotFoundException(`Drop ${id} not found`);
+    }
+
+    if (drop.organiser) {
+      const [{ dropCount, crewReached }] = await this.dataSource.query<[{ dropCount: string, crewReached: string }]>(
+        `
+        SELECT 
+          (SELECT COUNT(*) FROM drops WHERE "organiserId" = $1) as "dropCount",
+          (SELECT COUNT(DISTINCT c."userId") 
+           FROM drop_crew c 
+           WHERE c."dropId" IN (SELECT id FROM drops WHERE "organiserId" = $1)
+           AND c.status = 'in') as "crewReached"
+        `,
+        [drop.organiserId],
+      );
+
+      (drop.organiser as any).dropCount = parseInt(dropCount, 10);
+      (drop.organiser as any).crewReached = parseInt(crewReached, 10);
     }
 
     return drop;
@@ -703,45 +722,40 @@ export class DropsService {
   async discover(
     firebaseUid?: string,
     page = 1,
-    limit = 6,
+    limit = 15,
     category?: DropCategory,
   ): Promise<DiscoverDropsResponseDto> {
-    // 1. Parallel: featured drop + user lookup + public list + chief IDs
-    // We fetch the public list without exclusion to allow parallelization, then filter in memory
-    const [featuredResult, user, allPublicPaginated, chiefIds] = await Promise.all([
-      this.dropsRepository.findPublicDrops(1, 1),
-      firebaseUid ? this.usersService.findByFirebaseUid(firebaseUid) : Promise.resolve(null),
+    const user = firebaseUid ? await this.usersService.findByFirebaseUid(firebaseUid) : null;
+    const joinedIds = user ? await this.dropsRepository.findJoinedDropIds(user.id) : [];
+
+    // 1. Parallel: featured, chiefIds, public stream
+    const [featuredResult, chiefIds, allPublicPaginated] = await Promise.all([
+      // Featured: Most recent public and upcoming NOT joined (ignores category)
+      this.dropsRepository.findPublicDrops(1, 15, undefined, joinedIds),
+      // Squad Recon Chiefs: frequently joined
+      user ? this.dropsRepository.findRecentJoinedChiefIds(user.id, 4) : Promise.resolve([]),
+      // Public Stream: Paginated with category
       this.dropsRepository.findPublicDrops(page, limit, category),
-      firebaseUid ? (async () => {
-        const u = await this.usersService.findByFirebaseUid(firebaseUid);
-        return u ? this.dropsRepository.findRecentJoinedChiefIds(u.id) : [];
-      })() : Promise.resolve([]),
     ]);
 
+    // Choose newest drop from the 15 pre-checked candidates
     const featuredRow = featuredResult.data[0] ?? null;
-    
-    // Filter out the featured drop from the public list if it exists there
-    if (featuredRow) {
-      allPublicPaginated.data = allPublicPaginated.data.filter(d => d.id !== featuredRow.id);
-      // If we filtered one out, we might have limit-1 items. For UX this is usually fine, 
-      // or we could have fetched limit+1 to be safe.
-    }
 
-    // 2. Fetch upcoming drops by chiefs
-    const recentChiefsRows = chiefIds.length > 0 
-      ? await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, category)
+    // 2. Fetch Squad Recon: Top 4 from top 4 frequently joined chiefs NOT joined (ignores category)
+    const recentChiefsRows = chiefIds.length > 0
+      ? await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, undefined, joinedIds, 4)
       : [];
 
-    // 3. Fetch spark state for all visible drops in one go
+    // 3. Batch Spark Check - optimized performance for all visible drops
     let sparks: Set<string> | undefined;
     if (user) {
-      const dropIdList = new Set<string>();
-      if (featuredRow) dropIdList.add(featuredRow.id);
-      allPublicPaginated.data.forEach(r => dropIdList.add(r.id));
-      recentChiefsRows.forEach(r => dropIdList.add(r.id));
-
-      if (dropIdList.size > 0) {
-        const sparked = await this.dropsRepository.findDropIdsSparkedByUser(user.id, [...dropIdList]);
+      const allVisibleIds = new Set<string>();
+      if (featuredRow) allVisibleIds.add(featuredRow.id);
+      allPublicPaginated.data.forEach(d => allVisibleIds.add(d.id));
+      recentChiefsRows.forEach(r => allVisibleIds.add(r.id));
+      
+      if (allVisibleIds.size > 0) {
+        const sparked = await this.dropsRepository.findDropIdsSparkedByUser(user.id, [...allVisibleIds]);
         sparks = new Set(sparked);
       }
     }

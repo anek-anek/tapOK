@@ -295,7 +295,7 @@ export class DropsRepository {
     return [...new Set(rows.map((r) => r.dropId))];
   }
 
-  async findUpcomingDropsByChiefs(chiefIds: string[], category?: DropCategory): Promise<Drop[]> {
+  async findUpcomingDropsByChiefs(chiefIds: string[], category?: DropCategory, excludeIds: string[] = [], limit: number = 3): Promise<Drop[]> {
     if (chiefIds.length === 0) return [];
     const qb = this.buildPublicDiscoverQueryBuilder()
       .where('drop.organiserId IN (:...chiefIds)', { chiefIds })
@@ -306,22 +306,37 @@ export class DropsRepository {
     if (category) {
       qb.andWhere('drop.category = :category', { category });
     }
-    qb.orderBy('drop.scheduledAt', 'ASC');
+    if (excludeIds.length > 0) {
+      qb.andWhere('drop.id NOT IN (:...excludeIds)', { excludeIds });
+    }
+    qb.orderBy('drop.scheduledAt', 'ASC').limit(limit);
     return qb.getMany();
+  }
+
+  async findJoinedDropIds(userId: string): Promise<string[]> {
+    const rows = await this.crewRepo.createQueryBuilder('crew')
+      .select('crew.dropId', 'dropId')
+      .where('crew.userId = :userId', { userId })
+      .andWhere('crew.status = :status', { status: DropCrewStatus.IN })
+      .getRawMany<{ dropId: string }>();
+    return rows.map(r => r.dropId);
   }
 
   async findRecentJoinedChiefIds(userId: string, limit: number = 3): Promise<string[]> {
     const rows = await this.crewRepo.createQueryBuilder('crew')
       .select('drop.organiserId', 'organiserId')
+      .addSelect('COUNT(*)', 'count')
       .innerJoin('crew.drop', 'drop')
       .where('crew.userId = :userId', { userId })
       .andWhere('crew.status = :status', { status: DropCrewStatus.IN })
       .andWhere('drop.organiserId != :userId', { userId })
-      .orderBy('crew.joinedAt', 'DESC')
-      .limit(20)
-      .getRawMany<{ organiserId: string }>();
+      .groupBy('drop.organiserId')
+      .orderBy('count', 'DESC')
+      .addOrderBy('MAX(crew.joinedAt)', 'DESC')
+      .limit(limit)
+      .getRawMany<{ organiserId: string; count: string }>();
 
-    return Array.from(new Set(rows.map((r) => r.organiserId))).slice(0, limit);
+    return rows.map((r) => r.organiserId);
   }
 
   async findPublicDrops(
