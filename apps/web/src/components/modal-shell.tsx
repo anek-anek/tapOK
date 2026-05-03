@@ -40,7 +40,6 @@ export function ModalShell({
     const originalHtmlScrollbarGutter = document.documentElement.style.scrollbarGutter;
     
     document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
     document.documentElement.style.scrollbarGutter = 'initial';
     
     if (scrollbarWidth > 0) {
@@ -53,7 +52,6 @@ export function ModalShell({
       const otherModals = document.querySelectorAll('.fixed.inset-0.z-50');
       if (otherModals.length <= 1) {
         document.body.style.overflow = originalBodyOverflow;
-        document.documentElement.style.overflow = originalHtmlOverflow;
         document.documentElement.style.scrollbarGutter = originalHtmlScrollbarGutter;
         document.body.style.paddingRight = originalPaddingRight;
       }
