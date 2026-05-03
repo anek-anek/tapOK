@@ -7,6 +7,7 @@ import { TapokNavbar } from '@/components/tapok-navbar';
 import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
 import {
   useInfiniteDiscoverDrops,
+  useDiscoverLayout,
 } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import { DropShareModal } from '@/components/drops/DropShareModal';
@@ -17,6 +18,7 @@ import {
   Filter,
   Users,
   Loader2,
+  Globe,
 } from 'lucide-react';
 import {
   HeroDropCard,
@@ -30,7 +32,7 @@ import { cn } from '@/lib/utils';
 // ── components ────────────────────────────────────────────────────────────────
 
 const CATEGORIES: { label: string; value: DropCategory | undefined }[] = [
-  { label: 'ALL MISSIONS', value: undefined },
+  { label: 'ALL', value: undefined },
   { label: 'HANGOUTS', value: 'hangout' },
   { label: 'PARTIES', value: 'party' },
 ];
@@ -178,17 +180,29 @@ export default function DiscoverClient() {
   const [category, setCategory] = useState<DropCategory | undefined>(undefined);
   const [shareModalDrop, setShareModalDrop] = useState<Drop | null>(null);
 
+  // 1. Static Layout (Featured + Squad Recon)
   const {
-    data: realData,
-    isLoading,
-    isError,
+    data: layoutData,
+    isLoading: isLoadingLayout,
+    isError: isErrorLayout,
+  } = useDiscoverLayout();
+
+  // 2. Paginated Stream
+  const {
+    data: streamData,
+    isLoading: isLoadingStream,
+    isError: isErrorStream,
+    isFetching: isFetchingStream,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteDiscoverDrops({ category, limit: 15 });
+  } = useInfiniteDiscoverDrops({ category, limit: 15, uid: dbUser?.id });
 
-  const data = realData?.pages[0];
-  const allPublicDrops = realData?.pages.flatMap(page => page.allPublic.data) ?? [];
+  const isError = isErrorLayout || isErrorStream;
+
+  const allPublicDrops = streamData?.pages.flatMap(page => page.allPublic.data) ?? [];
+  const featuredDrop = layoutData?.featured;
+  const squadReconDrops = layoutData?.recentChiefsDrops;
   const observerTarget = React.useRef(null);
 
   React.useEffect(() => {
@@ -255,131 +269,150 @@ export default function DiscoverClient() {
         ) : (
           <div className="space-y-16">
             {/* Featured Section */}
-            {((isLoading && !data) || data?.featured || (data?.allPublic?.data?.length ?? 0) > 0) && (
+            {(isLoadingLayout || featuredDrop) && (
               <section className="animate-fade-up [animation-delay:200ms]">
                 <SectionHeading
                   icon={Sparkles}
                   title="Featured Mission"
                   sub="Current Highlight"
                 />
-                {isLoading && !data ? (
+                {isLoadingLayout ? (
                   <HeroCardSkeleton />
-                ) : data?.featured ? (
+                ) : featuredDrop ? (
                   <HeroDropCard
-                    drop={data.featured as unknown as Drop}
-                    viewerId={dbUser?.id}
-                    onShare={handleShare}
-                  />
-                ) : (data?.allPublic?.data?.length ?? 0) > 0 ? (
-                  <HeroDropCard
-                    drop={data!.allPublic.data[0] as unknown as Drop}
+                    drop={featuredDrop as unknown as Drop}
                     viewerId={dbUser?.id}
                     onShare={handleShare}
                   />
                 ) : null}
               </section>
-            )}
-
-            {/* Separator */}
-            {((data?.recentChiefsDrops?.length ?? 0) > 0 || isLoading) && (
-              <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
             )}
 
             {/* SQUAD RECON */}
-            {((data?.recentChiefsDrops?.length ?? 0) > 0 || isLoading) && (
-              <section className="animate-fade-up [animation-delay:300ms]">
-                <SectionHeading
-                  icon={Users}
-                  title="Squad Recon"
-                  sub="Active in your network"
-                />
-                {isLoading && !data ? (
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    <ListCardSkeleton />
-                    <ListCardSkeleton />
-                    <ListCardSkeleton />
-                  </div>
-                ) : (
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {data?.recentChiefsDrops?.slice(0, 3).map((drop) => (
-                      <ListDropCard
-                        key={drop.id}
-                        drop={drop as unknown as Drop}
-                        viewerId={dbUser?.id}
-                        onShare={handleShare}
-                        layout="masonry"
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
+            {(!!dbUser && (isLoadingLayout || (squadReconDrops?.length ?? 0) > 0)) && (
+              <>
+                <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
+                <section className="animate-fade-up [animation-delay:300ms]">
+                  <SectionHeading
+                    icon={Users}
+                    title="Squad Recon"
+                    sub="Active in your network"
+                  />
+                  {isLoadingLayout ? (
+                    <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+                      <ListCardSkeleton layout="grid" />
+                      <ListCardSkeleton layout="grid" />
+                      <ListCardSkeleton layout="grid" />
+                      <ListCardSkeleton layout="grid" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+                      {squadReconDrops?.slice(0, 4).map((drop) => (
+                        <ListDropCard
+                          key={drop.id}
+                          drop={drop as unknown as Drop}
+                          viewerId={dbUser?.id}
+                          onShare={handleShare}
+                          layout="grid"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </>
             )}
 
-            {/* Separator */}
-            {((data?.allPublic?.data?.length ?? 0) > 0 || isLoading) && (
-              <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
-            )}
+            {/* Separator before Stream */}
+            <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
 
             {/* Public Stream */}
             <section className="animate-fade-up [animation-delay:400ms]">
-              <div className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-                <SectionHeading
-                  icon={Filter}
-                  title="Public Stream"
-                  sub="Open grid missions"
-                  className="mb-0"
-                />
+              <div className="my-12 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <SectionHeading
+                    icon={Filter}
+                    title="Public Stream"
+                    sub="Open grid missions"
+                    className="mb-0"
+                  />
+                </div>
                 <CategoryFilter active={category} onSelect={setCategory} />
               </div>
 
-              {isLoading && !data ? (
-                <div className="columns-1 gap-6 sm:columns-2 lg:columns-3">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="mb-6 break-inside-avoid">
-                      <ListCardSkeleton />
+              <div className="relative min-h-[400px]">
+                {/* Center Loader Overlay */}
+                {(isFetchingStream && !isFetchingNextPage) && (
+                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-tok-cream/10 backdrop-blur-[1px]">
+                    <div className="flex flex-col items-center gap-3 rounded-2xl border-[3px] border-tok-black bg-white p-8 shadow-[8px_8px_0px_#1C1C1A] animate-in fade-in zoom-in duration-300">
+                      <Loader2 size={32} className="animate-spin text-tok-teal" />
+                      <p className="font-passion text-sm font-bold uppercase tracking-[2px] text-tok-black">
+                        Syncing Board...
+                      </p>
                     </div>
-                  ))}
-                </div>
-              ) : allPublicDrops.length === 0 ? (
-                <div className="flex flex-col items-center py-20 text-center rounded-2xl border-4 border-dashed border-tok-black/10">
-                  <p className="font-passion text-lg font-bold uppercase tracking-widest text-tok-black/20">
-                    No missions found
-                  </p>
-                </div>
-              ) : (
-                <div className={cn(
-                  "columns-1 gap-6 sm:columns-2 lg:columns-3 transition-opacity duration-300",
-                  (isLoading) ? "opacity-50" : "opacity-100"
-                )}>
-                  {allPublicDrops.map((drop) => (
-                    <div key={drop.id} className="break-inside-avoid mb-6">
-                      <ListDropCard
-                        drop={drop as unknown as Drop}
-                        viewerId={dbUser?.id}
-                        onShare={handleShare}
-                        layout="masonry"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                )}
 
-              {/* Load More Trigger */}
-              <div ref={observerTarget} className="mt-12 flex justify-center py-8">
-                {isFetchingNextPage || (isLoading && data) ? (
-                  <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-tok-teal" />
-                    <p className="font-passion text-xs font-bold uppercase tracking-[2px] text-tok-teal">
-                      Syncing grid...
+                {isLoadingStream ? (
+                  <div className="columns-2 gap-4 sm:columns-2 sm:gap-6 lg:columns-3">
+                    {/* Row 1 */}
+                    <div className="mb-4 break-inside-avoid sm:mb-6">
+                      <ListCardSkeleton layout="grid" /> {/* Standard vertical */}
+                    </div>
+                    <div className="mb-4 break-inside-avoid sm:mb-6">
+                      <ListCardSkeleton layout="masonry" /> {/* Default portraitish */}
+                    </div>
+                    <div className="mb-4 break-inside-avoid sm:mb-6">
+                      <ListCardSkeleton layout="grid" />
+                    </div>
+                    {/* Row 2 */}
+                    <div className="mb-4 break-inside-avoid sm:mb-6">
+                      <ListCardSkeleton layout="masonry" />
+                    </div>
+                    <div className="mb-4 break-inside-avoid sm:mb-6">
+                      <ListCardSkeleton layout="grid" />
+                    </div>
+                    <div className="mb-4 break-inside-avoid sm:mb-6">
+                      <ListCardSkeleton layout="masonry" />
+                    </div>
+                  </div>
+                ) : allPublicDrops.length === 0 ? (
+                  <div className="flex flex-col items-center py-20 text-center rounded-2xl border-4 border-dashed border-tok-black/10">
+                    <p className="font-passion text-lg font-bold uppercase tracking-widest text-tok-black/20">
+                      No missions found
                     </p>
                   </div>
-                ) : hasNextPage ? (
-                  <div className="h-8 w-full" />
-                ) : allPublicDrops.length > 0 ? (
-                  <p className="font-passion text-[10px] font-bold uppercase tracking-[3px] text-tok-black/20">
-                    — End of Signal —
-                  </p>
-                ) : null}
+                ) : (
+                  <div className="columns-2 gap-4 sm:columns-2 sm:gap-6 lg:columns-3">
+                    {allPublicDrops.map((drop) => (
+                      <div key={drop.id} className="break-inside-avoid mb-4 sm:mb-6">
+                        <ListDropCard
+                          drop={drop as unknown as Drop}
+                          viewerId={dbUser?.id}
+                          onShare={handleShare}
+                          layout="masonry"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Load More Trigger */}
+                <div ref={observerTarget} className="mt-12 flex justify-center py-8">
+                  {isFetchingNextPage ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-tok-teal" />
+                      <p className="font-passion text-xs font-bold uppercase tracking-[2px] text-tok-teal">
+                        Syncing grid...
+                      </p>
+                    </div>
+                  ) : hasNextPage ? (
+                    <div className="h-8 w-full" />
+                  ) : allPublicDrops.length > 0 ? (
+                    <p className="font-passion text-[10px] font-bold uppercase tracking-[3px] text-tok-black/20">
+                      — End of Signal —
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </section>
           </div>

@@ -20,29 +20,29 @@ export const dropKeys = {
   myActivity: (uid: string) => ['drops', 'activity', 'mine', uid] as const,
   myActivityPrefix: () => ['drops', 'activity', 'mine'] as const,
   activityLogs: (id: string, page: number) => ['drops', id, 'activity', page] as const,
-  discover: (page: number, category?: string) => ['drops', 'discover', page, category] as const,
-  discoverInfinite: (category?: string) => ['drops', 'discover', 'infinite', category] as const,
+  discoverLayout: (uid?: string) => ['drops', 'discover', 'layout', uid] as const,
+  discoverStream: (category?: string, uid?: string) => ['drops', 'discover', 'stream', category, uid] as const,
 };
 
-export function useDiscoverDrops(options?: { page?: number; category?: string }): UseQueryResult<DiscoverDropsPayload> {
-  const page = options?.page ?? 1;
-  const category = options?.category;
-  
+export function useDiscoverLayout() {
+  const { dbUser, isReady } = useAuth();
+  const uid = dbUser?.id;
+
   return useQuery({
-    queryKey: dropKeys.discover(page, category),
-    queryFn: () => dropsService.getDiscoverData(page, 6, category === 'all' ? undefined : category),
-    placeholderData: keepPreviousData,
-    refetchInterval: 60_000,
-    staleTime: 60_000,
+    queryKey: dropKeys.discoverLayout(uid),
+    queryFn: () => dropsService.getDiscoverData(1, 1),
+    enabled: isReady,
+    staleTime: 5 * 60_000,
   });
 }
 
-export function useInfiniteDiscoverDrops(options?: { category?: string; limit?: number }) {
+export function useInfiniteDiscoverDrops(options?: { category?: string; limit?: number; uid?: string }) {
   const category = options?.category;
-  const limit = options?.limit ?? 30;
+  const limit = options?.limit ?? 15;
+  const uid = options?.uid;
 
   return useInfiniteQuery({
-    queryKey: dropKeys.discoverInfinite(category),
+    queryKey: dropKeys.discoverStream(category, uid),
     queryFn: ({ pageParam = 1 }) => 
       dropsService.getDiscoverData(pageParam as number, limit, category === 'all' ? undefined : category),
     initialPageParam: 1,
