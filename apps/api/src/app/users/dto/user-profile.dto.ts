@@ -44,6 +44,9 @@ export class UserProfileDto {
   @ApiProperty({ description: 'Number of drops created by this user' })
   dropCount: number;
 
+  @ApiProperty({ description: 'Total unique crew members reached across all drops' })
+  crewReached: number;
+
   @ApiProperty()
   createdAt: Date;
 

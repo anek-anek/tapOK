@@ -71,12 +71,23 @@ export class UsersService {
     const user = await this.usersRepository.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('No account found for this user.');
 
-    const [{ count }] = await this.dataSource.query<[{ count: string }]>(
-      `SELECT COUNT(*) AS count FROM drops WHERE "organiserId" = $1`,
+    const [{ dropCount, crewReached }] = await this.dataSource.query<[{ dropCount: string, crewReached: string }]>(
+      `
+      SELECT 
+        (SELECT COUNT(*) FROM drops WHERE "organiserId" = $1) as "dropCount",
+        (SELECT COUNT(DISTINCT c."userId") 
+         FROM drop_crew c 
+         WHERE c."dropId" IN (SELECT id FROM drops WHERE "organiserId" = $1)
+         AND c.status = 'in') as "crewReached"
+      `,
       [user.id],
     );
 
-    return { ...user, dropCount: parseInt(count, 10) };
+    return { 
+      ...user, 
+      dropCount: parseInt(dropCount, 10),
+      crewReached: parseInt(crewReached, 10)
+    };
   }
 
   create(dto: CreateUserDto): Promise<User> {
