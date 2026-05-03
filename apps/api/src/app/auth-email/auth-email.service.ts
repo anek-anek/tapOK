@@ -80,20 +80,9 @@ export class AuthEmailService {
 
     let targetEmail = normalizedEmail;
 
-    // Resolve the authoritative email and check if already verified
+    // Resolve the authoritative email from Firebase
     if (firebaseUid) {
       const userRecord = await admin.auth().getUser(firebaseUid);
-
-      if (userRecord.emailVerified) {
-        if (user && !user.isEmailVerified) {
-          await this.usersRepository.update(user.id, {
-            isEmailVerified: true,
-            emailVerifiedAt: new Date(),
-          } as any);
-        }
-        return;
-      }
-
       if (userRecord.email) {
         targetEmail = userRecord.email;
       }
