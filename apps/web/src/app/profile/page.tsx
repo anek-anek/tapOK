@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { ListDropCard, ListCardSkeleton } from '@/components/drops/drop-cards';
 import {
   Popover,
@@ -588,14 +589,26 @@ export default function ProfilePage() {
                 </div>
                 <button
                   type="button"
-                  onClick={async () => {
+                  disabled={displayUser.isEmailVerified}
+                  onClick={async (e) => {
+                    const btn = e.currentTarget;
+                    const originalContent = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = 'SENDING...';
+
                     try {
+                      const auth = getFirebaseAuth();
+                      const token = await auth.currentUser?.getIdToken();
+                      
                       const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
                       const apiUrl = (rawApiUrl.split(',')[0] || '').trim();
 
                       const response = await fetch(`${apiUrl}/auth/email/verify-email`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                          'Content-Type': 'application/json',
+                          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                        },
                         body: JSON.stringify({ email: displayUser.email }),
                       });
                       
@@ -607,9 +620,12 @@ export default function ProfilePage() {
                       toast.success('VERIFICATION EMAIL SENT');
                     } catch (err: any) {
                       toast.error(err.message || 'FAILED TO SEND EMAIL');
+                    } finally {
+                      btn.disabled = false;
+                      btn.innerHTML = originalContent;
                     }
                   }}
-                  className="shrink-0 flex items-center gap-2 border-2 border-tok-black bg-tok-black px-3 py-2 font-passion text-sm text-tok-cream shadow-[3px_3px_0px_0px_#006666] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#006666] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:px-4 sm:text-base"
+                  className="shrink-0 flex items-center gap-2 border-2 border-tok-black bg-tok-black px-3 py-2 font-passion text-sm text-tok-cream shadow-[3px_3px_0px_0px_#006666] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#006666] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 sm:px-4 sm:text-base"
                 >
                   <Mail size={14} className="sm:size-4" />
                   <span className="uppercase">SEND LINK</span>

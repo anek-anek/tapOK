@@ -105,10 +105,12 @@ export function TapokNavbar() {
   return (
     <>
       <div className="h-[60px]" />
-      <VerificationBanner
-        isNavbarVisible={visible}
-        isMobileMenuOpen={mobileMenuOpen}
-      />
+      {!['/', '/login', '/register', '/forgot-password', '/reset-password'].includes(pathname) && (
+        <VerificationBanner
+          isNavbarVisible={visible}
+          isMobileMenuOpen={mobileMenuOpen}
+        />
+      )}
 
       {/* Progress bar visible when navbar is hidden */}
       <div
