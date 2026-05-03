@@ -163,7 +163,7 @@ export class DropsService {
   private assertUserIsVerified(user: User, action: string) {
     if (!user.isEmailVerified) {
       throw new ForbiddenException({
-        message: `Please verify your email to ${action}.`,
+        message: `Verification Required: Please verify your email to ${action}. You can resend the link from your Profile.`,
         code: 'EMAIL_NOT_VERIFIED',
       });
     }
@@ -489,7 +489,7 @@ export class DropsService {
       }
 
       if (drop.isLocked) {
-        this.assertUserIsVerified(user, 'join a drop that requires approval');
+        this.assertUserIsVerified(user, 'join drops that require approval');
       }
 
       this.assertUserMeetsDropMinimumAge(user, drop);

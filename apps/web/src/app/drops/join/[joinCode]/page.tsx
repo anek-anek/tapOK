@@ -251,7 +251,24 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
         }
       },
       onError: (err: unknown) => {
-        toast.error(getJoinDropErrorMessage(err).toUpperCase());
+        if (axios.isAxiosError(err) && err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+          toast.error((t) => (
+            <div className="flex flex-col gap-3">
+              <p className="font-passion text-xs font-bold uppercase tracking-wider">{err.response?.data?.message}</p>
+              <button 
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  router.push('/profile');
+                }}
+                className="rounded-sm border-2 border-white bg-white px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black transition-all hover:bg-white/90"
+              >
+                Go to Profile
+              </button>
+            </div>
+          ), { duration: 6000 });
+        } else {
+          toast.error(getJoinDropErrorMessage(err).toUpperCase());
+        }
       }
     });
   };

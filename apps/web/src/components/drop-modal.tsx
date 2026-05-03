@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -465,8 +466,25 @@ export function DropModal({
           try {
             await updateDrop.mutateAsync(dto);
           } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'FAILED TO UPDATE DROP';
-            toast.error(String(msg).toUpperCase());
+            if (axios.isAxiosError(err) && err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+              toast.error((t) => (
+                <div className="flex flex-col gap-3">
+                  <p className="font-passion text-xs font-bold uppercase tracking-wider">{err.response?.data?.message}</p>
+                  <button 
+                    onClick={() => {
+                      toast.dismiss(t.id);
+                      router.push('/profile');
+                    }}
+                    className="rounded-sm border-2 border-white bg-white px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black transition-all hover:bg-white/90"
+                  >
+                    Go to Profile
+                  </button>
+                </div>
+              ), { duration: 6000 });
+            } else {
+              const msg = err instanceof Error ? err.message : 'FAILED TO UPDATE DROP';
+              toast.error(String(msg).toUpperCase());
+            }
             return;
           }
         }
@@ -516,8 +534,25 @@ export function DropModal({
           createdId = result.id;
           pendingIdRef.current = createdId;
         } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'FAILED TO DEPLOY DROP';
-          toast.error(String(msg).toUpperCase());
+          if (axios.isAxiosError(err) && err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+            toast.error((t) => (
+              <div className="flex flex-col gap-3">
+                <p className="font-passion text-xs font-bold uppercase tracking-wider">{err.response?.data?.message}</p>
+                <button 
+                  onClick={() => {
+                    toast.dismiss(t.id);
+                    router.push('/profile');
+                  }}
+                  className="rounded-sm border-2 border-white bg-white px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black transition-all hover:bg-white/90"
+                >
+                  Go to Profile
+                </button>
+              </div>
+            ), { duration: 6000 });
+          } else {
+            const msg = err instanceof Error ? err.message : 'FAILED TO DEPLOY DROP';
+            toast.error(String(msg).toUpperCase());
+          }
           return;
         }
 
