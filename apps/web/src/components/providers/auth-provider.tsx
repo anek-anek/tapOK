@@ -83,13 +83,19 @@ export function AuthProvider({
         }
 
         const result = await finalizeSession(firebaseUser, { mode: 'login' });
+
         if (result.ok) {
           setDbUser(result.dbUser);
           setUser(firebaseUser);
         } else {
-          setDbUser(null);
-          setUser(null);
-          await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => undefined);
+          const transientReasons = ['rate_limited', 'backend_unavailable', 'error'];
+          if (transientReasons.includes(result.reason)) {
+            console.warn(`[AuthProvider] Transient session failure (${result.reason}). Preserving current state.`);
+          } else {
+            setDbUser(null);
+            setUser(null);
+            await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => undefined);
+          }
         }
       } else {
         queryClient.clear();

@@ -853,10 +853,27 @@ export class DropsService {
     return photo;
   }
 
-  async getPhotos(dropId: string, firebaseUid: string): Promise<DropPhotoPublicDto[]> {
+  async getPhotos(
+    dropId: string,
+    firebaseUid: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ data: DropPhotoPublicDto[]; total: number; page: number; totalPages: number }> {
     await this.findOne(dropId, firebaseUid);
-    const photos = await this.dropsRepository.findPhotos(dropId);
-    return photos.map((p) => this.toPhotoPublicDto(p));
+    const result = await this.dropsRepository.findPhotos(dropId, page, limit);
+    return {
+      ...result,
+      data: result.data.map((p) => this.toPhotoPublicDto(p)),
+    };
+  }
+
+  async getPhotoDetail(dropId: string, photoId: string, firebaseUid: string): Promise<DropPhotoPublicDto> {
+    await this.findOne(dropId, firebaseUid);
+    const photo = await this.dropsRepository.findPhotoById(photoId);
+    if (!photo || photo.dropId !== dropId) {
+      throw new NotFoundException('Photo not found');
+    }
+    return this.toPhotoPublicDto(photo);
   }
 
   private toPhotoPublicDto(photo: DropPhoto): DropPhotoPublicDto {
@@ -926,20 +943,8 @@ export class DropsService {
       const mimeType = photo.base64.match(/data:([^;]+);/)?.[1] || 'image/jpeg';
       
       // Upload to storage
-      const ext = mimeType === 'image/png' ? 'png' : 'jpg';
-      const path = `drops/${dropId}/photos/${photoId}.${ext}`;
-      const bucket = this.storageService.storage.from('drops');
-
-      const { error } = await bucket.upload(path, buffer, {
-        contentType: mimeType,
-        upsert: true,
-      });
-
-      if (error) throw new BadRequestException(`Storage upload failed: ${error.message}`);
-
-      const { data } = bucket.getPublicUrl(path);
-      const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
-
+      const publicUrl = await this.storageService.uploadPhoto(dropId, photoId, buffer, mimeType);
+      
       await this.dropsRepository.updatePhoto(photoId, {
         url: publicUrl,
         base64: null,

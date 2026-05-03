@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useMemo, type MouseEvent, type DragEvent } from 'react';
 import NextImage from 'next/image';
 import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
 import {
   Camera as IconCamera,
   Trash2 as IconTrash,
@@ -17,6 +16,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { dropsService } from '@/services/drops.service';
 import { useUploadPhoto, useFeaturePhoto, useDeletePhoto } from '@/hooks/mutations/use-drop-mutations';
+import { useInfinitePhotos, usePhotoDetail } from '@/hooks/queries/use-drops';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { ModalShell } from '@/components/modal-shell';
@@ -33,49 +33,42 @@ interface PhotoRollProps {
 export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRollProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<DropPhoto | null>(null);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [photoToDelete, setPhotoToDelete] = useState<DropPhoto | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
 
-  const blockImageContextMenu = (event: MouseEvent) => {
-    event.preventDefault();
-  };
-
-  const blockImageDrag = (event: DragEvent) => {
-    event.preventDefault();
-  };
-
-  const { data: photos = [], isLoading } = useQuery({
-    queryKey: ['drops', drop.id, 'photos'],
-    queryFn: () => dropsService.getPhotos(drop.id),
+  const {
+    data: infiniteData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfinitePhotos(drop.id, {
     enabled: !!drop.id && (isOrganiser || isCrewMember),
   });
+
+  const photos = useMemo(() =>
+    infiniteData?.pages.flatMap((page: any) => page.data) ?? [],
+    [infiniteData]
+  );
 
   useEffect(() => {
     if (photos.length > 0 && currentIndex >= photos.length) {
       setCurrentIndex(photos.length - 1);
     }
-  }, [photos.length, currentIndex]);
-
-  useEffect(() => {
-    const handleSaveShortcut = (event: KeyboardEvent) => {
-      const isSaveShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's';
-      if (!isSaveShortcut) return;
-      event.preventDefault();
-    };
-
-    window.addEventListener('keydown', handleSaveShortcut);
-    return () => window.removeEventListener('keydown', handleSaveShortcut);
-  }, []);
+    // Pre-fetch next page when near the end
+    if (hasNextPage && !isFetchingNextPage && currentIndex >= photos.length - 3) {
+      void fetchNextPage();
+    }
+  }, [photos.length, currentIndex, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const uploadMutation = useUploadPhoto(drop.id);
   const featureMutation = useFeaturePhoto(drop.id);
-  const deleteMutation = useDeletePhoto(drop.id);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith('image/')) {
       toast.error('PLEASE SELECT AN IMAGE FILE');
       return;
@@ -88,7 +81,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
       toast.success('POSTED A NEW SHOT TO THE ROLL');
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
-        toast.error((t) => (
+        toast.error((t: any) => (
           <div className="flex flex-col gap-3">
             <p className="font-passion text-xs font-bold uppercase tracking-wider">{err.response?.data?.message}</p>
             <button
@@ -115,8 +108,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
   const handleFeature = async (photoId: string) => {
     const photo = photos.find((p: any) => p.id === photoId);
     const isUnfeaturing = photo?.isFeatured;
-
-    if (!isUnfeaturing && reachedFeaturedLimit) {
+    if (!isUnfeaturing && photos.filter((p: any) => p.isFeatured).length >= 5) {
       toast.error('MAX 5 SPOTLIGHTS ON THE ROLL');
       return;
     }
@@ -124,35 +116,26 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
     try {
       await featureMutation.mutateAsync(photoId);
       toast.success(isUnfeaturing ? 'CLEARED THE SPOTLIGHT' : 'SPOTLIGHTED A MOMENT');
-    } catch {
-      toast.error(isUnfeaturing ? 'FAILED TO CLEAR THE SPOTLIGHT' : 'FAILED TO SPOTLIGHT');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || (isUnfeaturing ? 'FAILED TO CLEAR THE SPOTLIGHT' : 'FAILED TO SPOTLIGHT');
+      toast.error(String(msg).toUpperCase());
     }
-  };
-
-  const handleDelete = (photo: DropPhoto) => {
-    setPhotoToDelete(photo);
   };
 
   const isCompleted = drop.status === 'completed';
   const canUpload = (isOrganiser || isCrewMember) && !isCompleted;
   const userPhotos = photos.filter((p: any) => p.userId === userId);
   const reachedUserLimit = userPhotos.length >= 3;
-  const reachedTotalLimit = photos.length >= 10;
-  const featuredPhotos = photos.filter((p: any) => p.isFeatured);
-  const reachedFeaturedLimit = featuredPhotos.length >= 5;
+  const reachedTotalLimit = photos.length >= 50;
+
   const displayedPhotos = useMemo(() => {
-    if (isCompleted) {
-      return photos.filter((p) => p.isFeatured);
-    }
-    const featured = photos.filter((p) => p.isFeatured);
-    const nonFeatured = photos.filter((p) => !p.isFeatured);
+    if (isCompleted) return photos.filter((p: any) => p.isFeatured);
+    const featured = photos.filter((p: any) => p.isFeatured);
+    const nonFeatured = photos.filter((p: any) => !p.isFeatured);
     return [...featured, ...nonFeatured];
   }, [photos, isCompleted]);
 
-  // Hide the section if viewer is neither organiser nor crew.
-  if (!isOrganiser && !isCrewMember) {
-    return null;
-  }
+  if (!isOrganiser && !isCrewMember) return null;
 
   if (isLoading) {
     return (
@@ -162,11 +145,9 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
     );
   }
 
-
-
   return (
     <div className="mb-10 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-12 sm:mb-4">
         <div className="flex items-center gap-2">
           <IconCamera size={18} className="text-tok-black" strokeWidth={2.5} />
           <h3 className="font-passion text-lg font-bold uppercase tracking-wider text-tok-black">
@@ -206,13 +187,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
         )}
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileSelect}
-      />
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
 
       {displayedPhotos.length === 0 ? (
         <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A]">
@@ -232,14 +207,10 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isCompressing || uploadMutation.isPending || reachedUserLimit || reachedTotalLimit}
+                disabled={isCompressing || uploadMutation.isPending || reachedUserLimit}
                 className="flex h-9 shrink-0 items-center gap-1.5 rounded-[4px] border-[3px] border-tok-black bg-tok-yellow px-3 font-passion text-[10px] font-bold uppercase tracking-[1.2px] text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isCompressing || uploadMutation.isPending ? (
-                  <IconLoader size={12} className="animate-spin" />
-                ) : (
-                  <IconPlus size={12} strokeWidth={3} />
-                )}
+                {isCompressing || uploadMutation.isPending ? <IconLoader size={12} className="animate-spin" /> : <IconPlus size={12} strokeWidth={3} />}
                 <span>Add</span>
               </button>
             )}
@@ -247,115 +218,35 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
         </div>
       ) : (
         <div className="relative flex flex-col items-center pt-4 pb-8">
-          <div className="relative h-[320px] w-[260px] md:h-[400px] md:w-[320px]">
+          <div className="relative h-[320px] w-[320px] md:h-[400px] md:w-[400px] flex items-center justify-center">
             <AnimatePresence mode="popLayout">
               {displayedPhotos.slice().reverse().map((photo: any, index: number) => {
                 const actualIndex = displayedPhotos.length - 1 - index;
-                // Only show current and next 2 for performance and cleaner look
                 if (actualIndex < currentIndex || actualIndex > currentIndex + 2) return null;
-
                 const isTop = actualIndex === currentIndex;
                 const offset = actualIndex - currentIndex;
 
                 return (
-                  <motion.div
+                  <PhotoStackItem
                     key={photo.id}
-                    layout
-                    initial={{ scale: 0.8, opacity: 0, y: 20 }}
-                    animate={{
-                      scale: 1 - offset * 0.05,
-                      opacity: 1,
-                      y: offset * -12,
-                      x: offset * 4,
-                      rotate: isTop ? 0 : (offset % 2 === 0 ? 2 : -2),
-                      zIndex: 10 - offset
-                    }}
-                    exit={{ x: -300, opacity: 0, rotate: -20, scale: 0.9 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                    onClick={() => isTop && setSelectedPhoto(photo)}
-                    className={cn(
-                      "absolute inset-0 cursor-pointer overflow-hidden rounded-sm border-4 border-tok-black bg-white shadow-[8px_8px_0px_#1C1C1A]",
-                      !isTop && "pointer-events-none"
-                    )}
-                  >
-                    <NextImage
-                      src={photo.url || photo.base64}
-                      alt="Drop moment"
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 260px, 320px"
-                      draggable={false}
-                      onContextMenu={blockImageContextMenu}
-                      onDragStart={blockImageDrag}
-                    />
-
-                    {isTop && (
-                      <>
-                        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-tok-black/80 to-transparent p-4 pt-10">
-                          <div className="flex items-center gap-2">
-                            <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-white/10 font-passion text-[10px] font-bold text-white">
-                              {photo.user?.avatar ? (
-                                <NextImage src={photo.user.avatar} alt="" width={24} height={24} className="h-full w-full object-cover" />
-                              ) : (
-                                (photo.user?.firstName?.[0] || '') + (photo.user?.lastName?.[0] || '')
-                              )}
-                            </div>
-                            <p className="font-passion text-xs font-bold uppercase tracking-wider text-white">
-                              {photo.user?.firstName} {photo.user?.lastName}
-                            </p>
-                          </div>
-                        </div>
-                        {photo.isFeatured && (
-                          <div className="absolute left-4 top-4 rounded-full bg-tok-yellow p-2 shadow-[4px_4px_0px_#1C1C1A] border-2 border-tok-black">
-                            <IconStar size={14} className="fill-tok-black text-tok-black" strokeWidth={3} />
-                          </div>
-                        )}
-
-                        {/* Actions Overlay */}
-                        <div className="absolute right-3 top-3 flex flex-col gap-2">
-                          {isOrganiser && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                !featureMutation.isPending && handleFeature(photo.id);
-                              }}
-                              disabled={featureMutation.isPending}
-                              className={cn(
-                                "flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-black shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50",
-                                photo.isFeatured ? "bg-white text-tok-black" : "bg-tok-yellow text-tok-black"
-                              )}
-                            >
-                              {featureMutation.isPending ? (
-                                <IconLoader size={18} className="animate-spin" />
-                              ) : (
-                                <IconStar size={18} strokeWidth={2.5} className={photo.isFeatured ? "fill-tok-black" : ""} />
-                              )}
-                            </button>
-                          )}
-                          {(photo.userId === userId || isOrganiser) && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(photo);
-                              }}
-                              className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-black bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
-                            >
-                              <IconTrash size={18} strokeWidth={2.5} />
-                            </button>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </motion.div>
+                    dropId={drop.id}
+                    photo={photo}
+                    isTop={isTop}
+                    offset={offset}
+                    direction={direction}
+                    onSelect={() => setSelectedPhotoId(photo.id)}
+                  />
                 );
               })}
             </AnimatePresence>
           </div>
 
-          {/* Pagination Controls */}
           <div className="mt-10 flex items-center gap-6">
             <button
-              onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
+              onClick={() => {
+                setDirection(-1);
+                setCurrentIndex(prev => Math.max(0, prev - 1));
+              }}
               disabled={currentIndex === 0}
               className="flex h-12 w-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-20"
             >
@@ -363,93 +254,41 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
             </button>
 
             <div className="flex max-w-[120px] gap-2 overflow-hidden px-2">
-              {displayedPhotos.map((_, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "h-2 w-2 shrink-0 rounded-full border border-tok-black transition-all",
-                    i === currentIndex ? "w-6 bg-tok-black" : "bg-tok-black/20"
-                  )}
-                />
+              {displayedPhotos.map((_: any, i: number) => (
+                <div key={i} className={cn("h-2 w-2 shrink-0 rounded-full border border-tok-black transition-all", i === currentIndex ? "w-6 bg-tok-black" : "bg-tok-black/20")} />
               ))}
             </div>
 
             <button
-              onClick={() => setCurrentIndex(prev => Math.min(displayedPhotos.length - 1, prev + 1))}
-              disabled={currentIndex === displayedPhotos.length - 1}
+              onClick={() => {
+                setDirection(1);
+                setCurrentIndex(prev => Math.min(displayedPhotos.length - 1, prev + 1));
+              }}
+              disabled={currentIndex === displayedPhotos.length - 1 && !hasNextPage}
               className="flex h-12 w-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-20"
             >
-              <IconChevronRight size={28} strokeWidth={3} />
+              {isFetchingNextPage ? <IconLoader size={20} className="animate-spin" /> : <IconChevronRight size={28} strokeWidth={3} />}
             </button>
           </div>
         </div>
       )}
 
-      {reachedUserLimit && canUpload && !isOrganiser && (
-        <p className="text-center font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/40">
-          You&apos;ve reached your limit of 3 photos
-        </p>
+      {selectedPhotoId && (
+        <PhotoViewerModal
+          dropId={drop.id}
+          photoId={selectedPhotoId}
+          onClose={() => setSelectedPhotoId(null)}
+          isOrganiser={isOrganiser}
+          userId={userId}
+          onFeature={() => handleFeature(selectedPhotoId)}
+          onDelete={() => {
+            const photoObj = displayedPhotos.find(p => p.id === selectedPhotoId);
+            if (photoObj) setPhotoToDelete(photoObj);
+          }}
+          isFeaturePending={featureMutation.isPending}
+        />
       )}
 
-      {/* Photo Viewer Modal */}
-      {selectedPhoto && (
-        <ModalShell onClose={() => setSelectedPhoto(null)}>
-          {(close) => (
-            <div className="relative max-w-4xl overflow-hidden rounded-sm border-4 border-tok-black bg-tok-black shadow-[12px_12px_0px_#1C1C1A]">
-              <button
-                onClick={close}
-                className="absolute right-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"
-              >
-                <IconX size={20} strokeWidth={3} />
-              </button>
-
-              <div className="flex flex-col">
-                { }
-                <NextImage
-                  src={selectedPhoto.url || selectedPhoto.base64 || ''}
-                  alt="Full moment"
-                  width={1200}
-                  height={800}
-                  className="max-h-[80vh] w-full object-contain bg-tok-black/20"
-                  draggable={false}
-                  onContextMenu={blockImageContextMenu}
-                  onDragStart={blockImageDrag}
-                />
-
-                <div className="border-t-4 border-tok-black bg-tok-yellow p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-white font-passion text-xs font-bold text-tok-black">
-                        {selectedPhoto.user.avatar ? (
-                          <NextImage src={selectedPhoto.user.avatar} alt="" width={40} height={40} className="h-full w-full object-cover" />
-                        ) : (
-                          (selectedPhoto.user.firstName?.[0] || '') + (selectedPhoto.user.lastName?.[0] || '')
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/40">
-                          Captured By
-                        </p>
-                        <h4 className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
-                          {selectedPhoto.user.firstName} {selectedPhoto.user.lastName}
-                        </h4>
-                      </div>
-                    </div>
-                    {selectedPhoto.isFeatured && (
-                      <div className="flex items-center gap-2 rounded-sm border-2 border-tok-black bg-white px-3 py-1 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black shadow-[3px_3px_0px_#1C1C1A]">
-                        <IconStar size={12} className="fill-tok-black text-tok-black" strokeWidth={3} />
-                        Featured Moment
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </ModalShell>
-      )}
-
-      {/* Delete Photo Modal */}
       {photoToDelete && (
         <DeletePhotoModal
           dropId={drop.id}
@@ -461,9 +300,279 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
   );
 }
 
-/**
- * Compresses image to max 800px width/height and 0.7 quality
- */
+function PhotoStackItem({
+  dropId,
+  photo,
+  isTop,
+  offset,
+  direction,
+  onSelect,
+}: {
+  dropId: string;
+  photo: any;
+  isTop: boolean;
+  offset: number;
+  direction: number;
+  onSelect: () => void;
+}) {
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const { data: detail } = usePhotoDetail(dropId, photo.id, {
+    enabled: isTop && !photo.url,
+  });
+
+  const displaySrc = photo.url || detail?.base64 || '';
+  const isLandscape = orientation === 'landscape';
+
+  return (
+    <motion.div
+      layout
+      initial={{
+        x: direction < 0 ? -400 : 0,
+        opacity: 0,
+        scale: direction < 0 ? 0.9 : 0.8,
+        rotate: direction < 0 ? -25 : 0,
+        y: direction < 0 ? 0 : 20
+      }}
+      animate={{
+        scale: 1 - offset * 0.05,
+        opacity: 1,
+        y: offset * -12,
+        x: offset * 4,
+        rotate: isTop ? 0 : (offset % 2 === 0 ? 3 : -3),
+        zIndex: 10 - offset
+      }}
+      whileHover={isTop ? {
+        scale: 1.02,
+        y: -15,
+        rotate: 0,
+        transition: { type: 'spring', stiffness: 600, damping: 30 }
+      } : {}}
+      exit={{
+        x: -400,
+        opacity: 0,
+        rotate: -25,
+        scale: 0.9,
+        transition: { duration: 0.2, ease: "easeOut" }
+      }}
+      transition={{ type: 'spring', stiffness: 500, damping: 35, mass: 0.8 }}
+      onClick={() => isTop && displaySrc && onSelect()}
+      style={{
+        width: isLandscape ? 'min(440px, 95vw)' : 'min(280px, 75vw)',
+        height: isLandscape ? 'min(340px, 80vw)' : 'min(360px, 90vw)',
+      }}
+      className={cn(
+        "absolute cursor-pointer rounded-sm border-[4px] border-tok-black bg-white p-3 shadow-[8px_8px_0px_#1C1C1A] transition-all",
+        isLandscape ? "pb-14" : "pb-16",
+        !isTop && "pointer-events-none"
+      )}
+    >
+      <div className="relative h-full w-full overflow-hidden border-2 border-tok-black bg-tok-black/5">
+        {displaySrc ? (
+          <NextImage
+            src={displaySrc}
+            alt="Drop moment"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 440px, 440px"
+            draggable={false}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (img.naturalWidth > img.naturalHeight) {
+                setOrientation('landscape');
+              } else {
+                setOrientation('portrait');
+              }
+            }}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <IconLoader className="animate-spin text-tok-black/10" size={32} />
+          </div>
+        )}
+
+        {/* Status Badge only */}
+        {photo.isFeatured && (
+          <div className="absolute right-2 top-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-yellow shadow-[2px_2px_0px_#1C1C1A]">
+              <IconStar size={14} className="fill-tok-black text-tok-black" strokeWidth={2.5} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Polaroid bottom area */}
+      <div className={cn(
+        "absolute inset-x-3 bottom-0 flex items-center justify-between px-1",
+        isLandscape ? "h-14" : "h-16"
+      )}>
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale">
+            {photo.user?.avatar ? (
+              <NextImage src={photo.user.avatar} alt="" width={24} height={24} className="h-full w-full object-cover" />
+            ) : (
+              <span className="font-passion text-[9px] font-bold text-tok-teal">
+                {(photo.user?.firstName?.[0] || '') + (photo.user?.lastName?.[0] || '')}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col">
+            <p className="font-passion text-sm font-bold uppercase tracking-tight text-tok-black leading-none">
+              {photo.user?.firstName} {photo.user?.lastName}
+            </p>
+            <p className="mt-1 font-passion text-xs font-bold uppercase tracking-widest text-tok-black/50 leading-none">
+              {new Date(photo.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function PhotoViewerModal({
+  dropId,
+  photoId,
+  onClose,
+  isOrganiser,
+  userId,
+  onFeature,
+  onDelete,
+  isFeaturePending
+}: {
+  dropId: string;
+  photoId: string;
+  onClose: () => void;
+  isOrganiser: boolean;
+  userId?: string;
+  onFeature: () => void;
+  onDelete: () => void;
+  isFeaturePending: boolean;
+}) {
+  const { data: photo, isLoading } = usePhotoDetail(dropId, photoId);
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const [aspectRatio, setAspectRatio] = useState(1);
+
+  const isLandscape = orientation === 'landscape';
+
+  return (
+    <ModalShell onClose={onClose}>
+      {(close) => (
+        <div
+          className="relative mx-auto rounded-sm border-[4px] border-tok-black bg-white p-4 pb-6 shadow-[12px_12px_0px_#1C1C1A] transition-all"
+          style={{
+            maxWidth: '92vw',
+            width: 'fit-content',
+            minWidth: 'min(380px, 90vw)'
+          }}
+        >
+          <button
+            onClick={close}
+            className="absolute right-2 top-2 z-50 flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[3px_3px_0px_#1C1C1A] transition-all hover:bg-tok-black/5 active:translate-y-0 active:shadow-none"
+          >
+            <IconX size={18} strokeWidth={3} />
+          </button>
+
+          <div className="flex flex-col items-center">
+            {isLoading || !photo ? (
+              <div className="flex h-[300px] w-[300px] items-center justify-center text-tok-black/10">
+                <IconLoader className="animate-spin" size={48} />
+              </div>
+            ) : (
+              <>
+                <div className="relative overflow-hidden border-2 border-tok-black bg-tok-black/5 w-fit mt-8">
+                  <NextImage
+                    src={photo.url || photo.base64 || ''}
+                    alt="Full moment"
+                    width={1200}
+                    height={1200}
+                    className="h-auto w-auto object-contain max-h-[min(60vh,calc(100vh-240px))] max-w-[min(1000px,85vw)]"
+                    onLoad={(e) => {
+                      const img = e.currentTarget;
+                      const ratio = img.naturalWidth / img.naturalHeight;
+                      setAspectRatio(ratio);
+                      if (ratio > 1) setOrientation('landscape');
+                      else setOrientation('portrait');
+                    }}
+                  />
+                </div>
+
+                <div className={cn(
+                  "mt-4 flex items-center justify-between gap-4 w-full",
+                  isLandscape ? "min-h-12" : "min-h-16"
+                )}>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale font-passion text-sm font-bold text-tok-teal shadow-[2px_2px_0px_#1C1C1A]">
+                      {photo.user.avatar ? (
+                        <NextImage src={photo.user.avatar} alt="" width={48} height={48} className="h-full w-full object-cover" />
+                      ) : (
+                        (photo.user.firstName?.[0] || '') + (photo.user.lastName?.[0] || '')
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-passion text-xl md:text-2xl font-bold uppercase tracking-tight text-tok-black leading-none truncate">
+                        {photo.user.firstName} {photo.user.lastName}
+                      </p>
+                      <p className="mt-1.5 font-passion text-[11px] md:text-xs font-bold uppercase tracking-[2px] text-tok-black/50 leading-none">
+                        {new Date(photo.createdAt).toLocaleDateString()} @ {new Date(photo.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                    {(isOrganiser || photo.isFeatured) && (
+                      <button
+                        onClick={(e) => {
+                          if (!isOrganiser) return;
+                          e.stopPropagation();
+                          onFeature();
+                        }}
+                        disabled={isFeaturePending || !isOrganiser}
+                        className={cn(
+                          "flex h-10 md:h-12 gap-2 items-center justify-center rounded-sm border-2 border-tok-black px-3 md:px-4 font-passion text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-[3px_3px_0px_#1C1C1A] md:shadow-[4px_4px_0px_#1C1C1A] transition-all disabled:opacity-100",
+                          photo.isFeatured ? "bg-tok-yellow text-tok-black" : "bg-white text-tok-black",
+                          isOrganiser && "hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+                        )}
+                      >
+                        {isFeaturePending ? (
+                          <IconLoader size={14} className="animate-spin" />
+                        ) : (
+                          <>
+                            <IconStar
+                              strokeWidth={2.5}
+                              className={cn(
+                                "h-4 w-4 md:h-[18px] md:w-[18px]",
+                                photo.isFeatured ? "fill-tok-black text-tok-black" : "text-tok-black"
+                              )}
+                            />
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {(photo.userId === userId || isOrganiser) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete();
+                          onClose();
+                        }}
+                        className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-sm border-2 border-tok-black bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A] md:shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+                        title="Delete Photo"
+                      >
+                        <IconTrash strokeWidth={2.5} className="h-[18px] w-[18px] md:h-5 md:w-5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </ModalShell>
+  );
+}
+
 async function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -477,25 +586,15 @@ async function compressImage(file: File): Promise<string> {
         const MAX_HEIGHT = 800;
         let width = img.width;
         let height = img.height;
-
         if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
+          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
         } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
+          if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
         }
-
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-
-        // Output as jpeg with 0.7 quality to keep base64 string reasonable
         const base64 = canvas.toDataURL('image/jpeg', 0.7);
         resolve(base64);
       };

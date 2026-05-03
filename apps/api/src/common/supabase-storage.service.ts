@@ -31,6 +31,22 @@ export class SupabaseStorageService {
     return `${data.publicUrl}?t=${Date.now()}`;
   }
 
+  async uploadPhoto(dropId: string, photoId: string, buffer: Buffer, mimeType: string): Promise<string> {
+    const ext = mimeType === 'image/png' ? 'png' : 'jpg';
+    const path = `drops/${dropId}/photos/${photoId}.${ext}`;
+    const bucket = this.storage.from('drops');
+
+    const { error } = await bucket.upload(path, buffer, {
+      contentType: mimeType,
+      upsert: true,
+    });
+
+    if (error) throw new InternalServerErrorException(`Storage upload failed: ${error.message}`);
+
+    const { data } = bucket.getPublicUrl(path);
+    return `${data.publicUrl}?t=${Date.now()}`;
+  }
+
   async deleteDropCover(dropId: string): Promise<void> {
     const extensions = ['jpg', 'png'];
     const paths = extensions.map((ext) => `drops/${dropId}/cover.${ext}`);

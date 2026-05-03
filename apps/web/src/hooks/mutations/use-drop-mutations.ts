@@ -158,7 +158,7 @@ export function useUploadPhoto(dropId: string): UseMutationResult<any, Error, st
   return useMutation({
     mutationFn: (base64: string) => dropsService.uploadPhoto(dropId, base64),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['drops', dropId, 'photos'] });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.photos(dropId) });
     },
   });
 }
@@ -174,13 +174,19 @@ export function useFeaturePhoto(dropId: string): UseMutationResult<any, Error, s
       await queryClient.cancelQueries({ queryKey: photoKey });
 
       // Snapshot the previous value
-      const previousPhotos = queryClient.getQueryData<any[]>(photoKey);
+      const previousPhotos = queryClient.getQueryData<any>(photoKey);
 
       // Optimistically update to the new value
-      if (previousPhotos) {
-        queryClient.setQueryData(photoKey, previousPhotos.map(p => 
-          p.id === photoId ? { ...p, isFeatured: !p.isFeatured } : p
-        ));
+      if (previousPhotos?.pages) {
+        queryClient.setQueryData(photoKey, {
+          ...previousPhotos,
+          pages: previousPhotos.pages.map((page: any) => ({
+            ...page,
+            data: page.data.map((p: any) =>
+              p.id === photoId ? { ...p, isFeatured: !p.isFeatured } : p
+            ),
+          })),
+        });
       }
 
       return { previousPhotos };
@@ -191,9 +197,10 @@ export function useFeaturePhoto(dropId: string): UseMutationResult<any, Error, s
         queryClient.setQueryData(photoKey, context.previousPhotos);
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _error, photoId) => {
       // Refresh to ensure sync
-      void queryClient.invalidateQueries({ queryKey: photoKey });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.photos(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.photoDetail(dropId, photoId) });
       void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
     },
   });
@@ -204,8 +211,9 @@ export function useDeletePhoto(dropId: string): UseMutationResult<void, Error, s
 
   return useMutation({
     mutationFn: (photoId: string) => dropsService.deletePhoto(dropId, photoId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['drops', dropId, 'photos'] });
+    onSuccess: (_data, photoId) => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.photos(dropId) });
+      queryClient.removeQueries({ queryKey: dropKeys.photoDetail(dropId, photoId) });
     },
   });
 }

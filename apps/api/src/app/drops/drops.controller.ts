@@ -148,7 +148,7 @@ export class DropsController {
   getActivityLogs(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit = 6,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit = 5,
     @Req() request: RequestWithUser,
   ): Promise<ActivityLogsPageDto> {
     return this.dropsService.findDropActivityLogs(id, request.user.uid, page, limit);
@@ -371,14 +371,27 @@ export class DropsController {
 
   @Get(':id/photos')
   @UseGuards(FirebaseAuthGuard)
-  @ApiOperation({ summary: 'Get all photos for a drop (visible drops only)' })
+  @ApiOperation({ summary: 'Get all photos for a drop (paginated)' })
   @ApiResponse({ status: 200, type: [DropPhotoPublicDto] })
-  @ApiResponse({ status: 404, description: 'Drop not found or no access.' })
-  getPhotos(
+  async getPhotos(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: RequestWithUser,
-  ): Promise<DropPhotoPublicDto[]> {
-    return this.dropsService.getPhotos(id, request.user.uid);
+    @Query('page', new ParseIntPipe({ optional: true })) page = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit = 20,
+  ) {
+    return this.dropsService.getPhotos(id, request.user.uid, page, limit);
+  }
+
+  @Get(':id/photos/:photoId')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Get a single photo detail (includes base64 if available)' })
+  @ApiResponse({ status: 200, type: DropPhotoPublicDto })
+  async getPhotoDetail(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('photoId', ParseUUIDPipe) photoId: string,
+    @Req() request: RequestWithUser,
+  ) {
+    return this.dropsService.getPhotoDetail(id, photoId, request.user.uid);
   }
 
   @Patch(':id/photos/:photoId/feature')

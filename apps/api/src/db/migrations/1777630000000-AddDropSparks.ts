@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddDropSparks1777750000000 implements MigrationInterface {
+export class AddDropSparks1777630000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE "drop_sparks" (
@@ -14,9 +14,11 @@ export class AddDropSparks1777750000000 implements MigrationInterface {
         CONSTRAINT "FK_drop_sparks_user" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE
       )
     `);
+    await queryRunner.query(`CREATE INDEX "idx_drop_sparks_drop_id" ON "drop_sparks" ("dropId")`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP INDEX "idx_drop_sparks_drop_id"`);
     await queryRunner.query(`DROP TABLE "drop_sparks"`);
   }
 }
