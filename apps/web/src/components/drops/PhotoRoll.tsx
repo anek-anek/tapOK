@@ -147,7 +147,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
 
   return (
     <div className="mb-10 space-y-4">
-      <div className="flex items-center justify-between mb-12 sm:mb-4">
+      <div className="flex items-center justify-between mb-6 sm:mb-4">
         <div className="flex items-center gap-2">
           <IconCamera size={18} className="text-tok-black" strokeWidth={2.5} />
           <h3 className="font-passion text-lg font-bold uppercase tracking-wider text-tok-black">
