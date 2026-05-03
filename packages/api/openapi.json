@@ -129,6 +129,46 @@
         ]
       }
     },
+    "/users/auth-provider-check": {
+      "post": {
+        "operationId": "UsersController_checkAuthProvider",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckAuthProviderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "exists": true,
+                    "authProvider": "password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check whether an email already belongs to an existing auth provider",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/users/{id}": {
       "get": {
         "operationId": "UsersController_findOne",
@@ -1208,9 +1248,6 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Drop not found or no access."
           }
         },
         "security": [
@@ -1218,7 +1255,86 @@
             "bearer": []
           }
         ],
-        "summary": "Get all photos for a drop (visible drops only)",
+        "summary": "Get all photos for a drop (paginated)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/photos/{photoId}": {
+      "get": {
+        "operationId": "DropsController_getPhotoDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DropPhotoPublicDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a single photo detail (includes base64 if available)",
+        "tags": [
+          "drops"
+        ]
+      },
+      "delete": {
+        "operationId": "DropsController_deletePhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Photo deleted."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a photo from the roll (owner or organiser only)",
         "tags": [
           "drops"
         ]
@@ -1263,43 +1379,6 @@
           }
         ],
         "summary": "Feature a photo from the roll (organiser only)",
-        "tags": [
-          "drops"
-        ]
-      }
-    },
-    "/drops/{id}/photos/{photoId}": {
-      "delete": {
-        "operationId": "DropsController_deletePhoto",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "photoId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Photo deleted."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Delete a photo from the roll (owner or organiser only)",
         "tags": [
           "drops"
         ]
@@ -1415,6 +1494,10 @@
             "type": "string"
           },
           "emailVerificationSentAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "passwordResetSentAt": {
             "format": "date-time",
             "type": "string"
           },
@@ -1549,6 +1632,10 @@
             "type": "number",
             "description": "Number of drops created by this user"
           },
+          "crewReached": {
+            "type": "number",
+            "description": "Total unique crew members reached across all drops"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -1568,6 +1655,7 @@
           "isEmailVerified",
           "isActive",
           "dropCount",
+          "crewReached",
           "createdAt",
           "updatedAt"
         ]
@@ -1604,6 +1692,18 @@
           "lastName",
           "createdAt",
           "frequencyCount"
+        ]
+      },
+      "CheckAuthProviderDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          }
+        },
+        "required": [
+          "email"
         ]
       },
       "SyncUserDto": {
@@ -1648,6 +1748,10 @@
               "password",
               "google"
             ]
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
           }
         }
       },

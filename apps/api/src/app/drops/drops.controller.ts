@@ -148,7 +148,7 @@ export class DropsController {
   getActivityLogs(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit = 6,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit = 5,
     @Req() request: RequestWithUser,
   ): Promise<ActivityLogsPageDto> {
     return this.dropsService.findDropActivityLogs(id, request.user.uid, page, limit);

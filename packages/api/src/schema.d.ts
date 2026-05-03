@@ -56,6 +56,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/auth-provider-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check whether an email already belongs to an existing auth provider */
+        post: operations["UsersController_checkAuthProvider"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/{id}": {
         parameters: {
             query?: never;
@@ -392,12 +409,30 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get all photos for a drop (visible drops only) */
+        /** Get all photos for a drop (paginated) */
         get: operations["DropsController_getPhotos"];
         put?: never;
         /** Upload a photo to the drop roll (crew members only) */
         post: operations["DropsController_uploadPhoto"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/photos/{photoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single photo detail (includes base64 if available) */
+        get: operations["DropsController_getPhotoDetail"];
+        put?: never;
+        post?: never;
+        /** Delete a photo from the roll (owner or organiser only) */
+        delete: operations["DropsController_deletePhoto"];
         options?: never;
         head?: never;
         patch?: never;
@@ -418,23 +453,6 @@ export interface paths {
         head?: never;
         /** Feature a photo from the roll (organiser only) */
         patch: operations["DropsController_featurePhoto"];
-        trace?: never;
-    };
-    "/drops/{id}/photos/{photoId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Delete a photo from the roll (owner or organiser only) */
-        delete: operations["DropsController_deletePhoto"];
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/drops/{id}/spark": {
@@ -473,6 +491,8 @@ export interface components {
             emailVerifiedAt?: string;
             /** Format: date-time */
             emailVerificationSentAt?: string;
+            /** Format: date-time */
+            passwordResetSentAt?: string;
             googleId?: string;
             firebaseUid?: string;
             isActive: boolean;
@@ -527,6 +547,8 @@ export interface components {
             isActive: boolean;
             /** @description Number of drops created by this user */
             dropCount: number;
+            /** @description Total unique crew members reached across all drops */
+            crewReached: number;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -541,6 +563,10 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
             frequencyCount: number;
+        };
+        CheckAuthProviderDto: {
+            /** @example user@example.com */
+            email: string;
         };
         SyncUserDto: {
             /** @example John */
@@ -557,6 +583,8 @@ export interface components {
             authMode?: "login" | "signup";
             /** @enum {string} */
             authProvider?: "password" | "google";
+            /** @example user@example.com */
+            email?: string;
         };
         CreateUserDto: {
             /** @example user@example.com */
@@ -941,6 +969,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FrequentCrewDto"][];
+                };
+            };
+        };
+    };
+    UsersController_checkAuthProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckAuthProviderDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };
@@ -1789,13 +1840,6 @@ export interface operations {
                     "application/json": components["schemas"]["DropPhotoPublicDto"][];
                 };
             };
-            /** @description Drop not found or no access. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
         };
     };
     DropsController_uploadPhoto: {
@@ -1819,7 +1863,7 @@ export interface operations {
             };
         };
     };
-    DropsController_featurePhoto: {
+    DropsController_getPhotoDetail: {
         parameters: {
             query?: never;
             header?: never;
@@ -1836,7 +1880,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DropPhoto"];
+                    "application/json": components["schemas"]["DropPhotoPublicDto"];
                 };
             };
         };
@@ -1859,6 +1903,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    DropsController_featurePhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                photoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DropPhoto"];
+                };
             };
         };
     };

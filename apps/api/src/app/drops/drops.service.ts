@@ -943,20 +943,8 @@ export class DropsService {
       const mimeType = photo.base64.match(/data:([^;]+);/)?.[1] || 'image/jpeg';
       
       // Upload to storage
-      const ext = mimeType === 'image/png' ? 'png' : 'jpg';
-      const path = `drops/${dropId}/photos/${photoId}.${ext}`;
-      const bucket = this.storageService.storage.from('drops');
-
-      const { error } = await bucket.upload(path, buffer, {
-        contentType: mimeType,
-        upsert: true,
-      });
-
-      if (error) throw new BadRequestException(`Storage upload failed: ${error.message}`);
-
-      const { data } = bucket.getPublicUrl(path);
-      const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
-
+      const publicUrl = await this.storageService.uploadPhoto(dropId, photoId, buffer, mimeType);
+      
       await this.dropsRepository.updatePhoto(photoId, {
         url: publicUrl,
         base64: null,

@@ -131,7 +131,7 @@ export function useMyCrewStatus(dropId: string, options?: { enabled?: boolean })
 
 export function useDropActivityLogs(dropId: string, page: number, options?: { enabled?: boolean, limit?: number }) {
   const authOk = useFirebaseAuthReadyForProtectedDropRoutes();
-  const limit = options?.limit ?? 15;
+  const limit = options?.limit ?? 5;
   return useQuery({
     queryKey: dropKeys.activityLogs(dropId, page),
     queryFn: () => dropsService.getActivityLogs(dropId, page, limit),
