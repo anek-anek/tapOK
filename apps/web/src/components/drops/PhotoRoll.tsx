@@ -91,7 +91,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
         toast.error((t) => (
           <div className="flex flex-col gap-3">
             <p className="font-passion text-xs font-bold uppercase tracking-wider">{err.response?.data?.message}</p>
-            <button 
+            <button
               onClick={() => {
                 toast.dismiss(t.id);
                 window.location.href = '/profile?verify=true';
@@ -161,6 +161,8 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
       </div>
     );
   }
+
+
 
   return (
     <div className="mb-10 space-y-4">
@@ -244,233 +246,143 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
           </div>
         </div>
       ) : (
-      <>
-        {/* Desktop View - Horizontal Scroll */}
-        <div className="no-scrollbar hidden sm:flex gap-4 overflow-x-auto pb-4 pt-1 px-1">
-          {displayedPhotos.map((photo: any) => {
-            const isOwner = photo.userId === userId;
-            const displayUrl = photo.url || photo.base64;
+        <div className="relative flex flex-col items-center pt-4 pb-8">
+          <div className="relative h-[320px] w-[260px] md:h-[400px] md:w-[320px]">
+            <AnimatePresence mode="popLayout">
+              {displayedPhotos.slice().reverse().map((photo: any, index: number) => {
+                const actualIndex = displayedPhotos.length - 1 - index;
+                // Only show current and next 2 for performance and cleaner look
+                if (actualIndex < currentIndex || actualIndex > currentIndex + 2) return null;
 
-            return (
-              <div
-                key={photo.id}
-                onClick={() => setSelectedPhoto(photo)}
-                className="group relative h-48 w-40 shrink-0 cursor-pointer overflow-hidden rounded-sm border-[3px] border-tok-black bg-tok-black/10 shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:shadow-[5px_5px_0px_#1C1C1A] sm:shadow-[4px_4px_0px_#1C1C1A]"
-              >
-                { }
-                <NextImage
-                  src={displayUrl}
-                  alt="Drop moment"
-                  fill
-                  className="object-cover"
-                  sizes="160px"
-                  draggable={false}
-                  onContextMenu={blockImageContextMenu}
-                  onDragStart={blockImageDrag}
-                />
+                const isTop = actualIndex === currentIndex;
+                const offset = actualIndex - currentIndex;
 
-                  {/* Attribution Overlay */}
-                  <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-tok-black/80 to-transparent p-2 pt-6">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 font-passion text-[6px] font-bold text-white">
-                        {photo.user?.avatar ? (
-                          <NextImage src={photo.user.avatar} alt="" width={16} height={16} className="h-full w-full object-cover" />
-                        ) : (
-                          (photo.user?.firstName?.[0] || '') + (photo.user?.lastName?.[0] || '')
-                        )}
-                      </div>
-                      <p className="truncate font-passion text-[9px] font-bold uppercase tracking-wider text-white">
-                        {photo.user?.firstName} {photo.user?.lastName}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Featured Badge */}
-                  {photo.isFeatured && (
-                    <div className="absolute left-2 top-2 rounded-full bg-tok-yellow p-1 shadow-[2px_2px_0px_#1C1C1A] border-2 border-tok-black">
-                      <IconStar size={10} className="fill-tok-black text-tok-black" strokeWidth={3} />
-                    </div>
-                  )}
-
-                  {/* Actions Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center gap-2 bg-tok-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                    {isOrganiser && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          !featureMutation.isPending && handleFeature(photo.id);
-                        }}
-                        disabled={featureMutation.isPending}
-                        className={cn(
-                          "flex h-8 w-8 items-center justify-center rounded-sm border-2 border-tok-black transition-all hover:scale-110 active:scale-95 disabled:opacity-50",
-                          photo.isFeatured ? "bg-white text-tok-black" : "bg-tok-yellow text-tok-black"
-                        )}
-                        title={photo.isFeatured ? "Unfeature this photo" : "Feature this photo"}
-                      >
-                        {featureMutation.isPending ? (
-                          <IconLoader size={12} className="animate-spin" />
-                        ) : (
-                          <IconStar size={14} strokeWidth={2.5} className={photo.isFeatured ? "fill-tok-black" : ""} />
-                        )}
-                      </button>
-                    )}
-                    {(isOwner || isOrganiser) && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(photo);
-                        }}
-                        className="flex h-8 w-8 items-center justify-center rounded-sm border-2 border-tok-black bg-red-500 text-white transition-all hover:scale-110 active:scale-95"
-                        title="Delete photo"
-                      >
-                        <IconTrash size={14} strokeWidth={2.5} />
-                      </button>
-                    )}
-                  </div>
-              </div>
-            );
-          })}
-        </div>
-
-          {/* Mobile View - Stacked Album/Flipbook Style */}
-        <div className="relative flex flex-col items-center sm:hidden pt-4 pb-8">
-            <div className="relative h-[320px] w-[260px]">
-              <AnimatePresence mode="popLayout">
-                {displayedPhotos.slice().reverse().map((photo: any, index: number) => {
-                  const actualIndex = displayedPhotos.length - 1 - index;
-                  // Only show current and next 2 for performance and cleaner look
-                  if (actualIndex < currentIndex || actualIndex > currentIndex + 2) return null;
-
-                  const isTop = actualIndex === currentIndex;
-                  const offset = actualIndex - currentIndex;
-
-                  return (
-                    <motion.div
-                      key={photo.id}
-                      layout
-                      initial={{ scale: 0.8, opacity: 0, y: 20 }}
-                      animate={{
-                        scale: 1 - offset * 0.05,
-                        opacity: 1,
-                        y: offset * -12,
-                        x: offset * 4,
-                        rotate: isTop ? 0 : (offset % 2 === 0 ? 2 : -2),
-                        zIndex: 10 - offset
-                      }}
-                      exit={{ x: -300, opacity: 0, rotate: -20, scale: 0.9 }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                      onClick={() => isTop && setSelectedPhoto(photo)}
-                      className={cn(
-                        "absolute inset-0 cursor-pointer overflow-hidden rounded-sm border-4 border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]",
-                        !isTop && "pointer-events-none"
-                      )}
-                    >
-                      <NextImage
-                        src={photo.url || photo.base64}
-                        alt="Drop moment"
-                        fill
-                        className="object-cover"
-                        sizes="260px"
-                        draggable={false}
-                        onContextMenu={blockImageContextMenu}
-                        onDragStart={blockImageDrag}
-                      />
-
-                      {isTop && (
-                        <>
-                          <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-tok-black/80 to-transparent p-3 pt-8">
-                            <div className="flex items-center gap-2">
-                              <div className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 font-passion text-[8px] font-bold text-white">
-                                {photo.user?.avatar ? (
-                                  <NextImage src={photo.user.avatar} alt="" width={20} height={20} className="h-full w-full object-cover" />
-                                ) : (
-                                  (photo.user?.firstName?.[0] || '') + (photo.user?.lastName?.[0] || '')
-                                )}
-                              </div>
-                              <p className="font-passion text-[11px] font-bold uppercase tracking-wider text-white">
-                                {photo.user?.firstName} {photo.user?.lastName}
-                              </p>
-                            </div>
-                          </div>
-                          {photo.isFeatured && (
-                            <div className="absolute left-3 top-3 rounded-full bg-tok-yellow p-1.5 shadow-[3px_3px_0px_#1C1C1A] border-2 border-tok-black">
-                              <IconStar size={12} className="fill-tok-black text-tok-black" strokeWidth={3} />
-                            </div>
-                          )}
-
-                          {/* Mobile Actions Overlay */}
-                          <div className="absolute right-2 top-2 flex flex-col gap-2">
-                            {isOrganiser && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  !featureMutation.isPending && handleFeature(photo.id);
-                                }}
-                                disabled={featureMutation.isPending}
-                                className={cn(
-                                  "flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0.5 active:shadow-none disabled:opacity-50",
-                                  photo.isFeatured ? "bg-white text-tok-black" : "bg-tok-yellow text-tok-black"
-                                )}
-                              >
-                                {featureMutation.isPending ? (
-                                  <IconLoader size={16} className="animate-spin" />
-                                ) : (
-                                  <IconStar size={16} strokeWidth={2.5} className={photo.isFeatured ? "fill-tok-black" : ""} />
-                                )}
-                              </button>
-                            )}
-                            {(photo.userId === userId || isOrganiser) && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDelete(photo);
-                                }}
-                                className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-red-500 text-white shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0.5 active:shadow-none"
-                              >
-                                <IconTrash size={16} strokeWidth={2.5} />
-                              </button>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-
-            {/* Pagination Controls */}
-            <div className="mt-8 flex items-center gap-6">
-              <button
-                onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
-                disabled={currentIndex === 0}
-                className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all active:translate-y-0.5 active:shadow-none disabled:opacity-30"
-              >
-                <IconChevronLeft size={24} strokeWidth={3} />
-              </button>
-
-              <div className="flex gap-2">
-                {displayedPhotos.map((_, i) => (
-                  <div
-                    key={i}
+                return (
+                  <motion.div
+                    key={photo.id}
+                    layout
+                    initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                    animate={{
+                      scale: 1 - offset * 0.05,
+                      opacity: 1,
+                      y: offset * -12,
+                      x: offset * 4,
+                      rotate: isTop ? 0 : (offset % 2 === 0 ? 2 : -2),
+                      zIndex: 10 - offset
+                    }}
+                    exit={{ x: -300, opacity: 0, rotate: -20, scale: 0.9 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                    onClick={() => isTop && setSelectedPhoto(photo)}
                     className={cn(
-                      "h-2 w-2 rounded-full border border-tok-black transition-all",
-                      i === currentIndex ? "w-6 bg-tok-black" : "bg-tok-black/20"
+                      "absolute inset-0 cursor-pointer overflow-hidden rounded-sm border-4 border-tok-black bg-white shadow-[8px_8px_0px_#1C1C1A]",
+                      !isTop && "pointer-events-none"
                     )}
-                  />
-                ))}
-              </div>
+                  >
+                    <NextImage
+                      src={photo.url || photo.base64}
+                      alt="Drop moment"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 260px, 320px"
+                      draggable={false}
+                      onContextMenu={blockImageContextMenu}
+                      onDragStart={blockImageDrag}
+                    />
 
-              <button
-                onClick={() => setCurrentIndex(prev => Math.min(displayedPhotos.length - 1, prev + 1))}
-                disabled={currentIndex === displayedPhotos.length - 1}
-                className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all active:translate-y-0.5 active:shadow-none disabled:opacity-30"
-              >
-                <IconChevronRight size={24} strokeWidth={3} />
-              </button>
+                    {isTop && (
+                      <>
+                        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-tok-black/80 to-transparent p-4 pt-10">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-white/10 font-passion text-[10px] font-bold text-white">
+                              {photo.user?.avatar ? (
+                                <NextImage src={photo.user.avatar} alt="" width={24} height={24} className="h-full w-full object-cover" />
+                              ) : (
+                                (photo.user?.firstName?.[0] || '') + (photo.user?.lastName?.[0] || '')
+                              )}
+                            </div>
+                            <p className="font-passion text-xs font-bold uppercase tracking-wider text-white">
+                              {photo.user?.firstName} {photo.user?.lastName}
+                            </p>
+                          </div>
+                        </div>
+                        {photo.isFeatured && (
+                          <div className="absolute left-4 top-4 rounded-full bg-tok-yellow p-2 shadow-[4px_4px_0px_#1C1C1A] border-2 border-tok-black">
+                            <IconStar size={14} className="fill-tok-black text-tok-black" strokeWidth={3} />
+                          </div>
+                        )}
+
+                        {/* Actions Overlay */}
+                        <div className="absolute right-3 top-3 flex flex-col gap-2">
+                          {isOrganiser && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                !featureMutation.isPending && handleFeature(photo.id);
+                              }}
+                              disabled={featureMutation.isPending}
+                              className={cn(
+                                "flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-black shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50",
+                                photo.isFeatured ? "bg-white text-tok-black" : "bg-tok-yellow text-tok-black"
+                              )}
+                            >
+                              {featureMutation.isPending ? (
+                                <IconLoader size={18} className="animate-spin" />
+                              ) : (
+                                <IconStar size={18} strokeWidth={2.5} className={photo.isFeatured ? "fill-tok-black" : ""} />
+                              )}
+                            </button>
+                          )}
+                          {(photo.userId === userId || isOrganiser) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(photo);
+                              }}
+                              className="flex h-10 w-10 items-center justify-center rounded-sm border-2 border-tok-black bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+                            >
+                              <IconTrash size={18} strokeWidth={2.5} />
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="mt-10 flex items-center gap-6">
+            <button
+              onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
+              disabled={currentIndex === 0}
+              className="flex h-12 w-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-20"
+            >
+              <IconChevronLeft size={28} strokeWidth={3} />
+            </button>
+
+            <div className="flex max-w-[120px] gap-2 overflow-hidden px-2">
+              {displayedPhotos.map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "h-2 w-2 shrink-0 rounded-full border border-tok-black transition-all",
+                    i === currentIndex ? "w-6 bg-tok-black" : "bg-tok-black/20"
+                  )}
+                />
+              ))}
             </div>
+
+            <button
+              onClick={() => setCurrentIndex(prev => Math.min(displayedPhotos.length - 1, prev + 1))}
+              disabled={currentIndex === displayedPhotos.length - 1}
+              className="flex h-12 w-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-20"
+            >
+              <IconChevronRight size={28} strokeWidth={3} />
+            </button>
+          </div>
         </div>
-      </>
       )}
 
       {reachedUserLimit && canUpload && !isOrganiser && (

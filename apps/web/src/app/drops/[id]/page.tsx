@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useMounted } from '@/hooks/use-mounted';
@@ -20,6 +20,7 @@ import {
   UserCheck as IconUserCheck,
   Lock as IconLock,
   Martini as IconMartini,
+  Users as IconUsers,
 } from 'lucide-react';
 import { useDrop, useMyCrewStatus, useDropCrew, useDropActivityLogs } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -40,6 +41,7 @@ import type { DropStatus } from '@/types/drop';
 import { coverPhotoSrcForNextImage } from '@/lib/config';
 import { evaluateDropMinimumAgeEligibility, getJoinDropErrorMessage } from '@/lib/drop-minimum-age';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const STATUS_META: Record<DropStatus, { label: string; tone: string; dot: string; pulse: boolean }> = {
   active: {
@@ -450,6 +452,7 @@ function DropDetailContent({ id }: { id: string }) {
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [chiefModalOpen, setChiefModalOpen] = useState(false);
   const [removeModalOpen, setRemoveModalOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{ userId: string; name: string } | null>(null);
   const [logPage, setLogPage] = useState(1);
@@ -650,6 +653,11 @@ function DropDetailContent({ id }: { id: string }) {
             </div>
           )}
 
+          {/* Absolute Overlays */}
+          <div className="absolute right-4 top-4 z-20 flex flex-col gap-3 sm:right-6 sm:top-6 lg:right-10 lg:top-10">
+            <SparkButton drop={drop} variant="hero" />
+          </div>
+
           <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
             <div className="min-w-0 flex-1">
               <div className="mb-4 flex flex-wrap items-start gap-x-2 gap-y-2 sm:gap-x-3">
@@ -671,9 +679,6 @@ function DropDetailContent({ id }: { id: string }) {
                       Ages {drop.minimumAge}+
                     </span>
                   )}
-                </div>
-                <div className="ml-auto shrink-0 pl-1">
-                  <SparkButton drop={drop} variant="hero" />
                 </div>
               </div>
               <h1
@@ -837,6 +842,102 @@ function DropDetailContent({ id }: { id: string }) {
               </div>
             )}
 
+            {/* Non-Member Boarding CTA */}
+            {!isOrganiser && crewStatus?.status !== 'in' && !isCompleted && (
+              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-tok-teal-pale p-6 shadow-[6px_6px_0px_#1C1C1A] sm:p-8">
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+                      Mission Boarding
+                    </p>
+                    <h3 className="mt-2 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black sm:text-3xl">
+                      Ready to join the crew?
+                    </h3>
+                    <p className="mt-3 max-w-lg font-inter text-sm leading-relaxed text-tok-black/60">
+                      Join this mission to tap in, share photos, and track live activity with the crew.
+                      {drop.isLocked && " This mission requires approval from the Chief."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setJoinModalOpen(true)}
+                    disabled={isJoining}
+                    className="flex h-14 min-w-[200px] items-center justify-center gap-3 rounded-[4px] border-[3px] border-tok-black bg-tok-teal px-8 font-passion text-sm font-bold uppercase tracking-[2px] text-white shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+                  >
+                    {isJoining ? (
+                      <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    ) : (
+                      <>
+                        <IconUserCheck size={20} strokeWidth={3} />
+                        {drop.isLocked ? "Request to Join" : "Board Mission"}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Mission Protocol / Info Section */}
+            {crewStatus?.status !== 'in' && (
+              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
+                <div className="flex items-center gap-2">
+                  <IconMartini size={18} strokeWidth={2.5} className="text-tok-teal" />
+                  <p className="font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-tok-teal">
+                    Mission Protocol
+                  </p>
+                </div>
+                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="flex items-start gap-3 rounded-sm border-2 border-tok-black bg-tok-cream/10 p-4">
+                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-tok-teal text-white">
+                      <IconUserCheck size={10} strokeWidth={3} />
+                    </div>
+                    <div>
+                      <h5 className="font-passion text-xs font-bold uppercase tracking-wider text-tok-black">Entry Status</h5>
+                      <p className="mt-1 font-inter text-[12px] leading-relaxed text-tok-black/50">
+                        {drop.isPublic ? 'Open to all verified crew' : 'Private mission - invite only'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-sm border-2 border-tok-black bg-tok-cream/10 p-4">
+                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 text-tok-black">
+                      <IconLock size={10} strokeWidth={3} />
+                    </div>
+                    <div>
+                      <h5 className="font-passion text-xs font-bold uppercase tracking-wider text-tok-black">Authorization</h5>
+                      <p className="mt-1 font-inter text-[12px] leading-relaxed text-tok-black/50">
+                        {drop.isLocked ? 'Chief approval required' : 'Instant boarding enabled'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-sm border-2 border-tok-black bg-tok-cream/10 p-4">
+                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-tok-black text-white">
+                      <IconMapPin size={10} strokeWidth={3} />
+                    </div>
+                    <div>
+                      <h5 className="font-passion text-xs font-bold uppercase tracking-wider text-tok-black">Location Intel</h5>
+                      <p className="mt-1 font-inter text-[12px] leading-relaxed text-tok-black/50">
+                        {(crewStatus?.status as string) === 'in' ? 'Full coordinates unlocked' : 'Join crew for exact location'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-sm border-2 border-tok-black bg-tok-teal-pale p-4">
+                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-tok-teal bg-tok-teal-pale text-tok-teal">
+                      <IconClock size={10} strokeWidth={3} />
+                    </div>
+                    <div>
+                      <h5 className="font-passion text-xs font-bold uppercase tracking-wider text-tok-black">Timeframe</h5>
+                      <p className="mt-1 font-inter text-[12px] leading-relaxed text-tok-black/50">
+                        Synchronize with the Chief’s local time
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Pending Approvals */}
             {isOrganiser && !isCompleted && pendingMembers.length > 0 && (
               <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-amber-400 p-1 shadow-[6px_6px_0px_#1C1C1A]">
@@ -899,11 +1000,11 @@ function DropDetailContent({ id }: { id: string }) {
               drop={drop}
               userId={dbUser?.id}
               isOrganiser={isOrganiser}
-              isCrewMember={crewStatus?.status === 'in'}
+              isCrewMember={(crewStatus?.status as string) === 'in'}
             />
 
             {/* Crew Roster */}
-            {(isOrganiser || crewStatus?.status === 'in') && (
+            {(isOrganiser || (crewStatus?.status as string) === 'in') && (
               <CrewRoster
                 dropId={id}
                 organiserId={drop.organiserId}
@@ -930,15 +1031,90 @@ function DropDetailContent({ id }: { id: string }) {
             )}
           </div>
 
-          {/* Right: Digital Ticket Sidebar (Desktop Only, hidden when completed) */}
+          {/* Right Sidebar */}
           {!isCompleted && (
-            <aside className="order-1 hidden lg:block lg:order-2 lg:self-start">
-              <DigitalTicket drop={drop} />
+            <aside className="order-1 flex flex-col gap-8 lg:order-2 lg:self-start">
+              {/* Mission Command / Chief Card */}
+              <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
+                <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+                  Mission Command
+                </p>
+                <div className="mt-6 flex items-center gap-4">
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale shadow-[3px_3px_0px_#1C1C1A]">
+                    {drop.organiser?.avatar ? (
+                      <Image
+                        src={drop.organiser.avatar}
+                        alt=""
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center font-passion text-xl text-tok-teal">
+                        {drop.organiser?.firstName?.[0]}{drop.organiser?.lastName?.[0]}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black/40">
+                      Chief Organiser
+                    </p>
+                    <h4 className="truncate font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
+                      {drop.organiser?.firstName} {drop.organiser?.lastName}
+                    </h4>
+                  </div>
+                </div>
+
+                <div className="mt-8 space-y-4">
+                  <div className="flex items-center justify-between rounded-sm border-2 border-tok-black bg-tok-cream/30 p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-tok-teal text-white">
+                        <IconUsers size={16} strokeWidth={2.5} />
+                      </div>
+                      <span className="font-passion text-xs font-bold uppercase tracking-wider text-tok-black">Total Crew</span>
+                    </div>
+                    <span className="font-passion text-xl font-bold text-tok-teal">{drop.organiser.crewReached || 0}</span>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between rounded-sm border-2 border-tok-black bg-tok-cream/30 p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-amber-400 text-tok-black">
+                        <IconMartini size={16} strokeWidth={2.5} />
+                      </div>
+                      <span className="font-passion text-xs font-bold uppercase tracking-wider text-tok-black">Total Drops</span>
+                    </div>
+                    <span className="font-passion text-xl font-bold text-tok-black">{drop.organiser.dropCount || 0}</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setChiefModalOpen(true)}
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-white py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-1 hover:bg-tok-cream/50 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+                >
+                  View Chief Profile
+                </button>
+              </div>
+
+              {/* Digital Ticket */}
+              <div className="hidden lg:block">
+                <DigitalTicket
+                  drop={drop}
+                  isMember={isOrganiser || crewStatus?.status === 'in'}
+                />
+              </div>
             </aside>
           )}
         </div>
       </main>
 
+      <AnimatePresence>
+        {chiefModalOpen && (
+          <ChiefProfileModal
+            user={drop.organiser}
+            onClose={() => setChiefModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
       {shareModalOpen && (
         <DropShareModal drop={drop} onClose={() => setShareModalOpen(false)} />
       )}
@@ -985,3 +1161,135 @@ function DropDetailContent({ id }: { id: string }) {
   );
 }
 
+function ChiefProfileModal({ user, onClose }: { user: any; onClose: () => void }) {
+  const memberSince = useMemo(() => {
+    if (!user?.createdAt) return 'JUNE 2024';
+    try {
+      const d = new Date(user.createdAt);
+      return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
+    } catch { return 'JUNE 2024'; }
+  }, [user?.createdAt]);
+
+  const formatDate = (dateStr?: string | Date) => {
+    if (!dateStr) return 'NOT DISCLOSED';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+    } catch { return 'NOT DISCLOSED'; }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="absolute inset-0 bg-tok-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="relative w-full max-w-md overflow-hidden rounded-sm border-[4px] border-tok-black bg-tok-cream shadow-[12px_12px_0px_#1C1C1A]"
+      >
+        {/* Tactical Header */}
+        <div className="flex h-14 items-center justify-between border-b-[3px] border-tok-black bg-tok-teal px-6">
+          <div className="flex items-center gap-3">
+            <div className="h-3 w-3 rounded-full bg-white shadow-[2px_2px_0px_#1C1C1A]" />
+            <p className="font-passion text-base font-bold uppercase tracking-[3px] text-white">
+              Tactical Identifier
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+          >
+            <IconX size={18} strokeWidth={3} />
+          </button>
+        </div>
+
+        <div className="p-8">
+          <div className="flex flex-col items-center">
+            {/* ID Photo */}
+            <div className="group relative mb-6">
+              <div className="relative h-40 w-40 overflow-hidden rounded-sm border-[4px] border-tok-black bg-tok-teal-pale shadow-[8px_8px_0px_#1C1C1A]">
+                {user?.avatar ? (
+                  <Image
+                    src={user.avatar}
+                    alt=""
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-passion text-5xl text-tok-teal">
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </div>
+                )}
+              </div>
+              {/* Tactical Overlay */}
+              <div className="absolute -right-3 -top-3 h-10 w-10 rounded-full border-[3px] border-tok-black bg-amber-400 p-2 shadow-[3px_3px_0px_#1C1C1A]">
+                <IconUserCheck size={20} className="text-tok-black" strokeWidth={3} />
+              </div>
+            </div>
+
+            <div className="text-center">
+              <h3 className="font-passion text-4xl font-bold uppercase tracking-tight text-tok-black">
+                {user?.firstName} {user?.lastName}
+              </h3>
+              <p className="mt-1 font-passion text-lg font-bold uppercase tracking-[3px] text-tok-teal">
+                @{user?.userHandle || 'unregistered_chief'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3">
+            {/* Intel Section */}
+            <div className="rounded-sm border-2 border-tok-black bg-white p-5 shadow-[4px_4px_0px_#1C1C1A]">
+              <p className="mb-4 font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-black/30">
+                Mission Intel
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="border-r-2 border-tok-black/10 pr-4">
+                  <p className="font-passion text-3xl font-bold text-tok-teal">{user?.dropCount || 0}</p>
+                  <p className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black/50">Drops</p>
+                </div>
+                <div className="pl-4">
+                  <p className="font-passion text-3xl font-bold text-tok-black">{user?.crewReached || 0}</p>
+                  <p className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black/50">Crew Reached</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Dossier Grid */}
+            <div className="grid grid-cols-1 gap-3">
+              <div className="flex items-center justify-between rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A]">
+                <span className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">Active Since</span>
+                <span className="font-passion text-sm font-bold text-tok-black">{memberSince}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A]">
+                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-black/40">Gender</p>
+                  <p className="mt-1 font-passion text-xs font-bold uppercase text-tok-black">{user?.gender || 'NOT SET'}</p>
+                </div>
+                <div className="rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A]">
+                  <p className="font-passion text-[9px] font-bold uppercase tracking-[2px] text-tok-black/40">Birthday</p>
+                  <p className="mt-1 font-passion text-xs font-bold uppercase text-tok-black">{formatDate(user?.birthday)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex h-12 items-center justify-center border-t-[3px] border-tok-black bg-tok-black/5">
+          <p className="font-passion text-[10px] font-bold uppercase tracking-[4px] text-tok-black/30">
+            Mission Approved Credentials
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

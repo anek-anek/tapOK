@@ -43,8 +43,14 @@ export class UsersRepository {
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<User | null> {
-    await this.repo.update(id, dto);
-    return this.findById(id);
+    if (Object.keys(dto).length === 0) {
+      return this.findById(id);
+    }
+    const user = await this.findById(id);
+    if (!user) return null;
+    
+    Object.assign(user, dto);
+    return this.repo.save(user);
   }
 
   findByEmailVerificationToken(token: string): Promise<User | null> {

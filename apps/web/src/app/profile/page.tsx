@@ -186,14 +186,20 @@ export default function ProfilePage() {
     if (form.gender !== (profile.gender ?? '')) dto.gender = form.gender || undefined;
     if (form.avatar !== (profile.avatar ?? '')) dto.avatar = form.avatar || undefined;
 
+    if (Object.keys(dto).length === 0) {
+      setEditing(false);
+      return;
+    }
+
     updateUser.mutate(dto, {
       onSuccess: async () => {
         await refreshUser();
         setEditing(false);
         toast.success('PROFILE UPDATED SUCCESSFULLY');
       },
-      onError: (err: unknown) => {
-        const msg = err instanceof Error ? err.message : 'FAILED TO UPDATE PROFILE';
+      onError: (err: any) => {
+        const responseData = err.response?.data;
+        const msg = responseData?.message || err.message || 'FAILED TO UPDATE PROFILE';
         toast.error(String(msg).toUpperCase());
       }
     });

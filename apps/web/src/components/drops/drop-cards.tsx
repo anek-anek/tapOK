@@ -157,6 +157,27 @@ export function HeroDropCard({
             </div>
           )}
 
+          {/* Quick Action Buttons Overlay */}
+          <div className="absolute right-3 top-3 z-30 flex flex-col gap-2 transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5">
+            <SparkButton drop={drop} variant="hero" />
+          </div>
+
+          <div className="absolute left-3 top-3 z-30 flex gap-2 transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 sm:hidden">
+            {onShare && isShareableDrop(drop) && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onShare(drop as unknown as Drop);
+                }}
+                className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream-dim active:translate-y-0 active:shadow-none"
+                title="Share Drop"
+              >
+                <Share size={18} strokeWidth={3} />
+              </button>
+            )}
+          </div>
+
           {/* Status Badge overlay */}
           <div className="absolute bottom-3 left-3 flex flex-col gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-sm bg-amber-400 px-2 py-1 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A]">
@@ -179,6 +200,12 @@ export function HeroDropCard({
               {drop.category && (
                 <span className="rounded-sm bg-tok-black/20 px-1.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-amber-300 border border-amber-400/40 [text-shadow:0_1px_2px_rgba(0,0,0,0.3)]">
                   {drop.category}
+                </span>
+              )}
+              {drop.isLocked && (
+                <span className="rounded-sm bg-tok-black/20 px-1.5 py-0.5 font-passion text-[9px] font-bold uppercase tracking-wider text-amber-300 border border-amber-400/40 [text-shadow:0_1px_2px_rgba(0,0,0,0.3)] flex items-center gap-1">
+                  <Lock size={10} strokeWidth={3} />
+                  Requires Approval
                 </span>
               )}
             </div>
@@ -274,23 +301,6 @@ export function HeroDropCard({
           </div>
         </div>
       </div>
-
-      {/* Absolute Quick Actions */}
-      <div className="absolute right-3 top-3 z-20 flex flex-col gap-2 transition-all duration-300 group-hover:-translate-x-1 group-hover:-translate-y-1">
-        <SparkButton drop={drop} variant="hero" />
-      </div>
-
-      <div className="absolute left-4 top-4 z-20 flex gap-2 transition-all duration-300 group-hover:-translate-x-1 group-hover:-translate-y-1">
-        {onShare && isShareableDrop(drop) && (
-          <button
-            onClick={handleShare}
-            className="flex h-10 w-10 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-cream text-tok-teal shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-1 hover:bg-tok-cream-dim active:translate-y-0 active:shadow-none"
-            title="Share Drop"
-          >
-            <Share size={18} strokeWidth={3} />
-          </button>
-        )}
-      </div>
     </div>
   );
 }
@@ -298,7 +308,9 @@ export function HeroDropCard({
 function masonryAspectFromImageDimensions(naturalWidth: number, naturalHeight: number): number {
   if (!naturalWidth || !naturalHeight) return 1;
   const r = naturalWidth / naturalHeight;
-  return Math.min(2.25, Math.max(0.45, r));
+  if (r > 1.25) return 1.5;
+  if (r < 0.8) return 0.8;
+  return 1.0;
 }
 
 const MASONRY_PLACEHOLDER_ASPECT = 'aspect-[4/5]';
@@ -321,8 +333,8 @@ export function ListDropCard({
   onEdit?: (drop: Drop) => void;
   onDelete?: (drop: Drop) => void;
   showShareEditDelete?: boolean;
-  /** `masonry`: vertical tile for 2-column packed layout (profile active missions). */
-  layout?: 'list' | 'masonry';
+  /** `masonry`: vertical tile for packed layout. `grid`: vertical card with fixed aspect for consistent grids. */
+  layout?: 'list' | 'masonry' | 'grid';
   /** Hint LCP: eager-load cover for first visible tiles (e.g. profile masonry). */
   coverPriority?: boolean;
 }) {
@@ -332,6 +344,9 @@ export function ListDropCard({
   const canEdit = isOrganiser && drop.status !== 'completed' && isShareableDrop(drop);
   const canDelete = isOrganiser && onDelete && isShareableDrop(drop);
   const isCompleted = drop.status === 'completed';
+  const isMasonry = layout === 'masonry';
+  const isGrid = layout === 'grid';
+  const isVertical = isMasonry || isGrid;
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -351,7 +366,6 @@ export function ListDropCard({
     if (isShareableDrop(drop)) onDelete?.(drop);
   };
 
-  const isMasonry = layout === 'masonry';
   const [masonryCoverAspect, setMasonryCoverAspect] = useState<number | null>(null);
 
   useEffect(() => {
@@ -363,17 +377,17 @@ export function ListDropCard({
   }, [isMasonry, drop.coverPhoto]);
 
   return (
-    <div className={cn('group relative', isMasonry ? 'mt-0' : 'mt-4')}>
+    <div className={cn('group relative h-full', isVertical ? 'mt-0' : 'mt-4')}>
       <Link
         href={`/drops/${drop.id}`}
         className={cn(
-          'flex overflow-hidden border-[3px] border-tok-black transition-all',
-          isMasonry
+          'flex h-full overflow-hidden border-[3px] border-tok-black transition-all',
+          isVertical
             ? 'flex-col rounded-2xl'
             : 'flex-col rounded-xl sm:flex-row',
           isCompleted
             ? 'bg-tok-black/5 opacity-70 grayscale'
-            : isMasonry
+            : isVertical
               ? 'bg-white shadow-[3px_3px_0px_#1C1C1A] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A]'
               : 'bg-white shadow-[4px_4px_0px_#1C1C1A] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]',
         )}
@@ -382,9 +396,11 @@ export function ListDropCard({
         <div
           className={cn(
             'relative w-full shrink-0 border-tok-black',
-            isMasonry
-              ? cn('border-b-[3px]', !drop.coverPhoto && MASONRY_PLACEHOLDER_ASPECT)
+            isVertical
+              ? 'border-b-[3px]'
               : 'aspect-5/2 border-b-[3px] sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]',
+            isGrid && 'aspect-[3/2]',
+            isMasonry && !drop.coverPhoto && MASONRY_PLACEHOLDER_ASPECT,
           )}
           style={
             isMasonry && drop.coverPhoto
@@ -399,7 +415,7 @@ export function ListDropCard({
               fill
               className="object-cover"
               sizes={
-                isMasonry
+                isVertical
                   ? '(max-width: 640px) 44vw, (max-width: 1024px) 30vw, 280px'
                   : '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
               }
@@ -407,12 +423,12 @@ export function ListDropCard({
               onLoad={
                 isMasonry
                   ? (e) =>
-                      setMasonryCoverAspect(
-                        masonryAspectFromImageDimensions(
-                          e.currentTarget.naturalWidth,
-                          e.currentTarget.naturalHeight,
-                        ),
-                      )
+                    setMasonryCoverAspect(
+                      masonryAspectFromImageDimensions(
+                        e.currentTarget.naturalWidth,
+                        e.currentTarget.naturalHeight,
+                      ),
+                    )
                   : undefined
               }
             />
@@ -420,280 +436,272 @@ export function ListDropCard({
             <div
               className={cn(
                 'absolute inset-0 flex h-full w-full items-center justify-center bg-tok-teal/10 font-passion font-bold tracking-widest text-tok-teal/30',
-                isMasonry ? 'text-lg' : 'text-2xl',
+                isVertical ? 'text-lg' : 'text-2xl',
               )}
             >
               {getInitials(drop.name)}
             </div>
           )}
 
-
-          {/* Status Badge overlay */}
-          {drop.status === 'ongoing' && (
-            <div
-              className={cn(
-                'absolute bottom-2 left-2 flex items-center gap-1 rounded-sm bg-amber-400 font-passion font-bold uppercase tracking-wider text-tok-black border-2 border-tok-black shadow-[1.5px_1.5px_0px_#1C1C1A]',
-                isMasonry
-                  ? 'px-1 py-0.5 text-[7px]'
-                  : 'px-1.5 py-0.5 text-[8px]',
-              )}
-            >
-              <span className="relative flex h-1 w-1">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tok-black opacity-75" />
-                <span className="relative inline-flex h-1 w-1 rounded-full bg-tok-black" />
-              </span>
-              Ongoing
-            </div>
+        {/* Quick Action Overlays - pinned to media corner */}
+        <div
+          className={cn(
+            'absolute z-30 flex flex-col transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5',
+            'right-2 top-2 gap-1',
           )}
+        >
+          <SparkButton drop={drop} className="bg-white" />
         </div>
 
-        {/* Content Area */}
-        <div
-          className={cn('relative flex flex-1 flex-col', isMasonry ? 'p-3 sm:p-4' : 'p-5 sm:p-6')}
-        >
-          <div className={cn('flex flex-wrap items-center gap-1.5 sm:gap-2', isMasonry ? 'mb-1.5' : 'mb-2')}>
-            <span
+          {showShareEditDelete && (
+            <div
               className={cn(
-                'font-passion font-bold uppercase text-tok-black/50',
-                isMasonry ? 'text-[8px] tracking-[1px]' : 'text-[10px] tracking-[1.5px]',
+                'absolute z-30 flex transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 sm:hidden',
+                'left-2 top-2 gap-1',
               )}
             >
-              {role}
-            </span>
-            {drop.category && (
-              <span
-                className={cn(
-                  'rounded-sm bg-tok-teal-pale font-passion font-bold uppercase tracking-wider text-tok-teal border border-tok-teal/20',
-                  isMasonry ? 'px-1.5 py-0.5 text-[8px]' : 'px-2 py-0.5 text-[9px]',
-                )}
-              >
-                {drop.category}
-              </span>
-            )}
-            {!drop.isPublic && (
-              <span
-                className={cn(
-                  'inline-flex items-center gap-0.5 rounded-sm bg-tok-black/5 font-passion font-bold uppercase tracking-wider text-tok-black/50',
-                  isMasonry ? 'px-1.5 py-0.5 text-[8px]' : 'gap-1 px-2 py-0.5 text-[9px]',
-                )}
-              >
-                <Lock size={isMasonry ? 9 : 10} strokeWidth={3} />
-                Private
-              </span>
-            )}
-          </div>
+              {onShare && !isCompleted && isShareableDrop(drop) && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onShare(drop as unknown as Drop);
+                  }}
+                  className={cn(
+                    'flex items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none',
+                    'h-8 w-8',
+                  )}
+                  title="Share Drop"
+                >
+                  <Share size={16} strokeWidth={3} />
+                </button>
+              )}
+            </div>
+          )}
 
-          <h3
+
+        {/* Status Badge overlay */}
+        {drop.status === 'ongoing' && (
+          <div
             className={cn(
-              'font-passion font-bold leading-snug text-tok-black transition-colors group-hover:text-tok-teal',
-              isMasonry ? 'mb-1.5 text-base leading-tight sm:text-lg' : 'mb-2.5 text-2xl sm:text-[26px]',
-              showShareEditDelete ? (isMasonry ? 'pr-7 sm:pr-8' : 'pr-10 sm:pr-0') : '',
+              'absolute bottom-2 left-2 flex items-center gap-1 rounded-sm bg-amber-400 font-passion font-bold uppercase tracking-wider text-tok-black border-2 border-tok-black shadow-[1.5px_1.5px_0px_#1C1C1A]',
+              isVertical
+                ? 'px-1 py-0.5 text-[7px]'
+                : 'px-1.5 py-0.5 text-[8px]',
             )}
           >
-            {drop.name}
-          </h3>
+            <span className="relative flex h-1 w-1">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tok-black opacity-75" />
+              <span className="relative inline-flex h-1 w-1 rounded-full bg-tok-black" />
+            </span>
+            Ongoing
+          </div>
+        )}
+    </div>
+
+        {/* Content Area */ }
+  <div
+    className={cn('relative flex flex-1 flex-col', isVertical ? 'p-3 sm:p-4' : 'p-5 sm:p-6')}
+  >
+    <div className={cn('flex flex-wrap items-center gap-1.5 sm:gap-2', isVertical ? 'mb-1.5' : 'mb-2')}>
+      <span
+        className={cn(
+          'font-passion font-bold uppercase text-tok-black/50',
+          isVertical ? 'text-[8px] tracking-[1px]' : 'text-[10px] tracking-[1.5px]',
+        )}
+      >
+        {role}
+      </span>
+      {drop.category && (
+        <span
+          className={cn(
+            'rounded-sm bg-tok-teal-pale font-passion font-bold uppercase tracking-wider text-tok-teal border border-tok-teal/20',
+            isVertical ? 'px-1.5 py-0.5 text-[8px]' : 'px-2 py-0.5 text-[9px]',
+          )}
+        >
+          {drop.category}
+        </span>
+      )}
+      {!drop.isPublic && (
+        <span
+          className={cn(
+            'inline-flex items-center gap-0.5 rounded-sm bg-tok-black/5 font-passion font-bold uppercase tracking-wider text-tok-black/50',
+            isVertical ? 'px-1.5 py-0.5 text-[8px]' : 'gap-1 px-2 py-0.5 text-[9px]',
+          )}
+        >
+          <Lock size={isVertical ? 9 : 10} strokeWidth={3} />
+          Private
+        </span>
+      )}
+      {drop.isLocked && (
+        <span
+          className={cn(
+            'inline-flex items-center gap-0.5 rounded-sm bg-tok-teal-pale font-passion font-bold uppercase tracking-wider text-tok-teal border border-tok-teal/20',
+            isVertical ? 'px-1.5 py-0.5 text-[8px]' : 'gap-1 px-2 py-0.5 text-[9px]',
+          )}
+        >
+          <Lock size={isVertical ? 9 : 10} strokeWidth={3} />
+          Requires Approval
+        </span>
+      )}
+    </div>
+
+    <h3
+      className={cn(
+        'font-passion font-bold leading-snug text-tok-black transition-colors group-hover:text-tok-teal',
+        isVertical ? 'mb-1.5 text-base leading-tight sm:text-lg' : 'mb-2.5 text-2xl sm:text-[26px]',
+        showShareEditDelete ? (isVertical ? 'pr-7 sm:pr-8' : 'pr-10 sm:pr-0') : '',
+      )}
+    >
+      {drop.name}
+    </h3>
+
+    <div
+      className={cn(
+        'flex flex-wrap font-bold text-tok-black/55',
+        isVertical
+          ? 'mb-2 gap-x-2 gap-y-1 text-[10px] sm:text-[11px]'
+          : 'mb-3.5 gap-x-4 gap-y-1.5 text-xs sm:text-[13px]',
+      )}
+    >
+      <span className="inline-flex min-w-0 items-center gap-1">
+        <CalendarDays
+          size={isVertical ? 12 : 14}
+          className="shrink-0 text-tok-teal"
+          strokeWidth={2.5}
+        />
+        <span className="font-passion uppercase tracking-[0.06em]">{formatDateTime(drop.scheduledAt)}</span>
+      </span>
+      <span className="inline-flex min-w-0 items-center gap-1">
+        <MapPin size={isVertical ? 12 : 14} className="shrink-0 text-tok-teal" strokeWidth={2.5} />
+        <span
+          className={cn(
+            'font-passion truncate uppercase tracking-[0.06em]',
+            isVertical ? 'max-w-[min(100%,9rem)]' : 'max-w-[180px] sm:max-w-[220px]',
+          )}
+        >
+          {drop.location}
+        </span>
+      </span>
+    </div>
+
+    {drop.overview && (
+      <p
+        className={cn(
+          'font-inter leading-relaxed text-tok-black/72 line-clamp-2',
+          isVertical ? 'mb-2 text-xs sm:leading-snug' : 'mb-4 text-sm sm:text-[15px] sm:leading-relaxed',
+        )}
+      >
+        {drop.overview}
+      </p>
+    )}
+
+    {/* Crew Section */}
+    <div className={cn('mt-auto flex items-center', isVertical ? 'gap-1.5' : 'gap-2')}>
+      <div className="flex items-center">
+        {crew && crew.length > 0 ? (
+          <>
+            {crew.slice(0, 3).map((member, i) => {
+              const display = getCrewMemberDisplay(member);
+              return (
+                <div
+                  key={member.id}
+                  className={cn(
+                    'relative rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden',
+                    isVertical ? 'h-5 w-5' : 'h-6 w-6',
+                    i > 0 && (isVertical ? '-ml-2' : '-ml-3'),
+                  )}
+                  title={display.fullName}
+                >
+                  {display.avatar ? (
+                    <Image
+                      src={display.avatar}
+                      alt=""
+                      width={isVertical ? 20 : 24}
+                      height={isVertical ? 20 : 24}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className={cn(
+                        'flex h-full w-full items-center justify-center font-passion text-tok-teal',
+                        isVertical ? 'text-[7px]' : 'text-[8px]',
+                      )}
+                    >
+                      {display.initials}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {crew.length > 3 && (
+              <div
+                className={cn(
+                  'relative flex items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion font-bold text-tok-black',
+                  isVertical ? '-ml-2 h-5 w-5 text-[7px]' : '-ml-3 h-6 w-6 text-[8px]',
+                )}
+              >
+                +{crew.length - 3}
+              </div>
+            )}
+          </>
+        ) : (
+
 
           <div
             className={cn(
-              'flex flex-wrap font-bold text-tok-black/55',
-              isMasonry
-                ? 'mb-2 gap-x-2 gap-y-1 text-[10px] sm:text-[11px]'
-                : 'mb-3.5 gap-x-4 gap-y-1.5 text-xs sm:text-[13px]',
+              'flex items-center justify-center rounded-full border-2 border-tok-black border-dashed bg-tok-black/5 text-tok-black/20',
+              isVertical ? 'h-5 w-5' : 'h-6 w-6',
             )}
           >
-            <span className="inline-flex min-w-0 items-center gap-1">
-              <CalendarDays
-                size={isMasonry ? 12 : 14}
-                className="shrink-0 text-tok-teal"
-                strokeWidth={2.5}
-              />
-              <span className="font-passion uppercase tracking-[0.06em]">{formatDateTime(drop.scheduledAt)}</span>
-            </span>
-            <span className="inline-flex min-w-0 items-center gap-1">
-              <MapPin size={isMasonry ? 12 : 14} className="shrink-0 text-tok-teal" strokeWidth={2.5} />
-              <span
-                className={cn(
-                  'font-passion truncate uppercase tracking-[0.06em]',
-                  isMasonry ? 'max-w-[min(100%,9rem)]' : 'max-w-[180px] sm:max-w-[220px]',
-                )}
-              >
-                {drop.location}
-              </span>
-            </span>
+            <Users size={isVertical ? 9 : 10} strokeWidth={2.5} />
           </div>
-
-          {drop.overview && (
-            <p
-              className={cn(
-                'font-inter leading-relaxed text-tok-black/72 line-clamp-2',
-                isMasonry ? 'mb-2 text-xs sm:leading-snug' : 'mb-4 text-sm sm:text-[15px] sm:leading-relaxed',
-              )}
-            >
-              {drop.overview}
-            </p>
-          )}
-
-          {/* Crew Section */}
-          <div className={cn('mt-auto flex items-center', isMasonry ? 'gap-1.5' : 'gap-2')}>
-            <div className="flex items-center">
-              {crew && crew.length > 0 ? (
-                <>
-                  {crew.slice(0, 3).map((member, i) => {
-                    const display = getCrewMemberDisplay(member);
-                    return (
-                      <div
-                        key={member.id}
-                        className={cn(
-                          'relative rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden',
-                          isMasonry ? 'h-5 w-5' : 'h-6 w-6',
-                          i > 0 && (isMasonry ? '-ml-2' : '-ml-3'),
-                        )}
-                        title={display.fullName}
-                      >
-                        {display.avatar ? (
-                          <Image
-                            src={display.avatar}
-                            alt=""
-                            width={isMasonry ? 20 : 24}
-                            height={isMasonry ? 20 : 24}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            className={cn(
-                              'flex h-full w-full items-center justify-center font-passion text-tok-teal',
-                              isMasonry ? 'text-[7px]' : 'text-[8px]',
-                            )}
-                          >
-                            {display.initials}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {crew.length > 3 && (
-                    <div
-                      className={cn(
-                        'relative flex items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion font-bold text-tok-black',
-                        isMasonry ? '-ml-2 h-5 w-5 text-[7px]' : '-ml-3 h-6 w-6 text-[8px]',
-                      )}
-                    >
-                      +{crew.length - 3}
-                    </div>
-                  )}
-                </>
-              ) : (
-
-
-                <div
-                  className={cn(
-                    'flex items-center justify-center rounded-full border-2 border-tok-black border-dashed bg-tok-black/5 text-tok-black/20',
-                    isMasonry ? 'h-5 w-5' : 'h-6 w-6',
-                  )}
-                >
-                  <Users size={isMasonry ? 9 : 10} strokeWidth={2.5} />
-                </div>
-              )}
-            </div>
-
-            <div className={cn('h-4 w-px bg-tok-black/10', isMasonry ? 'mx-0.5' : 'mx-1')} />
-
-            <div className={cn('flex items-center', isMasonry ? 'min-w-0 gap-1' : 'gap-2')}>
-              <div
-                className={cn(
-                  'flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale',
-                  isMasonry ? 'h-5 w-5' : 'h-6 w-6',
-                )}
-              >
-                {drop.organiser?.avatar ? (
-                  <Image
-                    src={drop.organiser.avatar}
-                    alt=""
-                    width={isMasonry ? 20 : 24}
-                    height={isMasonry ? 20 : 24}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div
-                    className={cn(
-                      'flex h-full w-full items-center justify-center font-passion text-tok-teal',
-                      isMasonry ? 'text-[7px]' : 'text-[8px]',
-                    )}
-                  >
-                    {drop.organiser?.firstName?.[0] || '?'}{drop.organiser?.lastName?.[0] || ''}
-                  </div>
-                )}
-              </div>
-              <p
-                className={cn(
-                  'min-w-0 truncate font-passion font-bold uppercase tracking-[0.08em] text-tok-black/65',
-                  isMasonry ? 'text-[9px]' : 'text-[11px] sm:text-xs',
-                )}
-              >
-                Chief {drop.organiser?.firstName}
-              </p>
-            </div>
-          </div>
-        </div>
-      </Link>
-
-
-      {/* Quick Action Buttons */}
-      <div
-        className={cn(
-          'absolute z-20 flex flex-col transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5',
-          isMasonry ? 'right-2 top-2 gap-1' : 'right-4 top-4 gap-2',
         )}
-      >
-        <SparkButton drop={drop} className="bg-white" />
       </div>
 
-      {showShareEditDelete && (
+      <div className={cn('h-4 w-px bg-tok-black/10', isVertical ? 'mx-0.5' : 'mx-1')} />
+
+      <div className={cn('flex items-center', isVertical ? 'min-w-0 gap-1' : 'gap-2')}>
         <div
           className={cn(
-            'absolute z-20 flex transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5',
-            isMasonry ? 'left-2 top-2 gap-1' : 'left-4 top-4 gap-2',
+            'flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale',
+            isVertical ? 'h-5 w-5' : 'h-6 w-6',
           )}
         >
-          {onShare && !isCompleted && isShareableDrop(drop) && (
-            <button
-              onClick={handleShare}
+          {drop.organiser?.avatar ? (
+            <Image
+              src={drop.organiser.avatar}
+              alt=""
+              width={isVertical ? 20 : 24}
+              height={isVertical ? 20 : 24}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div
               className={cn(
-                'flex items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none',
-                isMasonry ? 'h-8 w-8' : 'h-9 w-9',
+                'flex h-full w-full items-center justify-center font-passion text-tok-teal',
+                isVertical ? 'text-[7px]' : 'text-[8px]',
               )}
-              title="Share Drop"
             >
-              <Share size={isMasonry ? 14 : 16} strokeWidth={2.5} />
-            </button>
-          )}
-          {canEdit && onEdit && (
-            <button
-              onClick={handleEdit}
-              className={cn(
-                'flex items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 active:shadow-none',
-                isMasonry ? 'h-8 w-8' : 'h-9 w-9',
-              )}
-              title="Edit Drop"
-            >
-              <Edit3 size={isMasonry ? 14 : 16} strokeWidth={2.5} />
-            </button>
-          )}
-          {canDelete && (
-            <button
-              onClick={handleDelete}
-              className={cn(
-                'flex items-center justify-center rounded-sm border-2 border-tok-black bg-white text-red-500 shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:bg-red-50 active:translate-y-0 active:shadow-none',
-                isMasonry ? 'h-8 w-8' : 'h-9 w-9',
-              )}
-              title="Delete Drop"
-            >
-              <Trash2 size={isMasonry ? 14 : 16} strokeWidth={2.5} />
-            </button>
+              {drop.organiser?.firstName?.[0] || '?'}{drop.organiser?.lastName?.[0] || ''}
+            </div>
           )}
         </div>
-      )}
+        <p
+          className={cn(
+            'min-w-0 truncate font-passion font-bold uppercase tracking-[0.08em] text-tok-black/65',
+            isVertical ? 'text-[9px]' : 'text-[11px] sm:text-xs',
+          )}
+        >
+          Chief {drop.organiser?.firstName}
+        </p>
+      </div>
     </div>
+  </div>
+      </Link >
+
+
+    </div >
   );
 }
 
@@ -756,14 +764,29 @@ export function HeroCardSkeleton() {
   );
 }
 
-export function ListCardSkeleton() {
+export function ListCardSkeleton({ layout = 'list' }: { layout?: 'list' | 'masonry' | 'grid' }) {
+  const isVertical = layout === 'masonry' || layout === 'grid';
+
   return (
-    <div className="group relative mt-4">
-      <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] sm:flex-row">
-        <div className="relative aspect-5/2 w-full shrink-0 border-b-[3px] border-tok-black sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]">
+    <div className={cn('group relative', isVertical ? 'mt-0' : 'mt-4')}>
+      <div
+        className={cn(
+          'flex overflow-hidden rounded-xl border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A]',
+          isVertical ? 'flex-col' : 'flex-col sm:flex-row',
+        )}
+      >
+        <div
+          className={cn(
+            'relative shrink-0 border-tok-black',
+            isVertical
+              ? 'aspect-[4/5] w-full border-b-[3px]'
+              : 'aspect-5/2 w-full border-b-[3px] sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]',
+            layout === 'grid' && 'aspect-[3/2]',
+          )}
+        >
           <Skeleton className="absolute inset-0 h-full w-full rounded-none bg-tok-teal/15" />
           <div className="pointer-events-none absolute bottom-2 left-2 sm:bottom-2 sm:left-2">
-            <Skeleton className="h-5 w-16 rounded-sm border border-tok-black/30 bg-amber-400/60" />
+            <Skeleton className="h-5 w-16 rounded-sm border border-tok-black/30 bg-tok-teal/20" />
           </div>
         </div>
 
