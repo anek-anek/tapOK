@@ -135,7 +135,7 @@ export function AuthProvider({
 
   const refreshUser = useCallback(async () => {
     if (!user) return;
-    const result = await finalizeSession(user, { mode: 'login' });
+    const result = await finalizeSession(user, { mode: 'login', sync: false });
     if (result.ok) {
       setDbUser(result.dbUser);
     }

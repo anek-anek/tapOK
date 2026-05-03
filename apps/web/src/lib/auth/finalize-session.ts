@@ -23,6 +23,7 @@ export type FinalizeFailureReason =
   | 'backend_unavailable'
   | 'invalid_credentials'
   | 'session_invalid'
+  | 'rate_limited'
   | 'error';
 
 export type FinalizeResult =
@@ -88,6 +89,20 @@ async function cleanupFailedAuth(
     failureReason?: FinalizeFailureReason;
   } = {},
 ) {
+  const fatalReasons: FinalizeFailureReason[] = [
+    'no_account',
+    'link_denied',
+    'auth_provider_mismatch',
+    'email_not_verified',
+    'invalid_credentials',
+    'session_invalid',
+  ];
+
+  if (options.failureReason && !fatalReasons.includes(options.failureReason)) {
+    console.warn(`[finalizeSession] Non-fatal failure (${options.failureReason}). Skipping sign-out cleanup.`);
+    return;
+  }
+
   setAuthToken(null);
   const auth = getFirebaseAuth();
   const currentUser = auth.currentUser?.uid === firebaseUser.uid ? auth.currentUser : firebaseUser;
@@ -192,6 +207,15 @@ function mapSessionError(error: SessionCookieError): Omit<Extract<FinalizeResult
     };
   }
 
+  if (error.status === 429) {
+    return {
+      reason: 'rate_limited',
+      message: 'Too many requests. Please wait a moment and try again.',
+      status: 429,
+      code: 'TOO_MANY_REQUESTS',
+    };
+  }
+
   return {
     reason: 'error',
     message,
@@ -207,6 +231,7 @@ export async function finalizeSession(
     provider?: AuthProvider;
     payload?: SyncPayload;
     deleteCreatedUserOnFailure?: boolean;
+    sync?: boolean;
   },
 ): Promise<FinalizeResult> {
   try {
@@ -215,7 +240,7 @@ export async function finalizeSession(
     setAuthToken(token);
 
     const result = await postSessionCookie(token, {
-      sync: true,
+      sync: options.sync ?? true,
       payload: { ...(options.payload ?? {}), authMode: options.mode, authProvider },
     });
 
