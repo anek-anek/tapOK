@@ -48,11 +48,19 @@ export async function POST(req: NextRequest) {
 
   if (!dbUserResponse.ok) {
     const errorData = await dbUserResponse.json().catch(() => ({}));
+    let message = errorData?.message ?? 'Unable to finalize your session.';
+    
+    if (dbUserResponse.status === 429) {
+      message = 'Too many requests. Please wait a moment and try again.';
+    } else if (dbUserResponse.status === 503) {
+      message = 'The service is temporarily unavailable. Please try again later.';
+    }
+
     return NextResponse.json(
       {
         ok: false,
         error: errorData?.error ?? 'SESSION_FINALIZE_FAILED',
-        message: errorData?.message ?? 'Unable to finalize your session.',
+        message,
         code: errorData?.code,
         upstream: errorData,
       },
