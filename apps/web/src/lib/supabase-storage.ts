@@ -1,12 +1,22 @@
 import { StorageClient } from '@supabase/storage-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const storageClient = new StorageClient(`${supabaseUrl}/storage/v1`, {
-  apikey: supabaseAnonKey,
-  Authorization: `Bearer ${supabaseAnonKey}`,
-});
+/**
+ * Returns a StorageClient instance.
+ * During build time, if env vars are missing, it returns a placeholder client 
+ * to avoid ERR_INVALID_URL crashes during module evaluation.
+ */
+function getStorageClient(token?: string) {
+  const url = supabaseUrl || 'https://placeholder.supabase.co';
+  const key = supabaseAnonKey || 'none';
+  
+  return new StorageClient(`${url}/storage/v1`, {
+    apikey: key,
+    Authorization: `Bearer ${token || key}`,
+  });
+}
 
 export const COVER_PHOTO_BUCKET = 'drops';
 export const MAX_COVER_PHOTO_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -16,11 +26,10 @@ export async function uploadDropCover(dropId: string, file: File, userToken: str
   const ext = file.type === 'image/png' ? 'png' : 'jpg';
   const path = `drops/${dropId}/cover.${ext}`;
 
+  if (!supabaseUrl) throw new Error('Supabase URL is not configured');
+
   // Use the user's JWT so RLS policies apply
-  const authedClient = new StorageClient(`${supabaseUrl}/storage/v1`, {
-    apikey: supabaseAnonKey,
-    Authorization: `Bearer ${userToken}`,
-  });
+  const authedClient = getStorageClient(userToken);
 
   const { error } = await authedClient.from(COVER_PHOTO_BUCKET).upload(path, file, {
     contentType: file.type,
@@ -34,13 +43,11 @@ export async function uploadDropCover(dropId: string, file: File, userToken: str
 }
 
 export async function deleteDropCover(dropId: string, userToken: string): Promise<void> {
-  const authedClient = new StorageClient(`${supabaseUrl}/storage/v1`, {
-    apikey: supabaseAnonKey,
-    Authorization: `Bearer ${userToken}`,
-  });
+  const authedClient = getStorageClient(userToken);
 
   const paths = [`drops/${dropId}/cover.jpg`, `drops/${dropId}/cover.png`];
   await authedClient.from(COVER_PHOTO_BUCKET).remove(paths);
 }
 
-export { storageClient };
+// Export a getter-based client to maintain compatibility if used as an object
+export const storageClient = getStorageClient();

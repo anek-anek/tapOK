@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+export const dynamic = 'force-dynamic';
 import { Loader2 } from 'lucide-react';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 
