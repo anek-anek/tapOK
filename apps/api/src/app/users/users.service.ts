@@ -130,20 +130,11 @@ export class UsersService {
     const tokenLast = rest.join(' ');
 
     const isEmailVerified = token.email_verified ?? existingUser?.isEmailVerified ?? false;
-    
-    // Logic to set emailVerifiedAt if it wasn't set before and user is now verified
     let emailVerifiedAt = existingUser?.emailVerifiedAt;
+
+    // If Firebase says the user is verified, but our DB says they aren't, update them.
+    // We trust Firebase as the source of truth for verification status.
     if (isEmailVerified && !existingUser?.isEmailVerified) {
-      const sentAt = existingUser?.emailVerificationSentAt;
-      const EXPIRY_MS = 10 * 60 * 1000;
-      
-      if (sentAt && (new Date().getTime() - new Date(sentAt).getTime() > EXPIRY_MS)) {
-        return {
-          ...existingUser,
-          isEmailVerified: false,
-        } as any;
-      }
-      
       emailVerifiedAt = new Date();
     }
 
