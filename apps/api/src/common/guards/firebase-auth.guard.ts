@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -11,6 +12,8 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
+  private readonly logger = new Logger(FirebaseAuthGuard.name);
+
   constructor(private readonly reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -33,7 +36,8 @@ export class FirebaseAuthGuard implements CanActivate {
     try {
       const decoded = await admin.auth().verifyIdToken(token);
       request.user = decoded;
-    } catch {
+    } catch (err) {
+      this.logger.error(`Token verification failed: ${err}`);
       if (isPublic) return true;
       throw new UnauthorizedException({
         message: 'Invalid or expired token',
