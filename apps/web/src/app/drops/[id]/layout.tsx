@@ -1,9 +1,7 @@
 import { Metadata } from 'next';
 import { absoluteUrlForMetadata, getApiUrl } from '@/lib/config';
 
-export async function generateStaticParams() {
-  return [];
-}
+export const dynamic = 'force-dynamic';
 
 type Props = {
   params: Promise<{ id: string }>;
