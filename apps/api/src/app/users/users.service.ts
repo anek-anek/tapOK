@@ -71,13 +71,6 @@ export class UsersService {
     const user = await this.usersRepository.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('No account found for this user.');
 
-    if (token.email_verified && !user.isEmailVerified) {
-      user.isEmailVerified = true;
-      user.emailVerifiedAt = new Date();
-      await this.usersRepository.save(user);
-      this.logger.log(`[UsersService] Auto-synced verification status for user ${user.id}`);
-    }
-
     const [{ count }] = await this.dataSource.query<[{ count: string }]>(
       `SELECT COUNT(*) AS count FROM drops WHERE "organiserId" = $1`,
       [user.id],
@@ -137,14 +130,8 @@ export class UsersService {
     const [tokenFirst = '', ...rest] = (token.name ?? '').split(' ');
     const tokenLast = rest.join(' ');
 
-    const isEmailVerified = token.email_verified ?? existingUser?.isEmailVerified ?? false;
-    let emailVerifiedAt = existingUser?.emailVerifiedAt;
-
-    // If Firebase says the user is verified, but our DB says they aren't, update them.
-    // We trust Firebase as the source of truth for verification status.
-    if (isEmailVerified && !existingUser?.isEmailVerified) {
-      emailVerifiedAt = new Date();
-    }
+    const isEmailVerified = existingUser?.isEmailVerified ?? false;
+    const emailVerifiedAt = existingUser?.emailVerifiedAt;
 
     return {
       email: token.email ?? existingUser?.email ?? '',
