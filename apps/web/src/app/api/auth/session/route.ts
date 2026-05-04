@@ -114,10 +114,13 @@ export async function POST(req: NextRequest) {
   res.cookies.set(SESSION_COOKIE, idToken, cookieOptions);
 
   const profile = {
+    id: dbUser.id,
     firstName: dbUser.firstName,
     lastName: dbUser.lastName,
     email: dbUser.email,
     avatar: dbUser.avatar,
+    role: dbUser.role,
+    isEmailVerified: dbUser.isEmailVerified,
   };
   
   res.cookies.set(PROFILE_COOKIE, encodeURIComponent(JSON.stringify(profile)), {

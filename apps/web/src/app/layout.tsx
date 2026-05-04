@@ -22,6 +22,7 @@ const inter = Inter({
 });
 
 import { getBaseUrl } from '@/lib/config';
+import { getServerUser } from '@/lib/auth/get-server-user';
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
@@ -59,16 +60,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialDbUser = await getServerUser();
+
   return (
     <html lang="en" className={cn(passionOne.variable, inter.variable, "font-sans", geist.variable)}>
       <body>
         <QueryProvider>
-          <AuthProvider initialDbUser={null}>
+          <AuthProvider initialDbUser={initialDbUser}>
             {children}
             <ToastProvider />
           </AuthProvider>

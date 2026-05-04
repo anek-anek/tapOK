@@ -7,20 +7,9 @@ import { CurrentYear } from '@/components/CurrentYear';
 import { ShieldCheck, Headphones, Smartphone } from 'lucide-react';
 import { HeroActions } from '@/components/landing/hero-actions';
 
-const WhyTapokFeatureCards = dynamic(() => import('@/components/landing/why-tapok-feature-cards').then(mod => mod.WhyTapokFeatureCards), {
-  ssr: true,
-  loading: () => <div className="h-96 w-full animate-pulse bg-tok-teal/10" />
-});
-
-const HowItWorks = dynamic(() => import('@/components/landing/how-it-works').then(mod => mod.HowItWorks), {
-  ssr: true,
-  loading: () => <div className="h-96 w-full animate-pulse bg-tok-cream" />
-});
-
-const FeatureTour = dynamic(() => import('@/components/landing/feature-tour').then(mod => mod.FeatureTour), {
-  ssr: true,
-  loading: () => <div className="h-96 w-full animate-pulse border-t-[3px] border-tok-black/10 bg-tok-cream" />
-});
+import { WhyTapokFeatureCards } from '@/components/landing/why-tapok-feature-cards';
+import { HowItWorks } from '@/components/landing/how-it-works';
+import { FeatureTour } from '@/components/landing/feature-tour';
 
 const features = [
   {
