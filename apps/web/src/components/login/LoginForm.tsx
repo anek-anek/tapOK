@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useState } from 'react';
+import { startTransition, use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -65,6 +65,16 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   const { formRef, clearForm } = useAuthFormReset(resetFormState);
 
   useEffect(() => {
+    const target = resolveAuthSuccessRedirect({
+      mode: 'login',
+      redirectTo,
+      firstName: '',
+      shouldOnboard: false,
+    });
+    void router.prefetch(target);
+  }, [router, redirectTo]);
+
+  useEffect(() => {
     if (!googleRedirectResolved) return;
 
     if (user && dbUser && !googleLoading && !isSubmitting) {
@@ -93,15 +103,16 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
         return;
       }
 
-      setSession(user, finalized.dbUser);
-      router.replace(
-        resolveAuthSuccessRedirect({
-          mode: 'login',
-          redirectTo,
-          firstName: finalized.dbUser.firstName,
-          shouldOnboard: false,
-        }),
-      );
+      const target = resolveAuthSuccessRedirect({
+        mode: 'login',
+        redirectTo,
+        firstName: finalized.dbUser.firstName,
+        shouldOnboard: false,
+      });
+      router.replace(target);
+      startTransition(() => {
+        setSession(user, finalized.dbUser);
+      });
     })();
 
     return () => {
@@ -118,15 +129,16 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
 
       if (resolution.status === 'success') {
         toast.success('WELCOME BACK');
-        setSession(resolution.user, resolution.finalized.dbUser);
-        router.replace(
-          resolveAuthSuccessRedirect({
-            mode: 'login',
-            redirectTo,
-            firstName: resolution.finalized.dbUser.firstName,
-            shouldOnboard: false,
-          }),
-        );
+        const target = resolveAuthSuccessRedirect({
+          mode: 'login',
+          redirectTo,
+          firstName: resolution.finalized.dbUser.firstName,
+          shouldOnboard: false,
+        });
+        router.replace(target);
+        startTransition(() => {
+          setSession(resolution.user, resolution.finalized.dbUser);
+        });
       } else if (resolution.status === 'finalize_error') {
         showError(resolution.finalized.message);
       } else if (
@@ -170,15 +182,16 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
 
       toast.success('WELCOME BACK');
       clearForm();
-      setSession(outcome.user, finalized.dbUser);
-      router.replace(
-        resolveAuthSuccessRedirect({
-          mode: 'login',
-          redirectTo,
-          firstName: finalized.dbUser.firstName,
-          shouldOnboard: false,
-        }),
-      );
+      const target = resolveAuthSuccessRedirect({
+        mode: 'login',
+        redirectTo,
+        firstName: finalized.dbUser.firstName,
+        shouldOnboard: false,
+      });
+      router.replace(target);
+      startTransition(() => {
+        setSession(outcome.user, finalized.dbUser);
+      });
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
       if (code === 'auth/popup-closed-by-user') return;
@@ -207,15 +220,16 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
 
       toast.success('WELCOME BACK');
       clearForm();
-      setSession(user, finalized.dbUser);
-      router.replace(
-        resolveAuthSuccessRedirect({
-          mode: 'login',
-          redirectTo,
-          firstName: finalized.dbUser.firstName,
-          shouldOnboard: false,
-        }),
-      );
+      const target = resolveAuthSuccessRedirect({
+        mode: 'login',
+        redirectTo,
+        firstName: finalized.dbUser.firstName,
+        shouldOnboard: false,
+      });
+      router.replace(target);
+      startTransition(() => {
+        setSession(user, finalized.dbUser);
+      });
     } catch (error: unknown) {
       const code = (error as { code?: string }).code ?? '';
 

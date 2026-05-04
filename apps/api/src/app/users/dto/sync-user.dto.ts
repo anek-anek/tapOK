@@ -1,5 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, MaxLength, IsDateString } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { AuthProvider, GenderEnum } from '../../../common';
 
 export enum SyncAuthMode {
@@ -48,4 +55,24 @@ export class SyncUserDto {
   @IsOptional()
   @IsString()
   email?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  termsAccepted?: boolean;
+
+  @ApiPropertyOptional({ example: '2026-05-04T10:42:00.000Z' })
+  @IsOptional()
+  @IsDateString()
+  termsAcceptedAt?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  privacyPolicyAccepted?: boolean;
+
+  @ApiPropertyOptional({ example: '2026-05-04T10:42:00.000Z' })
+  @IsOptional()
+  @IsDateString()
+  privacyPolicyAcceptedAt?: string;
 }

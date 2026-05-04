@@ -246,6 +246,15 @@ export class UsersService {
       gender: dto.gender ?? existingUser?.gender,
       birthday: dto.birthday ? new Date(dto.birthday) : existingUser?.birthday,
       userHandle: dto.userHandle?.trim() || existingUser?.userHandle,
+      termsAccepted: dto.termsAccepted ?? existingUser?.termsAccepted ?? false,
+      termsAcceptedAt: dto.termsAcceptedAt
+        ? new Date(dto.termsAcceptedAt)
+        : existingUser?.termsAcceptedAt,
+      privacyPolicyAccepted:
+        dto.privacyPolicyAccepted ?? existingUser?.privacyPolicyAccepted ?? false,
+      privacyPolicyAcceptedAt: dto.privacyPolicyAcceptedAt
+        ? new Date(dto.privacyPolicyAcceptedAt)
+        : existingUser?.privacyPolicyAcceptedAt,
     };
   }
 
