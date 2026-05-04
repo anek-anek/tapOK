@@ -34,8 +34,13 @@ export class FirebaseAuthGuard implements CanActivate {
     }
 
     try {
-      const decoded = await admin.auth().verifyIdToken(token);
-      request.user = decoded;
+      try {
+        const decodedIdToken = await admin.auth().verifyIdToken(token);
+        request.user = decodedIdToken;
+      } catch {
+        const decodedSession = await admin.auth().verifySessionCookie(token, true);
+        request.user = decodedSession;
+      }
     } catch (err) {
       this.logger.error(`Token verification failed: ${err}`);
       if (isPublic) return true;
