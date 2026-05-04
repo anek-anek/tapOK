@@ -7,6 +7,7 @@ import {
   CheckCheck as IconCheckCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type DigitalTicketProps = {
   drop: {
@@ -125,6 +126,44 @@ export function DigitalTicket({ drop, isMember, className = '', footer }: Digita
       </div>
 
       {/* Bottom decorative notches like a real ticket */}
+      <div className="absolute bottom-0 left-1/2 flex -translate-x-1/2 gap-4">
+        <div className="h-4 w-6 rounded-t-full border-t-2 border-l-2 border-r-2 border-tok-black bg-tok-cream" />
+      </div>
+    </div>
+  );
+}
+
+export function DigitalTicketSkeleton() {
+  return (
+    <div className="relative overflow-hidden rounded-[4px] border-[3px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]">
+      <div className="h-2 w-full bg-tok-teal" />
+      <div className="p-6">
+        <Skeleton className="mb-6 h-3 w-40 rounded-sm bg-tok-teal/25" />
+        <div className="relative mx-auto mb-8 flex aspect-square w-full max-w-[180px] justify-center overflow-hidden rounded-[4px] border-2 border-tok-black bg-tok-cream/40 p-6">
+          <Skeleton className="h-full w-full max-h-[140px] max-w-[140px] rounded-sm bg-tok-black/8" />
+        </div>
+        <div className="my-8 flex items-center gap-2">
+          <div className="h-px flex-1 border-t-2 border-dashed border-tok-black/20" />
+          <div className="h-3 w-3 shrink-0 rounded-full border-2 border-tok-black bg-tok-cream" />
+          <div className="h-px flex-1 border-t-2 border-dashed border-tok-black/20" />
+        </div>
+        <div className="space-y-4">
+          <div className="min-h-22 w-full rounded-[4px] border-2 border-tok-black bg-tok-cream/60 p-4">
+            <Skeleton className="h-2 w-16 bg-tok-black/20" />
+            <div className="mt-4 flex justify-between gap-4">
+              <Skeleton className="h-8 w-3/4 bg-tok-black/10" />
+              <Skeleton className="h-8 w-16 bg-tok-black/10" />
+            </div>
+          </div>
+          <div className="min-h-18 w-full rounded-[4px] border-2 border-tok-black bg-white p-4">
+            <Skeleton className="h-2 w-16 bg-tok-black/20" />
+            <div className="mt-4 flex justify-between gap-4">
+              <Skeleton className="h-4 w-3/4 bg-tok-black/5" />
+              <Skeleton className="h-8 w-16 bg-tok-black/10" />
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="absolute bottom-0 left-1/2 flex -translate-x-1/2 gap-4">
         <div className="h-4 w-6 rounded-t-full border-t-2 border-l-2 border-r-2 border-tok-black bg-tok-cream" />
       </div>

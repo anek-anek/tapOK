@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { coverPhotoSrcForNextImage } from '@/lib/config';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { CrewMember, Drop, DropCardModel } from '@/types/drop';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SparkButton } from './spark-button';
@@ -62,6 +63,15 @@ function getCrewMemberDisplay(member: CrewMember) {
   const fullName = `${firstName} ${lastName}`.trim();
 
   return { firstName, lastName, avatar, initials, fullName };
+}
+
+/** Get a theme-appropriate fallback cover from the public folder */
+export function getFallbackCover(category?: string | null) {
+  if (!category) return null;
+  const cat = category.toLowerCase();
+  if (cat.includes('party') || cat.includes('club') || cat.includes('event')) return '/tapok-party.png';
+  if (cat.includes('hangout') || cat.includes('chill') || cat.includes('mission')) return '/tapok-hangout.png';
+  return null;
 }
 
 /** Overlapping crew faces only — same stacking as HeroDropCard / list cards (no count copy). */
@@ -129,6 +139,8 @@ export function HeroDropCard({
 }) {
   const role = getRole(drop, viewerId);
   const crew = crewFor(drop);
+  const fallbackSrc = getFallbackCover(drop.category);
+  const displaySrc = drop.coverPhoto ? coverPhotoSrcForNextImage(drop.coverPhoto) : fallbackSrc;
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -139,23 +151,37 @@ export function HeroDropCard({
   return (
     <div className="group relative">
       <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal shadow-[8px_8px_0px_#1C1C1A] transition-all group-hover:-translate-x-1 group-hover:-translate-y-1 group-hover:shadow-[12px_12px_0px_#1C1C1A] md:flex-row">
-
         {/* Visual Section */}
-        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px]">
-          {drop.coverPhoto ? (
-            <Image
-              src={coverPhotoSrcForNextImage(drop.coverPhoto)}
-              alt={drop.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-
-          ) : (
-            <div className="absolute inset-0 flex h-full w-full items-center justify-center bg-tok-black/10 font-passion text-5xl font-bold tracking-widest text-tok-cream/10">
-              {getInitials(drop.name)}
-            </div>
-          )}
+        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px] bg-tok-black/5">
+          <AnimatePresence mode="wait">
+            {displaySrc ? (
+              <motion.div
+                key="cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4 }}
+                className="relative h-full w-full"
+              >
+                <Image
+                  src={displaySrc}
+                  alt={drop.name}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, 560px"
+                  priority
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="initials"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="absolute inset-0 flex h-full w-full items-center justify-center bg-tok-black/10 font-passion text-5xl font-bold tracking-widest text-tok-cream/10"
+              >
+                {getInitials(drop.name)}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Quick Action Buttons Overlay */}
           <div className="absolute right-3 top-3 z-30 flex flex-col gap-2 transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5">
@@ -333,13 +359,13 @@ export function ListDropCard({
   onEdit?: (drop: Drop) => void;
   onDelete?: (drop: Drop) => void;
   showShareEditDelete?: boolean;
-  /** `masonry`: vertical tile for packed layout. `grid`: vertical card with fixed aspect for consistent grids. */
   layout?: 'list' | 'masonry' | 'grid';
-  /** Hint LCP: eager-load cover for first visible tiles (e.g. profile masonry). */
   coverPriority?: boolean;
 }) {
   const role = getRole(drop, viewerId);
   const crew = crewFor(drop);
+  const fallbackSrc = getFallbackCover(drop.category);
+  const displaySrc = drop.coverPhoto ? coverPhotoSrcForNextImage(drop.coverPhoto) : fallbackSrc;
   const isOrganiser = !!viewerId && drop.organiserId === viewerId;
   const canEdit = isOrganiser && drop.status !== 'completed' && isShareableDrop(drop);
   const canDelete = isOrganiser && onDelete && isShareableDrop(drop);
@@ -395,7 +421,7 @@ export function ListDropCard({
         {/* Visual Element */}
         <div
           className={cn(
-            'relative w-full shrink-0 border-tok-black',
+            'relative w-full shrink-0 border-tok-black bg-tok-black/5',
             isVertical
               ? 'border-b-[3px]'
               : 'aspect-5/2 border-b-[3px] sm:aspect-square sm:w-32 sm:border-b-0 sm:border-r-[3px]',
@@ -408,50 +434,63 @@ export function ListDropCard({
               : undefined
           }
         >
-          {drop.coverPhoto ? (
-            <Image
-              src={coverPhotoSrcForNextImage(drop.coverPhoto)}
-              alt={drop.name}
-              fill
-              className="object-cover"
-              sizes={
-                isVertical
-                  ? '(max-width: 640px) 44vw, (max-width: 1024px) 30vw, 280px'
-                  : '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
-              }
-              priority={coverPriority}
-              onLoad={
-                isMasonry
-                  ? (e) =>
-                    setMasonryCoverAspect(
-                      masonryAspectFromImageDimensions(
-                        e.currentTarget.naturalWidth,
-                        e.currentTarget.naturalHeight,
-                      ),
-                    )
-                  : undefined
-              }
-            />
-          ) : (
-            <div
-              className={cn(
-                'absolute inset-0 flex h-full w-full items-center justify-center bg-tok-teal/10 font-passion font-bold tracking-widest text-tok-teal/30',
-                isVertical ? 'text-lg' : 'text-2xl',
-              )}
-            >
-              {getInitials(drop.name)}
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {displaySrc ? (
+              <motion.div
+                key="cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="relative h-full w-full"
+              >
+                <Image
+                  src={displaySrc}
+                  alt={drop.name}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  sizes={
+                    isVertical
+                      ? '(max-width: 640px) 100vw, 400px'
+                      : '(max-width: 640px) 100vw, 256px'
+                  }
+                  priority={coverPriority}
+                  onLoad={
+                    isMasonry
+                      ? (e) =>
+                        setMasonryCoverAspect(
+                          masonryAspectFromImageDimensions(
+                            e.currentTarget.naturalWidth,
+                            e.currentTarget.naturalHeight,
+                          ),
+                        )
+                      : undefined
+                  }
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="initials"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className={cn(
+                  'absolute inset-0 flex h-full w-full items-center justify-center bg-tok-teal/10 font-passion font-bold tracking-widest text-tok-teal/30',
+                  isVertical ? 'text-lg' : 'text-2xl',
+                )}
+              >
+                {getInitials(drop.name)}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Quick Action Overlays - pinned to media corner */}
-        <div
-          className={cn(
-            'absolute z-30 flex flex-col transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5',
-            'right-2 top-2 gap-1',
-          )}
-        >
-          <SparkButton drop={drop} className="bg-white" />
-        </div>
+          {/* Quick Action Overlays - pinned to media corner */}
+          <div
+            className={cn(
+              'absolute z-30 flex flex-col transition-all duration-300 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5',
+              'right-2 top-2 gap-1',
+            )}
+          >
+            <SparkButton drop={drop} className="bg-white" />
+          </div>
 
           {showShareEditDelete && (
             <div
@@ -480,224 +519,224 @@ export function ListDropCard({
           )}
 
 
-        {/* Status Badge overlay */}
-        {drop.status === 'ongoing' && (
-          <div
-            className={cn(
-              'absolute bottom-2 left-2 flex items-center gap-1 rounded-sm bg-amber-400 font-passion font-bold uppercase tracking-wider text-tok-black border-2 border-tok-black shadow-[1.5px_1.5px_0px_#1C1C1A]',
-              isVertical
-                ? 'px-1 py-0.5 text-[7px]'
-                : 'px-1.5 py-0.5 text-[8px]',
-            )}
-          >
-            <span className="relative flex h-1 w-1">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tok-black opacity-75" />
-              <span className="relative inline-flex h-1 w-1 rounded-full bg-tok-black" />
-            </span>
-            Ongoing
-          </div>
-        )}
-    </div>
-
-        {/* Content Area */ }
-  <div
-    className={cn('relative flex flex-1 flex-col', isVertical ? 'p-3 sm:p-4' : 'p-5 sm:p-6')}
-  >
-    <div className={cn('flex flex-wrap items-center gap-1.5 sm:gap-2', isVertical ? 'mb-1.5' : 'mb-2')}>
-      <span
-        className={cn(
-          'font-passion font-bold uppercase text-tok-black/50',
-          isVertical ? 'text-[8px] tracking-[1px]' : 'text-[10px] tracking-[1.5px]',
-        )}
-      >
-        {role}
-      </span>
-      {drop.category && (
-        <span
-          className={cn(
-            'rounded-sm bg-tok-teal-pale font-passion font-bold uppercase tracking-wider text-tok-teal border border-tok-teal/20',
-            isVertical ? 'px-1.5 py-0.5 text-[8px]' : 'px-2 py-0.5 text-[9px]',
-          )}
-        >
-          {drop.category}
-        </span>
-      )}
-      {!drop.isPublic && (
-        <span
-          className={cn(
-            'inline-flex items-center gap-0.5 rounded-sm bg-tok-black/5 font-passion font-bold uppercase tracking-wider text-tok-black/50',
-            isVertical ? 'px-1.5 py-0.5 text-[8px]' : 'gap-1 px-2 py-0.5 text-[9px]',
-          )}
-        >
-          <Lock size={isVertical ? 9 : 10} strokeWidth={3} />
-          Private
-        </span>
-      )}
-      {drop.isLocked && (
-        <span
-          className={cn(
-            'inline-flex items-center gap-0.5 rounded-sm bg-tok-teal-pale font-passion font-bold uppercase tracking-wider text-tok-teal border border-tok-teal/20',
-            isVertical ? 'px-1.5 py-0.5 text-[8px]' : 'gap-1 px-2 py-0.5 text-[9px]',
-          )}
-        >
-          <Lock size={isVertical ? 9 : 10} strokeWidth={3} />
-          Requires Approval
-        </span>
-      )}
-    </div>
-
-    <h3
-      className={cn(
-        'font-passion font-bold leading-snug text-tok-black transition-colors group-hover:text-tok-teal',
-        isVertical ? 'mb-1.5 text-base leading-tight sm:text-lg' : 'mb-2.5 text-2xl sm:text-[26px]',
-        showShareEditDelete ? (isVertical ? 'pr-7 sm:pr-8' : 'pr-10 sm:pr-0') : '',
-      )}
-    >
-      {drop.name}
-    </h3>
-
-    <div
-      className={cn(
-        'flex flex-wrap font-bold text-tok-black/55',
-        isVertical
-          ? 'mb-2 gap-x-2 gap-y-1 text-[10px] sm:text-[11px]'
-          : 'mb-3.5 gap-x-4 gap-y-1.5 text-xs sm:text-[13px]',
-      )}
-    >
-      <span className="inline-flex min-w-0 items-center gap-1">
-        <CalendarDays
-          size={isVertical ? 12 : 14}
-          className="shrink-0 text-tok-teal"
-          strokeWidth={2.5}
-        />
-        <span className="font-passion uppercase tracking-[0.06em]">{formatDateTime(drop.scheduledAt)}</span>
-      </span>
-      <span className="inline-flex min-w-0 items-center gap-1">
-        <MapPin size={isVertical ? 12 : 14} className="shrink-0 text-tok-teal" strokeWidth={2.5} />
-        <span
-          className={cn(
-            'font-passion truncate uppercase tracking-[0.06em]',
-            isVertical ? 'max-w-[min(100%,9rem)]' : 'max-w-[180px] sm:max-w-[220px]',
-          )}
-        >
-          {drop.location}
-        </span>
-      </span>
-    </div>
-
-    {drop.overview && (
-      <p
-        className={cn(
-          'font-inter leading-relaxed text-tok-black/72 line-clamp-2',
-          isVertical ? 'mb-2 text-xs sm:leading-snug' : 'mb-4 text-sm sm:text-[15px] sm:leading-relaxed',
-        )}
-      >
-        {drop.overview}
-      </p>
-    )}
-
-    {/* Crew Section */}
-    <div className={cn('mt-auto flex items-center', isVertical ? 'gap-1.5' : 'gap-2')}>
-      <div className="flex items-center">
-        {crew && crew.length > 0 ? (
-          <>
-            {crew.slice(0, 3).map((member, i) => {
-              const display = getCrewMemberDisplay(member);
-              return (
-                <div
-                  key={member.id}
-                  className={cn(
-                    'relative rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden',
-                    isVertical ? 'h-5 w-5' : 'h-6 w-6',
-                    i > 0 && (isVertical ? '-ml-2' : '-ml-3'),
-                  )}
-                  title={display.fullName}
-                >
-                  {display.avatar ? (
-                    <Image
-                      src={display.avatar}
-                      alt=""
-                      width={isVertical ? 20 : 24}
-                      height={isVertical ? 20 : 24}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      className={cn(
-                        'flex h-full w-full items-center justify-center font-passion text-tok-teal',
-                        isVertical ? 'text-[7px]' : 'text-[8px]',
-                      )}
-                    >
-                      {display.initials}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            {crew.length > 3 && (
-              <div
-                className={cn(
-                  'relative flex items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion font-bold text-tok-black',
-                  isVertical ? '-ml-2 h-5 w-5 text-[7px]' : '-ml-3 h-6 w-6 text-[8px]',
-                )}
-              >
-                +{crew.length - 3}
-              </div>
-            )}
-          </>
-        ) : (
-
-
-          <div
-            className={cn(
-              'flex items-center justify-center rounded-full border-2 border-tok-black border-dashed bg-tok-black/5 text-tok-black/20',
-              isVertical ? 'h-5 w-5' : 'h-6 w-6',
-            )}
-          >
-            <Users size={isVertical ? 9 : 10} strokeWidth={2.5} />
-          </div>
-        )}
-      </div>
-
-      <div className={cn('h-4 w-px bg-tok-black/10', isVertical ? 'mx-0.5' : 'mx-1')} />
-
-      <div className={cn('flex items-center', isVertical ? 'min-w-0 gap-1' : 'gap-2')}>
-        <div
-          className={cn(
-            'flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale',
-            isVertical ? 'h-5 w-5' : 'h-6 w-6',
-          )}
-        >
-          {drop.organiser?.avatar ? (
-            <Image
-              src={drop.organiser.avatar}
-              alt=""
-              width={isVertical ? 20 : 24}
-              height={isVertical ? 20 : 24}
-              className="h-full w-full object-cover"
-            />
-          ) : (
+          {/* Status Badge overlay */}
+          {drop.status === 'ongoing' && (
             <div
               className={cn(
-                'flex h-full w-full items-center justify-center font-passion text-tok-teal',
-                isVertical ? 'text-[7px]' : 'text-[8px]',
+                'absolute bottom-2 left-2 flex items-center gap-1 rounded-sm bg-amber-400 font-passion font-bold uppercase tracking-wider text-tok-black border-2 border-tok-black shadow-[1.5px_1.5px_0px_#1C1C1A]',
+                isVertical
+                  ? 'px-1 py-0.5 text-[7px]'
+                  : 'px-1.5 py-0.5 text-[8px]',
               )}
             >
-              {drop.organiser?.firstName?.[0] || '?'}{drop.organiser?.lastName?.[0] || ''}
+              <span className="relative flex h-1 w-1">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tok-black opacity-75" />
+                <span className="relative inline-flex h-1 w-1 rounded-full bg-tok-black" />
+              </span>
+              Ongoing
             </div>
           )}
         </div>
-        <p
-          className={cn(
-            'min-w-0 truncate font-passion font-bold uppercase tracking-[0.08em] text-tok-black/65',
-            isVertical ? 'text-[9px]' : 'text-[11px] sm:text-xs',
-          )}
+
+        {/* Content Area */}
+        <div
+          className={cn('relative flex flex-1 flex-col', isVertical ? 'p-3 sm:p-4' : 'p-5 sm:p-6')}
         >
-          Chief {drop.organiser?.firstName}
-        </p>
-      </div>
-    </div>
-  </div>
+          <div className={cn('flex flex-wrap items-center gap-1.5 sm:gap-2', isVertical ? 'mb-1.5' : 'mb-2')}>
+            <span
+              className={cn(
+                'font-passion font-bold uppercase text-tok-black/50',
+                isVertical ? 'text-[8px] tracking-[1px]' : 'text-[10px] tracking-[1.5px]',
+              )}
+            >
+              {role}
+            </span>
+            {drop.category && (
+              <span
+                className={cn(
+                  'rounded-sm bg-tok-teal-pale font-passion font-bold uppercase tracking-wider text-tok-teal border border-tok-teal/20',
+                  isVertical ? 'px-1.5 py-0.5 text-[8px]' : 'px-2 py-0.5 text-[9px]',
+                )}
+              >
+                {drop.category}
+              </span>
+            )}
+            {!drop.isPublic && (
+              <span
+                className={cn(
+                  'inline-flex items-center gap-0.5 rounded-sm bg-tok-black/5 font-passion font-bold uppercase tracking-wider text-tok-black/50',
+                  isVertical ? 'px-1.5 py-0.5 text-[8px]' : 'gap-1 px-2 py-0.5 text-[9px]',
+                )}
+              >
+                <Lock size={isVertical ? 9 : 10} strokeWidth={3} />
+                Private
+              </span>
+            )}
+            {drop.isLocked && (
+              <span
+                className={cn(
+                  'inline-flex items-center gap-0.5 rounded-sm bg-tok-teal-pale font-passion font-bold uppercase tracking-wider text-tok-teal border border-tok-teal/20',
+                  isVertical ? 'px-1.5 py-0.5 text-[8px]' : 'gap-1 px-2 py-0.5 text-[9px]',
+                )}
+              >
+                <Lock size={isVertical ? 9 : 10} strokeWidth={3} />
+                Requires Approval
+              </span>
+            )}
+          </div>
+
+          <h3
+            className={cn(
+              'font-passion font-bold leading-snug text-tok-black transition-colors group-hover:text-tok-teal',
+              isVertical ? 'mb-1.5 text-base leading-tight sm:text-lg' : 'mb-2.5 text-2xl sm:text-[26px]',
+              showShareEditDelete ? (isVertical ? 'pr-7 sm:pr-8' : 'pr-10 sm:pr-0') : '',
+            )}
+          >
+            {drop.name}
+          </h3>
+
+          <div
+            className={cn(
+              'flex flex-wrap font-bold text-tok-black/55',
+              isVertical
+                ? 'mb-2 gap-x-2 gap-y-1 text-[10px] sm:text-[11px]'
+                : 'mb-3.5 gap-x-4 gap-y-1.5 text-xs sm:text-[13px]',
+            )}
+          >
+            <span className="inline-flex min-w-0 items-center gap-1">
+              <CalendarDays
+                size={isVertical ? 12 : 14}
+                className="shrink-0 text-tok-teal"
+                strokeWidth={2.5}
+              />
+              <span className="font-passion uppercase tracking-[0.06em]">{formatDateTime(drop.scheduledAt)}</span>
+            </span>
+            <span className="inline-flex min-w-0 items-center gap-1">
+              <MapPin size={isVertical ? 12 : 14} className="shrink-0 text-tok-teal" strokeWidth={2.5} />
+              <span
+                className={cn(
+                  'font-passion truncate uppercase tracking-[0.06em]',
+                  isVertical ? 'max-w-[min(100%,9rem)]' : 'max-w-[180px] sm:max-w-[220px]',
+                )}
+              >
+                {drop.location}
+              </span>
+            </span>
+          </div>
+
+          {drop.overview && (
+            <p
+              className={cn(
+                'font-inter leading-relaxed text-tok-black/72 line-clamp-2',
+                isVertical ? 'mb-2 text-xs sm:leading-snug' : 'mb-4 text-sm sm:text-[15px] sm:leading-relaxed',
+              )}
+            >
+              {drop.overview}
+            </p>
+          )}
+
+          {/* Crew Section */}
+          <div className={cn('mt-auto flex items-center', isVertical ? 'gap-1.5' : 'gap-2')}>
+            <div className="flex items-center">
+              {crew && crew.length > 0 ? (
+                <>
+                  {crew.slice(0, 3).map((member, i) => {
+                    const display = getCrewMemberDisplay(member);
+                    return (
+                      <div
+                        key={member.id}
+                        className={cn(
+                          'relative rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden',
+                          isVertical ? 'h-5 w-5' : 'h-6 w-6',
+                          i > 0 && (isVertical ? '-ml-2' : '-ml-3'),
+                        )}
+                        title={display.fullName}
+                      >
+                        {display.avatar ? (
+                          <Image
+                            src={display.avatar}
+                            alt=""
+                            width={isVertical ? 20 : 24}
+                            height={isVertical ? 20 : 24}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div
+                            className={cn(
+                              'flex h-full w-full items-center justify-center font-passion text-tok-teal',
+                              isVertical ? 'text-[7px]' : 'text-[8px]',
+                            )}
+                          >
+                            {display.initials}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {crew.length > 3 && (
+                    <div
+                      className={cn(
+                        'relative flex items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion font-bold text-tok-black',
+                        isVertical ? '-ml-2 h-5 w-5 text-[7px]' : '-ml-3 h-6 w-6 text-[8px]',
+                      )}
+                    >
+                      +{crew.length - 3}
+                    </div>
+                  )}
+                </>
+              ) : (
+
+
+                <div
+                  className={cn(
+                    'flex items-center justify-center rounded-full border-2 border-tok-black border-dashed bg-tok-black/5 text-tok-black/20',
+                    isVertical ? 'h-5 w-5' : 'h-6 w-6',
+                  )}
+                >
+                  <Users size={isVertical ? 9 : 10} strokeWidth={2.5} />
+                </div>
+              )}
+            </div>
+
+            <div className={cn('h-4 w-px bg-tok-black/10', isVertical ? 'mx-0.5' : 'mx-1')} />
+
+            <div className={cn('flex items-center', isVertical ? 'min-w-0 gap-1' : 'gap-2')}>
+              <div
+                className={cn(
+                  'flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale',
+                  isVertical ? 'h-5 w-5' : 'h-6 w-6',
+                )}
+              >
+                {drop.organiser?.avatar ? (
+                  <Image
+                    src={drop.organiser.avatar}
+                    alt=""
+                    width={isVertical ? 20 : 24}
+                    height={isVertical ? 20 : 24}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className={cn(
+                      'flex h-full w-full items-center justify-center font-passion text-tok-teal',
+                      isVertical ? 'text-[7px]' : 'text-[8px]',
+                    )}
+                  >
+                    {drop.organiser?.firstName?.[0] || '?'}{drop.organiser?.lastName?.[0] || ''}
+                  </div>
+                )}
+              </div>
+              <p
+                className={cn(
+                  'min-w-0 truncate font-passion font-bold uppercase tracking-[0.08em] text-tok-black/65',
+                  isVertical ? 'text-[9px]' : 'text-[11px] sm:text-xs',
+                )}
+              >
+                Chief {drop.organiser?.firstName}
+              </p>
+            </div>
+          </div>
+        </div>
       </Link >
 
 
@@ -717,18 +756,16 @@ export function HeroCardSkeleton() {
         </div>
 
         <div className="relative flex flex-1 flex-col p-5 md:p-6">
-          <div className="mb-3 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Skeleton className="h-3 w-14 rounded-sm bg-tok-cream/25" />
-              <Skeleton className="h-5 w-18 rounded-sm border border-amber-400/30 bg-tok-black/25" />
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Skeleton className="h-3.5 w-14 rounded-sm bg-tok-cream/25" />
+              <Skeleton className="h-5 w-20 rounded-sm border border-amber-400/30 bg-tok-black/25" />
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 mb-2">
               <Skeleton className="h-6 w-6 shrink-0 rounded-full border border-tok-cream/30 bg-tok-black/25" />
-              <Skeleton className="h-3 max-w-[220px] flex-1 rounded-sm bg-tok-cream/30" />
+              <Skeleton className="h-3.5 w-40 rounded-sm bg-tok-cream/30" />
             </div>
-            <Skeleton className="h-9 max-w-xl rounded-sm bg-tok-cream/25" />
-            <Skeleton className="h-4 max-w-lg rounded-sm bg-tok-cream/20" />
-            <Skeleton className="h-4 max-w-md rounded-sm bg-tok-cream/15" />
+            <Skeleton className="h-9 w-3/4 rounded-sm bg-tok-cream/25 mb-4" />
           </div>
 
           <div className="mb-6 flex items-center gap-3">
@@ -741,18 +778,18 @@ export function HeroCardSkeleton() {
           </div>
 
           <div className="mt-auto grid grid-cols-1 gap-3 border-t border-dashed border-tok-cream/20 pt-4 sm:grid-cols-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Skeleton className="h-4 w-4 shrink-0 rounded-sm bg-tok-cream/35" />
-              <Skeleton className="h-4 flex-1 rounded-sm bg-tok-cream/25" />
+              <Skeleton className="h-4 w-32 rounded-sm bg-tok-cream/25" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Skeleton className="h-4 w-4 shrink-0 rounded-sm bg-tok-cream/35" />
-              <Skeleton className="h-4 flex-1 rounded-sm bg-tok-cream/25" />
+              <Skeleton className="h-4 w-40 rounded-sm bg-tok-cream/25" />
             </div>
           </div>
 
           <div className="mt-6">
-            <Skeleton className="h-10 w-44 rounded-sm border-2 border-tok-black bg-tok-cream/50 shadow-[3px_3px_0px_#1C1C1A]" />
+            <Skeleton className="h-10 w-40 rounded-sm border-2 border-tok-black bg-tok-cream/50 shadow-[3px_3px_0px_#1C1C1A]" />
           </div>
         </div>
       </div>
@@ -771,8 +808,10 @@ export function ListCardSkeleton({ layout = 'list' }: { layout?: 'list' | 'mason
     <div className={cn('group relative', isVertical ? 'mt-0' : 'mt-4')}>
       <div
         className={cn(
-          'flex overflow-hidden rounded-xl border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A]',
-          isVertical ? 'flex-col' : 'flex-col sm:flex-row',
+          'flex overflow-hidden rounded-xl border-[3px] border-tok-black bg-white transition-all',
+          isVertical
+            ? 'flex-col shadow-[3px_3px_0px_#1C1C1A]'
+            : 'flex-col shadow-[4px_4px_0px_#1C1C1A] sm:flex-row',
         )}
       >
         <div
@@ -791,12 +830,12 @@ export function ListCardSkeleton({ layout = 'list' }: { layout?: 'list' | 'mason
         </div>
 
         <div className="relative flex flex-1 flex-col p-5 sm:p-6">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
+          <div className={cn('flex flex-wrap items-center gap-1.5 sm:gap-2', isVertical ? 'mb-1.5' : 'mb-2')}>
             <Skeleton className="h-2.5 w-14 rounded-sm bg-tok-black/15" />
             <Skeleton className="h-5 w-17 rounded-sm bg-tok-teal-pale/80" />
           </div>
 
-          <Skeleton className="mb-2.5 h-8 max-w-md rounded-sm bg-tok-black/10" />
+          <Skeleton className={cn('mb-2.5 max-w-md rounded-sm bg-tok-black/10', isVertical ? 'h-6 sm:h-7' : 'h-8 sm:h-9')} />
 
           <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
             <Skeleton className="h-4 w-44 rounded-sm bg-tok-black/10" />
@@ -827,5 +866,3 @@ export function ListCardSkeleton({ layout = 'list' }: { layout?: 'list' | 'mason
     </div>
   );
 }
-
-

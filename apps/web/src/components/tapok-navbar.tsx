@@ -130,7 +130,13 @@ export function TapokNavbar() {
 
           {/* Desktop Nav links */}
           <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 md:flex">
-            {isReady && dbUser &&
+            {!isReady ? (
+              <div className="flex gap-4">
+                <Skeleton className="h-4 w-16 bg-black/5" />
+                <Skeleton className="h-4 w-16 bg-black/5" />
+                <Skeleton className="h-4 w-16 bg-black/5" />
+              </div>
+            ) : dbUser && (
               navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -146,7 +152,8 @@ export function TapokNavbar() {
                     />
                   )}
                 </Link>
-              ))}
+              ))
+            )}
           </nav>
 
           {/* Right Area */}
