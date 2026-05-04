@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { LogIn, ArrowRight, Activity as ActivityIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useMounted } from '@/hooks/use-mounted';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
@@ -98,11 +99,28 @@ function FeedAvatar({ initials, style, avatar }: { initials: string; style: Avat
       "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-passion text-[11px] sm:text-[14px] font-black tracking-wider shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] overflow-hidden",
       avatarCls[style]
     )}>
-      {avatar ? (
-        <img src={avatar} alt="" className="h-full w-full object-cover" />
-      ) : (
-        initials
-      )}
+      <AnimatePresence mode="wait">
+        {avatar ? (
+          <motion.img
+            key="avatar"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            src={avatar}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <motion.span
+            key="initials"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {initials}
+          </motion.span>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -113,12 +131,12 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
   const initials = isYou ? 'YOU' : getInitials(log.user.firstName, log.user.lastName);
 
   return (
-    <div className="group relative flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b-2 border-tok-black/5 last:border-b-0 hover:bg-tok-teal/3 transition-all duration-200">
+    <div className="group relative flex items-start gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b-2 border-tok-black/5 last:border-b-0 hover:bg-tok-teal/3 transition-all duration-200">
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-tok-teal/80 opacity-0 group-hover:opacity-100 transition-opacity" />
 
       <FeedAvatar initials={initials} style={style} avatar={log.user.avatar} />
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 pt-0.5 sm:pt-1">
         <p className="text-[14px] sm:text-[15px] text-tok-black/80 leading-snug">
           {describeAction(log, isYou)}
         </p>
@@ -134,7 +152,7 @@ function FeedItemRow({ log, index, currentUserId }: { log: DropActivityLog; inde
         </div>
       </div>
 
-      <div className="hidden sm:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+      <div className="hidden sm:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 pt-1">
         <Link
           href={`/drops/${log.dropId}`}
           className="p-2 rounded-full border-2 border-tok-black/80 hover:bg-tok-teal hover:text-tok-cream transition-colors"
@@ -405,7 +423,7 @@ export default function ActivityClient() {
   // Show skeleton if we're fetching the first batch of data or if the query hasn't run yet
   const isHardLoading = !activityFetched || (activityLoading && !activityLogs.length);
 
-  if (!mounted || !isReady || (loading && !dbUser)) {
+  if (!mounted || !isReady || loading) {
     return (
       <div className="min-h-screen bg-tok-cream text-tok-black">
         <TapokNavbar />
@@ -427,7 +445,7 @@ export default function ActivityClient() {
     );
   }
 
-  if (!loading && !user) {
+  if (isReady && !dbUser) {
     return (
       <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal selection:text-tok-cream">
         <TapokNavbar />
@@ -462,7 +480,7 @@ export default function ActivityClient() {
               YOUR DROP ACTIVITY
             </p>
             <h1 className="font-passion text-[clamp(52px,11vw,84px)] font-black uppercase leading-[0.8] tracking-tight text-tok-black">
-            THE DROP{' '}
+              THE DROP{' '}
               <span className="text-tok-teal">LOG.</span>
             </h1>
           </div>
