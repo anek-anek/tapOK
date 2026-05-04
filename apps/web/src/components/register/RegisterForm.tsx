@@ -9,7 +9,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Check } from 'lucide-react';
 import { getFirebaseAuth } from '@/lib/firebase';
 import { signUpSchema, type SignUpFormValues } from '@/lib/validations/auth';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -35,7 +35,7 @@ const SIGN_UP_DEFAULT_VALUES: SignUpFormValues = {
   lastName: '',
   email: '',
   password: '',
-  confirmPassword: '',
+  termsAccepted: false,
 };
 
 function delay(ms: number): Promise<void> {
@@ -52,6 +52,8 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
     register,
     handleSubmit,
     getValues,
+    setValue,
+    watch,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<SignUpFormValues>({
@@ -59,8 +61,8 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
     defaultValues: SIGN_UP_DEFAULT_VALUES,
   });
 
+  const termsAccepted = watch('termsAccepted');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(() => {
     if (typeof window !== 'undefined') {
       return sessionStorage.getItem('tapok_google_redirect_pending') === 'true';
@@ -76,7 +78,6 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
   const resetFormState = useCallback(() => {
     reset(SIGN_UP_DEFAULT_VALUES);
     setShowPassword(false);
-    setShowConfirm(false);
   }, [reset]);
 
   const { formRef, clearForm } = useAuthFormReset(resetFormState);
@@ -228,7 +229,13 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       const finalized = await finalizeSession(outcome.user, {
         mode: 'signup',
         provider: 'google',
-        payload: { email: normalizedEmail },
+        payload: {
+          email: normalizedEmail,
+          termsAccepted: true,
+          termsAcceptedAt: new Date().toISOString(),
+          privacyPolicyAccepted: true,
+          privacyPolicyAcceptedAt: new Date().toISOString(),
+        },
         deleteCreatedUserOnFailure: shouldDeleteGoogleUserOnFinalizeFailure(outcome),
       });
 
@@ -269,7 +276,14 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       const finalized = await finalizeSession(user, {
         mode: 'signup',
         provider: 'password',
-        payload: { firstName: values.firstName.trim(), lastName: values.lastName.trim() },
+        payload: {
+          firstName: values.firstName.trim(),
+          lastName: values.lastName.trim(),
+          termsAccepted: true,
+          termsAcceptedAt: new Date().toISOString(),
+          privacyPolicyAccepted: true,
+          privacyPolicyAcceptedAt: new Date().toISOString(),
+        },
         deleteCreatedUserOnFailure: true,
       });
 
@@ -425,7 +439,11 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       {/* Form */}
       <form
         ref={formRef}
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, (errors) => {
+          if (errors.termsAccepted) {
+            showError(errors.termsAccepted.message as string);
+          }
+        })}
         noValidate
         autoComplete="off"
         className="flex flex-col gap-4 lg:gap-3"
@@ -489,30 +507,28 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
           </div>
         </AuthFormField>
 
-        <AuthFormField label="Confirm password" error={errors.confirmPassword?.message} animClass="auth-panel-in" style={{ animationDelay: '0.4s' }}>
-          <div className="relative">
-            <input
-              {...register('confirmPassword')}
-              type={showConfirm ? 'text' : 'password'}
-              autoComplete="off"
-              placeholder="Confirm your password"
-              className={`${authInputClass} pr-10`}
-              aria-invalid={!!errors.confirmPassword}
-            />
+        <div className="auth-panel-in mt-2 flex flex-col gap-1 lg:mt-1" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-start gap-3">
             <button
               type="button"
-              onClick={() => setShowConfirm((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-tok-black/35 transition-all duration-150 hover:scale-110 hover:text-tok-black/65"
-              aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+              onClick={() => setValue('termsAccepted', !termsAccepted, { shouldValidate: false })}
+              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border-2 border-tok-black transition-all duration-150 ${termsAccepted ? 'bg-tok-teal shadow-[2px_2px_0px_0px_#262624]' : 'bg-white'
+                } ${errors.termsAccepted ? 'border-red-500' : ''}`}
             >
-              {showConfirm ? (
-                <EyeOff size={15} className="transition-all duration-150" />
-              ) : (
-                <Eye size={15} className="transition-all duration-150" />
-              )}
+              {termsAccepted && <Check size={14} className="text-white" strokeWidth={4} />}
             </button>
+            <p className="font-inter text-xs leading-snug text-tok-black/55 lg:text-[11px]">
+              By signing up, you agree to our{' '}
+              <Link href="/terms" className="font-bold text-tok-black underline underline-offset-4 transition-colors duration-150 hover:text-tok-teal">
+                Terms &amp; Conditions
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="font-bold text-tok-black underline underline-offset-4 transition-colors duration-150 hover:text-tok-teal">
+                Privacy Policy
+              </Link>
+            </p>
           </div>
-        </AuthFormField>
+        </div>
 
         <button
           type="submit"
@@ -541,17 +557,6 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             'TAP IN'
           )}
         </button>
-
-        <p className="auth-panel-in text-center font-inter text-xs text-tok-black/35 lg:text-[11px]" style={{ animationDelay: '0.5s' }}>
-          By signing up, you agree to our{' '}
-          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-tok-black/70">
-            Terms &amp; Conditions
-          </Link>{' '}
-          and{' '}
-          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-tok-black/70">
-            Privacy Policy
-          </Link>
-        </p>
       </form>
     </AuthPageShell>
   );

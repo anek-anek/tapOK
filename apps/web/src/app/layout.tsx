@@ -6,6 +6,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { ToastProvider } from '@/components/providers/toast-provider';
+import { LegalConsentModal } from '@/components/legal/LegalConsentModal';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -73,6 +74,7 @@ export default async function RootLayout({
         <QueryProvider>
           <AuthProvider initialDbUser={initialDbUser}>
             {children}
+            <LegalConsentModal />
             <ToastProvider />
           </AuthProvider>
         </QueryProvider>
