@@ -8,7 +8,7 @@ import {
 import axios from 'axios';
 import { dropsService } from '@/services/drops.service';
 import { useAuth } from '@/components/providers/auth-provider';
-import type { CrewMember, DiscoverDropsPayload } from '@/types/drop';
+import type { CrewMember, DiscoverDropsPayload, DropCrew } from '@/types/drop';
 
 export const dropKeys = {
   mine: (uid: string) => ['drops', 'mine', uid] as const,
@@ -121,7 +121,16 @@ export function useMyCrewStatus(dropId: string, options?: { enabled?: boolean })
   const authOk = useFirebaseAuthReadyForProtectedDropRoutes();
   return useQuery({
     queryKey: dropKeys.crewMe(dropId),
-    queryFn: () => dropsService.getMyCrewStatus(dropId),
+    queryFn: async (): Promise<DropCrew | null> => {
+      try {
+        return await dropsService.getMyCrewStatus(dropId);
+      } catch (e: unknown) {
+        if (axios.isAxiosError(e) && e.response?.status === 404) {
+          return null;
+        }
+        throw e;
+      }
+    },
     enabled: (options?.enabled ?? true) && Boolean(dropId) && authOk,
     retry: (failureCount, error) => {
       if (axios.isAxiosError(error) && error.response?.status === 404) return false;

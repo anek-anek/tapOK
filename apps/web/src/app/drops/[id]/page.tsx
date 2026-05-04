@@ -1,9 +1,8 @@
 'use client';
 
-import React, { Suspense, useState, useMemo, useEffect } from 'react';
+import React, { Suspense, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useMounted } from '@/hooks/use-mounted';
 import Link from 'next/link';
 import {
   ArrowLeft as IconArrowLeft,
@@ -19,6 +18,7 @@ import {
   Lock as IconLock,
   Martini as IconMartini,
   Users as IconUsers,
+  ShieldCheck as IconShieldCheck,
 } from 'lucide-react';
 import { useDrop, useMyCrewStatus, useDropCrew, useDropActivityLogs } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -413,10 +413,13 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
 function DropDetailContent({ id }: { id: string }) {
   const router = useRouter();
-  const mounted = useMounted();
   const { user, dbUser, loading: authLoading, isReady } = useAuth();
   const { data: drop, isError, isLoading: dropLoading } = useDrop(id);
-  const { data: crewStatus, isLoading: isLoadingCrewStatus } = useMyCrewStatus(id, { enabled: Boolean(dbUser) });
+  const {
+    data: crewStatus,
+    isLoading: isLoadingCrewStatus,
+    status: crewQueryStatus,
+  } = useMyCrewStatus(id, { enabled: Boolean(dbUser) });
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
@@ -587,6 +590,13 @@ function DropDetailContent({ id }: { id: string }) {
   const isOrganiser = isOrganiserCheck;
   const isCompleted = drop.status === 'completed';
   const canEdit = isOrganiser && !isCompleted;
+  const showGuestMissionPanels =
+    !isOrganiser &&
+    !isCompleted &&
+    drop.isPublic &&
+    crewQueryStatus === 'success' &&
+    crewStatus?.status !== 'in';
+  const hasDigitalTicketAccess = isOrganiser || crewStatus?.status === 'in';
 
   return (
     <div className="min-h-screen bg-tok-cream font-inter text-[#1C1C1A] selection:bg-tok-teal/15">
@@ -789,6 +799,109 @@ function DropDetailContent({ id }: { id: string }) {
                 </div>
               )}
 
+              {showGuestMissionPanels && crewStatus?.status === 'pending' && (
+                <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-amber-400 p-6 shadow-[6px_6px_0px_#1C1C1A] sm:p-8">
+                  <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-black/50">
+                    Mission Boarding
+                  </p>
+                  <h3 className="mt-4 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black sm:text-3xl">
+                    Request pending
+                  </h3>
+                  <p className="mt-3 max-w-xl font-inter text-sm leading-relaxed text-tok-black/70">
+                    The chief still needs to approve your join request. You will get full crew access as soon as you are approved.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setLeaveModalOpen(true)}
+                    className="mt-8 w-full rounded-[4px] border-[3px] border-tok-black bg-white py-3.5 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto sm:px-10"
+                  >
+                    Withdraw request
+                  </button>
+                </div>
+              )}
+
+              {showGuestMissionPanels && crewStatus?.status !== 'pending' && (
+                <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-tok-teal-pale p-6 shadow-[6px_6px_0px_#1C1C1A] sm:p-8">
+                  <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+                    Mission Boarding
+                  </p>
+                  <h3 className="mt-4 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black sm:text-3xl">
+                    Ready to join the crew?
+                  </h3>
+                  <p className="mt-3 max-w-xl font-inter text-sm leading-relaxed text-tok-black/65">
+                    {drop.isLocked
+                      ? 'This mission is locked. Send a join request and the chief can approve you for access codes, attendance, and the live activity feed.'
+                      : 'Board instantly to unlock your digital ticket, join codes, and the full mission toolkit for this drop.'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setJoinModalOpen(true)}
+                    disabled={isJoining}
+                    className="mt-8 flex w-full items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-tok-teal py-3.5 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-60 sm:w-auto sm:px-10"
+                  >
+                    {isJoining ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    ) : drop.isLocked ? (
+                      <>
+                        <IconLock size={16} strokeWidth={2.5} />
+                        Request to join
+                      </>
+                    ) : (
+                      <>
+                        <IconUserCheck size={16} strokeWidth={2.5} />
+                        Join the crew
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {showGuestMissionPanels && (
+                <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A] sm:p-8">
+                  <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+                    Mission Protocol
+                  </p>
+                  <dl className="mt-6 grid gap-6 sm:grid-cols-2">
+                    <div className="rounded-sm border-2 border-tok-black/10 bg-tok-cream/20 p-4">
+                      <dt className="flex items-center gap-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/45">
+                        <IconShieldCheck size={14} strokeWidth={2.5} className="text-tok-teal" aria-hidden />
+                        Entry status
+                      </dt>
+                      <dd className="mt-2 font-passion text-lg font-bold uppercase tracking-tight text-tok-black">
+                        {crewStatus?.status === 'pending' ? 'Awaiting authorization' : 'Not boarded'}
+                      </dd>
+                    </div>
+                    <div className="rounded-sm border-2 border-tok-black/10 bg-tok-cream/20 p-4">
+                      <dt className="flex items-center gap-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/45">
+                        <IconLock size={14} strokeWidth={2.5} className="text-tok-teal" aria-hidden />
+                        Authorization
+                      </dt>
+                      <dd className="mt-2 font-passion text-lg font-bold uppercase tracking-tight text-tok-black">
+                        {drop.isLocked ? 'Chief approval' : 'Open boarding'}
+                      </dd>
+                    </div>
+                    <div className="rounded-sm border-2 border-tok-black/10 bg-tok-cream/20 p-4">
+                      <dt className="flex items-center gap-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/45">
+                        <IconMapPin size={14} strokeWidth={2.5} className="text-tok-teal" aria-hidden />
+                        Location intel
+                      </dt>
+                      <dd className="mt-2 font-inter text-sm font-semibold leading-snug text-tok-black/80">
+                        {drop.location}
+                      </dd>
+                    </div>
+                    <div className="rounded-sm border-2 border-tok-black/10 bg-tok-cream/20 p-4">
+                      <dt className="flex items-center gap-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/45">
+                        <IconCalendar size={14} strokeWidth={2.5} className="text-tok-teal" aria-hidden />
+                        Timeframe
+                      </dt>
+                      <dd className="mt-2 font-passion text-lg font-bold uppercase tracking-tight text-tok-black">
+                        {formatDateTime(drop.scheduledAt)}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              )}
+
               {/* Attendance (Tap In / Out) - Only for crew members */}
               {crewStatus?.status === 'in' && !isCompleted && (
                 <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[6px_6px_0px_#1C1C1A] sm:p-6">
@@ -871,11 +984,16 @@ function DropDetailContent({ id }: { id: string }) {
             </div>
 
             {/* Sidebar — Ticket & Join Codes */}
-            <aside className="order-1 flex flex-col gap-8 lg:order-2 lg:self-start">
+            <aside
+              className={cn(
+                'order-1 flex flex-col gap-8 lg:order-2 lg:self-start',
+                !hasDigitalTicketAccess && 'flex-col-reverse',
+              )}
+            >
               <DigitalTicket
                 drop={drop}
-                isMember={isOrganiser || crewStatus?.status === 'in'}
-                className="hidden lg:block"
+                isMember={hasDigitalTicketAccess}
+                className="w-full"
               />
 
               {/* Mission Command / Chief Card */}

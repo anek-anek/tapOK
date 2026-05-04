@@ -229,7 +229,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   const { data: drop, isError: isDropError, isLoading: isDropLoading } = useDropByJoinCode(joinCode);
   const { user, dbUser, loading: authLoading } = useAuth();
 
-  const { data: crewStatus, isError: isCrewError, error: crewError } = useMyCrewStatus(
+  const { data: crewStatus, isLoading: isCrewStatusLoading } = useMyCrewStatus(
     drop?.id ?? '',
     { enabled: Boolean(drop?.id && dbUser) },
   );
@@ -276,8 +276,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   };
 
   const isOrganiser = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
-  const isNotCrew =
-    isCrewError && axios.isAxiosError(crewError) && crewError.response?.status === 404;
+  const isNotCrew = Boolean(drop?.id && dbUser) && !isCrewStatusLoading && crewStatus === null;
 
   React.useEffect(() => {
     if (drop?.id) track('crew_invite_viewed', { dropId: drop.id });
