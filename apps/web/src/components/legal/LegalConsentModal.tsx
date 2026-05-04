@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { Loader2, ShieldCheck, X, ChevronDown } from 'lucide-react';
 import { TermsContent } from './TermsContent';
 import { PrivacyContent } from './PrivacyContent';
+import { PUBLIC_ROUTES } from '@/lib/constants/routes';
 
 export function LegalConsentModal() {
   const pathname = usePathname();
@@ -18,14 +19,19 @@ export function LegalConsentModal() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Only show if user is logged in and ready
     if (!isReady || !dbUser) {
       setIsVisible(false);
       return;
     }
 
-    // Don't show on auth or legal pages
-    const suppressedRoutes = ['/login', '/register', '/privacy', '/terms'];
-    if (suppressedRoutes.includes(pathname)) {
+    // Only show on NON-public routes
+    const isPublicRoute = PUBLIC_ROUTES.some((route) => {
+      if (route === '/') return pathname === '/';
+      return pathname === route || pathname.startsWith(`${route}/`);
+    });
+
+    if (isPublicRoute) {
       setIsVisible(false);
       return;
     }
