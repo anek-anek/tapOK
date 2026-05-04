@@ -444,6 +444,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
             showError(errors.termsAccepted.message as string);
           }
         })}
+        method="post"
         noValidate
         autoComplete="off"
         className="flex flex-col gap-4 lg:gap-3"

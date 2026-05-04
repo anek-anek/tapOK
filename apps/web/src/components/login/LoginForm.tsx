@@ -329,6 +329,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       <form
         ref={formRef}
         onSubmit={handleSubmit(onSubmit)}
+        method="post"
         noValidate
         autoComplete="off"
         className="flex flex-col gap-4 lg:gap-3"

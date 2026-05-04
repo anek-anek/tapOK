@@ -6,11 +6,16 @@ const PROFILE_COOKIE = 'user_profile';
 const MAX_AGE = 60 * 60 * 24 * 7;
 
 interface Profile {
+  id: string;
   firstName: string;
   lastName: string;
   email: string;
-  avatar?: string;
+  role: string;
+  authProvider?: string;
+  isEmailVerified: boolean;
 }
+
+const MAX_PROFILE_COOKIE_BYTES = 3000;
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -150,20 +155,28 @@ export async function POST(req: NextRequest) {
 
   res.cookies.set(SESSION_COOKIE, sessionCookiePayload.sessionCookie, cookieOptions);
 
-  const profile = {
+  // Keep this cookie intentionally small to avoid response-header overflow.
+  const profile: Profile = {
     id: dbUser.id,
     firstName: dbUser.firstName,
     lastName: dbUser.lastName,
     email: dbUser.email,
-    avatar: dbUser.avatar,
     role: dbUser.role,
+    authProvider: dbUser.authProvider,
     isEmailVerified: dbUser.isEmailVerified,
   };
-  
-  res.cookies.set(PROFILE_COOKIE, encodeURIComponent(JSON.stringify(profile)), {
-    ...cookieOptions,
-    httpOnly: false,
-  });
+  const serializedProfile = encodeURIComponent(JSON.stringify(profile));
+  const profileBytes = new TextEncoder().encode(serializedProfile).length;
+
+  if (profileBytes <= MAX_PROFILE_COOKIE_BYTES) {
+    res.cookies.set(PROFILE_COOKIE, serializedProfile, {
+      ...cookieOptions,
+      httpOnly: false,
+    });
+  } else {
+    // Best effort fallback: keep auth session valid even when profile payload is unexpectedly large.
+    res.cookies.delete(PROFILE_COOKIE);
+  }
 
   return res;
 }
