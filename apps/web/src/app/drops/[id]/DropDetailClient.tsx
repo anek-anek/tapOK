@@ -30,6 +30,7 @@ import { DeleteDropModal } from '@/components/drops/DeleteDropModal';
 import { DigitalTicket } from '@/components/drops/DigitalTicket';
 import { PhotoRoll } from '@/components/drops/PhotoRoll';
 import { CrewRoster, CrewRosterSkeleton } from '@/components/drops/CrewRoster';
+import { DropMemberProfileModal, type DropMemberProfileSubject } from '@/components/drops/DropMemberProfileModal';
 import { ActivityLedger, ActivityLedgerSkeleton } from '@/components/drops/ActivityLedger';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -427,6 +428,7 @@ export default function DropDetailClient({ id }: { id: string }) {
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [removeModalOpen, setRemoveModalOpen] = useState(false);
+  const [memberProfileSubject, setMemberProfileSubject] = useState<DropMemberProfileSubject | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<{ userId: string; name: string } | null>(null);
   const [logPage, setLogPage] = useState(1);
   const { mutate: leaveDrop, isPending: isLeaving } = useLeaveDrop(id);
@@ -865,6 +867,13 @@ export default function DropDetailClient({ id }: { id: string }) {
                       }
                     : undefined
                 }
+                onOpenMemberProfile={(member) => {
+                  if (member.userId === drop.organiserId) {
+                    setMemberProfileSubject({ kind: 'organiser', profile: drop.organiser });
+                  } else {
+                    setMemberProfileSubject({ kind: 'crew', member });
+                  }
+                }}
               />
             )}
 
@@ -930,6 +939,12 @@ export default function DropDetailClient({ id }: { id: string }) {
             setRemoveModalOpen(false);
             setMemberToRemove(null);
           }}
+        />
+      )}
+      {memberProfileSubject && (
+        <DropMemberProfileModal
+          subject={memberProfileSubject}
+          onClose={() => setMemberProfileSubject(null)}
         />
       )}
     </div>

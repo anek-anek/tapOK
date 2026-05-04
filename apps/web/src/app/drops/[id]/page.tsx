@@ -34,7 +34,7 @@ import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
 import { SparkButton, SparkButtonSkeleton } from '@/components/drops/spark-button';
-import { ChiefProfileModal } from '@/components/drops/ChiefProfileModal';
+import { DropMemberProfileModal, type DropMemberProfileSubject } from '@/components/drops/DropMemberProfileModal';
 import { toast } from 'react-hot-toast';
 import type { DropStatus } from '@/types/drop';
 import { coverPhotoSrcForNextImage } from '@/lib/config';
@@ -411,7 +411,7 @@ function DropDetailContent({ id }: { id: string }) {
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [chiefModalOpen, setChiefModalOpen] = useState(false);
+  const [memberProfileSubject, setMemberProfileSubject] = useState<DropMemberProfileSubject | null>(null);
   const [removeModalOpen, setRemoveModalOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{ userId: string; name: string } | null>(null);
   const [logPage, setLogPage] = useState(1);
@@ -978,6 +978,13 @@ function DropDetailContent({ id }: { id: string }) {
                         }
                       : undefined
                   }
+                  onOpenMemberProfile={(member) => {
+                    if (member.userId === drop.organiserId) {
+                      setMemberProfileSubject({ kind: 'organiser', profile: drop.organiser });
+                    } else {
+                      setMemberProfileSubject({ kind: 'crew', member });
+                    }
+                  }}
                 />
               )}
 
@@ -1007,10 +1014,10 @@ function DropDetailContent({ id }: { id: string }) {
                 )}
               />
 
-              {/* Mission Command / Chief Card */}
-              <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
+              {/* Drop command / chief card — desktop only (mobile: tap crew roster rows) */}
+              <div className="hidden lg:block rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
                 <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
-                  Mission Command
+                  Drop command
                 </p>
                 <div className="mt-6 flex items-center gap-4">
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale shadow-[3px_3px_0px_#1C1C1A]">
@@ -1029,7 +1036,7 @@ function DropDetailContent({ id }: { id: string }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-tok-black/40">
-                      Chief Organiser
+                      Drop chief
                     </p>
                     <h4 className="truncate font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
                       {drop.organiser?.firstName} {drop.organiser?.lastName}
@@ -1060,7 +1067,8 @@ function DropDetailContent({ id }: { id: string }) {
                 </div>
 
                 <button
-                  onClick={() => setChiefModalOpen(true)}
+                  type="button"
+                  onClick={() => setMemberProfileSubject({ kind: 'organiser', profile: drop.organiser })}
                   className="mt-6 flex w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-white py-3 font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-1 hover:bg-tok-cream/50 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
                 >
                   View Chief Profile
@@ -1113,10 +1121,10 @@ function DropDetailContent({ id }: { id: string }) {
             }}
           />
         )}
-        {chiefModalOpen && drop.organiser && (
-          <ChiefProfileModal
-            user={drop.organiser}
-            onClose={() => setChiefModalOpen(false)}
+        {memberProfileSubject && (
+          <DropMemberProfileModal
+            subject={memberProfileSubject}
+            onClose={() => setMemberProfileSubject(null)}
           />
         )}
         {removeModalOpen && memberToRemove && (

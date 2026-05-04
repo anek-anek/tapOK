@@ -11,6 +11,10 @@ export interface DropOrganiser {
   userHandle?: string;
   dropCount?: number;
   crewReached?: number;
+  /** Returned on full organiser payloads when available */
+  gender?: string;
+  birthday?: string | Date;
+  createdAt?: string;
 }
 
 export interface DropDiscoverOrganiser {

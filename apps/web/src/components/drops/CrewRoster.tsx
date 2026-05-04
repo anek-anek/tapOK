@@ -32,6 +32,7 @@ interface CrewRosterProps {
   isRemoving: boolean;
   removingUserId: string | null;
   myPresence?: CrewRosterMyPresence;
+  onOpenMemberProfile: (member: CrewMember) => void;
 }
 
 export function CrewRoster({
@@ -45,6 +46,7 @@ export function CrewRoster({
   isRemoving,
   removingUserId,
   myPresence,
+  onOpenMemberProfile,
 }: CrewRosterProps) {
   const { data: members = [], isLoading, isError } = useDropCrew(dropId, { enabled: Boolean(dropId) });
 
@@ -180,56 +182,82 @@ export function CrewRoster({
       )}
 
       <div className="divide-y-2 divide-tok-black/5">
-        {sortedActiveMembers.map((member) => (
-          <div key={member.id} className="flex items-center gap-4 px-6 py-5 transition-colors hover:bg-tok-teal/2">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal font-passion text-sm font-bold text-tok-cream">
-              {member.user.avatar ? (
-                <Image src={member.user.avatar} alt="" width={48} height={48} className="h-full w-full object-cover" />
-              ) : (
-                getLogInitials(member.user.firstName, member.user.lastName)
+        {sortedActiveMembers.map((member) => {
+          const showRemove = !isCompleted && isOrganiser && member.userId !== organiserId;
+          return (
+            <div
+              key={member.id}
+              className={cn(
+                'flex w-full min-w-0 items-stretch transition-colors duration-150 ease-out',
+                'hover:bg-tok-teal/10 focus-within:bg-tok-teal/10',
               )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:text-xl">
-                  {member.user.firstName} {member.user.lastName}
-                </p>
-                {member.userId === organiserId && (
-                  <span className="inline-flex items-center rounded-sm bg-tok-black px-2 py-0.5 font-passion text-[9px] font-bold tracking-[1.5px] text-tok-yellow">
-                    CHIEF
-                  </span>
+            >
+              <button
+                type="button"
+                onClick={() => onOpenMemberProfile(member)}
+                className={cn(
+                  'flex min-w-0 flex-1 items-center gap-3 px-4 py-4 text-left outline-none transition-[color]',
+                  'sm:gap-4 sm:px-6 sm:py-5',
+                  'focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-tok-black focus-visible:ring-offset-2 focus-visible:ring-offset-white',
                 )}
-              </div>
-              <p className="font-inter text-xs text-tok-black/40">
-                Joined {formatLogTime(member.joinedAt)}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 sm:gap-6">
-              <span className={cn(
-                "rounded-full px-2.5 py-1 sm:px-4 sm:py-1.5 font-passion text-[10px] sm:text-[11px] font-bold uppercase tracking-[1px] sm:tracking-[1.5px] border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A] min-w-[44px] sm:min-w-[110px] text-center",
-                member.isPresent ? "bg-emerald-500 text-white" : "bg-white text-red-500"
-              )}>
-                <span className="hidden sm:inline">
-                  {member.isPresent ? 'TAPPED IN' : 'TAPPED OUT'}
-                </span>
-                <span className="sm:hidden">
-                  {member.isPresent ? 'IN' : 'OUT'}
-                </span>
-              </span>
-              {!isCompleted && isOrganiser && member.userId !== organiserId && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveMember(member.userId, `${member.user.firstName} ${member.user.lastName}`)}
-                  disabled={isRemoving && removingUserId === member.userId}
-                  className="flex h-8 w-8 items-center justify-center text-tok-black/20 transition-colors hover:text-red-500 disabled:opacity-50"
-                  title="Remove from crew"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal font-passion text-sm font-bold text-tok-cream">
+                  {member.user.avatar ? (
+                    <Image src={member.user.avatar} alt="" width={48} height={48} className="h-full w-full object-cover" />
+                  ) : (
+                    getLogInitials(member.user.firstName, member.user.lastName)
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:text-xl">
+                      {member.user.firstName} {member.user.lastName}
+                    </p>
+                    {member.userId === organiserId && (
+                      <span className="inline-flex items-center rounded-sm bg-tok-black px-2 py-0.5 font-passion text-[9px] font-bold tracking-[1.5px] text-tok-yellow">
+                        CHIEF
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-inter text-xs text-tok-black/40">
+                    Joined {formatLogTime(member.joinedAt)}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    'shrink-0 rounded-full px-2.5 py-1 text-center font-passion text-[10px] font-bold uppercase tracking-[1px] border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A] min-w-[44px] sm:min-w-[110px] sm:px-4 sm:py-1.5 sm:text-[11px] sm:tracking-[1.5px]',
+                    member.isPresent ? 'bg-emerald-500 text-white' : 'bg-white text-red-500',
+                  )}
                 >
-                  <IconUserX size={16} strokeWidth={2.5} />
-                </button>
-              )}
+                  <span className="hidden sm:inline">
+                    {member.isPresent ? 'TAPPED IN' : 'TAPPED OUT'}
+                  </span>
+                  <span className="sm:hidden">{member.isPresent ? 'IN' : 'OUT'}</span>
+                </span>
+              </button>
+              {showRemove ? (
+                <div className="flex shrink-0 items-center self-stretch pr-3 sm:pr-4">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onRemoveMember(member.userId, `${member.user.firstName} ${member.user.lastName}`)
+                    }
+                    disabled={isRemoving && removingUserId === member.userId}
+                    className={cn(
+                      'flex h-10 w-10 items-center justify-center rounded-sm border-2 border-transparent text-tok-black/25',
+                      'transition-colors hover:border-tok-black/15 hover:bg-red-50 hover:text-red-500',
+                      'disabled:opacity-50',
+                      'motion-safe:active:scale-95',
+                    )}
+                    title="Remove from crew"
+                  >
+                    <IconUserX size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
+              ) : null}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
