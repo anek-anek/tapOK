@@ -21,6 +21,8 @@ export function getLoginFirebaseError(code: string): string {
       return TOO_MANY_REQUESTS;
     case 'auth/network-request-failed':
       return NETWORK_ERROR;
+    case 'auth/redirect-cancelled-or-blocked':
+      return 'Google sign-in was blocked by your browser. Please ensure cookies are enabled and try again.';
     default:
       return 'Something went wrong. Please try again.';
   }
@@ -42,6 +44,8 @@ export function getRegisterFirebaseError(code: string): string {
       return TOO_MANY_REQUESTS;
     case 'auth/network-request-failed':
       return NETWORK_ERROR;
+    case 'auth/redirect-cancelled-or-blocked':
+      return 'Google sign-up was blocked by your browser. Please ensure cookies are enabled and try again.';
     default:
       return 'Something went wrong. Please try again.';
   }
