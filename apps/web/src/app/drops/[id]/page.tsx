@@ -370,20 +370,6 @@ function PageSkeleton() {
               </div>
             </div>
 
-            {/* Attendance (Tap In / Out) */}
-            <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[6px_6px_0px_#1C1C1A] sm:p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0 flex-1 space-y-2">
-                  <Skeleton className="hidden h-3 w-40 rounded-sm bg-tok-teal/25 sm:block" />
-                  <Skeleton className="h-8 max-w-xs rounded-sm bg-tok-black/10 sm:h-9 sm:max-w-md" />
-                </div>
-                <div className="flex shrink-0 flex-row items-center gap-2 sm:gap-3">
-                  <Skeleton className="h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black bg-tok-teal/35 sm:min-w-[120px]" />
-                  <Skeleton className="h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black bg-red-500/35 sm:min-w-[120px]" />
-                </div>
-              </div>
-            </div>
-
             {/* Photo Roll strip */}
             <PhotoRollSkeleton />
 
@@ -902,50 +888,6 @@ function DropDetailContent({ id }: { id: string }) {
                 </div>
               )}
 
-              {/* Attendance (Tap In / Out) - Only for crew members */}
-              {crewStatus?.status === 'in' && !isCompleted && (
-                <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[6px_6px_0px_#1C1C1A] sm:p-6">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="hidden font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal sm:block">
-                        Mission Presence
-                      </p>
-                      <h3 className="mt-1 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black sm:text-3xl">
-                        {crewStatus.isPresent ? "YOU'RE IN" : "NOT IN YET"}
-                      </h3>
-                    </div>
-                    <div className="flex shrink-0 flex-row items-center gap-2 sm:gap-3">
-                      <button
-                        onClick={() => handleUpdatePresence(true)}
-                        disabled={crewStatus.isPresent || isUpdatingPresence}
-                        className={cn(
-                          'flex h-11 min-w-[104px] items-center justify-center rounded-[4px] border-[3px] border-tok-black px-4 font-passion text-xs font-bold uppercase tracking-[2px] transition-all sm:min-w-[120px]',
-                          crewStatus.isPresent
-                            ? 'bg-tok-teal text-white'
-                            : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none',
-                          isUpdatingPresence && 'opacity-50',
-                        )}
-                      >
-                        {isUpdatingPresence && crewStatus.isPresent ? '...' : 'TAP IN'}
-                      </button>
-                      <button
-                        onClick={() => handleUpdatePresence(false)}
-                        disabled={!crewStatus.isPresent || isUpdatingPresence}
-                        className={cn(
-                          'flex h-11 min-w-[104px] items-center justify-center rounded-[4px] border-[3px] border-tok-black px-4 font-passion text-xs font-bold uppercase tracking-[2px] transition-all sm:min-w-[120px]',
-                          !crewStatus.isPresent
-                            ? 'bg-red-500 text-white'
-                            : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none',
-                          isUpdatingPresence && !crewStatus.isPresent && 'opacity-50',
-                        )}
-                      >
-                        {isUpdatingPresence && !crewStatus.isPresent ? '...' : 'TAP OUT'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {isOrganiser && !isCompleted && pendingMembers.length > 0 && (
                 <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-amber-400 p-1 shadow-[6px_6px_0px_#1C1C1A]">
                   <div className="bg-amber-400 px-6 py-4">
@@ -1011,7 +953,7 @@ function DropDetailContent({ id }: { id: string }) {
                 isLoadingStatus={isLoadingCrewStatus}
               />
 
-              {/* Crew — visible to members or the organiser */}
+              {/* Crew — visible to members or the organiser (tap in/out lives in this card) */}
               {(isOrganiser || (crewStatus?.status as string) === 'in') && (
                 <CrewRoster
                   dropId={id}
@@ -1026,6 +968,16 @@ function DropDetailContent({ id }: { id: string }) {
                   }}
                   isRemoving={isRemoving}
                   removingUserId={removingUserId ?? null}
+                  myPresence={
+                    crewStatus?.status === 'in' && !isCompleted
+                      ? {
+                          isPresent: Boolean(crewStatus.isPresent),
+                          onTapIn: () => handleUpdatePresence(true),
+                          onTapOut: () => handleUpdatePresence(false),
+                          isPending: isUpdatingPresence,
+                        }
+                      : undefined
+                  }
                 />
               )}
 

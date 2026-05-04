@@ -2,11 +2,19 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Users as IconUsers, UserX as IconUserX } from 'lucide-react';
+import { Users as IconUsers, UserCheck as IconUserCheck, UserX as IconUserX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDropCrew } from '@/hooks/queries/use-drops';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { CrewMember } from '@/types/drop';
+
+/** When set, tap in / out for the signed-in crew member is shown inside The Crew card. */
+export type CrewRosterMyPresence = {
+  isPresent: boolean;
+  onTapIn: () => void;
+  onTapOut: () => void;
+  isPending: boolean;
+};
 
 interface CrewRosterProps {
   dropId: string;
@@ -23,6 +31,7 @@ interface CrewRosterProps {
   onRemoveMember: (userId: string, name: string) => void;
   isRemoving: boolean;
   removingUserId: string | null;
+  myPresence?: CrewRosterMyPresence;
 }
 
 export function CrewRoster({
@@ -35,6 +44,7 @@ export function CrewRoster({
   onRemoveMember,
   isRemoving,
   removingUserId,
+  myPresence,
 }: CrewRosterProps) {
   const { data: members = [], isLoading, isError } = useDropCrew(dropId, { enabled: Boolean(dropId) });
 
@@ -99,6 +109,76 @@ export function CrewRoster({
           </div>
         </div>
       </div>
+
+      {myPresence && (
+        <div
+          className="border-t-[3px] border-tok-black bg-tok-cream/25 px-4 py-4 sm:px-6 sm:py-5"
+          aria-label="Your attendance at this drop"
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div className="flex min-w-0 flex-1 gap-3 sm:items-center sm:gap-4">
+              <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-teal text-white shadow-[3px_3px_0px_#1C1C1A] sm:flex">
+                <IconUserCheck size={20} strokeWidth={2.5} aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal sm:text-[11px] sm:tracking-[3px]">
+                  Your attendance
+                </p>
+                <p
+                  className="mt-1 font-passion text-xl font-bold uppercase leading-tight tracking-tight text-tok-black sm:text-2xl"
+                  aria-live="polite"
+                >
+                  {myPresence.isPresent ? "YOU'RE IN" : 'NOT IN YET'}
+                </p>
+                <p className="mt-1 font-inter text-xs leading-snug text-tok-black/50 sm:max-w-md">
+                  Tap in on arrival, tap out when you leave.
+                </p>
+              </div>
+            </div>
+            <div className="flex w-full shrink-0 flex-row items-stretch gap-2 sm:w-auto sm:items-center sm:gap-3">
+              <button
+                type="button"
+                onClick={myPresence.onTapIn}
+                disabled={myPresence.isPresent || myPresence.isPending}
+                aria-busy={myPresence.isPending && !myPresence.isPresent}
+                className={cn(
+                  'flex h-11 min-w-0 flex-1 items-center justify-center rounded-[4px] border-[3px] border-tok-black px-3 font-passion text-[11px] font-bold uppercase tracking-[1.5px] transition-all sm:h-12 sm:min-w-[120px] sm:flex-none sm:px-4 sm:text-xs sm:tracking-[2px]',
+                  myPresence.isPresent
+                    ? 'bg-tok-teal text-white shadow-[3px_3px_0px_#1C1C1A]'
+                    : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none',
+                  myPresence.isPending && 'opacity-60',
+                )}
+              >
+                {myPresence.isPending && !myPresence.isPresent ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-tok-black/25 border-t-tok-black" />
+                ) : (
+                  'TAP IN'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={myPresence.onTapOut}
+                disabled={!myPresence.isPresent || myPresence.isPending}
+                aria-busy={myPresence.isPending && myPresence.isPresent}
+                className={cn(
+                  'flex h-11 min-w-0 flex-1 items-center justify-center rounded-[4px] border-[3px] border-tok-black px-3 font-passion text-[11px] font-bold uppercase tracking-[1.5px] transition-all sm:h-12 sm:min-w-[120px] sm:flex-none sm:px-4 sm:text-xs sm:tracking-[2px]',
+                  !myPresence.isPresent
+                    ? 'bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A]'
+                    : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none',
+                  myPresence.isPending && 'opacity-60',
+                )}
+              >
+                {myPresence.isPending && myPresence.isPresent ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-tok-black/20 border-t-tok-black" />
+                ) : (
+                  'TAP OUT'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="divide-y-2 divide-tok-black/5">
         {sortedActiveMembers.map((member) => (
           <div key={member.id} className="flex items-center gap-4 px-6 py-5 transition-colors hover:bg-tok-teal/2">
@@ -160,6 +240,19 @@ export function CrewRosterSkeleton() {
     <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white shadow-[6px_6px_0px_#1C1C1A]">
       <div className="border-b-[3px] border-tok-black bg-tok-teal/5 px-6 py-5">
         <Skeleton className="h-8 w-48 bg-tok-black/5" />
+      </div>
+      <div className="border-t-[3px] border-tok-black bg-tok-cream/25 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-3 w-32 rounded-sm bg-tok-teal/25" />
+            <Skeleton className="h-7 w-40 max-w-full rounded-sm bg-tok-black/10 sm:h-8 sm:w-48" />
+            <Skeleton className="hidden h-3 max-w-md rounded-sm bg-tok-black/8 sm:block" />
+          </div>
+          <div className="flex w-full gap-2 sm:w-auto">
+            <Skeleton className="h-11 flex-1 rounded-[4px] border-[3px] border-tok-black bg-tok-teal/25 sm:min-w-[120px] sm:flex-none" />
+            <Skeleton className="h-11 flex-1 rounded-[4px] border-[3px] border-tok-black bg-red-500/25 sm:min-w-[120px] sm:flex-none" />
+          </div>
+        </div>
       </div>
       <div className="divide-y-2 divide-tok-black/5">
         {Array.from({ length: 3 }).map((_, i) => (

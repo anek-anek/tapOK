@@ -360,20 +360,6 @@ function PageSkeleton() {
               </div>
             </div>
 
-            {/* Attendance (Tap In / Out) */}
-            <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[6px_6px_0px_#1C1C1A] sm:p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0 flex-1 space-y-2">
-                  <Skeleton className="hidden h-3 w-40 rounded-sm bg-tok-teal/25 sm:block" />
-                  <Skeleton className="h-8 max-w-xs rounded-sm bg-tok-black/10 sm:h-9 sm:max-w-md" />
-                </div>
-                <div className="flex shrink-0 flex-row items-center gap-2 sm:gap-3">
-                  <Skeleton className="h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black bg-tok-teal/35 sm:min-w-[120px]" />
-                  <Skeleton className="h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black bg-red-500/35 sm:min-w-[120px]" />
-                </div>
-              </div>
-            </div>
-
             {/* Photo Roll strip */}
             <div className="mb-10 space-y-4">
               <div className="flex items-center justify-between gap-3">
@@ -789,46 +775,6 @@ export default function DropDetailClient({ id }: { id: string }) {
               </div>
             )}
 
-            {/* Presence / Quick Action for Crew */}
-            {!isOrganiser && crewStatus?.status === 'in' && !isCompleted && (
-              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[6px_6px_0px_#1C1C1A] sm:p-6">
-                <div className="flex items-center justify-between gap-3 sm:gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="hidden font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-tok-teal sm:block">
-                      Your Attendance
-                    </p>
-                    <h3 className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black sm:mt-1 sm:text-2xl">
-                      Are you hitting this drop?
-                    </h3>
-                  </div>
-                  <div className="flex shrink-0 flex-row items-center gap-2 sm:gap-3">
-                    <button
-                      type="button"
-                      disabled={isUpdatingPresence || crewStatus?.isPresent === true}
-                      onClick={() => handleUpdatePresence(true)}
-                      className={`h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black px-3 font-passion text-[11px] font-bold uppercase tracking-[1.5px] transition-all sm:h-12 sm:min-w-[120px] sm:px-4 sm:text-xs sm:tracking-[2px] ${crewStatus?.isPresent
-                        ? 'bg-tok-teal text-white shadow-[3px_3px_0px_#1C1C1A]'
-                        : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
-                        }`}
-                    >
-                      {crewStatus?.isPresent ? 'I am In ✓' : 'Tap In'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isUpdatingPresence || crewStatus?.isPresent === false}
-                      onClick={() => handleUpdatePresence(false)}
-                      className={`h-11 min-w-[104px] rounded-[4px] border-[3px] border-tok-black px-3 font-passion text-[11px] font-bold uppercase tracking-[1.5px] transition-all sm:h-12 sm:min-w-[120px] sm:px-4 sm:text-xs sm:tracking-[2px] ${!crewStatus?.isPresent
-                        ? 'bg-red-500 text-white shadow-[3px_3px_0px_#1C1C1A]'
-                        : 'bg-white text-tok-black/30 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] hover:text-tok-black'
-                        }`}
-                    >
-                      {!crewStatus?.isPresent ? 'I am Out ✓' : 'Tap Out'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Pending Approvals */}
             {isOrganiser && !isCompleted && pendingMembers.length > 0 && (
               <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-amber-400 p-1 shadow-[6px_6px_0px_#1C1C1A]">
@@ -909,6 +855,16 @@ export default function DropDetailClient({ id }: { id: string }) {
                 }}
                 isRemoving={isRemoving}
                 removingUserId={removingUserId ?? null}
+                myPresence={
+                  crewStatus?.status === 'in' && !isCompleted
+                    ? {
+                        isPresent: Boolean(crewStatus.isPresent),
+                        onTapIn: () => handleUpdatePresence(true),
+                        onTapOut: () => handleUpdatePresence(false),
+                        isPending: isUpdatingPresence,
+                      }
+                    : undefined
+                }
               />
             )}
 
