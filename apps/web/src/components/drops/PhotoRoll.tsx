@@ -147,35 +147,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember, isLoadingSt
   if (isError) return null;
 
   return (
-    <div className="mb-10 space-y-4">
-      <div className="flex items-center justify-between mb-6 sm:mb-4">
-        {canUpload && !reachedTotalLimit && displayedPhotos.length > 0 && (
-          <button
-            onClick={() => !reachedUserLimit && fileInputRef.current?.click()}
-            disabled={isCompressing || uploadMutation.isPending || reachedUserLimit}
-            className={cn(
-              "flex h-9 items-center gap-2 rounded-sm border-[3px] border-tok-black px-4 font-passion text-[11px] font-bold uppercase tracking-wider transition-all",
-              reachedUserLimit
-                ? "bg-tok-black/5 text-tok-black/40 border-tok-black/20 cursor-not-allowed"
-                : "bg-tok-yellow text-tok-black shadow-[3px_3px_0px_#1C1C1A] hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
-            )}
-          >
-            {reachedUserLimit ? (
-              <span>Limit Reached</span>
-            ) : (
-              <>
-                {isCompressing || uploadMutation.isPending ? (
-                  <IconLoader size={14} className="animate-spin" />
-                ) : (
-                  <IconPlus size={14} strokeWidth={3} />
-                )}
-                <span>Add Photo</span>
-              </>
-            )}
-          </button>
-        )}
-      </div>
-
+    <div className="py-6 space-y-4">
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
 
       {displayedPhotos.length === 0 ? (
@@ -212,38 +184,68 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember, isLoadingSt
             </AnimatePresence>
           </div>
 
-          <div className="mt-10 flex items-center gap-6">
-            <button
-              onClick={() => {
-                setDirection(-1);
-                setCurrentIndex(prev => Math.max(0, prev - 1));
-              }}
-              disabled={currentIndex === 0}
-              className="flex h-12 w-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-20"
-            >
-              <IconChevronLeft size={28} strokeWidth={3} />
-            </button>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-5">
+              <button
+                type="button"
+                onClick={() => {
+                  setDirection(-1);
+                  setCurrentIndex(prev => Math.max(0, prev - 1));
+                }}
+                disabled={currentIndex === 0}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-20"
+              >
+                <IconChevronLeft size={28} strokeWidth={3} />
+              </button>
 
-            <div className="flex max-w-[120px] gap-2 overflow-hidden px-2">
-              {displayedPhotos.map((_: any, i: number) => (
-                <div key={i} className={cn("h-2 w-2 shrink-0 rounded-full border border-tok-black transition-all", i === currentIndex ? "w-6 bg-tok-black" : "bg-tok-black/20")} />
-              ))}
+              <div className="flex max-w-[120px] gap-2 overflow-hidden px-1">
+                {displayedPhotos.map((_: any, i: number) => (
+                  <div key={i} className={cn("h-2 w-2 shrink-0 rounded-full border border-tok-black transition-all", i === currentIndex ? "w-6 bg-tok-black" : "bg-tok-black/20")} />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDirection(1);
+                  if (currentIndex === displayedPhotos.length - 1) {
+                    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+                    return;
+                  }
+                  setCurrentIndex(prev => prev + 1);
+                }}
+                disabled={currentIndex === displayedPhotos.length - 1 && !hasNextPage}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-20"
+              >
+                {isFetchingNextPage ? <IconLoader size={20} className="animate-spin" /> : <IconChevronRight size={28} strokeWidth={3} />}
+              </button>
             </div>
 
-            <button
-              onClick={() => {
-                setDirection(1);
-                if (currentIndex === displayedPhotos.length - 1) {
-                  if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-                  return;
-                }
-                setCurrentIndex(prev => prev + 1);
-              }}
-              disabled={currentIndex === displayedPhotos.length - 1 && !hasNextPage}
-              className="flex h-12 w-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-20"
-            >
-              {isFetchingNextPage ? <IconLoader size={20} className="animate-spin" /> : <IconChevronRight size={28} strokeWidth={3} />}
-            </button>
+            {canUpload && !reachedTotalLimit && !reachedUserLimit && displayedPhotos.length > 0 && (
+              <>
+                <span className="hidden h-8 w-[3px] shrink-0 rounded-full bg-tok-black/15 sm:block" aria-hidden />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isCompressing || uploadMutation.isPending}
+                  title="Add photo"
+                  aria-label="Add photo"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-yellow text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto sm:min-w-[7.5rem] sm:gap-2 sm:px-3 disabled:opacity-60"
+                >
+                  {isCompressing || uploadMutation.isPending ? (
+                    <IconLoader size={20} className="animate-spin" />
+                  ) : (
+                    <>
+                      <IconPlus size={22} strokeWidth={3} className="sm:hidden" />
+                      <IconPlus size={16} strokeWidth={3} className="hidden sm:block" />
+                      <span className="hidden font-passion text-[10px] font-bold uppercase tracking-wider sm:inline">
+                        Add
+                      </span>
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -316,6 +318,7 @@ function PhotoRollEmptyStack({
   canUpload: boolean;
   isCompressing: boolean;
   isUploadPending: boolean;
+  /** When true, hide the add control (per-user photo cap). */
   reachedUserLimit: boolean;
   onAddClick: () => void;
 }) {
@@ -354,18 +357,12 @@ function PhotoRollEmptyStack({
                         : 'Be the first to post a moment to the stack.'}
                     </p>
                   </div>
-                  {canUpload && (
+                  {canUpload && !reachedUserLimit && (
                     <button
                       type="button"
                       onClick={onAddClick}
-                      disabled={isCompressing || isUploadPending || reachedUserLimit}
-                      className={cn(
-                        'mt-1 flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black px-5 font-passion text-[11px] font-bold uppercase tracking-wider transition-all',
-                        reachedUserLimit
-                          ? 'cursor-not-allowed bg-tok-black/5 text-tok-black/35 shadow-none'
-                          : 'bg-tok-yellow text-tok-black shadow-[3px_3px_0px_#1C1C1A] hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none',
-                        (isCompressing || isUploadPending) && 'opacity-70',
-                      )}
+                      disabled={isCompressing || isUploadPending}
+                      className="mt-1 flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-yellow px-5 font-passion text-[11px] font-bold uppercase tracking-wider text-tok-black shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-70"
                     >
                       {isCompressing || isUploadPending ? (
                         <IconLoader size={14} className="animate-spin" />
@@ -764,16 +761,8 @@ async function compressImage(file: File): Promise<string> {
 export function PhotoRollSkeleton() {
   return (
     <div className="mb-10 space-y-4">
-      <div className="flex items-center justify-between mb-6 sm:mb-4">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-5 w-5 bg-tok-black/15" />
-          <Skeleton className="h-6 w-32 bg-tok-black/10" />
-        </div>
-        <Skeleton className="hidden h-9 w-28 rounded-sm border-[3px] border-tok-black bg-tok-yellow/40 sm:block" />
-      </div>
-
       <div className="relative flex flex-col items-center pt-4 pb-8">
-        <div className="relative h-[320px] w-[320px] md:h-[400px] md:w-[400px] flex items-center justify-center">
+        <div className="relative flex h-[320px] w-[320px] items-center justify-center md:h-[400px] md:w-[400px]">
           {/* Stack effect */}
           {[0, 1, 2].map((i) => (
             <div
@@ -792,14 +781,18 @@ export function PhotoRollSkeleton() {
           ))}
         </div>
 
-        <div className="mt-10 flex items-center gap-6">
-          <Skeleton className="h-12 w-12 rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A]" />
-          <div className="flex gap-2">
-            {[0, 1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-2 w-2 rounded-full bg-tok-black/10" />
-            ))}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <Skeleton className="h-12 w-12 shrink-0 rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A]" />
+            <div className="flex gap-2">
+              {[0, 1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-2 w-2 rounded-full bg-tok-black/10" />
+              ))}
+            </div>
+            <Skeleton className="h-12 w-12 shrink-0 rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A]" />
           </div>
-          <Skeleton className="h-12 w-12 rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A]" />
+          <span className="hidden h-8 w-[3px] shrink-0 rounded-full bg-tok-black/10 sm:block" aria-hidden />
+          <Skeleton className="h-12 w-12 shrink-0 rounded-sm border-[3px] border-tok-black bg-tok-yellow/40 shadow-[4px_4px_0px_#1C1C1A] sm:w-24" />
         </div>
       </div>
     </div>

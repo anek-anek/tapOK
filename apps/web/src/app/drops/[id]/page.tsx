@@ -414,7 +414,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 function DropDetailContent({ id }: { id: string }) {
   const router = useRouter();
   const { user, dbUser, loading: authLoading, isReady } = useAuth();
-  const { data: drop, isError, isLoading: dropLoading } = useDrop(id);
+  const { data: drop, isError } = useDrop(id);
   const {
     data: crewStatus,
     isLoading: isLoadingCrewStatus,
@@ -557,9 +557,9 @@ function DropDetailContent({ id }: { id: string }) {
     );
   }
 
-  if (dropLoading) return <PageSkeleton />;
+  if (!drop && !isError) return <PageSkeleton />;
 
-  if (isError || !drop) {
+  if (isError && !drop) {
     return (
       <div className="min-h-screen bg-tok-cream text-tok-black">
         <TapokNavbar />
