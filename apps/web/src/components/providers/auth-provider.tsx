@@ -57,7 +57,7 @@ export function AuthProvider({
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [dbUser, setDbUser] = useState<DbUser | null>(initialDbUser);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialDbUser === null);
   const [isReady, setIsReady] = useState(initialDbUser !== null);
   const queryClient = useQueryClient();
   const prevUidRef = useRef<string | null>(null);

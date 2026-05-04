@@ -5,10 +5,9 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useMounted } from '@/hooks/use-mounted';
 
 export function HeroActions() {
-  const mounted = useMounted();
   const { dbUser, loading } = useAuth();
 
-  if (!mounted || loading) {
+  if (loading && !dbUser) {
     return (
       <div className="mt-8 inline-block h-[60px] w-[214px] rounded-lg border-2 border-tok-black/10 bg-tok-teal/5 animate-pulse" />
     );

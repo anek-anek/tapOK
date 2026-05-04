@@ -115,7 +115,7 @@ function FlipCard({
         >
           <span
             style={{
-              fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
+              fontFamily: 'var(--font-passion, "Passion One", sans-serif)',
               fontSize: 'clamp(64px, 8vw, 96px)',
               fontWeight: 700,
               lineHeight: 1,
@@ -128,7 +128,7 @@ function FlipCard({
           <div>
             <p
               style={{
-                fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
+                fontFamily: 'var(--font-passion, "Passion One", sans-serif)',
                 fontSize: 'clamp(28px, 3.5vw, 42px)',
                 fontWeight: 700,
                 lineHeight: 1.1,
@@ -188,7 +188,7 @@ function FlipCard({
               alignSelf: 'flex-start',
               background: step.tagBg,
               color: step.tagText,
-              fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
+              fontFamily: 'var(--font-passion, "Passion One", sans-serif)',
               fontSize: '11px',
               fontWeight: 700,
               letterSpacing: '0.14em',
@@ -202,7 +202,7 @@ function FlipCard({
           <div>
             <h3
               style={{
-                fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
+                fontFamily: 'var(--font-passion, "Passion One", sans-serif)',
                 fontSize: 'clamp(24px, 2.8vw, 34px)',
                 fontWeight: 700,
                 lineHeight: 1.1,
@@ -247,7 +247,6 @@ export function HowItWorks() {
   const [flipped, setFlipped] = useState<boolean[]>([false, false, false]);
   const toggle = (i: number) => setFlipped((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
   
-  const mounted = useMounted();
   const { dbUser, loading } = useAuth();
 
   return (
@@ -275,7 +274,7 @@ export function HowItWorks() {
               alignItems: 'center',
               background: '#006666',
               color: '#F7E9B2',
-              fontFamily: 'var(--font-passion-one, "Passion One", sans-serif)',
+              fontFamily: 'var(--font-passion, "Passion One", sans-serif)',
               fontSize: '11px',
               fontWeight: 700,
               letterSpacing: '0.18em',
@@ -311,7 +310,7 @@ export function HowItWorks() {
           ))}
         </div>
 
-        {mounted && !loading && (
+        {(!loading || dbUser) && (
           <div className="mt-14 flex flex-col items-center gap-3">
             <Link
               href={dbUser ? '/drops/create' : '/login'}
