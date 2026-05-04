@@ -62,6 +62,19 @@ export class UsersRepository {
       .getOne();
   }
 
+  findStalePendingAvatarUploads(cutoff: Date): Promise<User[]> {
+    return this.repo
+      .createQueryBuilder('user')
+      .where('"user"."avatarStoragePath" IS NOT NULL')
+      .andWhere('("user"."avatar" IS NULL OR "user"."avatar" <> "user"."avatarStoragePath")')
+      .andWhere('"user"."updatedAt" < :cutoff', { cutoff })
+      .getMany();
+  }
+
+  async updateAvatarStoragePath(id: string, avatarStoragePath: string | null): Promise<void> {
+    await this.repo.update(id, { avatarStoragePath });
+  }
+
   async remove(id: string): Promise<void> {
     await this.repo.delete(id);
   }

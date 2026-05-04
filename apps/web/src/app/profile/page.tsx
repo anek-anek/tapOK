@@ -22,6 +22,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { usersService } from '@/services/users.service';
 
 function getInitials(firstName?: string, lastName?: string): string {
   return `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase() || '?';
@@ -89,6 +90,8 @@ export default function ProfilePage() {
   const displayUser = profile ?? dbUser;
 
   const [editing, setEditing] = useState(false);
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [form, setForm] = useState<ProfileForm>({
     firstName: '',
     lastName: '',
@@ -153,6 +156,7 @@ export default function ProfilePage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setForm(f => ({ ...f, avatar: reader.result as string }));
@@ -163,9 +167,10 @@ export default function ProfilePage() {
 
   function cancelEdit() {
     setEditing(false);
+    setAvatarFile(null);
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     if (!profile) return;
     const tenDigits = form.phone.replace(/\D/g, '').slice(0, 10);
     const profileTen = parsePhoneToTenDigits(profile.phone ?? '');
@@ -186,23 +191,32 @@ export default function ProfilePage() {
     if (form.gender !== (profile.gender ?? '')) dto.gender = form.gender || undefined;
     if (form.avatar !== (profile.avatar ?? '')) dto.avatar = form.avatar || undefined;
 
-    if (Object.keys(dto).length === 0) {
-      setEditing(false);
-      return;
-    }
-
-    updateUser.mutate(dto, {
-      onSuccess: async () => {
-        await refreshUser();
-        setEditing(false);
-        toast.success('PROFILE UPDATED SUCCESSFULLY');
-      },
-      onError: (err: any) => {
-        const responseData = err.response?.data;
-        const msg = responseData?.message || err.message || 'FAILED TO UPDATE PROFILE';
-        toast.error(String(msg).toUpperCase());
+    try {
+      if (avatarFile) {
+        setIsAvatarUploading(true);
+        await usersService.uploadAvatar(profile.id, avatarFile);
       }
-    });
+
+      if (Object.keys(dto).length > 0) {
+        await new Promise<void>((resolve, reject) => {
+          updateUser.mutate(dto, {
+            onSuccess: () => resolve(),
+            onError: (err: any) => reject(err),
+          });
+        });
+      }
+
+      await refreshUser();
+      setAvatarFile(null);
+      setEditing(false);
+      toast.success('PROFILE UPDATED SUCCESSFULLY');
+    } catch (err: any) {
+      const responseData = err.response?.data;
+      const msg = responseData?.message || err.message || 'FAILED TO UPDATE PROFILE';
+      toast.error(String(msg).toUpperCase());
+    } finally {
+      setIsAvatarUploading(false);
+    }
   }
 
   if (!mounted || !isReady || authLoading || (isLoading && !dbUser)) {
@@ -336,10 +350,10 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={saveEdit}
-                disabled={updateUser.isPending}
+                disabled={updateUser.isPending || isAvatarUploading}
                 className="flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 border-2 border-tok-black bg-tok-teal px-4 py-2 font-passion text-base text-tok-white shadow-[3px_3px_0px_0px_#262624] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#262624] disabled:opacity-50 sm:flex-initial sm:px-6 sm:text-lg"
               >
-                {updateUser.isPending ? 'SAVING...' : (
+                {updateUser.isPending || isAvatarUploading ? 'SAVING...' : (
                   <>
                     <Check size={18} />
                     SAVE

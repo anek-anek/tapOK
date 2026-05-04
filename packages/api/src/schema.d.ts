@@ -126,6 +126,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/{id}/avatar/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create signed upload session for profile avatar */
+        post: operations["UsersController_createAvatarUploadSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{id}/avatar/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Finalize signed avatar upload and replace previous avatar */
+        post: operations["UsersController_completeAvatarUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drops/cron/transition": {
         parameters: {
             query?: never;
@@ -437,6 +471,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drops/{id}/photos/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a signed upload session for a drop roll photo */
+        post: operations["DropsController_createPhotoUploadSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/photos/{photoId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Finalize a signed upload and return the photo payload */
+        post: operations["DropsController_completePhotoUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drops/{id}/photos/{photoId}": {
         parameters: {
             query?: never;
@@ -502,6 +570,7 @@ export interface components {
             firstName: string;
             lastName: string;
             avatar?: string;
+            avatarStoragePath?: Record<string, never>;
             role: string;
             isEmailVerified: boolean;
             /** Format: date-time */
@@ -677,6 +746,19 @@ export interface components {
             privacyPolicyAccepted: boolean;
             /** Format: date-time */
             privacyPolicyAcceptedAt?: string;
+        };
+        CreateAvatarUploadDto: {
+            /** @enum {string} */
+            mimeType: "image/jpeg" | "image/jpg" | "image/png";
+            /** @description Original file size in bytes */
+            sizeBytes: number;
+            width?: number;
+            height?: number;
+        };
+        AvatarUploadSessionDto: {
+            userId: string;
+            storagePath: string;
+            uploadToken: string;
         };
         DropOrganiserPublicDto: {
             id: string;
@@ -887,6 +969,11 @@ export interface components {
             dropId: string;
             userId: string;
             url?: Record<string, never> | null;
+            storagePath?: Record<string, never> | null;
+            mimeType?: Record<string, never> | null;
+            sizeBytes?: Record<string, never> | null;
+            width?: Record<string, never> | null;
+            height?: Record<string, never> | null;
             base64?: Record<string, never> | null;
             /** @default false */
             isFeatured: boolean;
@@ -896,12 +983,27 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        CreatePhotoUploadDto: {
+            /** @enum {string} */
+            mimeType: "image/jpeg" | "image/jpg" | "image/png";
+            /** @description Original file size in bytes */
+            sizeBytes: number;
+            /** @description Client image width in pixels */
+            width?: number;
+            /** @description Client image height in pixels */
+            height?: number;
+        };
+        PhotoUploadSessionDto: {
+            photoId: string;
+            storagePath: string;
+            uploadToken: string;
+        };
         DropPhotoPublicDto: {
             id: string;
             dropId: string;
             userId: string;
             url?: Record<string, never> | null;
-            /** @description Embedded image data only until the photo is featured and stored at url. */
+            /** @description Deprecated: image payloads are no longer returned in API responses. */
             base64?: Record<string, never> | null;
             isFeatured: boolean;
             /** Format: date-time */
@@ -1180,6 +1282,52 @@ export interface operations {
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
+    UsersController_createAvatarUploadSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAvatarUploadDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvatarUploadSessionDto"];
+                };
+            };
+        };
+    };
+    UsersController_completeAvatarUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1922,6 +2070,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DropPhoto"];
+                };
+            };
+        };
+    };
+    DropsController_createPhotoUploadSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePhotoUploadDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoUploadSessionDto"];
+                };
+            };
+        };
+    };
+    DropsController_completePhotoUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                photoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DropPhotoPublicDto"];
                 };
             };
         };

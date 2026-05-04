@@ -43,6 +43,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { FrequentCrewDto } from './dto/frequent-crew.dto';
+import { CreateAvatarUploadDto } from './dto/create-avatar-upload.dto';
+import { AvatarUploadSessionDto } from './dto/avatar-upload-session.dto';
 
 interface RequestWithUser extends Request {
   user: DecodedIdToken;
@@ -172,6 +174,29 @@ export class UsersController {
     @Req() request: RequestWithUser,
   ): Promise<User> {
     return this.usersService.update(id, dto, request.user.uid);
+  }
+
+  @Post(':id/avatar/upload-url')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Create signed upload session for profile avatar' })
+  @ApiResponse({ status: 201, type: AvatarUploadSessionDto })
+  createAvatarUploadSession(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateAvatarUploadDto,
+    @Req() request: RequestWithUser,
+  ): Promise<AvatarUploadSessionDto> {
+    return this.usersService.createAvatarUploadSession(id, request.user.uid, dto);
+  }
+
+  @Post(':id/avatar/complete')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({ summary: 'Finalize signed avatar upload and replace previous avatar' })
+  @ApiResponse({ status: 200, type: User })
+  completeAvatarUpload(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<User> {
+    return this.usersService.completeAvatarUpload(id, request.user.uid);
   }
 
   @Delete(':id')

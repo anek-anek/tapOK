@@ -49,5 +49,19 @@ export async function deleteDropCover(dropId: string, userToken: string): Promis
   await authedClient.from(COVER_PHOTO_BUCKET).remove(paths);
 }
 
+export async function uploadToSignedDropPhotoUrl(
+  storagePath: string,
+  uploadToken: string,
+  file: File,
+): Promise<void> {
+  const client = getStorageClient();
+  const { error } = await client.from(COVER_PHOTO_BUCKET).uploadToSignedUrl(storagePath, uploadToken, file, {
+    contentType: file.type,
+  });
+  if (error) {
+    throw new Error(`Signed upload failed: ${error.message}`);
+  }
+}
+
 // Export a getter-based client to maintain compatibility if used as an object
 export const storageClient = getStorageClient();

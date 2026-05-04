@@ -34,6 +34,10 @@ export class User {
   @Column({ nullable: true })
   avatar?: string;
 
+  @ApiProperty({ required: false })
+  @Column({ type: 'text', nullable: true })
+  avatarStoragePath?: string | null;
+
   @ApiProperty()
   @Column({ type: 'enum', enum: UserRole, default: UserRole.PARTICIPANT })
   role: UserRole;

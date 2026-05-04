@@ -5,6 +5,7 @@ import { StorageClient } from '@supabase/storage-js';
 @Injectable()
 export class SupabaseStorageService {
   public readonly storage: StorageClient;
+  private readonly bucket = 'drops';
 
   constructor(private readonly config: ConfigService) {
     const url = config.getOrThrow<string>('SUPABASE_URL');
@@ -18,7 +19,7 @@ export class SupabaseStorageService {
   async uploadDropCover(dropId: string, buffer: Buffer, mimeType: string): Promise<string> {
     const ext = mimeType === 'image/png' ? 'png' : 'jpg';
     const path = `drops/${dropId}/cover.${ext}`;
-    const bucket = this.storage.from('drops');
+    const bucket = this.storage.from(this.bucket);
 
     const { error } = await bucket.upload(path, buffer, {
       contentType: mimeType,
@@ -34,7 +35,7 @@ export class SupabaseStorageService {
   async uploadPhoto(dropId: string, photoId: string, buffer: Buffer, mimeType: string): Promise<string> {
     const ext = mimeType === 'image/png' ? 'png' : 'jpg';
     const path = `drops/${dropId}/photos/${photoId}.${ext}`;
-    const bucket = this.storage.from('drops');
+    const bucket = this.storage.from(this.bucket);
 
     const { error } = await bucket.upload(path, buffer, {
       contentType: mimeType,
@@ -50,6 +51,55 @@ export class SupabaseStorageService {
   async deleteDropCover(dropId: string): Promise<void> {
     const extensions = ['jpg', 'png'];
     const paths = extensions.map((ext) => `drops/${dropId}/cover.${ext}`);
-    await this.storage.from('drops').remove(paths);
+    await this.storage.from(this.bucket).remove(paths);
+  }
+
+  async deletePhoto(dropId: string, photoId: string): Promise<void> {
+    const extensions = ['jpg', 'png'];
+    const paths = extensions.map((ext) => `drops/${dropId}/photos/${photoId}.${ext}`);
+    await this.storage.from(this.bucket).remove(paths);
+  }
+
+  async createSignedPhotoUpload(storagePath: string): Promise<{ token: string }> {
+    const { data, error } = await this.storage.from(this.bucket).createSignedUploadUrl(storagePath);
+    if (error || !data?.token) {
+      throw new InternalServerErrorException(
+        `Storage signed upload URL creation failed: ${error?.message ?? 'missing token'}`,
+      );
+    }
+    return { token: data.token };
+  }
+
+  async storageObjectExists(storagePath: string): Promise<boolean> {
+    const normalized = storagePath.replace(/^\/+/, '');
+    const slash = normalized.lastIndexOf('/');
+    const folder = slash >= 0 ? normalized.slice(0, slash) : '';
+    const file = slash >= 0 ? normalized.slice(slash + 1) : normalized;
+    const { data, error } = await this.storage.from(this.bucket).list(folder, {
+      search: file,
+      limit: 1,
+    });
+    if (error) {
+      throw new InternalServerErrorException(`Storage existence check failed: ${error.message}`);
+    }
+    return Boolean(data?.some((entry) => entry.name === file));
+  }
+
+  async resolvePhotoReadUrl(storagePath: string): Promise<string> {
+    const { data, error } = await this.storage.from(this.bucket).createSignedUrl(storagePath, 60 * 60);
+    if (error || !data?.signedUrl) {
+      throw new InternalServerErrorException(
+        `Storage signed read URL creation failed: ${error?.message ?? 'missing signed URL'}`,
+      );
+    }
+    return data.signedUrl;
+  }
+
+  async tryResolvePhotoReadUrl(storagePath: string): Promise<string | null> {
+    const { data, error } = await this.storage.from(this.bucket).createSignedUrl(storagePath, 60 * 60);
+    if (error || !data?.signedUrl) {
+      return null;
+    }
+    return data.signedUrl;
   }
 }

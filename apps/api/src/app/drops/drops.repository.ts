@@ -52,6 +52,15 @@ export class DropsRepository {
     });
   }
 
+  findDropsWithCoverPhoto(): Promise<Drop[]> {
+    return this.dropRepo
+      .createQueryBuilder('drop')
+      .select(['drop.id', 'drop.coverPhoto'])
+      .where('drop."coverPhoto" IS NOT NULL')
+      .andWhere("drop.\"coverPhoto\" <> ''")
+      .getMany();
+  }
+
   findByIdempotencyKey(key: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
       where: { idempotencyKey: key },
@@ -391,6 +400,11 @@ export class DropsRepository {
         dropId: true,
         userId: true,
         url: true,
+        storagePath: true,
+        mimeType: true,
+        sizeBytes: true,
+        width: true,
+        height: true,
         isFeatured: true,
         createdAt: true,
         updatedAt: true,
@@ -422,6 +436,10 @@ export class DropsRepository {
     return this.photoRepo.countBy({ dropId });
   }
 
+  countActiveCrewMembers(dropId: string): Promise<number> {
+    return this.crewRepo.countBy({ dropId, status: DropCrewStatus.IN });
+  }
+
   async addPhoto(data: Partial<DropPhoto>): Promise<DropPhoto> {
     const photo = this.photoRepo.create(data);
     return this.photoRepo.save(photo);
@@ -438,6 +456,46 @@ export class DropsRepository {
   async deleteNonFeaturedPhotosForDrops(dropIds: string[]): Promise<void> {
     if (dropIds.length === 0) return;
     await this.photoRepo.delete({ dropId: In(dropIds), isFeatured: false });
+  }
+
+  findNonFeaturedPhotosForDrops(dropIds: string[]): Promise<DropPhoto[]> {
+    if (dropIds.length === 0) return Promise.resolve([]);
+    return this.photoRepo.find({
+      where: { dropId: In(dropIds), isFeatured: false },
+      select: {
+        id: true,
+        dropId: true,
+        storagePath: true,
+        url: true,
+      },
+    });
+  }
+
+  findPhotosByDropId(dropId: string): Promise<DropPhoto[]> {
+    return this.photoRepo.find({
+      where: { dropId },
+      select: {
+        id: true,
+        dropId: true,
+        storagePath: true,
+        url: true,
+      },
+    });
+  }
+
+  async findStalePendingUploadPhotos(cutoff: Date): Promise<DropPhoto[]> {
+    return this.photoRepo
+      .createQueryBuilder('photo')
+      .where('photo."storagePath" IS NOT NULL')
+      .andWhere('(photo.url IS NULL OR photo.url = \'\')')
+      .andWhere('(photo.isFeatured = false)')
+      .andWhere('photo."createdAt" < :cutoff', { cutoff: cutoff.toISOString() })
+      .getMany();
+  }
+
+  async deletePhotosByIds(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await this.photoRepo.delete({ id: In(ids) });
   }
   
   async addSpark(dropId: string, userId: string): Promise<DropSpark> {

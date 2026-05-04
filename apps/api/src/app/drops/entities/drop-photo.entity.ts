@@ -34,6 +34,26 @@ export class DropPhoto {
 
   @ApiProperty({ required: false, nullable: true })
   @Column({ type: 'text', nullable: true })
+  storagePath?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  mimeType?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'integer', nullable: true })
+  sizeBytes?: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'integer', nullable: true })
+  width?: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'integer', nullable: true })
+  height?: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'text', nullable: true })
   base64?: string | null;
 
   @ApiProperty({ default: false })

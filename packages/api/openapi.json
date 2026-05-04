@@ -371,6 +371,88 @@
         ]
       }
     },
+    "/users/{id}/avatar/upload-url": {
+      "post": {
+        "operationId": "UsersController_createAvatarUploadSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAvatarUploadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvatarUploadSessionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create signed upload session for profile avatar",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/{id}/avatar/complete": {
+      "post": {
+        "operationId": "UsersController_completeAvatarUpload",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Finalize signed avatar upload and replace previous avatar",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/drops/cron/transition": {
       "post": {
         "operationId": "DropsController_runCronTransition",
@@ -1301,6 +1383,96 @@
         ]
       }
     },
+    "/drops/{id}/photos/upload-url": {
+      "post": {
+        "operationId": "DropsController_createPhotoUploadSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePhotoUploadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoUploadSessionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a signed upload session for a drop roll photo",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/photos/{photoId}/complete": {
+      "post": {
+        "operationId": "DropsController_completePhotoUpload",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DropPhotoPublicDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Finalize a signed upload and return the photo payload",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
     "/drops/{id}/photos/{photoId}": {
       "get": {
         "operationId": "DropsController_getPhotoDetail",
@@ -1522,6 +1694,9 @@
           },
           "avatar": {
             "type": "string"
+          },
+          "avatarStoragePath": {
+            "type": "object"
           },
           "role": {
             "type": "string"
@@ -1944,6 +2119,53 @@
             "type": "string"
           }
         }
+      },
+      "CreateAvatarUploadDto": {
+        "type": "object",
+        "properties": {
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/jpg",
+              "image/png"
+            ]
+          },
+          "sizeBytes": {
+            "type": "number",
+            "description": "Original file size in bytes",
+            "maximum": 5242880
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "mimeType",
+          "sizeBytes"
+        ]
+      },
+      "AvatarUploadSessionDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "storagePath": {
+            "type": "string"
+          },
+          "uploadToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "storagePath",
+          "uploadToken"
+        ]
       },
       "DropOrganiserPublicDto": {
         "type": "object",
@@ -2610,6 +2832,26 @@
             "type": "object",
             "nullable": true
           },
+          "storagePath": {
+            "type": "object",
+            "nullable": true
+          },
+          "mimeType": {
+            "type": "object",
+            "nullable": true
+          },
+          "sizeBytes": {
+            "type": "object",
+            "nullable": true
+          },
+          "width": {
+            "type": "object",
+            "nullable": true
+          },
+          "height": {
+            "type": "object",
+            "nullable": true
+          },
           "base64": {
             "type": "object",
             "nullable": true
@@ -2640,6 +2882,55 @@
           "updatedAt"
         ]
       },
+      "CreatePhotoUploadDto": {
+        "type": "object",
+        "properties": {
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/jpg",
+              "image/png"
+            ]
+          },
+          "sizeBytes": {
+            "type": "number",
+            "description": "Original file size in bytes",
+            "maximum": 5242880
+          },
+          "width": {
+            "type": "number",
+            "description": "Client image width in pixels"
+          },
+          "height": {
+            "type": "number",
+            "description": "Client image height in pixels"
+          }
+        },
+        "required": [
+          "mimeType",
+          "sizeBytes"
+        ]
+      },
+      "PhotoUploadSessionDto": {
+        "type": "object",
+        "properties": {
+          "photoId": {
+            "type": "string"
+          },
+          "storagePath": {
+            "type": "string"
+          },
+          "uploadToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "photoId",
+          "storagePath",
+          "uploadToken"
+        ]
+      },
       "DropPhotoPublicDto": {
         "type": "object",
         "properties": {
@@ -2659,7 +2950,7 @@
           "base64": {
             "type": "object",
             "nullable": true,
-            "description": "Embedded image data only until the photo is featured and stored at url."
+            "description": "Deprecated: image payloads are no longer returned in API responses."
           },
           "isFeatured": {
             "type": "boolean"

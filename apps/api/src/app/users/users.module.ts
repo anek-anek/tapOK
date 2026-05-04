@@ -5,10 +5,11 @@ import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
+import { MediaAssetsService, SupabaseStorageService } from '../../common';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
-  providers: [UsersRepository, UsersService],
+  providers: [UsersRepository, UsersService, SupabaseStorageService, MediaAssetsService],
   controllers: [UsersController],
   exports: [UsersService, UsersRepository],
 })

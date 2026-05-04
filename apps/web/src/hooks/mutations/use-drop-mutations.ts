@@ -152,11 +152,14 @@ export function useDeleteCoverPhoto(dropId: string): UseMutationResult<void, Err
   });
 }
 
-export function useUploadPhoto(dropId: string): UseMutationResult<any, Error, string> {
+export function useUploadPhoto(
+  dropId: string,
+): UseMutationResult<any, Error, { file: File; width?: number; height?: number }> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (base64: string) => dropsService.uploadPhoto(dropId, base64),
+    mutationFn: ({ file, width, height }) =>
+      dropsService.uploadPhoto(dropId, file, width && height ? { width, height } : undefined),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: dropKeys.photos(dropId) });
     },

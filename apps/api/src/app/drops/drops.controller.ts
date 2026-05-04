@@ -37,6 +37,8 @@ import { UpdatePresenceDto } from './dto/update-presence.dto';
 import { JoinDropResponseDto } from './dto/join-drop-response.dto';
 import { CrewMemberDto } from './dto/crew-member.dto';
 import { DropPhotoPublicDto } from './dto/drop-photo-public.dto';
+import { CreatePhotoUploadDto } from './dto/create-photo-upload.dto';
+import { PhotoUploadSessionDto } from './dto/photo-upload-session.dto';
 import { DiscoverDropsResponseDto } from './dto/discover-drops-response.dto';
 import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
 import { Drop } from './entities/drop.entity';
@@ -367,6 +369,32 @@ export class DropsController {
   ): Promise<DropPhoto> {
     if (!base64) throw new BadRequestException('Base64 content is required');
     return this.dropsService.uploadPhoto(id, request.user.uid, base64);
+  }
+
+  @Post(':id/photos/upload-url')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a signed upload session for a drop roll photo' })
+  @ApiResponse({ status: 201, type: PhotoUploadSessionDto })
+  createPhotoUploadSession(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreatePhotoUploadDto,
+    @Req() request: RequestWithUser,
+  ): Promise<PhotoUploadSessionDto> {
+    return this.dropsService.createPhotoUploadSession(id, request.user.uid, dto);
+  }
+
+  @Post(':id/photos/:photoId/complete')
+  @UseGuards(FirebaseAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Finalize a signed upload and return the photo payload' })
+  @ApiResponse({ status: 200, type: DropPhotoPublicDto })
+  completePhotoUpload(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('photoId', ParseUUIDPipe) photoId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<DropPhotoPublicDto> {
+    return this.dropsService.completePhotoUpload(id, photoId, request.user.uid);
   }
 
   @Get(':id/photos')

@@ -840,6 +840,7 @@ export default function DropDetailClient({ id }: { id: string }) {
               userId={dbUser?.id}
               isOrganiser={isOrganiser}
               isCrewMember={crewStatus?.status === 'in'}
+              activeCrewCount={crew?.filter((member) => member.status === 'in').length}
             />
 
             {/* Crew Roster */}

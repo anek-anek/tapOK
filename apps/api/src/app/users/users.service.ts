@@ -15,7 +15,9 @@ import { SyncAuthMode, SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { FrequentCrewDto } from './dto/frequent-crew.dto';
-import { AuthProvider, UserRole } from '../../common';
+import { AuthProvider, MediaAssetsService, UserRole } from '../../common';
+import { CreateAvatarUploadDto } from './dto/create-avatar-upload.dto';
+import { AvatarUploadSessionDto } from './dto/avatar-upload-session.dto';
 
 const SESSION_COOKIE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -26,20 +28,39 @@ export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly dataSource: DataSource,
+    private readonly mediaAssets: MediaAssetsService,
   ) {}
 
+  private async resolveAvatarReference(avatar?: string | null): Promise<string | undefined> {
+    if (!avatar) return undefined;
+    const storagePath = this.mediaAssets.extractStoragePath(avatar);
+    if (!storagePath) return avatar;
+    const resolved = await this.mediaAssets.tryResolveReadUrl(storagePath);
+    return resolved ?? undefined;
+  }
+
   findAll(page: number = 1, limit: number = 100): Promise<User[]> {
-    return this.usersRepository.findAll(page, limit);
+    return this.usersRepository.findAll(page, limit).then((users) =>
+      Promise.all(
+        users.map(async (user) => ({
+          ...user,
+          avatar: await this.resolveAvatarReference(user.avatar),
+        })),
+      ),
+    );
   }
 
   async findOne(id: string): Promise<User> {
     const user = await this.usersRepository.findById(id);
     if (!user) throw new NotFoundException(`User ${id} not found`);
-    return user;
+    return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
   }
 
   findByFirebaseUid(firebaseUid: string): Promise<User | null> {
-    return this.usersRepository.findByFirebaseUid(firebaseUid);
+    return this.usersRepository.findByFirebaseUid(firebaseUid).then(async (user) => {
+      if (!user) return null;
+      return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
+    });
   }
 
   async findExistingAuthProviderByEmail(email: string): Promise<AuthProvider | null> {
@@ -86,7 +107,8 @@ export class UsersService {
     );
 
     return { 
-      ...user, 
+      ...user,
+      avatar: await this.resolveAvatarReference(user.avatar),
       dropCount: parseInt(dropCount, 10),
       crewReached: parseInt(crewReached, 10)
     };
@@ -117,7 +139,8 @@ export class UsersService {
   }
 
   async assertOwnership(id: string, firebaseUid: string): Promise<User> {
-    const user = await this.findOne(id);
+    const user = await this.usersRepository.findById(id);
+    if (!user) throw new NotFoundException(`User ${id} not found`);
     if (user.firebaseUid !== firebaseUid) throw new ForbiddenException('Access denied');
     return user;
   }
@@ -126,7 +149,52 @@ export class UsersService {
     await this.assertOwnership(id, firebaseUid);
     const user = await this.usersRepository.update(id, dto);
     if (!user) throw new NotFoundException(`User ${id} not found`);
-    return user;
+    return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
+  }
+
+  async createAvatarUploadSession(
+    id: string,
+    firebaseUid: string,
+    dto: CreateAvatarUploadDto,
+  ): Promise<AvatarUploadSessionDto> {
+    const user = await this.assertOwnership(id, firebaseUid);
+    const mimeType = dto.mimeType === 'image/jpg' ? 'image/jpeg' : dto.mimeType;
+    if (!['image/jpeg', 'image/png'].includes(mimeType)) {
+      throw new BadRequestException('Invalid image format: Only JPG and PNG are allowed');
+    }
+    const storagePath = this.mediaAssets.buildUserAvatarPath(user.id, mimeType);
+    const { token } = await this.mediaAssets.createSignedUpload(storagePath);
+    await this.usersRepository.save({ ...user, avatarStoragePath: storagePath });
+    return { userId: user.id, storagePath, uploadToken: token };
+  }
+
+  async completeAvatarUpload(id: string, firebaseUid: string): Promise<User> {
+    const user = await this.assertOwnership(id, firebaseUid);
+    const storagePath = user.avatarStoragePath ?? this.mediaAssets.extractStoragePath(user.avatar ?? '');
+    if (!storagePath) {
+      throw new BadRequestException('Avatar upload session not found');
+    }
+    const exists = await this.mediaAssets.storageObjectExists(storagePath);
+    if (!exists) {
+      throw new BadRequestException('Uploaded avatar file not found in storage');
+    }
+
+    const previousPath = this.mediaAssets.extractStoragePath(user.avatar ?? '');
+    const saved = await this.usersRepository.save({
+      ...user,
+      avatarStoragePath: storagePath,
+      avatar: storagePath,
+    });
+
+    if (previousPath && previousPath !== storagePath) {
+      try {
+        await this.mediaAssets.deleteByPath(previousPath);
+      } catch (err) {
+        this.logger.warn(`Failed to delete old avatar for user ${user.id}: ${String(err)}`);
+      }
+    }
+
+    return { ...saved, avatar: await this.resolveAvatarReference(saved.avatar) };
   }
 
   async remove(id: string, firebaseUid: string): Promise<void> {
@@ -266,7 +334,10 @@ export class UsersService {
         this.logger.warn(`Failed to set custom claims for ${token.uid}: ${err}`);
       }
 
-      return user;
+      return {
+        ...user,
+        avatar: await this.resolveAvatarReference(user.avatar),
+      };
     }
 
     if (existingByEmail && existingByEmail.authProvider !== requestedAuthProvider) {
@@ -303,7 +374,10 @@ export class UsersService {
         this.logger.warn(`Failed to set custom claims for ${token.uid}: ${err}`);
       }
 
-      return user;
+      return {
+        ...user,
+        avatar: await this.resolveAvatarReference(user.avatar),
+      };
     }
 
     if (existingByEmail.firebaseUid && existingByEmail.firebaseUid !== firebaseUid) {
@@ -340,7 +414,10 @@ export class UsersService {
       this.logger.warn(`Failed to set custom claims for ${token.uid}: ${err}`);
     }
 
-    return user;
+    return {
+      ...user,
+      avatar: await this.resolveAvatarReference(user.avatar),
+    };
   }
 
   async getFrequentCrew(firebaseUid: string): Promise<FrequentCrewDto[]> {
@@ -361,7 +438,7 @@ export class UsersService {
       [user.id],
     );
 
-    return results.map((r: any) => ({
+    const mapped = results.map((r: any) => ({
       id: r.id,
       firstName: r.firstName,
       lastName: r.lastName,
@@ -370,5 +447,11 @@ export class UsersService {
       createdAt: r.createdAt,
       frequencyCount: parseInt(r.frequencyCount, 10),
     }));
+    return Promise.all(
+      mapped.map(async (member) => ({
+        ...member,
+        avatar: await this.resolveAvatarReference(member.avatar),
+      })),
+    );
   }
 }

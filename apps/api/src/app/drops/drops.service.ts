@@ -22,7 +22,7 @@ import {
   DropCrewMemberRole,
   DropCrewStatus,
   DropStatus,
-  SupabaseStorageService,
+  MediaAssetsService,
 } from '../../common';
 import { CreateDropDto } from './dto/create-drop.dto';
 import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
@@ -30,7 +30,10 @@ import { DiscoverDropsResponseDto } from './dto/discover-drops-response.dto';
 import { DropActivityLogPublicDto } from './dto/drop-activity-log-public.dto';
 import { DropDiscoverSummaryDto } from './dto/drop-discover-summary.dto';
 import { DropPhotoPublicDto } from './dto/drop-photo-public.dto';
+import { CreatePhotoUploadDto } from './dto/create-photo-upload.dto';
+import { PhotoUploadSessionDto } from './dto/photo-upload-session.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
+import { DROP_PHOTO_MAX_PER_USER, getDropPhotoMaxPerDrop } from './drop-photo.constants';
 
 const PUBLIC_ACTIVITY_CHANGED_FIELDS = new Set([
   'name',
@@ -57,14 +60,14 @@ export class DropsService {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly dropsCronService: DropsCronService,
-    private readonly storageService: SupabaseStorageService,
+    private readonly mediaAssets: MediaAssetsService,
     private readonly dataSource: DataSource,
   ) {}
 
-  private mapRowToDiscoverSummary(
+  private async mapRowToDiscoverSummary(
     row: Drop & { sparkCount?: number },
     viewerSparkedDropIds?: Set<string>,
-  ): DropDiscoverSummaryDto {
+  ): Promise<DropDiscoverSummaryDto> {
     const organiser = row.organiser;
     const summary: DropDiscoverSummaryDto = {
       id: row.id,
@@ -84,7 +87,7 @@ export class DropsService {
         id: organiser.id,
         firstName: organiser.firstName,
         lastName: organiser.lastName,
-        avatar: organiser.avatar ?? null,
+        avatar: await this.resolveAvatarReference(organiser.avatar ?? null),
         userHandle: organiser.userHandle ?? null,
       },
       sparkCount: row.sparkCount ?? 0,
@@ -94,10 +97,47 @@ export class DropsService {
     if (viewerSparkedDropIds !== undefined) {
       summary.sparkedByViewer = viewerSparkedDropIds.has(row.id);
     }
-    return summary;
+    return this.resolveCoverPhotoForSummary(summary);
   }
 
-  private toPublicActivityLog(log: DropActivityLog): DropActivityLogPublicDto {
+  private async resolveCoverPhotoForSummary(summary: DropDiscoverSummaryDto): Promise<DropDiscoverSummaryDto> {
+    const cover = summary.coverPhoto;
+    if (!cover || cover.startsWith('/')) return summary;
+    const storagePath = this.mediaAssets.extractStoragePath(cover);
+    if (!storagePath) return summary;
+    const resolved = await this.mediaAssets.tryResolveReadUrl(storagePath);
+    return { ...summary, coverPhoto: resolved ?? null };
+  }
+
+  private async resolveDropCoverPhoto(drop: Drop): Promise<Drop> {
+    if (!drop.coverPhoto || drop.coverPhoto.startsWith('/')) return drop;
+    const storagePath = this.mediaAssets.extractStoragePath(drop.coverPhoto);
+    if (!storagePath) return drop;
+    const resolved = await this.mediaAssets.tryResolveReadUrl(storagePath);
+    return { ...drop, coverPhoto: resolved ?? null };
+  }
+
+  private async resolveAvatarReference(avatar?: string | null): Promise<string | null> {
+    if (!avatar) return null;
+    const storagePath = this.mediaAssets.extractStoragePath(avatar);
+    if (!storagePath) return avatar;
+    const resolved = await this.mediaAssets.tryResolveReadUrl(storagePath);
+    return resolved ?? null;
+  }
+
+  private async resolveDropOrganiserAvatar(drop: Drop): Promise<Drop> {
+    if (!drop.organiser) return drop;
+    const resolvedAvatar = await this.resolveAvatarReference(drop.organiser.avatar ?? null);
+    return {
+      ...drop,
+      organiser: {
+        ...drop.organiser,
+        avatar: resolvedAvatar ?? undefined,
+      },
+    };
+  }
+
+  private async toPublicActivityLog(log: DropActivityLog): Promise<DropActivityLogPublicDto> {
     const safeChangedFields = this.toSafeChangedFields(log.changedFields);
 
     return {
@@ -108,7 +148,7 @@ export class DropsService {
         id: log.user.id,
         firstName: log.user.firstName,
         lastName: log.user.lastName,
-        avatar: log.user.avatar,
+        avatar: (await this.resolveAvatarReference(log.user.avatar)) ?? undefined,
       },
       action: log.action,
       ...(safeChangedFields && { changedFields: safeChangedFields }),
@@ -247,8 +287,9 @@ export class DropsService {
 
       if (dto.coverPhotoBase64?.trim()) {
         const { buffer, mimeType } = this.coverBufferFromDataUrl(dto.coverPhotoBase64);
-        const publicUrl = await this.storageService.uploadDropCover(drop.id, buffer, mimeType);
-        await this.dropsRepository.update(drop.id, { coverPhoto: publicUrl });
+        const coverPath = this.mediaAssets.buildDropCoverPath(drop.id, mimeType);
+        await this.mediaAssets.uploadImage(coverPath, buffer, mimeType);
+        await this.dropsRepository.update(drop.id, { coverPhoto: coverPath });
       } else {
         const origin = baseUrl.replace(/\/$/, '');
         const defaultCover =
@@ -262,7 +303,8 @@ export class DropsService {
         }
       }
 
-      return this.dropsRepository.findById(drop.id) as Promise<Drop>;
+      const savedDrop = (await this.dropsRepository.findById(drop.id)) as Drop;
+      return this.resolveDropCoverPhoto(savedDrop);
     } finally {
       this._createInFlight.delete(inFlightKey);
     }
@@ -301,7 +343,8 @@ export class DropsService {
       (drop.organiser as any).crewReached = parseInt(crewReached, 10);
     }
 
-    return drop;
+    const dropWithCover = await this.resolveDropCoverPhoto(drop);
+    return this.resolveDropOrganiserAvatar(dropWithCover);
   }
 
   async findMyDrops(firebaseUid: string): Promise<Drop[]> {
@@ -323,7 +366,7 @@ export class DropsService {
       drop.sparkedByViewer = sparked.has(drop.id);
     }
 
-    return drops;
+    return Promise.all(drops.map((drop) => this.resolveDropCoverPhoto(drop)));
   }
 
   async findByJoinCode(joinCode: string, firebaseUid?: string): Promise<Drop> {
@@ -342,7 +385,7 @@ export class DropsService {
     }
 
     drop.crew = await this.dropsRepository.findActiveInCrewWithUsers(drop.id);
-    return drop;
+    return this.resolveDropCoverPhoto(drop);
   }
 
   async update(id: string, dto: UpdateDropDto, firebaseUid: string): Promise<Drop> {
@@ -394,7 +437,7 @@ export class DropsService {
     
     // If the drop is manually marked as completed, clean up non-featured photos
     if (dto.status === DropStatus.COMPLETED) {
-      await this.dropsRepository.deleteNonFeaturedPhotosForDrops([id]);
+      await this.deleteNonFeaturedPhotosForDrops([id]);
     }
 
     const statusActionMap: Partial<Record<DropStatus, string>> = {
@@ -424,13 +467,28 @@ export class DropsService {
     // Clean up cover photo if exists
     if (drop.coverPhoto) {
       try {
-        await this.storageService.deleteDropCover(id);
+        await this.mediaAssets.deleteManyByPath([
+          this.mediaAssets.buildDropCoverPath(id, 'image/jpeg'),
+          this.mediaAssets.buildDropCoverPath(id, 'image/png'),
+        ]);
       } catch (err) {
         const detail = err instanceof Error ? err.message : String(err);
         this.logger.warn(
           `Failed to delete cover photo from storage during drop deletion (dropId=${id}): ${detail}`,
         );
       }
+    }
+
+    try {
+      const photos = await this.dropsRepository.findPhotosByDropId(id);
+      await this.mediaAssets.deleteManyByPath(
+        photos
+          .map((photo) => photo.storagePath)
+          .filter((path): path is string => Boolean(path)),
+      );
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Failed to delete drop photos from storage during drop deletion (dropId=${id}): ${detail}`);
     }
 
     await this.dropsRepository.delete(id);
@@ -573,7 +631,16 @@ export class DropsService {
       }
     }
 
-    return this.dropsRepository.findCrewMembers(dropId);
+    const members = await this.dropsRepository.findCrewMembers(dropId);
+    return Promise.all(
+      members.map(async (member) => ({
+        ...member,
+        user: {
+          ...member.user,
+          avatar: (await this.resolveAvatarReference(member.user.avatar)) ?? undefined,
+        },
+      })),
+    );
   }
 
   async rejectPendingMember(dropId: string, targetUserId: string, firebaseUid: string): Promise<void> {
@@ -705,7 +772,7 @@ export class DropsService {
 
     return {
       ...logsPage,
-      data: logsPage.data.map((log) => this.toPublicActivityLog(log)),
+      data: await Promise.all(logsPage.data.map((log) => this.toPublicActivityLog(log))),
     };
   }
 
@@ -760,14 +827,17 @@ export class DropsService {
       }
     }
 
-    const map = (row: Drop & { sparkCount?: number }) =>
-      this.mapRowToDiscoverSummary(row, sparks);
+    const map = (row: Drop & { sparkCount?: number }) => this.mapRowToDiscoverSummary(row, sparks);
 
     return {
-      featured: featuredRow ? map(featuredRow as Drop & { sparkCount?: number }) : null,
-      recentChiefsDrops: recentChiefsRows.map((r) => map(r as Drop & { sparkCount?: number })),
+      featured: featuredRow ? await map(featuredRow as Drop & { sparkCount?: number }) : null,
+      recentChiefsDrops: await Promise.all(
+        recentChiefsRows.map((r) => map(r as Drop & { sparkCount?: number })),
+      ),
       allPublic: {
-        data: allPublicPaginated.data.map((r) => map(r as Drop & { sparkCount?: number })),
+        data: await Promise.all(
+          allPublicPaginated.data.map((r) => map(r as Drop & { sparkCount?: number })),
+        ),
         total: allPublicPaginated.total,
         page: allPublicPaginated.page,
         totalPages: allPublicPaginated.totalPages,
@@ -783,12 +853,19 @@ export class DropsService {
       throw new ForbiddenException('Only the organiser can update the cover photo');
     }
 
-    const publicUrl = await this.storageService.uploadDropCover(id, buffer, mimeType);
+    const coverPath = this.mediaAssets.buildDropCoverPath(id, mimeType);
+    await this.mediaAssets.uploadImage(coverPath, buffer, mimeType);
 
-    await this.dropsRepository.update(id, { coverPhoto: publicUrl });
-    await this.recordDropActivity({ dropId: id, userId: drop.organiserId, action: 'updated', changedFields: { coverPhoto: publicUrl } });
+    await this.dropsRepository.update(id, { coverPhoto: coverPath });
+    await this.recordDropActivity({
+      dropId: id,
+      userId: drop.organiserId,
+      action: 'updated',
+      changedFields: { coverPhoto: true },
+    });
 
-    return this.dropsRepository.findById(id) as Promise<Drop>;
+    const savedDrop = (await this.dropsRepository.findById(id)) as Drop;
+    return this.resolveDropCoverPhoto(savedDrop);
   }
 
   async deleteCoverPhoto(id: string, firebaseUid: string): Promise<void> {
@@ -799,12 +876,25 @@ export class DropsService {
       throw new ForbiddenException('Only the organiser can delete the cover photo');
     }
 
-    await this.storageService.deleteDropCover(id);
+    await this.mediaAssets.deleteManyByPath([
+      this.mediaAssets.buildDropCoverPath(id, 'image/jpeg'),
+      this.mediaAssets.buildDropCoverPath(id, 'image/png'),
+    ]);
     await this.dropsRepository.update(id, { coverPhoto: null });
     await this.recordDropActivity({ dropId: id, userId: drop.organiserId, action: 'updated', changedFields: { coverPhoto: null } });
   }
 
-  async uploadPhoto(dropId: string, firebaseUid: string, base64: string): Promise<DropPhoto> {
+  private async deleteNonFeaturedPhotosForDrops(dropIds: string[]): Promise<void> {
+    const nonFeaturedPhotos = await this.dropsRepository.findNonFeaturedPhotosForDrops(dropIds);
+    await this.mediaAssets.deleteManyByPath(
+      nonFeaturedPhotos
+        .map((photo) => photo.storagePath)
+        .filter((path): path is string => Boolean(path)),
+    );
+    await this.dropsRepository.deleteNonFeaturedPhotosForDrops(dropIds);
+  }
+
+  private async assertCanUploadPhoto(dropId: string, firebaseUid: string): Promise<{ user: User }> {
     const user = await this.usersService.findByFirebaseUid(firebaseUid);
     if (!user) throw new NotFoundException('User not found');
 
@@ -813,32 +903,108 @@ export class DropsService {
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException('Drop not found');
 
-    // Check if user is part of the crew or the organiser
     const isOrganiser = drop.organiserId === user.id;
     const crewMember = await this.dropsRepository.findCrewMember(dropId, user.id);
     if (!isOrganiser && (!crewMember || crewMember.status !== DropCrewStatus.IN)) {
       throw new ForbiddenException('Only active crew members can upload photos');
     }
 
-    // Check limits
     const userPhotoCount = await this.dropsRepository.countPhotosByUser(dropId, user.id);
-    if (userPhotoCount >= 3) {
-      throw new BadRequestException('You can only upload up to 3 photos per drop');
+    if (userPhotoCount >= DROP_PHOTO_MAX_PER_USER) {
+      throw new BadRequestException(
+        `You can only upload up to ${DROP_PHOTO_MAX_PER_USER} photos per drop`,
+      );
     }
 
-    const totalPhotoCount = await this.dropsRepository.countTotalPhotos(dropId);
-    if (totalPhotoCount >= 10) {
-      throw new BadRequestException('This drop has reached its photo limit');
+    const [totalPhotoCount, activeCrewCount] = await Promise.all([
+      this.dropsRepository.countTotalPhotos(dropId),
+      this.dropsRepository.countActiveCrewMembers(dropId),
+    ]);
+    const maxPhotosForDrop = getDropPhotoMaxPerDrop(activeCrewCount);
+    if (totalPhotoCount >= maxPhotosForDrop) {
+      throw new BadRequestException(
+        `This drop has reached its photo limit (${maxPhotosForDrop})`,
+      );
     }
 
-    // Validate image format and size
-    this.validateImageBase64(base64);
+    return { user };
+  }
 
+  async createPhotoUploadSession(
+    dropId: string,
+    firebaseUid: string,
+    dto: CreatePhotoUploadDto,
+  ): Promise<PhotoUploadSessionDto> {
+    const { user } = await this.assertCanUploadPhoto(dropId, firebaseUid);
+
+    const mimeType = dto.mimeType === 'image/jpg' ? 'image/jpeg' : dto.mimeType;
+    if (!['image/jpeg', 'image/png'].includes(mimeType)) {
+      throw new BadRequestException('Invalid image format: Only JPG and PNG are allowed');
+    }
+
+    const seed = await this.dropsRepository.addPhoto({
+      dropId,
+      userId: user.id,
+      base64: null,
+      url: null,
+      isFeatured: false,
+    });
+    const storagePath = this.mediaAssets.buildDropPhotoPath(dropId, seed.id, mimeType);
+    await this.dropsRepository.updatePhoto(seed.id, {
+      storagePath,
+      mimeType,
+      sizeBytes: dto.sizeBytes,
+      width: dto.width ?? null,
+      height: dto.height ?? null,
+    });
+
+    const { token } = await this.mediaAssets.createSignedUpload(storagePath);
+    return { photoId: seed.id, storagePath, uploadToken: token };
+  }
+
+  async completePhotoUpload(
+    dropId: string,
+    photoId: string,
+    firebaseUid: string,
+  ): Promise<DropPhotoPublicDto> {
+    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    if (!user) throw new NotFoundException('User not found');
+
+    const photo = await this.dropsRepository.findPhotoById(photoId);
+    if (!photo || photo.dropId !== dropId) throw new NotFoundException('Photo not found');
+    if (photo.userId !== user.id) {
+      throw new ForbiddenException('You do not have permission to complete this upload');
+    }
+    if (!photo.storagePath) {
+      throw new BadRequestException('Photo upload session is missing storage metadata');
+    }
+    const objectExists = await this.mediaAssets.storageObjectExists(photo.storagePath);
+    if (!objectExists) {
+      throw new BadRequestException('Uploaded file not found in storage. Please retry the upload.');
+    }
+
+    return this.toPhotoPublicDto(await this.ensurePhotoHasStorageUrl(photo));
+  }
+
+  async uploadPhoto(dropId: string, firebaseUid: string, base64: string): Promise<DropPhoto> {
+    const { user } = await this.assertCanUploadPhoto(dropId, firebaseUid);
+
+    const { buffer, mimeType } = this.coverBufferFromDataUrl(base64);
     const photo = await this.dropsRepository.addPhoto({
       dropId,
       userId: user.id,
-      base64,
+      base64: null,
+      mimeType,
+      sizeBytes: buffer.length,
       isFeatured: false,
+    });
+
+    const storagePath = this.mediaAssets.buildDropPhotoPath(dropId, photo.id, mimeType);
+    await this.mediaAssets.uploadImage(storagePath, buffer, mimeType);
+    await this.dropsRepository.updatePhoto(photo.id, {
+      storagePath,
+      base64: null,
+      url: null,
     });
 
     await this.recordDropActivity(
@@ -850,7 +1016,7 @@ export class DropsService {
       { photoId: photo.id },
     );
 
-    return photo;
+    return (await this.dropsRepository.findPhotoById(photo.id)) as DropPhoto;
   }
 
   async getPhotos(
@@ -861,9 +1027,10 @@ export class DropsService {
   ): Promise<{ data: DropPhotoPublicDto[]; total: number; page: number; totalPages: number }> {
     await this.findOne(dropId, firebaseUid);
     const result = await this.dropsRepository.findPhotos(dropId, page, limit);
+    const hydrated = await Promise.all(result.data.map((photo) => this.ensurePhotoHasStorageUrl(photo)));
     return {
       ...result,
-      data: result.data.map((p) => this.toPhotoPublicDto(p)),
+      data: await Promise.all(hydrated.map((p) => this.toPhotoPublicDto(p))),
     };
   }
 
@@ -873,18 +1040,52 @@ export class DropsService {
     if (!photo || photo.dropId !== dropId) {
       throw new NotFoundException('Photo not found');
     }
-    return this.toPhotoPublicDto(photo);
+    return this.toPhotoPublicDto(await this.ensurePhotoHasStorageUrl(photo));
   }
 
-  private toPhotoPublicDto(photo: DropPhoto): DropPhotoPublicDto {
+  private async ensurePhotoHasStorageUrl(photo: DropPhoto): Promise<DropPhoto> {
+    if (photo.storagePath) {
+      const resolvedUrl = await this.mediaAssets.tryResolveReadUrl(photo.storagePath);
+      return { ...photo, url: resolvedUrl ?? undefined };
+    }
+
+    if (photo.url && !photo.base64) {
+      const inferredPath = this.mediaAssets.extractStoragePath(photo.url);
+      if (inferredPath) {
+        await this.dropsRepository.updatePhoto(photo.id, { storagePath: inferredPath, url: null });
+        const resolvedUrl = await this.mediaAssets.tryResolveReadUrl(inferredPath);
+        return { ...photo, storagePath: inferredPath, url: resolvedUrl ?? undefined };
+      }
+      return photo;
+    }
+
+    if (!photo.base64) {
+      return photo;
+    }
+
+    const { buffer, mimeType } = this.coverBufferFromDataUrl(photo.base64);
+    const storagePath = this.mediaAssets.buildDropPhotoPath(photo.dropId, photo.id, mimeType);
+    await this.mediaAssets.uploadImage(storagePath, buffer, mimeType);
+    await this.dropsRepository.updatePhoto(photo.id, {
+      storagePath,
+      mimeType,
+      sizeBytes: buffer.length,
+      base64: null,
+      url: null,
+    });
+    const saved = (await this.dropsRepository.findPhotoById(photo.id)) as DropPhoto;
+    const resolvedUrl = await this.mediaAssets.tryResolveReadUrl(storagePath);
+    return { ...saved, url: resolvedUrl ?? undefined };
+  }
+
+  private async toPhotoPublicDto(photo: DropPhoto): Promise<DropPhotoPublicDto> {
     const user = photo.user;
-    const hasUrl = photo.url !== null && photo.url !== undefined && photo.url !== '';
     return {
       id: photo.id,
       dropId: photo.dropId,
       userId: photo.userId,
       url: photo.url ?? undefined,
-      base64: hasUrl ? undefined : (photo.base64 ?? undefined),
+      base64: undefined,
       isFeatured: photo.isFeatured,
       createdAt: photo.createdAt,
       updatedAt: photo.updatedAt,
@@ -892,7 +1093,7 @@ export class DropsService {
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
-        avatar: user.avatar,
+        avatar: (await this.resolveAvatarReference(user.avatar)) ?? undefined,
       },
     };
   }
@@ -935,25 +1136,8 @@ export class DropsService {
       return this.dropsRepository.findPhotoById(photoId) as Promise<DropPhoto>;
     }
 
-    // To save storage as requested, we only upload to Supabase when featured
-    if (photo.base64) {
-      // Convert base64 to buffer
-      const base64Data = photo.base64.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Data, 'base64');
-      const mimeType = photo.base64.match(/data:([^;]+);/)?.[1] || 'image/jpeg';
-      
-      // Upload to storage
-      const publicUrl = await this.storageService.uploadPhoto(dropId, photoId, buffer, mimeType);
-      
-      await this.dropsRepository.updatePhoto(photoId, {
-        url: publicUrl,
-        base64: null,
-        isFeatured: true,
-      });
-    } else {
-      // Already has a URL but was unfeatured, just re-feature it
-      await this.dropsRepository.updatePhoto(photoId, { isFeatured: true });
-    }
+    await this.ensurePhotoHasStorageUrl(photo);
+    await this.dropsRepository.updatePhoto(photoId, { isFeatured: true });
 
     await this.recordDropActivity(
       {
@@ -985,9 +1169,18 @@ export class DropsService {
       throw new ForbiddenException('You do not have permission to delete this photo');
     }
 
-    if (photo.url) {
-      // If it was in storage, we should probably delete it from there too
-      // But for now let's just delete the record.
+    if (photo.storagePath || photo.url) {
+      try {
+        const storagePath =
+          photo.storagePath ??
+          this.mediaAssets.buildDropPhotoPath(dropId, photo.id, photo.mimeType ?? 'image/jpeg');
+        await this.mediaAssets.deleteByPath(storagePath);
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        this.logger.warn(
+          `Failed to delete roll photo from storage (dropId=${dropId}, photoId=${photo.id}): ${detail}`,
+        );
+      }
     }
 
     await this.dropsRepository.deletePhoto(photoId);

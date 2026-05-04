@@ -1,5 +1,19 @@
 import { api } from './api';
 import type { Drop, CreateDropDto, UpdateDropDto, DropActivityLog, DropCrew, CrewMember, ActivityLogsPage, DiscoverDropsPayload } from '@/types/drop';
+import { uploadToSignedDropPhotoUrl } from '@/lib/supabase-storage';
+
+interface CreatePhotoUploadSessionDto {
+  mimeType: string;
+  sizeBytes: number;
+  width?: number;
+  height?: number;
+}
+
+interface PhotoUploadSession {
+  photoId: string;
+  storagePath: string;
+  uploadToken: string;
+}
 
 
 export const dropsService = {
@@ -95,8 +109,23 @@ export const dropsService = {
     return api.get(`/drops/${dropId}/photos/${photoId}`).then((r) => r.data);
   },
 
-  uploadPhoto(dropId: string, base64: string): Promise<any> {
-    return api.post<any>(`/drops/${dropId}/photos`, { base64 }).then((r) => r.data);
+  createPhotoUploadSession(dropId: string, dto: CreatePhotoUploadSessionDto): Promise<PhotoUploadSession> {
+    return api.post<PhotoUploadSession>(`/drops/${dropId}/photos/upload-url`, dto).then((r) => r.data);
+  },
+
+  completePhotoUpload(dropId: string, photoId: string): Promise<any> {
+    return api.post<any>(`/drops/${dropId}/photos/${photoId}/complete`).then((r) => r.data);
+  },
+
+  async uploadPhoto(dropId: string, file: File, imageSize?: { width: number; height: number }): Promise<any> {
+    const session = await this.createPhotoUploadSession(dropId, {
+      mimeType: file.type,
+      sizeBytes: file.size,
+      width: imageSize?.width,
+      height: imageSize?.height,
+    });
+    await uploadToSignedDropPhotoUrl(session.storagePath, session.uploadToken, file);
+    return this.completePhotoUpload(dropId, session.photoId);
   },
 
   featurePhoto(dropId: string, photoId: string): Promise<any> {

@@ -19,6 +19,7 @@ import { useUploadPhoto, useFeaturePhoto, useDeletePhoto } from '@/hooks/mutatio
 import { useInfinitePhotos, usePhotoDetail } from '@/hooks/queries/use-drops';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import { DROP_PHOTO_MAX_PER_USER, getDropPhotoMaxPerDrop } from '@/lib/drop-photo.constants';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ModalShell } from '@/components/modal-shell';
 import { DeletePhotoModal } from './DeletePhotoModal';
@@ -29,10 +30,18 @@ interface PhotoRollProps {
   userId?: string;
   isOrganiser: boolean;
   isCrewMember: boolean;
+  activeCrewCount?: number;
   isLoadingStatus?: boolean;
 }
 
-export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember, isLoadingStatus }: PhotoRollProps) {
+export function PhotoRoll({
+  drop,
+  userId,
+  isOrganiser,
+  isCrewMember,
+  activeCrewCount,
+  isLoadingStatus,
+}: PhotoRollProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
@@ -79,8 +88,12 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember, isLoadingSt
 
     setIsCompressing(true);
     try {
-      const base64 = await compressImage(file);
-      await uploadMutation.mutateAsync(base64);
+      const compressed = await compressImage(file);
+      await uploadMutation.mutateAsync({
+        file: compressed.file,
+        width: compressed.width,
+        height: compressed.height,
+      });
       toast.success('POSTED A NEW SHOT TO THE ROLL');
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
@@ -128,8 +141,9 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember, isLoadingSt
   const isCompleted = drop.status === 'completed';
   const canUpload = (isOrganiser || isCrewMember) && !isCompleted;
   const userPhotos = photos.filter((p: any) => p.userId === userId);
-  const reachedUserLimit = userPhotos.length >= 3;
-  const reachedTotalLimit = photos.length >= 50;
+  const maxPhotosForDrop = getDropPhotoMaxPerDrop(activeCrewCount ?? 1);
+  const reachedUserLimit = userPhotos.length >= DROP_PHOTO_MAX_PER_USER;
+  const reachedTotalLimit = photos.length >= maxPhotosForDrop;
 
   const displayedPhotos = useMemo(() => {
     if (isCompleted) return photos.filter((p: any) => p.isFeatured);
@@ -740,7 +754,7 @@ function PhotoViewerModal({
   );
 }
 
-async function compressImage(file: File): Promise<string> {
+async function compressImage(file: File): Promise<{ file: File; width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -762,8 +776,20 @@ async function compressImage(file: File): Promise<string> {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        const base64 = canvas.toDataURL('image/jpeg', 0.7);
-        resolve(base64);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to compress image'));
+              return;
+            }
+            const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+              type: 'image/jpeg',
+            });
+            resolve({ file: compressedFile, width: canvas.width, height: canvas.height });
+          },
+          'image/jpeg',
+          0.7,
+        );
       };
       img.onerror = reject;
     };

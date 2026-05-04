@@ -19,7 +19,7 @@ export class DropPhotoPublicDto {
 
   @ApiPropertyOptional({
     nullable: true,
-    description: 'Embedded image data only until the photo is featured and stored at url.',
+    description: 'Deprecated: image payloads are no longer returned in API responses.',
   })
   base64?: string | null;
 
