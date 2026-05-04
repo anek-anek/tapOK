@@ -162,7 +162,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember, isLoadingSt
       ) : (
         <div className="relative flex flex-col items-center pt-4 pb-8">
           <div className="relative h-[320px] w-[320px] md:h-[400px] md:w-[400px] flex items-center justify-center">
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence mode="sync" initial={false}>
               {displayedPhotos.slice().reverse().map((photo: any, index: number) => {
                 const actualIndex = displayedPhotos.length - 1 - index;
                 if (actualIndex < currentIndex || actualIndex > currentIndex + 2) return null;
@@ -446,39 +446,52 @@ function PhotoStackItem({
 
   const displaySrc = photo.url || detail?.base64 || '';
   const isLandscape = orientation === 'landscape';
+  const isNext = direction >= 0;
+  const baseRotate = offset === 0 ? 0 : offset % 2 === 0 ? 2.2 : -2.2;
+  const enterX = isNext ? 145 : -115;
+  const exitX = isNext ? -260 : 210;
 
   return (
     <motion.div
-      layout
+      layout="position"
       initial={{
-        x: direction < 0 ? -400 : 0,
+        x: enterX,
         opacity: 0,
-        scale: direction < 0 ? 0.9 : 0.8,
-        rotate: direction < 0 ? -25 : 0,
-        y: direction < 0 ? 0 : 20
+        scale: 0.96,
+        rotate: isNext ? 6 : -4.5,
+        y: offset * -8 + 10,
       }}
       animate={{
-        scale: 1 - offset * 0.05,
-        opacity: 1,
-        y: offset * -12,
-        x: offset * 4,
-        rotate: isTop ? 0 : (offset % 2 === 0 ? 3 : -3),
-        zIndex: 10 - offset
+        scale: 1 - offset * 0.04,
+        opacity: 1 - offset * 0.08,
+        y: offset * -10,
+        x: offset * 3,
+        rotate: isTop ? 0 : baseRotate,
+        zIndex: 10 - offset,
       }}
       whileHover={isTop ? {
-        scale: 1.02,
-        y: -15,
+        scale: 1.014,
+        y: -12,
         rotate: 0,
-        transition: { type: 'spring', stiffness: 600, damping: 30 }
+        transition: { type: 'spring', stiffness: 360, damping: 24, mass: 0.75 }
       } : {}}
       exit={{
-        x: -400,
+        x: exitX,
         opacity: 0,
-        rotate: -25,
-        scale: 0.9,
-        transition: { duration: 0.2, ease: "easeOut" }
+        rotate: isNext ? -11 : 7,
+        scale: 0.95,
+        transition: {
+          duration: isNext ? 0.34 : 0.26,
+          ease: isNext ? [0.19, 1, 0.22, 1] : [0.22, 1, 0.36, 1],
+        },
       }}
-      transition={{ type: 'spring', stiffness: 500, damping: 35, mass: 0.8 }}
+      transition={{
+        x: { type: 'spring', stiffness: isNext ? 175 : 230, damping: isNext ? 24 : 27, mass: isNext ? 1.05 : 0.9 },
+        y: { type: 'spring', stiffness: isNext ? 165 : 220, damping: isNext ? 22 : 25, mass: isNext ? 1.05 : 0.9 },
+        scale: { type: 'spring', stiffness: isNext ? 185 : 240, damping: isNext ? 23 : 25, mass: isNext ? 1 : 0.85 },
+        rotate: { type: 'spring', stiffness: isNext ? 155 : 205, damping: isNext ? 20 : 23, mass: isNext ? 1.05 : 0.9 },
+        opacity: { duration: isNext ? 0.28 : 0.2, ease: [0.22, 1, 0.36, 1] },
+      }}
       onClick={() => isTop && displaySrc && onSelect()}
       style={{
         width: isLandscape ? 'min(440px, 95vw)' : 'min(280px, 75vw)',
@@ -510,7 +523,7 @@ function PhotoStackItem({
               key="image"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.24, ease: 'easeOut' }}
               className="relative h-full w-full"
             >
               <NextImage
