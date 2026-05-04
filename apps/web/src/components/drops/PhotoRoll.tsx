@@ -19,6 +19,7 @@ import { useUploadPhoto, useFeaturePhoto, useDeletePhoto } from '@/hooks/mutatio
 import { useInfinitePhotos, usePhotoDetail } from '@/hooks/queries/use-drops';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ModalShell } from '@/components/modal-shell';
 import { DeletePhotoModal } from './DeletePhotoModal';
 import type { Drop, DropPhoto } from '@/types/drop';
@@ -28,9 +29,10 @@ interface PhotoRollProps {
   userId?: string;
   isOrganiser: boolean;
   isCrewMember: boolean;
+  isLoadingStatus?: boolean;
 }
 
-export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRollProps) {
+export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember, isLoadingStatus }: PhotoRollProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
@@ -41,6 +43,7 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
   const {
     data: infiniteData,
     isLoading,
+    isError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage
@@ -135,15 +138,13 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
     return [...featured, ...nonFeatured];
   }, [photos, isCompleted]);
 
+  if (isLoadingStatus || isLoading) {
+    return <PhotoRollSkeleton />;
+  }
+
   if (!isOrganiser && !isCrewMember) return null;
 
-  if (isLoading) {
-    return (
-      <div className="flex h-40 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white/50">
-        <IconLoader className="animate-spin text-tok-black/20" size={32} />
-      </div>
-    );
-  }
+  if (isError) return null;
 
   return (
     <div className="mb-10 space-y-4">
@@ -262,7 +263,11 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember }: PhotoRoll
             <button
               onClick={() => {
                 setDirection(1);
-                setCurrentIndex(prev => Math.min(displayedPhotos.length - 1, prev + 1));
+                if (currentIndex === displayedPhotos.length - 1) {
+                  if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+                  return;
+                }
+                setCurrentIndex(prev => prev + 1);
               }}
               disabled={currentIndex === displayedPhotos.length - 1 && !hasNextPage}
               className="flex h-12 w-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-20"
@@ -367,32 +372,51 @@ function PhotoStackItem({
       )}
     >
       <div className="relative h-full w-full overflow-hidden border-2 border-tok-black bg-tok-black/5">
-        {displaySrc ? (
-          <NextImage
-            src={displaySrc}
-            alt="Drop moment"
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 440px, 440px"
-            draggable={false}
-            onLoad={(e) => {
-              const img = e.currentTarget;
-              if (img.naturalWidth > img.naturalHeight) {
-                setOrientation('landscape');
-              } else {
-                setOrientation('portrait');
-              }
-            }}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <IconLoader className="animate-spin text-tok-black/10" size={32} />
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {!displaySrc ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex h-full w-full items-center justify-center bg-tok-black/5"
+            >
+              <Skeleton className="h-full w-full bg-tok-black/10" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <IconLoader className="animate-spin text-tok-black/20" size={32} />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="image"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
+              className="relative h-full w-full"
+            >
+              <NextImage
+                src={displaySrc}
+                alt="Drop moment"
+                fill
+                className="object-cover transition-all duration-700"
+                sizes="(max-width: 640px) 90vw, (max-width: 768px) 440px, 440px"
+                draggable={false}
+                onLoad={(e) => {
+                  const img = e.currentTarget;
+                  if (img.naturalWidth > img.naturalHeight) {
+                    setOrientation('landscape');
+                  } else {
+                    setOrientation('portrait');
+                  }
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Status Badge only */}
         {photo.isFeatured && (
-          <div className="absolute right-2 top-2">
+          <div className="absolute right-2 top-2 z-10">
             <div className="flex h-7 w-7 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-yellow shadow-[2px_2px_0px_#1C1C1A]">
               <IconStar size={14} className="fill-tok-black text-tok-black" strokeWidth={2.5} />
             </div>
@@ -475,25 +499,36 @@ function PhotoViewerModal({
           <div className="flex flex-col items-center">
             {isLoading || !photo ? (
               <div className="flex h-[300px] w-[300px] items-center justify-center text-tok-black/10">
-                <IconLoader className="animate-spin" size={48} />
+                <Skeleton className="h-full w-full bg-tok-black/5" />
+                <IconLoader className="absolute animate-spin text-tok-black/20" size={48} />
               </div>
             ) : (
               <>
-                <div className="relative overflow-hidden border-2 border-tok-black bg-tok-black/5 w-fit mt-8">
-                  <NextImage
-                    src={photo.url || photo.base64 || ''}
-                    alt="Full moment"
-                    width={1200}
-                    height={1200}
-                    className="h-auto w-auto object-contain max-h-[min(60vh,calc(100vh-240px))] max-w-[min(1000px,85vw)]"
-                    onLoad={(e) => {
-                      const img = e.currentTarget;
-                      const ratio = img.naturalWidth / img.naturalHeight;
-                      setAspectRatio(ratio);
-                      if (ratio > 1) setOrientation('landscape');
-                      else setOrientation('portrait');
-                    }}
-                  />
+                <div className="relative overflow-hidden border-2 border-tok-black bg-tok-black/5 w-fit mt-8 min-h-[200px] min-w-[200px]">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={photo.url || photo.base64}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <NextImage
+                        src={photo.url || photo.base64 || ''}
+                        alt="Full moment"
+                        width={1200}
+                        height={1200}
+                        priority
+                        className="h-auto w-auto object-contain max-h-[min(65vh,calc(100vh-220px))] max-w-[min(1000px,85vw)] transition-all duration-500"
+                        onLoad={(e) => {
+                          const img = e.currentTarget;
+                          const ratio = img.naturalWidth / img.naturalHeight;
+                          setAspectRatio(ratio);
+                          if (ratio > 1) setOrientation('landscape');
+                          else setOrientation('portrait');
+                        }}
+                      />
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
 
                 <div className={cn(
@@ -602,4 +637,49 @@ async function compressImage(file: File): Promise<string> {
     };
     reader.onerror = reject;
   });
+}
+
+export function PhotoRollSkeleton() {
+  return (
+    <div className="mb-10 space-y-4">
+      <div className="flex items-center justify-between mb-6 sm:mb-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-5 bg-tok-black/15" />
+          <Skeleton className="h-6 w-32 bg-tok-black/10" />
+        </div>
+        <Skeleton className="hidden h-9 w-28 rounded-sm border-[3px] border-tok-black bg-tok-yellow/40 sm:block" />
+      </div>
+
+      <div className="relative flex flex-col items-center pt-4 pb-8">
+        <div className="relative h-[320px] w-[320px] md:h-[400px] md:w-[400px] flex items-center justify-center">
+          {/* Stack effect */}
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="absolute rounded-sm border-[4px] border-tok-black bg-white p-3 shadow-[8px_8px_0px_#1C1C1A]"
+              style={{
+                width: 'min(280px, 75vw)',
+                height: 'min(360px, 90vw)',
+                zIndex: 10 - i,
+                transform: `rotate(${i === 0 ? 0 : (i % 2 === 0 ? 3 : -3)}deg) translate(${i * 4}px, ${i * -12}px)`,
+                opacity: 1 - i * 0.2
+              }}
+            >
+              <Skeleton className="h-full w-full bg-tok-black/5" />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 flex items-center gap-6">
+          <Skeleton className="h-12 w-12 rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A]" />
+          <div className="flex gap-2">
+            {[0, 1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-2 w-2 rounded-full bg-tok-black/10" />
+            ))}
+          </div>
+          <Skeleton className="h-12 w-12 rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A]" />
+        </div>
+      </div>
+    </div>
+  );
 }

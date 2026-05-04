@@ -61,14 +61,15 @@ export function useInfiniteDiscoverDrops(options?: { category?: string; limit?: 
 }
 
 export function useMyDrops(options?: { enabled?: boolean }) {
-  const { user } = useAuth();
-  const uid = user?.uid ?? '';
+  const { dbUser, isReady } = useAuth();
+  const uid = dbUser?.id ?? '';
   return useQuery({
     queryKey: dropKeys.mine(uid),
     queryFn: () => dropsService.getMyDrops(),
-    enabled: (options?.enabled ?? true) && Boolean(uid),
+    enabled: (options?.enabled ?? true) && Boolean(uid) && isReady,
   });
 }
+
 
 function useFirebaseAuthReadyForProtectedDropRoutes() {
   const { user, loading } = useAuth();

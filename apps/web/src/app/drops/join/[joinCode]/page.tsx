@@ -16,6 +16,7 @@ import {
   Ticket as IconTicket,
   Martini as IconMartini,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useDropByJoinCode, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -256,7 +257,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
           toast.error((t) => (
             <div className="flex flex-col gap-3">
               <p className="font-passion text-xs font-bold uppercase tracking-wider">{err.response?.data?.message}</p>
-              <button 
+              <button
                 onClick={() => {
                   toast.dismiss(t.id);
                   router.push('/profile?verify=true');
@@ -289,15 +290,66 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
     }
   }, [crewStatus?.status, drop?.id, router]);
 
-  if (!mounted || authLoading) {
+  function JoinDropSkeleton() {
+    return (
+      <div className="mx-auto max-w-md px-4 py-12 sm:py-20 animate-pulse">
+        <div className="relative">
+          <div className="relative overflow-hidden rounded-2xl border-[4px] border-tok-black bg-white shadow-[12px_12px_0px_#1C1C1A]">
+            <div className="h-3 w-full bg-tok-teal/20" />
+            <div className="p-8 sm:p-10">
+              {/* Header Skeleton */}
+              <div className="mb-10 flex items-center gap-3">
+                <Skeleton className="h-12 w-12 rounded-full border-[3px] border-tok-black bg-tok-black/5" />
+                <div className="space-y-2">
+                  <Skeleton className="h-2 w-20 bg-tok-black/5" />
+                  <Skeleton className="h-4 w-32 bg-tok-black/10" />
+                </div>
+              </div>
+
+              {/* Title Skeleton */}
+              <div className="space-y-4">
+                <Skeleton className="h-3 w-32 bg-tok-teal/10" />
+                <Skeleton className="h-16 w-full bg-tok-black/10" />
+                <Skeleton className="h-16 w-3/4 bg-tok-black/10" />
+              </div>
+
+              {/* Perforation Skeleton */}
+              <div className="relative my-8 flex items-center gap-4">
+                <div className="h-[2px] flex-1 border-t-[3px] border-dashed border-tok-black/10" />
+              </div>
+
+              {/* Details Skeleton */}
+              <div className="space-y-8">
+                {[1, 2].map((i) => (
+                  <div key={i} className="flex items-start gap-5">
+                    <Skeleton className="h-8 w-8 rounded-sm border-[3px] border-tok-black bg-tok-black/5" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-2 w-20 bg-tok-black/5" />
+                      <Skeleton className="h-6 w-48 bg-tok-black/10" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA Skeleton */}
+              <div className="mt-12 pt-8 border-t-[3px] border-tok-black/5">
+                <Skeleton className="h-16 w-full rounded-sm border-[3px] border-tok-black bg-tok-teal/10" />
+              </div>
+            </div>
+            {/* Footer Skeleton */}
+            <div className="h-16 w-full bg-tok-black" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function PageSkeleton() {
     return (
       <div className="flex min-h-screen flex-col bg-tok-cream">
         <TapokNavbar />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center">
-            <Skeleton className="mx-auto h-2 w-24 bg-tok-black/10" />
-            <p className="mt-6 font-passion text-xs font-bold uppercase tracking-[3px] text-tok-black/20">Establishing connection…</p>
-          </div>
+        <div className="flex-1">
+          <JoinDropSkeleton />
         </div>
       </div>
     );
@@ -336,18 +388,8 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
     );
   }
 
-  if (isDropLoading) {
-    return (
-      <div className="flex min-h-screen flex-col bg-tok-cream">
-        <TapokNavbar />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center">
-            <Skeleton className="mx-auto h-2 w-24 bg-tok-black/10" />
-            <p className="mt-6 font-passion text-xs font-bold uppercase tracking-[3px] text-tok-black/20">Establishing connection…</p>
-          </div>
-        </div>
-      </div>
-    );
+  if (!mounted || authLoading || isDropLoading) {
+    return <PageSkeleton />;
   }
 
   if (isDropError || !drop) {
@@ -390,17 +432,27 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
               <div className="mb-10 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-tok-black bg-tok-cream shadow-[3px_3px_0px_#1C1C1A]">
-                    {drop.organiser.avatar ? (
-                      <img
-                        src={drop.organiser.avatar}
-                        alt={organiserName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="font-passion text-lg font-bold text-tok-black">
-                        {drop.organiser.firstName[0]}{drop.organiser.lastName[0]}
-                      </span>
-                    )}
+                    <AnimatePresence mode="wait">
+                      {drop.organiser.avatar ? (
+                        <motion.img
+                          key="avatar"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          src={drop.organiser.avatar}
+                          alt={organiserName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <motion.span
+                          key="initials"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="font-passion text-lg font-bold text-tok-black"
+                        >
+                          {drop.organiser.firstName[0]}{drop.organiser.lastName[0]}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
                   </div>
                   <div className="min-w-0">
                     <p className="font-passion text-[9px] font-bold uppercase tracking-[2.5px] text-tok-black/40 leading-none">

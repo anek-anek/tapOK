@@ -15,6 +15,7 @@ import { DropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useMyDrops } from '@/hooks/queries/use-drops';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Alert,
   AlertDescription,
@@ -173,20 +174,36 @@ function EmptyTabState({ message, sub }: { message: string; sub: string }) {
   );
 }
 
+function DropsBoardHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+      <div>
+        <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
+          YOUR DROP BOARD
+        </p>
+        <h1 className="font-passion whitespace-nowrap text-[clamp(26px,7vw,72px)] font-black uppercase leading-[0.85] tracking-tight text-tok-black">
+          THE <span className="text-tok-teal">BOARD.</span>
+        </h1>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 /** Hero + tab strip + list rows — matches the board below the static page header. */
 function DropsBoardBodySkeleton() {
   return (
-    <>
+    <div className="animate-pulse">
       <HeroCardSkeleton />
 
       <div className="mt-8 flex items-center justify-end">
         <div className="flex gap-2">
-          <Skeleton className="flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-black px-5">
-            <Skeleton className="h-3 w-16 rounded-sm bg-white/25" />
-            <Skeleton className="h-5 w-7 rounded-full bg-white/20" />
+          <Skeleton className="flex h-10 w-[140px] items-center gap-3 rounded-sm border-[3px] border-tok-black bg-white px-6">
+            <Skeleton className="h-3 w-16 rounded-sm bg-tok-black/15" />
+            <Skeleton className="h-5 w-7 rounded-full bg-tok-black/10" />
           </Skeleton>
-          <Skeleton className="flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-white px-5">
-            <Skeleton className="h-3 w-10 rounded-sm bg-tok-black/15" />
+          <Skeleton className="flex h-10 w-[90px] items-center gap-3 rounded-sm border-[3px] border-tok-black bg-white px-6">
+            <Skeleton className="h-3 w-8 rounded-sm bg-tok-black/15" />
             <Skeleton className="h-5 w-7 rounded-full bg-tok-black/10" />
           </Skeleton>
         </div>
@@ -196,22 +213,14 @@ function DropsBoardBodySkeleton() {
         <ListCardSkeleton />
         <ListCardSkeleton />
       </div>
-    </>
+    </div>
   );
 }
 
 function DropsBoardSkeleton() {
   return (
-    <>
-      <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-        <div className="space-y-4">
-          <Skeleton className="h-3 w-44 rounded-sm bg-tok-teal/30" />
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-[clamp(44px,10vw,72px)] max-w-[min(100%,320px)] rounded-sm bg-tok-black/10" />
-            <Skeleton className="h-[clamp(44px,10vw,72px)] max-w-[min(100%,220px)] rounded-sm bg-tok-teal/35" />
-          </div>
-        </div>
-
+    <div className="animate-pulse">
+      <DropsBoardHeader>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <div className="flex h-12 w-full overflow-hidden rounded-sm border-[3px] border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] sm:w-auto">
             <Skeleton className="h-full min-w-[140px] flex-1 rounded-none bg-tok-black/6" />
@@ -219,10 +228,10 @@ function DropsBoardSkeleton() {
           </div>
           <Skeleton className="flex h-12 w-full items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-teal/35 px-6 shadow-[4px_4px_0px_#1C1C1A] sm:w-auto sm:min-w-[148px]" />
         </div>
-      </div>
+      </DropsBoardHeader>
 
       <DropsBoardBodySkeleton />
-    </>
+    </div>
   );
 }
 
@@ -242,14 +251,14 @@ function PageSkeleton() {
 export default function DropsClient() {
   const router = useRouter();
   const pathname = usePathname();
-  const mounted = useMounted();
-  const { user, dbUser, loading, isReady } = useAuth();
+  const { dbUser, loading, isReady } = useAuth();
+
   const {
     data,
     isPending,
     isError,
   } = useMyDrops({
-    enabled: isReady && Boolean(user),
+    enabled: isReady && Boolean(dbUser),
   });
 
   const drops = data ?? [];
@@ -296,9 +305,11 @@ export default function DropsClient() {
     router.push(`/drops/join/${code}`);
   };
 
-  if (!mounted || !isReady || (loading && !dbUser)) return <PageSkeleton />;
+  if (!isReady || (loading && !dbUser)) {
+    return <PageSkeleton />;
+  }
 
-  if (!loading && !user) {
+  if (!dbUser) {
     return (
       <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
         <DropsDotGrid />
@@ -332,19 +343,7 @@ export default function DropsClient() {
       <PageBackdropWatermark label="DROPS" />
 
       <main className="relative z-1 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
-
-
-        {/* Page header row */}
-        <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-          <div>
-            <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
-              YOUR DROP BOARD
-            </p>
-            <h1 className="font-passion whitespace-nowrap text-[clamp(26px,7vw,72px)] font-black uppercase leading-[0.85] tracking-tight text-tok-black">
-              THE <span className="text-tok-teal">BOARD.</span>
-            </h1>
-          </div>
-
+        <DropsBoardHeader>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
             {/* Join code form */}
             <form
@@ -382,100 +381,136 @@ export default function DropsClient() {
               New Drop
             </button>
           </div>
-        </div>
+        </DropsBoardHeader>
 
-        {/* Board */}
-        {isError ? (
-          <Alert className="rounded-[20px] border-tok-black/10 bg-white/72 p-6 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
-            <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/34">
-              Something slipped
-            </p>
-            <AlertTitle className="mt-3 font-passion text-[24px] font-bold uppercase tracking-[-0.03em] text-tok-black">
-              We could not load your Drops.
-            </AlertTitle>
-            <AlertDescription className="mt-3 max-w-xl text-[14px] leading-7 text-tok-black/64">
-              Try again in a moment. Your session may need a refresh if this
-              keeps happening.
-            </AlertDescription>
-          </Alert>
-        ) : showBoardBodySkeleton ? (
-          <DropsBoardBodySkeleton />
-        ) : (
-          <>
-            {/* Hero / Focus card — always shown when there's an active drop */}
-            {focusDrop && (
-              <HeroDropCard
-                drop={focusDrop}
-                viewerId={dbUser?.id}
-                onShare={handleShare}
-              />
-            )}
 
-            {/* Tab bar */}
-            <div className="mt-8 flex items-center justify-between">
-              <div className="ml-auto flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('upcoming')}
-                  className={cn(
-                    'flex h-10 items-center gap-3 rounded-sm border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
-                    activeTab === 'upcoming'
-                      ? 'bg-tok-black text-tok-cream'
-                      : 'bg-white text-tok-black hover:bg-tok-black/5',
-                  )}
-                >
-                  Upcoming
-                  <span
+        {/* Board Body */}
+        <AnimatePresence mode="wait">
+          {isError ? (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <Alert className="rounded-[20px] border-tok-black/10 bg-white/72 p-6 shadow-[0_14px_40px_rgba(42,33,24,0.05)]">
+                <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-black/34">
+                  Something slipped
+                </p>
+                <AlertTitle className="mt-3 font-passion text-[24px] font-bold uppercase tracking-[-0.03em] text-tok-black">
+                  We could not load your Drops.
+                </AlertTitle>
+                <AlertDescription className="mt-3 max-w-xl text-[14px] leading-7 text-tok-black/64">
+                  Try again in a moment. Your session may need a refresh if this
+                  keeps happening.
+                </AlertDescription>
+              </Alert>
+            </motion.div>
+          ) : showBoardBodySkeleton ? (
+            <motion.div
+              key="skeleton"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <DropsBoardBodySkeleton />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              {/* Hero / Focus card — always shown when there's an active drop */}
+              {focusDrop && (
+                <HeroDropCard
+                  drop={focusDrop}
+                  viewerId={dbUser?.id}
+                  onShare={handleShare}
+                />
+              )}
+
+              {/* Tab bar */}
+              <div className="mt-8 flex items-center justify-between">
+                <div className="ml-auto flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('upcoming')}
                     className={cn(
-                      'flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
+                      'flex h-10 items-center gap-3 rounded-sm border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
                       activeTab === 'upcoming'
-                        ? 'bg-white/20 text-tok-cream'
-                        : 'bg-tok-black/10 text-tok-black/40',
+                        ? 'bg-tok-black text-tok-cream'
+                        : 'bg-white text-tok-black hover:bg-tok-black/5',
                     )}
                   >
-                    {upcomingCount}
-                  </span>
-                </button>
+                    Upcoming
+                    <span
+                      className={cn(
+                        'flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
+                        activeTab === 'upcoming'
+                          ? 'bg-white/20 text-tok-cream'
+                          : 'bg-tok-black/10 text-tok-black/40',
+                      )}
+                    >
+                      {upcomingCount}
+                    </span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('past')}
-                  className={cn(
-                    'flex h-10 items-center gap-3 rounded-sm border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
-                    activeTab === 'past'
-                      ? 'bg-tok-black text-[#F7E9B2]'
-                      : 'bg-white text-tok-black hover:bg-tok-black/5',
-                  )}
-                >
-                  Past
-                  <span
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('past')}
                     className={cn(
-                      'flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
+                      'flex h-10 items-center gap-3 rounded-sm border-[3px] border-tok-black px-6 font-passion text-xs font-bold uppercase tracking-[2px] transition-all',
                       activeTab === 'past'
-                        ? 'bg-white/20 text-[#F7E9B2]'
-                        : 'bg-tok-black/10 text-tok-black/40',
+                        ? 'bg-tok-black text-[#F7E9B2]'
+                        : 'bg-white text-tok-black hover:bg-tok-black/5',
                     )}
                   >
-                    {pastCount}
-                  </span>
-                </button>
+                    Past
+                    <span
+                      className={cn(
+                        'flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
+                        activeTab === 'past'
+                          ? 'bg-white/20 text-[#F7E9B2]'
+                          : 'bg-tok-black/10 text-tok-black/40',
+                      )}
+                    >
+                      {pastCount}
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Tab content */}
-            <div className="mt-3 space-y-2">
-              {activeTab === 'upcoming' ? (
-                upcomingCount === 0 ? (
+              {/* Tab content */}
+              <div className="mt-3 space-y-2">
+                {activeTab === 'upcoming' ? (
+                  upcomingCount === 0 ? (
+                    <EmptyTabState
+                      message="Nothing upcoming"
+                      sub="Create a new Drop or join one with a code and it will appear here."
+                    />
+                  ) : activeDrops.length === 0 ? (
+                    <p className="py-6 text-center font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
+                      That&apos;s your only upcoming drop — shown above
+                    </p>
+                  ) : (
+                    activeDrops.map((drop) => (
+                      <ListDropCard
+                        key={drop.id}
+                        drop={drop}
+                        viewerId={dbUser?.id}
+                        showShareEditDelete={false}
+                      />
+                    ))
+                  )
+                ) : pastCount === 0 ? (
                   <EmptyTabState
-                    message="Nothing upcoming"
-                    sub="Create a new Drop or join one with a code and it will appear here."
+                    message="No past drops"
+                    sub="Finished plans will collect here with their logs and share links."
                   />
-                ) : activeDrops.length === 0 ? (
-                  <p className="py-6 text-center font-passion text-[11px] font-bold uppercase tracking-[2.2px] text-[#2a2118]/28">
-                    That&apos;s your only upcoming drop — shown above
-                  </p>
                 ) : (
-                  activeDrops.map((drop) => (
+                  completedDrops.map((drop) => (
                     <ListDropCard
                       key={drop.id}
                       drop={drop}
@@ -483,25 +518,12 @@ export default function DropsClient() {
                       showShareEditDelete={false}
                     />
                   ))
-                )
-              ) : pastCount === 0 ? (
-                <EmptyTabState
-                  message="No past drops"
-                  sub="Finished plans will collect here with their logs and share links."
-                />
-              ) : (
-                completedDrops.map((drop) => (
-                  <ListDropCard
-                    key={drop.id}
-                    drop={drop}
-                    viewerId={dbUser?.id}
-                    showShareEditDelete={false}
-                  />
-                ))
-              )}
-            </div>
-          </>
-        )}
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </main>
 
       {shareModalDrop && (

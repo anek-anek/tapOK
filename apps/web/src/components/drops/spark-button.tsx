@@ -224,4 +224,45 @@ export function SparkButton({
   );
 }
 
+export function SparkButtonSkeleton({
+  variant = 'default',
+  className
+}: {
+  variant?: 'default' | 'hero' | 'compact';
+  className?: string;
+}) {
+  if (variant === 'hero') {
+    return (
+      <div className={cn(
+        "flex h-10 min-w-[70px] items-center justify-center gap-2 rounded-sm border-2 border-tok-black bg-tok-cream shadow-[3px_3px_0px_#1C1C1A]",
+        className
+      )}>
+        <Skeleton className="h-4 w-4 bg-tok-black/10" />
+        <Skeleton className="h-4 w-6 bg-tok-black/10" />
+      </div>
+    );
+  }
+
+  if (variant === 'compact') {
+    return (
+      <div className={cn("flex items-center gap-1.5", className)}>
+        <Skeleton className="h-3.5 w-3.5 bg-tok-black/10" />
+        <Skeleton className="h-3.5 w-5 bg-tok-black/10" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn(
+      "flex h-9 items-center gap-2 rounded-sm border-2 border-tok-black bg-white px-3 shadow-[2px_2px_0px_#1C1C1A]",
+      className
+    )}>
+      <Skeleton className="h-3.5 w-3.5 bg-tok-black/10" />
+      <Skeleton className="h-3.5 w-5 bg-tok-black/10" />
+    </div>
+  );
+}
+
+import { Skeleton } from '@/components/ui/skeleton';
+
 
