@@ -169,6 +169,46 @@
         ]
       }
     },
+    "/users/session-cookie": {
+      "post": {
+        "operationId": "UsersController_createSessionCookie",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionCookieDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "sessionCookie": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...",
+                    "expiresIn": 604800
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Exchange a Firebase ID token for a 7-day session cookie",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/users/{id}": {
       "get": {
         "operationId": "UsersController_findOne",
@@ -1706,6 +1746,19 @@
           "email"
         ]
       },
+      "CreateSessionCookieDto": {
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "type": "string",
+            "description": "Firebase ID token from the authenticated client session.",
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+          }
+        },
+        "required": [
+          "idToken"
+        ]
+      },
       "SyncUserDto": {
         "type": "object",
         "properties": {
@@ -1814,6 +1867,22 @@
           "phone": {
             "type": "string",
             "example": "+639123456789"
+          },
+          "termsAccepted": {
+            "type": "boolean",
+            "default": false
+          },
+          "termsAcceptedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "privacyPolicyAccepted": {
+            "type": "boolean",
+            "default": false
+          },
+          "privacyPolicyAcceptedAt": {
+            "format": "date-time",
+            "type": "string"
           }
         },
         "required": [
@@ -1857,6 +1926,22 @@
           "phone": {
             "type": "string",
             "example": "+639123456789"
+          },
+          "termsAccepted": {
+            "type": "boolean",
+            "default": false
+          },
+          "termsAcceptedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "privacyPolicyAccepted": {
+            "type": "boolean",
+            "default": false
+          },
+          "privacyPolicyAcceptedAt": {
+            "format": "date-time",
+            "type": "string"
           }
         }
       },

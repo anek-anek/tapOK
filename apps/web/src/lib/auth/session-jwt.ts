@@ -18,10 +18,21 @@ export type VerifiedFirebaseSession = {
 
 export async function verifyFirebaseSessionToken(token: string): Promise<VerifiedFirebaseSession | null> {
   try {
-    const { payload } = await jwtVerify(token, firebaseJwks, {
-      issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
-      audience: FIREBASE_PROJECT_ID,
-    });
+    let payload: Awaited<ReturnType<typeof jwtVerify>>['payload'] | null = null;
+
+    try {
+      const verifiedSession = await jwtVerify(token, firebaseJwks, {
+        issuer: `https://session.firebase.google.com/${FIREBASE_PROJECT_ID}`,
+        audience: FIREBASE_PROJECT_ID,
+      });
+      payload = verifiedSession.payload;
+    } catch {
+      const verifiedIdToken = await jwtVerify(token, firebaseJwks, {
+        issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
+        audience: FIREBASE_PROJECT_ID,
+      });
+      payload = verifiedIdToken.payload;
+    }
 
     const roleRaw = (payload as Record<string, unknown>)['role'];
     const role: SessionRole | null =

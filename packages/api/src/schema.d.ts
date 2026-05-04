@@ -73,6 +73,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/session-cookie": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Exchange a Firebase ID token for a 7-day session cookie */
+        post: operations["UsersController_createSessionCookie"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/{id}": {
         parameters: {
             query?: never;
@@ -568,6 +585,13 @@ export interface components {
             /** @example user@example.com */
             email: string;
         };
+        CreateSessionCookieDto: {
+            /**
+             * @description Firebase ID token from the authenticated client session.
+             * @example eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...
+             */
+            idToken: string;
+        };
         SyncUserDto: {
             /** @example John */
             firstName?: string;
@@ -618,6 +642,14 @@ export interface components {
             userHandle?: string;
             /** @example +639123456789 */
             phone?: string;
+            /** @default false */
+            termsAccepted: boolean;
+            /** Format: date-time */
+            termsAcceptedAt?: string;
+            /** @default false */
+            privacyPolicyAccepted: boolean;
+            /** Format: date-time */
+            privacyPolicyAcceptedAt?: string;
         };
         UpdateUserDto: {
             /** @example Jane */
@@ -637,6 +669,14 @@ export interface components {
             userHandle?: string;
             /** @example +639123456789 */
             phone?: string;
+            /** @default false */
+            termsAccepted: boolean;
+            /** Format: date-time */
+            termsAcceptedAt?: string;
+            /** @default false */
+            privacyPolicyAccepted: boolean;
+            /** Format: date-time */
+            privacyPolicyAcceptedAt?: string;
         };
         DropOrganiserPublicDto: {
             id: string;
@@ -983,6 +1023,29 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["CheckAuthProviderDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    UsersController_createSessionCookie: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSessionCookieDto"];
             };
         };
         responses: {

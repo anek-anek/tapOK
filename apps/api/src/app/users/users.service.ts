@@ -17,6 +17,8 @@ import { UserProfileDto } from './dto/user-profile.dto';
 import { FrequentCrewDto } from './dto/frequent-crew.dto';
 import { AuthProvider, UserRole } from '../../common';
 
+const SESSION_COOKIE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
@@ -88,6 +90,26 @@ export class UsersService {
       dropCount: parseInt(dropCount, 10),
       crewReached: parseInt(crewReached, 10)
     };
+  }
+
+  async createSessionCookie(idToken: string): Promise<{ sessionCookie: string; expiresIn: number }> {
+    try {
+      await admin.auth().verifyIdToken(idToken);
+      const sessionCookie = await admin.auth().createSessionCookie(idToken, {
+        expiresIn: SESSION_COOKIE_TTL_MS,
+      });
+
+      return {
+        sessionCookie,
+        expiresIn: Math.floor(SESSION_COOKIE_TTL_MS / 1000),
+      };
+    } catch (err) {
+      this.logger.warn(`Failed to create Firebase session cookie: ${err}`);
+      throw new BadRequestException({
+        message: 'Invalid or expired token',
+        code: 'INVALID_OR_EXPIRED_TOKEN',
+      });
+    }
   }
 
   create(dto: CreateUserDto): Promise<User> {

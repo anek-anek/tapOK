@@ -3,7 +3,7 @@ import { getApiUrl } from '@/lib/config';
 
 const SESSION_COOKIE = '__session';
 const PROFILE_COOKIE = 'user_profile';
-const MAX_AGE = 60 * 60 * 24 * 30;
+const MAX_AGE = 60 * 60 * 24 * 7;
 
 interface Profile {
   firstName: string;
@@ -24,8 +24,42 @@ export async function POST(req: NextRequest) {
 
   const apiUrl = getApiUrl().replace(/\/$/, '');
   let dbUserResponse: Response;
+  let sessionCookieResponse: Response;
 
   try {
+    sessionCookieResponse = await fetch(`${apiUrl}/users/session-cookie`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ idToken }),
+      cache: 'no-store',
+    });
+
+    if (!sessionCookieResponse.ok) {
+      const rawBody = await sessionCookieResponse.text().catch(() => '');
+      let errorData: any = {};
+      try {
+        errorData = JSON.parse(rawBody);
+      } catch {
+        console.error('[api/auth/session] Non-JSON session-cookie response from upstream', {
+          status: sessionCookieResponse.status,
+          body: rawBody,
+        });
+      }
+
+      return NextResponse.json(
+        {
+          ok: false,
+          error: errorData?.error ?? 'SESSION_COOKIE_EXCHANGE_FAILED',
+          message: errorData?.message ?? 'Unable to establish your session.',
+          code: errorData?.code,
+          upstream: errorData,
+        },
+        { status: sessionCookieResponse.status },
+      );
+    }
+
     const endpoint = sync ? '/users/sync' : '/users/me';
     const method = sync ? 'POST' : 'GET';
     
@@ -84,13 +118,16 @@ export async function POST(req: NextRequest) {
   }
 
   const rawSuccessBody = await dbUserResponse.text();
+  const rawSessionCookieBody = await sessionCookieResponse.text();
   let dbUser: any;
+  let sessionCookiePayload: { sessionCookie: string; expiresIn?: number };
   try {
     dbUser = JSON.parse(rawSuccessBody);
+    sessionCookiePayload = JSON.parse(rawSessionCookieBody);
   } catch (err) {
     console.error('[api/auth/session] Success status but invalid JSON', { 
       status: dbUserResponse.status, 
-      body: rawSuccessBody 
+      body: rawSuccessBody,
     });
     return NextResponse.json(
       { 
@@ -111,7 +148,7 @@ export async function POST(req: NextRequest) {
     maxAge: MAX_AGE,
   };
 
-  res.cookies.set(SESSION_COOKIE, idToken, cookieOptions);
+  res.cookies.set(SESSION_COOKIE, sessionCookiePayload.sessionCookie, cookieOptions);
 
   const profile = {
     id: dbUser.id,

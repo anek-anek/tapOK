@@ -35,6 +35,7 @@ import {
   THROTTLE_STRICT,
 } from '../../common';
 import { CheckAuthProviderDto } from './dto/check-auth-provider.dto';
+import { CreateSessionCookieDto } from './dto/create-session-cookie.dto';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SyncUserDto } from './dto/sync-user.dto';
@@ -104,6 +105,23 @@ export class UsersController {
       exists: authProvider !== null,
       authProvider,
     };
+  }
+
+  @Post('session-cookie')
+  @Public()
+  @Throttle({ strict: THROTTLE_STRICT })
+  @ApiOperation({ summary: 'Exchange a Firebase ID token for a 7-day session cookie' })
+  @ApiResponse({
+    status: 201,
+    schema: {
+      example: {
+        sessionCookie: 'eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...',
+        expiresIn: 604800,
+      },
+    },
+  })
+  createSessionCookie(@Body() dto: CreateSessionCookieDto): Promise<{ sessionCookie: string; expiresIn: number }> {
+    return this.usersService.createSessionCookie(dto.idToken);
   }
 
   @Get(':id')
