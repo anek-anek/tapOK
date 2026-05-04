@@ -798,7 +798,7 @@ function DropDetailContent({ id }: { id: string }) {
                         Mission Presence
                       </p>
                       <h3 className="mt-1 font-passion text-2xl font-bold uppercase tracking-tight text-tok-black sm:text-3xl">
-                        {crewStatus.isPresent ? "YOU'RE TAPPED IN." : 'NOT YET ARRIVED?'}
+                        {crewStatus.isPresent ? "YOU'RE IN" : "NOT IN YET"}
                       </h3>
                     </div>
                     <div className="flex shrink-0 flex-row items-center gap-2 sm:gap-3">
@@ -875,6 +875,7 @@ function DropDetailContent({ id }: { id: string }) {
               <DigitalTicket
                 drop={drop}
                 isMember={isOrganiser || crewStatus?.status === 'in'}
+                className="hidden lg:block"
               />
 
               {/* Mission Command / Chief Card */}
