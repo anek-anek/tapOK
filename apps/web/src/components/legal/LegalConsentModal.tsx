@@ -12,20 +12,26 @@ import { PUBLIC_ROUTES } from '@/lib/constants/routes';
 
 export function LegalConsentModal() {
   const pathname = usePathname();
-  const { dbUser, isReady, refreshUser } = useAuth();
+  const { dbUser, isReady, loading, refreshUser } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [hasSettled, setHasSettled] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Only show if user is logged in and ready
-    if (!isReady || !dbUser) {
+    if (isReady && !loading) {
+      const timer = setTimeout(() => setHasSettled(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isReady, loading]);
+
+  useEffect(() => {
+    if (!isReady || loading || !hasSettled || !dbUser) {
       setIsVisible(false);
       return;
     }
 
-    // Only show on NON-public routes
     const isPublicRoute = PUBLIC_ROUTES.some((route) => {
       if (route === '/') return pathname === '/';
       return pathname === route || pathname.startsWith(`${route}/`);
@@ -36,25 +42,21 @@ export function LegalConsentModal() {
       return;
     }
 
-    // Check if already accepted using the correct field names from DB schema
     const hasAccepted = !!(dbUser.privacyPolicyAccepted && dbUser.termsAccepted);
     if (hasAccepted) {
       setIsVisible(false);
       return;
     }
 
-    // Check if dismissed in this session
     const isDismissed = sessionStorage.getItem('tapok_legal_dismissed') === 'true';
     if (isDismissed) {
       setIsVisible(false);
       return;
     }
 
-    // Show it
     setIsVisible(true);
   }, [dbUser, isReady, pathname]);
 
-  // Lock background scroll when modal is open
   useEffect(() => {
     if (isVisible) {
       document.body.style.overflow = 'hidden';
