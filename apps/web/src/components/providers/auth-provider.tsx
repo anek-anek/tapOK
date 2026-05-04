@@ -61,6 +61,8 @@ export function AuthProvider({
   const [isReady, setIsReady] = useState(initialDbUser !== null);
   const queryClient = useQueryClient();
   const prevUidRef = useRef<string | null>(null);
+  const lastSyncRef = useRef<number>(0);
+  const SYNC_THROTTLE_MS = 10 * 60 * 1000;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getFirebaseAuth(), async (firebaseUser) => {
@@ -85,6 +87,7 @@ export function AuthProvider({
         const result = await finalizeSession(firebaseUser, { mode: 'login' });
 
         if (result.ok) {
+          lastSyncRef.current = Date.now();
           setDbUser(result.dbUser);
           setUser(firebaseUser);
         } else {
@@ -100,6 +103,7 @@ export function AuthProvider({
       } else {
         queryClient.clear();
         prevUidRef.current = null;
+        lastSyncRef.current = 0;
         setAuthToken(null);
         setDbUser(null);
         setUser(null);
@@ -118,10 +122,17 @@ export function AuthProvider({
 
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return;
+
+      const now = Date.now();
+      if (now - lastSyncRef.current < SYNC_THROTTLE_MS) return;
+
       void (async () => {
         try {
-          const fresh = await user.getIdToken(true);
-          await applyIdTokenToAxiosAndSessionCookie(fresh);
+          const fresh = await user.getIdToken();
+          const ok = await applyIdTokenToAxiosAndSessionCookie(fresh);
+          if (ok) {
+            lastSyncRef.current = Date.now();
+          }
         } catch {
           // ignore — next finalizeSession or API 401 path will recover
         }
