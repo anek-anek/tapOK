@@ -149,18 +149,6 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember, isLoadingSt
   return (
     <div className="mb-10 space-y-4">
       <div className="flex items-center justify-between mb-6 sm:mb-4">
-        <div className="flex items-center gap-2">
-          <IconCamera size={18} className="text-tok-black" strokeWidth={2.5} />
-          <h3 className="font-passion text-lg font-bold uppercase tracking-wider text-tok-black">
-            {isCompleted ? 'Mission Highlights' : 'Photo Roll'}
-          </h3>
-          {isCompleted && (
-            <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/40">
-              (Curated)
-            </span>
-          )}
-        </div>
-
         {canUpload && !reachedTotalLimit && displayedPhotos.length > 0 && (
           <button
             onClick={() => !reachedUserLimit && fileInputRef.current?.click()}
@@ -191,32 +179,14 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember, isLoadingSt
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
 
       {displayedPhotos.length === 0 ? (
-        <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A]">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border-2 border-tok-black bg-white">
-              <IconCamera size={16} className="text-tok-black/40" strokeWidth={2.5} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="font-passion text-[12px] font-bold uppercase tracking-[1.8px] text-tok-black">
-                {isCompleted ? 'No highlights yet' : 'Photo roll is empty'}
-              </p>
-              <p className="mt-0.5 font-inter text-[11px] text-tok-black/45">
-                {isCompleted ? 'No featured moments were saved.' : 'Be the first to capture one.'}
-              </p>
-            </div>
-            {canUpload && (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isCompressing || uploadMutation.isPending || reachedUserLimit}
-                className="flex h-9 shrink-0 items-center gap-1.5 rounded-[4px] border-[3px] border-tok-black bg-tok-yellow px-3 font-passion text-[10px] font-bold uppercase tracking-[1.2px] text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isCompressing || uploadMutation.isPending ? <IconLoader size={12} className="animate-spin" /> : <IconPlus size={12} strokeWidth={3} />}
-                <span>Add</span>
-              </button>
-            )}
-          </div>
-        </div>
+        <PhotoRollEmptyStack
+          isCompleted={isCompleted}
+          canUpload={canUpload}
+          isCompressing={isCompressing}
+          isUploadPending={uploadMutation.isPending}
+          reachedUserLimit={reachedUserLimit}
+          onAddClick={() => fileInputRef.current?.click()}
+        />
       ) : (
         <div className="relative flex flex-col items-center pt-4 pb-8">
           <div className="relative h-[320px] w-[320px] md:h-[400px] md:w-[400px] flex items-center justify-center">
@@ -301,6 +271,158 @@ export function PhotoRoll({ drop, userId, isOrganiser, isCrewMember, isLoadingSt
           onClose={() => setPhotoToDelete(null)}
         />
       )}
+    </div>
+  );
+}
+
+function emptyStackCardDims(orientation: 'portrait' | 'landscape') {
+  return orientation === 'portrait'
+    ? { width: 'min(280px, 75vw)', height: 'min(360px, 90vw)' }
+    : { width: 'min(440px, 95vw)', height: 'min(340px, 80vw)' };
+}
+
+/** Back → front: portrait, landscape, portrait (mixed aspects like a real roll). */
+const EMPTY_PHOTO_STACK_LAYERS = [
+  {
+    orientation: 'portrait' as const,
+    zIndex: 8,
+    opacity: 0.5,
+    transform: 'rotate(4deg) translate(10px, -28px)',
+  },
+  {
+    orientation: 'landscape' as const,
+    zIndex: 9,
+    opacity: 0.68,
+    transform: 'rotate(-3deg) translate(2px, -6px)',
+  },
+  {
+    orientation: 'portrait' as const,
+    zIndex: 10,
+    opacity: 1,
+    transform: 'rotate(-1deg) translate(-2px, 4px)',
+    isFront: true,
+  },
+];
+
+function PhotoRollEmptyStack({
+  isCompleted,
+  canUpload,
+  isCompressing,
+  isUploadPending,
+  reachedUserLimit,
+  onAddClick,
+}: {
+  isCompleted: boolean;
+  canUpload: boolean;
+  isCompressing: boolean;
+  isUploadPending: boolean;
+  reachedUserLimit: boolean;
+  onAddClick: () => void;
+}) {
+  return (
+    <div className="relative flex flex-col items-center pt-4 pb-8">
+      <div className="relative flex h-[320px] w-[320px] items-center justify-center overflow-visible md:h-[400px] md:w-[400px]">
+        {EMPTY_PHOTO_STACK_LAYERS.map((layer, idx) => {
+          const dims = emptyStackCardDims(layer.orientation);
+          return (
+            <div
+              key={idx}
+              className={cn(
+                'absolute flex min-h-0 flex-col rounded-sm border-[4px] border-tok-black bg-white p-3 shadow-[8px_8px_0px_#1C1C1A]',
+                layer.isFront ? 'pointer-events-auto' : 'pointer-events-none',
+              )}
+              style={{
+                ...dims,
+                zIndex: layer.zIndex,
+                transform: layer.transform,
+                opacity: layer.opacity,
+              }}
+              aria-hidden={!layer.isFront}
+            >
+              {layer.isFront ? (
+                <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 border-2 border-tok-black bg-tok-cream/25 p-4 text-center sm:p-5">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
+                    <IconCamera size={26} className="text-tok-black/35" strokeWidth={2.5} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="font-passion text-sm font-bold uppercase tracking-[1.8px] text-tok-black">
+                      {isCompleted ? 'No highlights yet' : 'Photo roll is empty'}
+                    </p>
+                    <p className="font-inter text-xs leading-relaxed text-tok-black/50">
+                      {isCompleted
+                        ? 'No featured moments were saved for this drop.'
+                        : 'Be the first to post a moment to the stack.'}
+                    </p>
+                  </div>
+                  {canUpload && (
+                    <button
+                      type="button"
+                      onClick={onAddClick}
+                      disabled={isCompressing || isUploadPending || reachedUserLimit}
+                      className={cn(
+                        'mt-1 flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black px-5 font-passion text-[11px] font-bold uppercase tracking-wider transition-all',
+                        reachedUserLimit
+                          ? 'cursor-not-allowed bg-tok-black/5 text-tok-black/35 shadow-none'
+                          : 'bg-tok-yellow text-tok-black shadow-[3px_3px_0px_#1C1C1A] hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none',
+                        (isCompressing || isUploadPending) && 'opacity-70',
+                      )}
+                    >
+                      {isCompressing || isUploadPending ? (
+                        <IconLoader size={14} className="animate-spin" />
+                      ) : (
+                        <IconPlus size={14} strokeWidth={3} />
+                      )}
+                      Add photo
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    'h-full min-h-0 w-full flex-1 border-2 border-tok-black',
+                    layer.orientation === 'landscape'
+                      ? 'bg-linear-to-br from-tok-cream/50 via-tok-teal/15 to-tok-black/10'
+                      : 'bg-linear-to-b from-tok-cream/40 to-tok-black/8',
+                  )}
+                >
+                  <div className="flex h-full w-full items-center justify-center opacity-30">
+                    <IconCamera
+                      size={layer.orientation === 'landscape' ? 40 : 32}
+                      strokeWidth={2}
+                      className="text-tok-black"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-10 flex items-center gap-6">
+        <button
+          type="button"
+          disabled
+          tabIndex={-1}
+          aria-hidden
+          className="flex h-12 w-12 cursor-default items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black opacity-25 shadow-[4px_4px_0px_#1C1C1A]"
+        >
+          <IconChevronLeft size={28} strokeWidth={3} />
+        </button>
+        <div
+          className="flex h-2 min-w-[32px] items-center justify-center rounded-full border border-tok-black/25 bg-tok-black/10 px-2"
+          aria-label="No photos in roll"
+        />
+        <button
+          type="button"
+          disabled
+          tabIndex={-1}
+          aria-hidden
+          className="flex h-12 w-12 cursor-default items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black opacity-25 shadow-[4px_4px_0px_#1C1C1A]"
+        >
+          <IconChevronRight size={28} strokeWidth={3} />
+        </button>
+      </div>
     </div>
   );
 }

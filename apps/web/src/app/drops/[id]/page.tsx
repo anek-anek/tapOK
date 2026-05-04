@@ -946,6 +946,62 @@ function DropDetailContent({ id }: { id: string }) {
                 </div>
               )}
 
+              {isOrganiser && !isCompleted && pendingMembers.length > 0 && (
+                <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-amber-400 p-1 shadow-[6px_6px_0px_#1C1C1A]">
+                  <div className="bg-amber-400 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <IconClock size={16} strokeWidth={2.5} className="text-tok-black" />
+                        <h2 className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black">
+                          Join Requests ({pendingMembers.length})
+                        </h2>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    {pendingMembers.map((member) => (
+                      <div key={member.id} className="flex flex-col gap-4 bg-white p-6 sm:flex-row sm:items-center">
+                        <div className="flex flex-1 items-center gap-4">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-amber-400 font-passion text-sm font-bold text-tok-black">
+                            {member.user.avatar ? (
+                              <Image src={member.user.avatar} alt="" width={44} height={44} className="h-full w-full object-cover" />
+                            ) : (
+                              getLogInitials(member.user.firstName, member.user.lastName)
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
+                              {member.user.firstName} {member.user.lastName}
+                            </p>
+                            <p className="font-inter text-xs font-medium text-tok-black/50">
+                              Requested {formatLogTime(member.joinedAt)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleReject(member.userId)}
+                            disabled={(isRejecting && rejectingUserId === member.userId) || (isApproving && approvingUserId === member.userId)}
+                            className="h-10 flex-1 rounded-[4px] border-2 border-tok-black bg-white px-4 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-red-600 hover:bg-red-50 disabled:opacity-50 sm:flex-none"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleApprove(member.userId)}
+                            disabled={(isApproving && approvingUserId === member.userId) || (isRejecting && rejectingUserId === member.userId)}
+                            className="h-10 flex-1 rounded-[4px] border-2 border-tok-black bg-tok-teal px-4 font-passion text-[10px] font-bold uppercase tracking-[1.5px] text-white hover:bg-tok-teal/90 disabled:opacity-50 sm:flex-none"
+                          >
+                            {isApproving && approvingUserId === member.userId ? '…' : 'Approve'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Photos — accessible to crew */}
               <PhotoRoll
                 drop={drop}
