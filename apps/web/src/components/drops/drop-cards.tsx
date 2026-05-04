@@ -65,6 +65,44 @@ function getCrewMemberDisplay(member: CrewMember) {
   return { firstName, lastName, avatar, initials, fullName };
 }
 
+function AvatarImage({
+  src,
+  alt = '',
+  initials,
+  width,
+  height,
+  className,
+}: {
+  src?: string | null;
+  alt?: string;
+  initials: string;
+  width: number;
+  height: number;
+  className?: string;
+}) {
+  const [error, setError] = useState(false);
+
+  if (!src || error) {
+    return (
+      <div className={cn('flex h-full w-full items-center justify-center font-passion text-tok-teal', className)}>
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      className={cn('h-full w-full object-cover', className)}
+      unoptimized={src.startsWith('/')}
+      onError={() => setError(true)}
+    />
+  );
+}
+
 /** Get a theme-appropriate fallback cover from the public folder */
 export function getFallbackCover(category?: string | null) {
   if (!category) return null;
@@ -107,13 +145,13 @@ export function CrewAvatarIconsOnly({
               )}
               title={display.fullName}
             >
-              {display.avatar ? (
-                <Image src={display.avatar} alt="" width={32} height={32} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center font-passion text-[10px] text-tok-teal">
-                  {display.initials}
-                </div>
-              )}
+              <AvatarImage
+                src={display.avatar}
+                initials={display.initials}
+                width={32}
+                height={32}
+                className="text-[10px]"
+              />
             </div>
           );
         })}
@@ -141,6 +179,9 @@ export function HeroDropCard({
   const crew = crewFor(drop);
   const fallbackSrc = getFallbackCover(drop.category);
   const displaySrc = drop.coverPhoto ? coverPhotoSrcForNextImage(drop.coverPhoto) : fallbackSrc;
+  const isLocalFallback = !!displaySrc && displaySrc.startsWith('/');
+
+  const [imgError, setImgError] = useState(false);
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -148,18 +189,24 @@ export function HeroDropCard({
     if (isShareableDrop(drop)) onShare?.(drop);
   };
 
+  // Reset error state if displaySrc changes
+  useEffect(() => {
+    setImgError(false);
+  }, [displaySrc]);
+
   return (
     <div className="group relative">
       <div className="flex flex-col overflow-hidden rounded-xl border-[3px] border-tok-black bg-tok-teal shadow-[8px_8px_0px_#1C1C1A] transition-all group-hover:-translate-x-1 group-hover:-translate-y-1 group-hover:shadow-[12px_12px_0px_#1C1C1A] md:flex-row">
         {/* Visual Section */}
-        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px] bg-tok-black/5">
-          <AnimatePresence mode="wait">
-            {displaySrc ? (
+        <div className="relative aspect-video w-full shrink-0 border-b-[3px] border-tok-black md:aspect-square md:w-[280px] md:border-b-0 md:border-r-[3px] bg-tok-black/15">
+          <AnimatePresence>
+            {displaySrc && !imgError ? (
               <motion.div
-                key="cover"
+                key={displaySrc}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.4 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
                 className="relative h-full w-full"
               >
                 <Image
@@ -169,6 +216,8 @@ export function HeroDropCard({
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, 560px"
                   priority
+                  unoptimized={isLocalFallback}
+                  onError={() => setImgError(true)}
                 />
               </motion.div>
             ) : (
@@ -238,13 +287,13 @@ export function HeroDropCard({
 
             <div className="flex items-center gap-2.5 mb-2">
               <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-tok-cream/30 bg-tok-black/20">
-                {drop.organiser?.avatar ? (
-                  <Image src={drop.organiser.avatar} alt="" width={24} height={24} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center font-passion text-[9px] text-tok-cream">
-                    {drop.organiser?.firstName?.[0] || '?'}{drop.organiser?.lastName?.[0] || ''}
-                  </div>
-                )}
+                <AvatarImage
+                  src={drop.organiser?.avatar}
+                  initials={`${drop.organiser?.firstName?.[0] || '?'}${drop.organiser?.lastName?.[0] || ''}`}
+                  width={24}
+                  height={24}
+                  className="text-[9px] text-tok-cream"
+                />
               </div>
               <p className="font-passion text-[11px] font-bold uppercase tracking-wider text-tok-cream [text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">
                 CHIEF {drop.organiser?.firstName} {drop.organiser?.lastName}
@@ -276,13 +325,13 @@ export function HeroDropCard({
                         i > 0 && "-ml-4"
                       )}
                     >
-                      {display.avatar ? (
-                        <Image src={display.avatar} alt="" width={32} height={32} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center font-passion text-[10px] text-tok-teal">
-                          {display.initials}
-                        </div>
-                      )}
+                      <AvatarImage
+                        src={display.avatar}
+                        initials={display.initials}
+                        width={32}
+                        height={32}
+                        className="text-[10px]"
+                      />
                     </div>
                   );
                 })}
@@ -366,6 +415,8 @@ export function ListDropCard({
   const crew = crewFor(drop);
   const fallbackSrc = getFallbackCover(drop.category);
   const displaySrc = drop.coverPhoto ? coverPhotoSrcForNextImage(drop.coverPhoto) : fallbackSrc;
+  const isLocalFallback = !!displaySrc && displaySrc.startsWith('/');
+
   const isOrganiser = !!viewerId && drop.organiserId === viewerId;
   const canEdit = isOrganiser && drop.status !== 'completed' && isShareableDrop(drop);
   const canDelete = isOrganiser && onDelete && isShareableDrop(drop);
@@ -393,13 +444,18 @@ export function ListDropCard({
   };
 
   const [masonryCoverAspect, setMasonryCoverAspect] = useState<number | null>(null);
+  const [imgError, setImgError] = useState(false);
 
+  // Reset error state if displaySrc changes
+  useEffect(() => {
+    setImgError(false);
+  }, [displaySrc]);
+
+  // Handle Masonry aspect ratio logic - ONLY update if isMasonry and source exists
   useEffect(() => {
     if (!isMasonry || !drop.coverPhoto) {
       setMasonryCoverAspect(null);
-      return;
     }
-    setMasonryCoverAspect(null);
   }, [isMasonry, drop.coverPhoto]);
 
   return (
@@ -434,12 +490,13 @@ export function ListDropCard({
               : undefined
           }
         >
-          <AnimatePresence mode="wait">
-            {displaySrc ? (
+          <AnimatePresence>
+            {displaySrc && !imgError ? (
               <motion.div
-                key="cover"
+                key={displaySrc}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
                 className="relative h-full w-full"
               >
@@ -454,6 +511,7 @@ export function ListDropCard({
                       : '(max-width: 640px) 100vw, 256px'
                   }
                   priority={coverPriority}
+                  unoptimized={isLocalFallback}
                   onLoad={
                     isMasonry
                       ? (e) =>
@@ -465,6 +523,7 @@ export function ListDropCard({
                         )
                       : undefined
                   }
+                  onError={() => setImgError(true)}
                 />
               </motion.div>
             ) : (
@@ -652,24 +711,13 @@ export function ListDropCard({
                         )}
                         title={display.fullName}
                       >
-                        {display.avatar ? (
-                          <Image
-                            src={display.avatar}
-                            alt=""
-                            width={isVertical ? 20 : 24}
-                            height={isVertical ? 20 : 24}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            className={cn(
-                              'flex h-full w-full items-center justify-center font-passion text-tok-teal',
-                              isVertical ? 'text-[7px]' : 'text-[8px]',
-                            )}
-                          >
-                            {display.initials}
-                          </div>
-                        )}
+                        <AvatarImage
+                          src={display.avatar}
+                          initials={display.initials}
+                          width={isVertical ? 20 : 24}
+                          height={isVertical ? 20 : 24}
+                          className={isVertical ? 'text-[7px]' : 'text-[8px]'}
+                        />
                       </div>
                     );
                   })}
@@ -707,24 +755,13 @@ export function ListDropCard({
                   isVertical ? 'h-5 w-5' : 'h-6 w-6',
                 )}
               >
-                {drop.organiser?.avatar ? (
-                  <Image
-                    src={drop.organiser.avatar}
-                    alt=""
-                    width={isVertical ? 20 : 24}
-                    height={isVertical ? 20 : 24}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div
-                    className={cn(
-                      'flex h-full w-full items-center justify-center font-passion text-tok-teal',
-                      isVertical ? 'text-[7px]' : 'text-[8px]',
-                    )}
-                  >
-                    {drop.organiser?.firstName?.[0] || '?'}{drop.organiser?.lastName?.[0] || ''}
-                  </div>
-                )}
+                <AvatarImage
+                  src={drop.organiser?.avatar}
+                  initials={`${drop.organiser?.firstName?.[0] || '?'}${drop.organiser?.lastName?.[0] || ''}`}
+                  width={isVertical ? 20 : 24}
+                  height={isVertical ? 20 : 24}
+                  className={isVertical ? 'text-[7px]' : 'text-[8px]'}
+                />
               </div>
               <p
                 className={cn(
