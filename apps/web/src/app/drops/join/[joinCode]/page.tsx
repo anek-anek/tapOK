@@ -355,7 +355,11 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
     );
   }
 
-  if (!user) {
+  if (!mounted || authLoading || isDropLoading) {
+    return <PageSkeleton />;
+  }
+
+  if (!dbUser) {
     return (
       <div className="flex min-h-screen flex-col bg-tok-cream">
         <TapokNavbar />
@@ -386,10 +390,6 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
         </div>
       </div>
     );
-  }
-
-  if (!mounted || authLoading || isDropLoading) {
-    return <PageSkeleton />;
   }
 
   if (isDropError || !drop) {
