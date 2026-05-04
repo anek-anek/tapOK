@@ -132,7 +132,6 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       if (cancelled) return;
 
       if (resolution.status === 'success') {
-        toast.success('WELCOME BACK');
         const target = resolveAuthSuccessRedirect({
           mode: 'login',
           redirectTo,
@@ -140,9 +139,8 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
           shouldOnboard: false,
         });
         router.replace(target);
-        startTransition(() => {
-          setSession(resolution.user, resolution.finalized.dbUser);
-        });
+        setSession(resolution.user, resolution.finalized.dbUser);
+        toast.success('WELCOME BACK');
       } else if (resolution.status === 'finalize_error') {
         showError(resolution.finalized.message);
       } else if (
@@ -418,7 +416,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
           {isSubmitting || googleLoading ? (
             <>
               <Loader2 size={15} className="animate-spin" />
-              <span className="animate-fade-in">Processing…</span>
+              <span className="animate-fade-in uppercase">{googleLoading ? 'Signing in…' : 'Processing…'}</span>
             </>
           ) : (
             'TAP BACK IN'

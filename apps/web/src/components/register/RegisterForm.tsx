@@ -189,17 +189,15 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       if (cancelled) return;
 
       if (resolution.status === 'success') {
-        toast.success('WELCOME TO TAPOK');
+        const target = resolveAuthSuccessRedirect({
+          mode: 'signup',
+          redirectTo,
+          firstName: resolution.finalized.dbUser.firstName,
+          shouldOnboard: resolution.finalized.shouldOnboard,
+        });
+        router.replace(target);
         setSession(resolution.user, resolution.finalized.dbUser);
-        handledSuccessRedirectRef.current = true;
-        router.replace(
-          resolveAuthSuccessRedirect({
-            mode: 'signup',
-            redirectTo,
-            firstName: resolution.finalized.dbUser.firstName,
-            shouldOnboard: resolution.finalized.shouldOnboard,
-          }),
-        );
+        toast.success('WELCOME TO TAPOK');
       } else if (resolution.status === 'finalize_error') {
         showError(resolution.finalized.message);
       } else if (
@@ -555,7 +553,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
           {isSubmitting || googleLoading ? (
             <>
               <Loader2 size={15} className="animate-spin" />
-              <span className="animate-fade-in">Processing…</span>
+              <span className="animate-fade-in uppercase">{googleLoading ? 'Signing up…' : 'Processing…'}</span>
             </>
           ) : (
             'TAP IN'
