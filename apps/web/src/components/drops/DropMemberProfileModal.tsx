@@ -123,6 +123,32 @@ export function DropMemberProfileModal({ subject, onClose }: DropMemberProfileMo
   const crewJoinedHead =
     subject.kind === 'crew' ? formatJoinedDropHeadline(subject.member.joinedAt) : null;
 
+  const profileCards = useMemo(() => {
+    if (subject.kind === 'organiser') {
+      return {
+        intelLeftValue: String(subject.profile.dropCount ?? 0),
+        intelLeftLabel: 'Drops hosted',
+        intelRightValue: String(subject.profile.crewReached ?? 0),
+        intelRightLabel: 'Crews reached',
+        activeSince: memberSince,
+        gender: (subject.profile.gender ?? 'NOT SET').toUpperCase(),
+        birthday: formatDate(subject.profile.birthday),
+      };
+    }
+
+    // Keep the same card schema for crew, using available crew data + safe placeholders.
+    const joined = crewJoinedHead ? `${crewJoinedHead.mo} ${crewJoinedHead.day}` : '—';
+    return {
+      intelLeftValue: joined,
+      intelLeftLabel: 'Joined this drop',
+      intelRightValue: subject.member.isPresent ? 'IN' : 'OUT',
+      intelRightLabel: 'Attendance',
+      activeSince: formatDate(subject.member.joinedAt),
+      gender: 'NOT SET',
+      birthday: 'NOT DISCLOSED',
+    };
+  }, [subject, memberSince, crewJoinedHead]);
+
   return (
     <div
       className={cn(
@@ -238,142 +264,69 @@ export function DropMemberProfileModal({ subject, onClose }: DropMemberProfileMo
                 </h3>
                 {subject.kind === 'organiser' ? (
                   <>
-                    <p className="mt-1.5 font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black/65 md:mt-2 md:text-sm md:tracking-[1.75px]">
+                    <p className="mt-1 font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black/65 md:mt-1.5 md:text-sm md:tracking-[1.75px]">
                       Drop chief
                     </p>
-                    <p className="mt-2 max-w-[20rem] mx-auto break-all font-passion text-base font-bold uppercase tracking-[1.8px] text-tok-teal sm:mx-0 sm:text-lg md:text-xl md:tracking-[2px]">
+                    <p className="mt-1 max-w-[20rem] mx-auto break-all font-passion text-base font-bold uppercase tracking-[1.8px] text-tok-teal sm:mx-0 sm:text-lg md:text-xl md:tracking-[2px]">
                       @{subject.profile.userHandle || 'unregistered_handle'}
                     </p>
                   </>
                 ) : (
-                  <p className="mt-1.5 font-passion text-xs font-bold uppercase tracking-[1.4px] text-tok-black/65 md:mt-2 md:text-sm md:tracking-[1.75px]">
+                  <p className="mt-1 font-passion text-xs font-bold uppercase tracking-[1.4px] text-tok-black/65 md:mt-1.5 md:text-sm md:tracking-[1.75px]">
                     {crewRoleSubtitle}
                   </p>
                 )}
               </div>
             </div>
 
-            <section className={cn('mt-6 flex flex-col gap-3 md:mt-10 md:gap-4')} aria-live="polite">
-              {subject.kind === 'organiser' ? (
-                <>
-                  <div className="rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A] sm:p-[1.15rem] md:p-6">
-                    <p className="mb-4 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black/45 md:mb-[1.125rem]">
-                      Drop intel
+            <section className={cn('mt-2 flex flex-col gap-3 md:mt-10 md:gap-4')} aria-live="polite">
+              <div className="rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A] sm:p-[1.15rem] md:p-6">
+                <p className="font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black/45">
+                  Drop intel
+                </p>
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-8 lg:gap-x-10">
+                  <div className="min-w-0 border-r-2 border-tok-black/10 pr-3 sm:pr-6">
+                    <p className="font-passion text-[clamp(1.5rem,6.5vw,2.375rem)] font-bold leading-none text-tok-teal md:text-[2.5rem]">
+                      {profileCards.intelLeftValue}
                     </p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-8 lg:gap-x-10">
-                      <div className="min-w-0 border-r-2 border-tok-black/10 pr-3 sm:pr-6">
-                        <p className="font-passion text-[clamp(1.5rem,6.5vw,2.375rem)] font-bold leading-none text-tok-teal md:text-[2.5rem]">
-                          {subject.profile.dropCount ?? 0}
-                        </p>
-                        <p className="mt-1.5 font-passion text-[10px] font-bold uppercase leading-tight tracking-[1px] text-tok-black/70 sm:text-[11px] sm:tracking-[1.25px]">
-                          Drops hosted
-                        </p>
-                      </div>
-                      <div className="min-w-0 pl-1 sm:pl-2 lg:pl-4">
-                        <p className="font-passion text-[clamp(1.5rem,6.5vw,2.375rem)] font-bold leading-none text-tok-black md:text-[2.5rem]">
-                          {subject.profile.crewReached ?? 0}
-                        </p>
-                        <p className="mt-1.5 font-passion text-[10px] font-bold uppercase leading-snug tracking-[1px] text-tok-black/70 sm:text-[11px] sm:tracking-[1.25px]">
-                          Lifetime crew reached
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-sm border-2 border-tok-black bg-white px-4 py-4 shadow-[4px_4px_0px_#1C1C1A] flex flex-wrap items-center justify-between gap-x-6 sm:py-[1.025rem] md:px-[1.25rem]">
-                    <span className="font-passion text-[10px] font-bold uppercase tracking-[1.25px] text-tok-black/60 shrink-0 md:text-[11px] md:tracking-[1.5px]">
-                      Active since
-                    </span>
-                    <span className="break-words font-passion text-xs font-bold uppercase leading-snug tracking-[0.8px] text-tok-black text-right sm:text-sm sm:max-w-[18rem] md:max-w-[24rem] md:text-base lg:text-[0.95rem]">
-                      {memberSince}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 md:gap-4">
-                    <div className="flex min-h-[5.125rem] flex-col justify-center rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A] lg:p-[1.1rem] lg:leading-normal">
-                      <p className="font-passion text-[10px] font-bold uppercase tracking-[1.25px] text-tok-black/60 lg:text-[11px]">Gender</p>
-                      <p className="mt-2 font-passion text-xs font-bold uppercase tracking-[0.8px] text-tok-black lg:text-[0.95rem]">
-                        {subject.profile.gender ?? 'NOT SET'}
-                      </p>
-                    </div>
-                    <div className="flex min-h-[5.125rem] flex-col justify-center rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A] lg:p-[1.1rem]">
-                      <p className="font-passion text-[10px] font-bold uppercase tracking-[1.25px] text-tok-black/60 lg:text-[11px]">Birthday</p>
-                      <p className="mt-2 break-words font-passion text-xs font-bold uppercase tracking-[0.8px] text-tok-black lg:text-[0.95rem]">
-                        {formatDate(subject.profile.birthday)}
-                      </p>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A] sm:p-[1.15rem] md:p-6">
-                    <p className="mb-4 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black/45 md:mb-[1.125rem]">
-                      Drop intel
+                    <p className="mt-1 font-passion text-[10px] font-bold uppercase leading-tight tracking-[1px] text-tok-black/70 sm:text-[11px] sm:tracking-[1.25px]">
+                      {profileCards.intelLeftLabel}
                     </p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-8 lg:gap-x-10">
-                      <div className="min-w-0 border-r-2 border-tok-black/10 pr-3 sm:pr-6">
-                        <p className="font-passion text-[clamp(1.5rem,6.5vw,2.375rem)] font-bold leading-[0.95] text-tok-teal md:text-[2.5rem]">
-                          {crewJoinedHead ? (
-                            <>
-                              <span className="block text-[clamp(1rem,4vw,1.25rem)] font-bold leading-none md:text-xl">
-                                {crewJoinedHead.mo}
-                              </span>
-                              <span className="mt-0.5 block">{crewJoinedHead.day}</span>
-                            </>
-                          ) : (
-                            '—'
-                          )}
-                        </p>
-                        <p className="mt-1.5 font-passion text-[10px] font-bold uppercase leading-tight tracking-[1px] text-tok-black/70 sm:text-[11px] sm:tracking-[1.25px]">
-                          Joined this drop
-                        </p>
-                      </div>
-                      <div className="min-w-0 pl-1 sm:pl-2 lg:pl-4">
-                        <p
-                          className={cn(
-                            'font-passion text-[clamp(1.5rem,6.5vw,2.375rem)] font-bold leading-none md:text-[2.5rem]',
-                            subject.member.isPresent ? 'text-emerald-600' : 'text-red-500',
-                          )}
-                        >
-                          {subject.member.isPresent ? 'IN' : 'OUT'}
-                        </p>
-                        <p className="mt-1.5 font-passion text-[10px] font-bold uppercase leading-snug tracking-[1px] text-tok-black/70 sm:text-[11px] sm:tracking-[1.25px]">
-                          Attendance
-                        </p>
-                      </div>
-                    </div>
                   </div>
+                  <div className="min-w-0 pl-1 sm:pl-2 lg:pl-4">
+                    <p className="font-passion text-[clamp(1.5rem,6.5vw,2.375rem)] font-bold leading-none text-tok-black md:text-[2.5rem]">
+                      {profileCards.intelRightValue}
+                    </p>
+                    <p className="mt-1 font-passion text-[10px] font-bold uppercase leading-snug tracking-[1px] text-tok-black/70 sm:text-[11px] sm:tracking-[1.25px]">
+                      {profileCards.intelRightLabel}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-                  <div className="rounded-sm border-2 border-tok-black bg-white px-4 py-4 shadow-[4px_4px_0px_#1C1C1A] flex flex-wrap items-center justify-between gap-x-6 sm:py-[1.025rem] md:px-[1.25rem]">
-                    <span className="font-passion text-[10px] font-bold uppercase tracking-[1.25px] text-tok-black/60 shrink-0 md:text-[11px] md:tracking-[1.5px]">
-                      Joined drop
-                    </span>
-                    <span className="break-words font-passion text-xs font-bold uppercase leading-snug tracking-[0.8px] text-tok-black text-right sm:text-sm sm:max-w-[18rem] md:max-w-[24rem] md:text-base lg:text-[0.95rem]">
-                      {formatDate(subject.member.joinedAt)}
-                    </span>
-                  </div>
+              <div className="px-4 py-3 rounded-sm border-2 border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] flex flex-wrap items-center justify-between gap-x-6">
+                <span className="font-passion text-[10px] font-bold uppercase tracking-[1.25px] text-tok-black/60 shrink-0 md:text-[11px] md:tracking-[1.5px]">
+                  Active since
+                </span>
+                <span className="break-words font-passion text-xs font-bold uppercase leading-snug tracking-[0.8px] text-tok-black text-right sm:text-sm sm:max-w-[18rem] md:max-w-[24rem] md:text-base lg:text-[0.95rem]">
+                  {profileCards.activeSince}
+                </span>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-3 md:gap-4">
-                    <div className="flex min-h-[5.125rem] flex-col justify-center rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A] lg:p-[1.1rem] lg:leading-normal">
-                      <p className="font-passion text-[10px] font-bold uppercase tracking-[1.25px] text-tok-black/60 lg:text-[11px]">Role</p>
-                      <p className="mt-2 font-passion text-xs font-bold uppercase tracking-[0.8px] text-tok-black lg:text-[0.95rem]">
-                        {crewRoleBadge}
-                      </p>
-                    </div>
-                    <div className="flex min-h-[5.125rem] flex-col justify-center rounded-sm border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A] lg:p-[1.1rem]">
-                      <p className="font-passion text-[10px] font-bold uppercase tracking-[1.25px] text-tok-black/60 lg:text-[11px]">Attendance</p>
-                      <p
-                        className={cn(
-                          'mt-2 break-words font-passion text-xs font-bold uppercase tracking-[0.8px] lg:text-[0.95rem]',
-                          subject.member.isPresent ? 'text-emerald-600' : 'text-red-500',
-                        )}
-                      >
-                        {subject.member.isPresent ? 'Tapped in' : 'Tapped out'}
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="px-4 flex min-h-[4rem] flex-col justify-center rounded-sm border-2 border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A] lg:leading-normal">
+                  <p className="font-passion text-[10px] font-bold uppercase tracking-[1.25px] text-tok-black/60 lg:text-[11px]">Gender</p>
+                  <p className="mt-1 font-passion text-xs font-bold uppercase tracking-[0.8px] text-tok-black lg:text-[0.95rem]">
+                    {profileCards.gender}
+                  </p>
+                </div>
+                <div className="px-4 flex min-h-[4rem] flex-col justify-center rounded-sm border-2 border-tok-black bg-white shadow-[4px_4px_0px_#1C1C1A]">
+                  <p className="font-passion text-[10px] font-bold uppercase tracking-[1.25px] text-tok-black/60 lg:text-[11px]">Birthday</p>
+                  <p className="mt-1 break-words font-passion text-xs font-bold uppercase tracking-[0.8px] text-tok-black lg:text-[0.95rem]">
+                    {profileCards.birthday}
+                  </p>
+                </div>
+              </div>
             </section>
           </div>
         </div>
