@@ -22,7 +22,7 @@ export function getLoginFirebaseError(code: string): string {
     case 'auth/network-request-failed':
       return NETWORK_ERROR;
     case 'auth/redirect-cancelled-or-blocked':
-      return 'Google sign-in was blocked by your browser. Please ensure cookies are enabled and try again.';
+      return 'Google sign-in was blocked by your browser. If you use Brave or Safari, please ensure "Prevent Cross-Site Tracking" is disabled or try again.';
     default:
       return 'Something went wrong. Please try again.';
   }
@@ -45,7 +45,7 @@ export function getRegisterFirebaseError(code: string): string {
     case 'auth/network-request-failed':
       return NETWORK_ERROR;
     case 'auth/redirect-cancelled-or-blocked':
-      return 'Google sign-up was blocked by your browser. Please ensure cookies are enabled and try again.';
+      return 'Google sign-up was blocked by your browser. If you use Brave or Safari, please ensure "Prevent Cross-Site Tracking" is disabled or try again.';
     default:
       return 'Something went wrong. Please try again.';
   }

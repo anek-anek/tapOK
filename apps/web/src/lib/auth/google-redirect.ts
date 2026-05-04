@@ -34,14 +34,13 @@ export async function resolveGoogleRedirectSession(
 ): Promise<GoogleRedirectResolution> {
   try {
     const auth = getFirebaseAuth();
+    await auth.authStateReady();
     const result = await getRedirectResult(auth);
     const redirectPending = consumeStorageValue(GOOGLE_REDIRECT_PENDING_KEY) === 'true';
     const user = result?.user ?? auth.currentUser;
 
     if (!user) {
       if (redirectPending) {
-        // If we were expecting a redirect result but didn't get one, it's likely
-        // that the browser blocked the cross-origin auth cookie (common on iOS Safari).
         return { status: 'firebase_error', code: 'auth/redirect-cancelled-or-blocked' };
       }
       return { status: 'none' };
