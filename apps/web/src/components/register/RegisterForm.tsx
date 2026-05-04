@@ -143,7 +143,8 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       handledSuccessRedirectRef.current ||
       !user ||
       dbUser ||
-      isSubmitting
+      isSubmitting ||
+      googleLoading
     ) {
       return;
     }
@@ -173,13 +174,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
     return () => {
       cancelled = true;
     };
-  }, [user, dbUser, isSubmitting, redirectTo, router, setSession, showError]);
-
-  useEffect(() => {
-    if (user) {
-      setGoogleLoading(false);
-    }
-  }, [user]);
+  }, [user, dbUser, isSubmitting, googleLoading, redirectTo, router, setSession, showError]);
 
   useEffect(() => {
     let cancelled = false;

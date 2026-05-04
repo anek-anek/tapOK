@@ -88,7 +88,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   }, [user, dbUser, isSubmitting, router, redirectTo]);
 
   useEffect(() => {
-    if (!user || dbUser || isSubmitting) return;
+    if (!user || dbUser || isSubmitting || googleLoading) return;
 
     let cancelled = false;
 
@@ -116,13 +116,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
     return () => {
       cancelled = true;
     };
-  }, [user, dbUser, isSubmitting, redirectTo, router, setSession, showError]);
-
-  useEffect(() => {
-    if (user) {
-      setGoogleLoading(false);
-    }
-  }, [user]);
+  }, [user, dbUser, isSubmitting, googleLoading, redirectTo, router, setSession, showError]);
 
   useEffect(() => {
     let cancelled = false;

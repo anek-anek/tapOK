@@ -39,8 +39,6 @@ export async function signInWithGoogleInteractive(loginHint?: string): Promise<G
   const auth = getFirebaseAuth();
   const provider = createGoogleAuthProvider(loginHint);
 
-  // On mobile devices, we prefer the redirect flow because popups are frequently blocked
-  // or provide a poor user experience.
   if (prefersGoogleRedirectFlow()) {
     if (loginHint) setGoogleEmailHint(loginHint);
     setGoogleRedirectPending('true');
@@ -52,7 +50,6 @@ export async function signInWithGoogleInteractive(loginHint?: string): Promise<G
     return await signInWithPopup(auth, provider);
   } catch (error: unknown) {
     const code = (error as { code?: string }).code ?? '';
-    // Fallback to redirect if popup is blocked or not supported
     if (
       code === 'auth/popup-blocked' ||
       code === 'auth/operation-not-supported-in-this-environment'
