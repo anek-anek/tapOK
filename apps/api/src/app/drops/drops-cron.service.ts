@@ -25,6 +25,7 @@ export class DropsCronService {
     const now = new Date();
     const toOngoing = await this.transitionActiveToOngoing(now);
     const toCompleted = await this.transitionOngoingToCompleted(now);
+    await this.cleanupExpiredDropsPhotos(now);
     await this.cleanupStalePendingPhotoUploads(now);
     await this.cleanupStalePendingAvatarUploads(now);
     await this.repairDeadCoverPhotos();
@@ -55,9 +56,6 @@ export class DropsCronService {
 
     const ids = drops.map((d) => d.id);
     await this.dropsRepository.bulkTransitionStatus(ids, DropStatus.COMPLETED);
-    
-    // Clean up non-featured photos for the completed drops (storage + DB).
-    await this.cleanupNonFeaturedPhotos(ids);
 
     await this.dropsRepository.bulkWriteLogs(
       drops.map((d) => ({ dropId: d.id, userId: d.organiserId, action: 'marked_completed' })),
@@ -66,8 +64,27 @@ export class DropsCronService {
     this.logger.log(
       `Drop activity (cron): ${JSON.stringify({ action: 'marked_completed', count: ids.length })}`,
     );
-    this.logger.log(`Transitioned ${ids.length} drop(s) ONGOING → COMPLETED (Curation Complete)`);
+    this.logger.log(`Transitioned ${ids.length} drop(s) ONGOING → COMPLETED (Curation Pending)`);
     return ids.length;
+  }
+
+  private async cleanupExpiredDropsPhotos(now: Date): Promise<void> {
+    const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const drops = await this.dropsRepository.findCompletedDropsPastCuration(cutoff);
+    if (drops.length === 0) return;
+
+    const ids = drops.map((d) => d.id);
+    const nonFeatured = await this.dropsRepository.findNonFeaturedPhotosForDrops(ids);
+    if (nonFeatured.length === 0) return;
+
+    await this.mediaAssets.deleteManyByPath(
+      nonFeatured
+        .map((photo) => photo.storagePath)
+        .filter((path): path is string => Boolean(path)),
+    );
+    await this.dropsRepository.deleteNonFeaturedPhotosForDrops(ids);
+
+    this.logger.log(`Cleaned up ${nonFeatured.length} non-featured photos across expired drop(s)`);
   }
 
   private async cleanupStalePendingPhotoUploads(now: Date): Promise<void> {

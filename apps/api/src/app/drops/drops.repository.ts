@@ -203,6 +203,13 @@ export class DropsRepository {
     });
   }
 
+  findCompletedDropsPastCuration(cutoff: Date): Promise<Drop[]> {
+    return this.dropRepo.find({
+      where: { status: DropStatus.COMPLETED, scheduledAt: LessThanOrEqual(cutoff) },
+      select: ['id'],
+    });
+  }
+
   async bulkTransitionStatus(ids: string[], status: DropStatus): Promise<void> {
     if (ids.length === 0) return;
     await this.dropRepo

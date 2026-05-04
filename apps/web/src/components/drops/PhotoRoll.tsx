@@ -138,19 +138,28 @@ export function PhotoRoll({
     }
   };
 
+  const isUpcoming = drop.status === 'active' && new Date() < new Date(drop.scheduledAt);
   const isCompleted = drop.status === 'completed';
-  const canUpload = (isOrganiser || isCrewMember) && !isCompleted;
+
+  // Upload validity is strictly 24 hours from the drop's scheduled start time
+  const timeSinceStart = Date.now() - new Date(drop.scheduledAt).getTime();
+  const isWithinValidityPeriod = timeSinceStart <= 24 * 60 * 60 * 1000;
+
+  const canUpload = isOrganiser || isCrewMember;
+  const hasExpired = isCompleted && !isWithinValidityPeriod;
   const userPhotos = photos.filter((p: any) => p.userId === userId);
   const maxPhotosForDrop = getDropPhotoMaxPerDrop(activeCrewCount ?? 1);
   const reachedUserLimit = userPhotos.length >= DROP_PHOTO_MAX_PER_USER;
   const reachedTotalLimit = photos.length >= maxPhotosForDrop;
 
   const displayedPhotos = useMemo(() => {
-    if (isCompleted) return photos.filter((p: any) => p.isFeatured);
+    if (isCompleted && !isWithinValidityPeriod) return photos.filter((p: any) => p.isFeatured);
     const featured = photos.filter((p: any) => p.isFeatured);
     const nonFeatured = photos.filter((p: any) => !p.isFeatured);
     return [...featured, ...nonFeatured];
-  }, [photos, isCompleted]);
+  }, [photos, isCompleted, isWithinValidityPeriod]);
+
+  if (isUpcoming) return null;
 
   if (isLoadingStatus || isLoading) {
     return <PhotoRollSkeleton />;
@@ -168,6 +177,7 @@ export function PhotoRoll({
         <PhotoRollEmptyStack
           isCompleted={isCompleted}
           canUpload={canUpload}
+          hasExpired={hasExpired}
           isCompressing={isCompressing}
           isUploadPending={uploadMutation.isPending}
           reachedUserLimit={reachedUserLimit}
@@ -235,16 +245,16 @@ export function PhotoRoll({
               </button>
             </div>
 
-            {canUpload && !reachedTotalLimit && !reachedUserLimit && displayedPhotos.length > 0 && (
+            {canUpload && !hasExpired && displayedPhotos.length > 0 && (
               <>
                 <span className="hidden h-8 w-[3px] shrink-0 rounded-full bg-tok-black/15 sm:block" aria-hidden />
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isCompressing || uploadMutation.isPending}
-                  title="Add photo"
+                  disabled={isCompressing || uploadMutation.isPending || reachedTotalLimit || reachedUserLimit}
+                  title={reachedTotalLimit ? "Drop limit reached" : reachedUserLimit ? "User limit reached" : "Add photo"}
                   aria-label="Add photo"
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-yellow text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto sm:min-w-[7.5rem] sm:gap-2 sm:px-3 disabled:opacity-60"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-yellow text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none sm:w-auto sm:min-w-[7.5rem] sm:gap-2 sm:px-3 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isCompressing || uploadMutation.isPending ? (
                     <IconLoader size={20} className="animate-spin" />
@@ -253,7 +263,7 @@ export function PhotoRoll({
                       <IconPlus size={22} strokeWidth={3} className="sm:hidden" />
                       <IconPlus size={16} strokeWidth={3} className="hidden sm:block" />
                       <span className="hidden font-passion text-[10px] font-bold uppercase tracking-wider sm:inline">
-                        Add
+                        {(reachedTotalLimit || reachedUserLimit) ? 'Limit Reached' : 'Add'}
                       </span>
                     </>
                   )}
@@ -323,6 +333,7 @@ const EMPTY_PHOTO_STACK_LAYERS = [
 function PhotoRollEmptyStack({
   isCompleted,
   canUpload,
+  hasExpired,
   isCompressing,
   isUploadPending,
   reachedUserLimit,
@@ -330,6 +341,7 @@ function PhotoRollEmptyStack({
 }: {
   isCompleted: boolean;
   canUpload: boolean;
+  hasExpired: boolean;
   isCompressing: boolean;
   isUploadPending: boolean;
   /** When true, hide the add control (per-user photo cap). */
@@ -363,27 +375,28 @@ function PhotoRollEmptyStack({
                   </div>
                   <div className="space-y-1.5">
                     <p className="font-passion text-sm font-bold uppercase tracking-[1.8px] text-tok-black">
-                      {isCompleted ? 'No highlights yet' : 'Photo roll is empty'}
+                      {isCompleted && hasExpired ? 'No highlights yet' : 'Photo roll is empty'}
                     </p>
                     <p className="font-inter text-xs leading-relaxed text-tok-black/50">
-                      {isCompleted
+                      {isCompleted && hasExpired
                         ? 'No featured moments were saved for this drop.'
                         : 'Be the first to post a moment to the stack.'}
                     </p>
                   </div>
-                  {canUpload && !reachedUserLimit && (
+                  {canUpload && !hasExpired && (
                     <button
                       type="button"
                       onClick={onAddClick}
-                      disabled={isCompressing || isUploadPending}
-                      className="mt-1 flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-yellow px-5 font-passion text-[11px] font-bold uppercase tracking-wider text-tok-black shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-70"
+                      disabled={isCompressing || isUploadPending || reachedUserLimit}
+                      title={reachedUserLimit ? "User limit reached" : "Add photo"}
+                      className="mt-1 flex h-10 items-center gap-2 rounded-sm border-[3px] border-tok-black bg-tok-yellow px-5 font-passion text-[11px] font-bold uppercase tracking-wider text-tok-black shadow-[3px_3px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {isCompressing || isUploadPending ? (
                         <IconLoader size={14} className="animate-spin" />
                       ) : (
                         <IconPlus size={14} strokeWidth={3} />
                       )}
-                      Add photo
+                      {reachedUserLimit ? 'Limit Reached' : 'Add photo'}
                     </button>
                   )}
                 </div>

@@ -435,11 +435,6 @@ export class DropsService {
       ...(nextMinimumAge !== undefined && { minimumAge: nextMinimumAge }),
     });
     
-    // If the drop is manually marked as completed, clean up non-featured photos
-    if (dto.status === DropStatus.COMPLETED) {
-      await this.deleteNonFeaturedPhotosForDrops([id]);
-    }
-
     const statusActionMap: Partial<Record<DropStatus, string>> = {
       [DropStatus.ONGOING]: 'marked_ongoing',
       [DropStatus.COMPLETED]: 'marked_completed',
