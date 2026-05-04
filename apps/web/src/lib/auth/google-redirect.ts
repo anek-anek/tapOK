@@ -17,22 +17,37 @@ export type GoogleRedirectResolution =
   | { status: 'success'; user: User; finalized: FinalizeSuccess }
   | { status: 'finalize_error'; finalized: FinalizeFailure }
   | { status: 'firebase_error'; code: string };
+const GOOGLE_REDIRECT_PENDING_KEY = 'tapok_google_redirect_pending';
+const GOOGLE_EMAIL_HINT_KEY = 'tapok_auth_email_hint';
+
+function consumeStorageValue(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const fromSession = sessionStorage.getItem(key);
+  const fromLocal = localStorage.getItem(key);
+  sessionStorage.removeItem(key);
+  localStorage.removeItem(key);
+  return fromSession ?? fromLocal;
+}
 
 export async function resolveGoogleRedirectSession(
   mode: AuthMode,
 ): Promise<GoogleRedirectResolution> {
   try {
-    const result = await getRedirectResult(getFirebaseAuth());
-    if (!result) return { status: 'none' };
+    const auth = getFirebaseAuth();
+    const result = await getRedirectResult(auth);
+    const redirectPending = consumeStorageValue(GOOGLE_REDIRECT_PENDING_KEY) === 'true';
+    const user = result?.user ?? auth.currentUser;
+    if (!user) return { status: 'none' };
 
-    const hint = typeof window !== 'undefined' ? sessionStorage.getItem('tapok_auth_email_hint') : null;
-    if (typeof window !== 'undefined') sessionStorage.removeItem('tapok_auth_email_hint');
+    const hint = consumeStorageValue(GOOGLE_EMAIL_HINT_KEY);
 
-    const finalized = await finalizeSession(result.user, {
+    const finalized = await finalizeSession(user, {
       mode,
       provider: 'google',
       payload: hint ? { email: hint } : undefined,
-      deleteCreatedUserOnFailure: shouldDeleteGoogleUserOnFinalizeFailure(result),
+      deleteCreatedUserOnFailure: result
+        ? shouldDeleteGoogleUserOnFinalizeFailure(result)
+        : false,
     });
 
     if (!finalized.ok) {
@@ -41,7 +56,7 @@ export async function resolveGoogleRedirectSession(
 
     return {
       status: 'success',
-      user: result.user,
+      user,
       finalized,
     };
   } catch (error: unknown) {

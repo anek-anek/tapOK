@@ -16,6 +16,20 @@ export function prefersGoogleRedirectFlow(): boolean {
 }
 
 export type GoogleSignInOutcome = UserCredential | 'redirect';
+const GOOGLE_REDIRECT_PENDING_KEY = 'tapok_google_redirect_pending';
+const GOOGLE_EMAIL_HINT_KEY = 'tapok_auth_email_hint';
+
+function setGoogleRedirectPending(value: string) {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, value);
+  localStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, value);
+}
+
+function setGoogleEmailHint(value: string) {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem(GOOGLE_EMAIL_HINT_KEY, value);
+  localStorage.setItem(GOOGLE_EMAIL_HINT_KEY, value);
+}
 
 export function shouldDeleteGoogleUserOnFinalizeFailure(userCredential: UserCredential): boolean {
   return getAdditionalUserInfo(userCredential)?.isNewUser === true;
@@ -25,23 +39,17 @@ export async function signInWithGoogleInteractive(loginHint?: string): Promise<G
   const auth = getFirebaseAuth();
   const provider = createGoogleAuthProvider(loginHint);
 
-  if (prefersGoogleRedirectFlow()) {
-    if (loginHint) sessionStorage.setItem('tapok_auth_email_hint', loginHint);
-    sessionStorage.setItem('tapok_google_redirect_pending', 'true');
-    await signInWithRedirect(auth, provider);
-    return 'redirect';
-  }
-
   try {
     return await signInWithPopup(auth, provider);
   } catch (error: unknown) {
     const code = (error as { code?: string }).code ?? '';
     if (
       code === 'auth/popup-blocked' ||
-      code === 'auth/operation-not-supported-in-this-environment'
+      code === 'auth/operation-not-supported-in-this-environment' ||
+      (prefersGoogleRedirectFlow() && code === 'auth/popup-closed-by-user')
     ) {
-      if (loginHint) sessionStorage.setItem('tapok_auth_email_hint', loginHint);
-      sessionStorage.setItem('tapok_google_redirect_pending', 'true');
+      if (loginHint) setGoogleEmailHint(loginHint);
+      setGoogleRedirectPending('true');
       await signInWithRedirect(auth, provider);
       return 'redirect';
     }
