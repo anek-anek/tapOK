@@ -123,6 +123,9 @@ export function DropMemberProfileModal({ subject, onClose }: DropMemberProfileMo
   const crewJoinedHead =
     subject.kind === 'crew' ? formatJoinedDropHeadline(subject.member.joinedAt) : null;
 
+  const organiserHandle =
+    subject.kind === 'organiser' ? subject.profile.userHandle?.trim() ?? '' : '';
+
   const profileCards = useMemo(() => {
     if (subject.kind === 'organiser') {
       return {
@@ -267,9 +270,11 @@ export function DropMemberProfileModal({ subject, onClose }: DropMemberProfileMo
                     <p className="mt-1 font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black/65 md:mt-1.5 md:text-sm md:tracking-[1.75px]">
                       Drop chief
                     </p>
-                    <p className="mt-1 max-w-[20rem] mx-auto break-all font-passion text-base font-bold uppercase tracking-[1.8px] text-tok-teal sm:mx-0 sm:text-lg md:text-xl md:tracking-[2px]">
-                      @{subject.profile.userHandle || 'unregistered_handle'}
-                    </p>
+                    {organiserHandle ? (
+                      <p className="mt-1 max-w-[20rem] mx-auto break-all font-passion text-base font-bold uppercase tracking-[1.8px] text-tok-teal sm:mx-0 sm:text-lg md:text-xl md:tracking-[2px]">
+                        @{organiserHandle}
+                      </p>
+                    ) : null}
                   </>
                 ) : (
                   <p className="mt-1 font-passion text-xs font-bold uppercase tracking-[1.4px] text-tok-black/65 md:mt-1.5 md:text-sm md:tracking-[1.75px]">

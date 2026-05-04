@@ -125,7 +125,6 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
 
   useEffect(() => {
     if (handledSuccessRedirectRef.current) return;
-    if (!googleRedirectResolved) return;
 
     if (user && dbUser && !googleLoading && !isSubmitting) {
       router.replace(
@@ -137,12 +136,11 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
         }),
       );
     }
-  }, [user, dbUser, googleLoading, googleRedirectResolved, isSubmitting, router, redirectTo]);
+  }, [user, dbUser, googleLoading, isSubmitting, router, redirectTo]);
 
   useEffect(() => {
     if (
       handledSuccessRedirectRef.current ||
-      !googleRedirectResolved ||
       !user ||
       dbUser ||
       googleLoading ||
@@ -176,7 +174,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
     return () => {
       cancelled = true;
     };
-  }, [user, dbUser, googleLoading, googleRedirectResolved, isSubmitting, redirectTo, router, setSession, showError]);
+  }, [user, dbUser, googleLoading, isSubmitting, redirectTo, router, setSession, showError]);
 
   useEffect(() => {
     let cancelled = false;
