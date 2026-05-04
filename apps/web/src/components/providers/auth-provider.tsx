@@ -28,6 +28,10 @@ export interface DbUser {
   gender?: string;
   phone?: string;
   userHandle?: string;
+  termsAccepted: boolean;
+  termsAcceptedAt?: string;
+  privacyPolicyAccepted: boolean;
+  privacyPolicyAcceptedAt?: string;
 }
 
 interface AuthContextValue {
@@ -57,8 +61,8 @@ export function AuthProvider({
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [dbUser, setDbUser] = useState<DbUser | null>(initialDbUser);
-  const [loading, setLoading] = useState(initialDbUser === null);
-  const [isReady, setIsReady] = useState(initialDbUser !== null);
+  const [loading, setLoading] = useState(false);
+  const [isReady, setIsReady] = useState(true);
   const queryClient = useQueryClient();
   const prevUidRef = useRef<string | null>(null);
   const lastSyncRef = useRef<number>(0);

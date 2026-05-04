@@ -142,8 +142,8 @@ export default function LandingClient() {
           <p className="hidden font-inter text-sm text-tok-cream/45 md:block">Drop it. Share it. Tap in.</p>
           <div className="ml-auto flex items-center gap-6">
             {[
-              { label: 'Privacy', href: '#' },
-              { label: 'Terms', href: '#' },
+              { label: 'Privacy', href: '/privacy' },
+              { label: 'Terms', href: '/terms' },
             ].map(({ label, href }) => (
               <a key={label} href={href} className="font-inter text-sm text-tok-cream/50 transition-colors hover:text-tok-cream">
                 {label}

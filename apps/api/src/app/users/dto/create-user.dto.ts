@@ -65,4 +65,24 @@ export class CreateUserDto {
   @IsOptional()
   @IsPhoneNumber()
   phone?: string;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  termsAccepted?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  termsAcceptedAt?: Date;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  privacyPolicyAccepted?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  privacyPolicyAcceptedAt?: Date;
 }

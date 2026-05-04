@@ -23,7 +23,10 @@ export interface User {
   gender?: GenderEnum;
   birthday?: string;
   userHandle?: string;
-  privacyPolicyAcceptedDate?: string;
+  termsAccepted: boolean;
+  termsAcceptedAt?: string;
+  privacyPolicyAccepted: boolean;
+  privacyPolicyAcceptedAt?: string;
 }
 
 export interface UserProfile extends User {
@@ -53,8 +56,25 @@ export interface CreateUserDto {
   birthday?: string;
   userHandle?: string;
   phone?: string;
+  termsAccepted?: boolean;
+  termsAcceptedAt?: string;
+  privacyPolicyAccepted?: boolean;
+  privacyPolicyAcceptedAt?: string;
 }
 
 export type UpdateUserDto = Partial<
-  Pick<CreateUserDto, 'firstName' | 'lastName' | 'avatar' | 'gender' | 'birthday' | 'userHandle' | 'phone'>
+  Pick<
+    CreateUserDto,
+    | 'firstName'
+    | 'lastName'
+    | 'avatar'
+    | 'gender'
+    | 'birthday'
+    | 'userHandle'
+    | 'phone'
+    | 'termsAccepted'
+    | 'termsAcceptedAt'
+    | 'privacyPolicyAccepted'
+    | 'privacyPolicyAcceptedAt'
+  >
 >;

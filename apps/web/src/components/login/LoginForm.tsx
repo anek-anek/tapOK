@@ -407,13 +407,12 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
         </button>
 
         <p className="auth-panel-in text-center font-inter text-xs text-tok-black/35 lg:text-[11px]" style={{ animationDelay: '0.45s' }}>
-
           By signing in, you agree to our{' '}
-          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-tok-black/70">
+          <Link href="/terms" className="underline underline-offset-4 transition-colors duration-150 hover:text-tok-black/70">
             Terms &amp; Conditions
           </Link>{' '}
           and{' '}
-          <Link href="/" className="underline underline-offset-4 transition-colors duration-150 hover:text-tok-black/70">
+          <Link href="/privacy" className="underline underline-offset-4 transition-colors duration-150 hover:text-tok-black/70">
             Privacy Policy
           </Link>
         </p>

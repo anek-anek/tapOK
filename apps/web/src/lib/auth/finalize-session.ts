@@ -45,6 +45,10 @@ interface SyncPayload {
   userHandle?: string;
   authMode?: AuthMode;
   authProvider?: AuthProvider;
+  termsAccepted?: boolean;
+  termsAcceptedAt?: string;
+  privacyPolicyAccepted?: boolean;
+  privacyPolicyAcceptedAt?: string;
 }
 
 function detectAuthProvider(firebaseUser: FirebaseUser): AuthProvider {
