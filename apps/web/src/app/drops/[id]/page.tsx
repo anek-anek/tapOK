@@ -993,7 +993,10 @@ function DropDetailContent({ id }: { id: string }) {
               <DigitalTicket
                 drop={drop}
                 isMember={hasDigitalTicketAccess}
-                className="w-full"
+                className={cn(
+                  'w-full',
+                  !isCompleted && 'hidden lg:block',
+                )}
               />
 
               {/* Mission Command / Chief Card */}
