@@ -101,66 +101,71 @@ function PageSkeleton() {
       <PageBackdropWatermark label="DISCOVER" />
       <main className="relative z-1 mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-16 lg:px-10 pb-24">
         {/* Header Skeleton */}
-        <div className="mb-16">
-          <Skeleton className="h-3 w-40 rounded-sm bg-tok-teal/30 mb-4" />
+        <div className="mb-16 animate-pulse">
+          <Skeleton className="h-3 w-40 rounded-sm bg-tok-teal/20 mb-4" />
           <Skeleton className="h-[clamp(52px,11vw,84px)] w-[min(100%,480px)] rounded-sm bg-tok-black/10" />
         </div>
 
         <div className="space-y-16">
           {/* Featured */}
-          <section>
+          <section className="animate-pulse">
             <div className="mb-8 flex items-center gap-3">
-              <Skeleton className="h-10 w-10 rounded-lg border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
+                <Skeleton className="h-5 w-5 rounded-sm bg-tok-black/10" />
+              </div>
               <div className="space-y-2">
-                <Skeleton className="h-3 w-24 rounded-sm bg-tok-teal/20" />
-                <Skeleton className="h-6 w-48 rounded-sm bg-tok-black/10" />
+                <Skeleton className="h-2 w-24 bg-tok-teal/20" />
+                <Skeleton className="h-6 w-48 bg-tok-black/10" />
               </div>
             </div>
             <HeroCardSkeleton />
           </section>
 
-          {/* Separator */}
           <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
 
           {/* Squad Recon */}
-          <section>
+          <section className="animate-pulse">
             <div className="mb-8 flex items-center gap-3">
-              <Skeleton className="h-10 w-10 rounded-lg border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
+                <Skeleton className="h-5 w-5 rounded-sm bg-tok-black/10" />
+              </div>
               <div className="space-y-2">
-                <Skeleton className="h-3 w-28 rounded-sm bg-tok-teal/20" />
-                <Skeleton className="h-6 w-40 rounded-sm bg-tok-black/10" />
+                <Skeleton className="h-2 w-28 bg-tok-teal/20" />
+                <Skeleton className="h-6 w-40 bg-tok-black/10" />
               </div>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              <ListCardSkeleton />
-              <ListCardSkeleton />
-              <ListCardSkeleton />
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+              <ListCardSkeleton layout="grid" />
+              <ListCardSkeleton layout="grid" />
+              <ListCardSkeleton layout="grid" />
+              <ListCardSkeleton layout="grid" />
             </div>
           </section>
 
-          {/* Separator */}
           <div className="my-12 border-b-2 border-dashed border-tok-black/10" />
 
           {/* Public Stream */}
-          <section>
+          <section className="animate-pulse">
             <div className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
               <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-lg border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-tok-black bg-white shadow-[3px_3px_0px_#1C1C1A]">
+                  <Skeleton className="h-5 w-5 rounded-sm bg-tok-black/10" />
+                </div>
                 <div className="space-y-2">
-                  <Skeleton className="h-3 w-32 rounded-sm bg-tok-teal/20" />
-                  <Skeleton className="h-6 w-44 rounded-sm bg-tok-black/10" />
+                  <Skeleton className="h-2 w-32 bg-tok-teal/20" />
+                  <Skeleton className="h-6 w-44 bg-tok-black/10" />
                 </div>
               </div>
               <div className="flex gap-2">
                 {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-10 w-28 rounded-sm border-[3px] border-tok-black bg-white" />
+                  <Skeleton key={i} className="h-10 w-24 rounded-sm border-[3px] border-tok-black bg-white" />
                 ))}
               </div>
             </div>
-            <div className="columns-1 gap-6 sm:columns-2 lg:columns-3">
+            <div className="columns-2 gap-4 sm:columns-2 sm:gap-6 lg:columns-3">
               {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="mb-6 break-inside-avoid">
-                  <ListCardSkeleton />
+                <div key={i} className="mb-4 break-inside-avoid sm:mb-6">
+                  <ListCardSkeleton layout="masonry" />
                 </div>
               ))}
             </div>
@@ -176,7 +181,7 @@ function PageSkeleton() {
 export default function DiscoverClient() {
   const router = useRouter();
   const mounted = useMounted();
-  const { dbUser, isReady } = useAuth();
+  const { dbUser, isReady, loading: authLoading } = useAuth();
   const [category, setCategory] = useState<DropCategory | undefined>(undefined);
   const [shareModalDrop, setShareModalDrop] = useState<Drop | null>(null);
 
@@ -222,7 +227,7 @@ export default function DiscoverClient() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (!mounted || !isReady) return <PageSkeleton />;
+  if (!mounted || !isReady || authLoading || (isLoadingLayout && !layoutData)) return <PageSkeleton />;
 
   const handleShare = (drop: Drop) => setShareModalDrop(drop);
 

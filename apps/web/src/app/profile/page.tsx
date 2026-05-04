@@ -83,7 +83,7 @@ function tenDigitsToE164(ten: string): string {
 
 export default function ProfilePage() {
   const mounted = useMounted();
-  const { dbUser, refreshUser } = useAuth();
+  const { dbUser, loading: authLoading, isReady, refreshUser } = useAuth();
   const searchParams = useSearchParams();
   const { data: profile, isLoading } = useCurrentUser();
   const displayUser = profile ?? dbUser;
@@ -205,27 +205,27 @@ export default function ProfilePage() {
     });
   }
 
-  if (!mounted || (isLoading && !displayUser)) {
+  if (!mounted || !isReady || authLoading || (isLoading && !dbUser)) {
     return (
       <div className="min-h-screen bg-tok-cream">
         <TapokNavbar />
         <main className="mx-auto max-w-2xl px-3 py-12 sm:px-6">
           {/* Header Skeleton */}
-          <div className="mb-10 flex items-end justify-between border-b-4 border-tok-black/10 pb-4">
-            <Skeleton className="h-16 w-48 rounded-none border-2 border-tok-black/10 bg-tok-black/5" />
+          <div className="mb-10 flex items-end justify-between border-b-4 border-tok-black/10 pb-4 animate-pulse">
+            <Skeleton className="h-14 w-40 rounded-none border-2 border-tok-black/10 bg-tok-black/5" />
             <Skeleton className="h-10 w-24 rounded-none border-2 border-tok-black/10 bg-tok-black/5" />
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-12 animate-pulse">
             {/* Identity Skeleton */}
             <div className="border-2 border-tok-black/10 bg-tok-white p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]">
               <div className="flex flex-col items-center gap-8 sm:flex-row sm:items-start">
-                <Skeleton className="h-32 w-32 rounded-none border-4 border-tok-black/10 bg-tok-black/5" />
+                <Skeleton className="h-32 w-32 rounded-none border-4 border-tok-black/10 bg-tok-black/5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)]" />
                 <div className="flex-1 space-y-4">
                   <Skeleton className="h-10 w-64 rounded-none bg-tok-black/5" />
                   <div className="flex gap-4">
-                    <Skeleton className="h-8 w-24 rounded-none bg-tok-black/5" />
-                    <Skeleton className="h-8 w-32 rounded-none bg-tok-black/5" />
+                    <Skeleton className="h-7 w-24 rounded-none bg-tok-black/5" />
+                    <Skeleton className="h-7 w-32 rounded-none bg-tok-black/5" />
                   </div>
                 </div>
               </div>
@@ -248,13 +248,15 @@ export default function ProfilePage() {
             </div>
 
             {/* Activity Skeleton */}
-            <div className="h-40 w-full border-2 border-tok-black/10 bg-tok-white p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]" />
-            
+            <div className="h-28 w-full border-2 border-tok-black/10 bg-tok-teal/5 p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]" />
+
             {/* Drops Skeleton */}
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-48 rounded-none bg-tok-black/5" />
-              <ListCardSkeleton />
-              <ListCardSkeleton />
+            <div className="space-y-6">
+              <Skeleton className="h-8 w-48 rounded-none border-b-2 border-tok-black/10 bg-tok-black/5" />
+              <div className="space-y-4">
+                <ListCardSkeleton />
+                <ListCardSkeleton />
+              </div>
             </div>
           </div>
         </main>
@@ -262,18 +264,30 @@ export default function ProfilePage() {
     );
   }
 
-  if (!displayUser) {
+  if (isReady && !dbUser) {
     return (
       <div className="min-h-screen bg-tok-cream">
         <TapokNavbar />
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <span className="font-passion text-2xl tracking-tight text-tok-black/40 uppercase">
-            Profile Not Found
-          </span>
+        <div className="flex min-h-[calc(100vh-88px)] flex-col items-center justify-center p-6 text-center">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center border-4 border-tok-black bg-white shadow-[8px_8px_0px_#1C1C1A]">
+            <LockKeyhole size={32} className="text-tok-teal" />
+          </div>
+          <h2 className="font-passion text-3xl font-black uppercase tracking-tight text-tok-black">Identity Required</h2>
+          <p className="mt-4 max-w-xs font-inter text-sm font-medium text-tok-black/60">
+            Sign in to view and manage your profile details, missions, and crew connections.
+          </p>
+          <Link
+            href="/login?redirectTo=/profile"
+            className="mt-8 flex h-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-teal px-8 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]"
+          >
+            Log in to continue
+          </Link>
         </div>
       </div>
     );
   }
+
+  if (!displayUser) return null;
 
   const firstName = editing ? form.firstName : displayUser.firstName;
   const lastName = editing ? form.lastName : displayUser.lastName;
@@ -569,7 +583,7 @@ export default function ProfilePage() {
             </div>
 
             {!displayUser.isEmailVerified && (
-              <div 
+              <div
                 id="verify-email"
                 ref={verifySectionRef}
                 className={cn(
@@ -605,19 +619,19 @@ export default function ProfilePage() {
                     try {
                       const auth = getFirebaseAuth();
                       const token = await auth.currentUser?.getIdToken();
-                      
+
                       const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
                       const apiUrl = (rawApiUrl.split(',')[0] || '').trim();
 
                       const response = await fetch(`${apiUrl}/auth/email/verify-email`, {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                           'Content-Type': 'application/json',
                           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                         },
                         body: JSON.stringify({ email: displayUser.email }),
                       });
-                      
+
                       if (!response.ok) {
                         const errorData = await response.json().catch(() => ({}));
                         throw new Error(errorData.message || 'FAILED TO SEND EMAIL');
@@ -766,8 +780,8 @@ export default function ProfilePage() {
             {orchestratedDrops.length === 0 && !dropsLoading && (
               <div className="border-2 border-dashed border-tok-black/20 p-12 text-center">
                 <p className="font-passion text-xl text-tok-black/40 uppercase">No drops orchestrated yet.</p>
-                <Link 
-                  href="/drops" 
+                <Link
+                  href="/drops"
                   className="mt-4 inline-block font-passion text-sm text-tok-teal underline decoration-2 underline-offset-4"
                 >
                   START YOUR FIRST MISSION
