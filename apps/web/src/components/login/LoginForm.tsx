@@ -1,6 +1,6 @@
 'use client';
 
-import { startTransition, use, useCallback, useEffect, useState } from 'react';
+import { startTransition, use, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -51,7 +51,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
     }
     return false;
   });
-  const [googleRedirectResolved, setGoogleRedirectResolved] = useState(false);
+  const redirectingRef = useRef(false);
 
   const showError = useCallback((message: string) => {
     toast.error(message.toUpperCase());
@@ -75,26 +75,28 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   }, [router, redirectTo]);
 
   useEffect(() => {
-    if (user && dbUser && !isSubmitting) {
-      router.replace(
-        resolveAuthSuccessRedirect({
-          mode: 'login',
-          redirectTo,
-          firstName: dbUser.firstName,
-          shouldOnboard: false,
-        }),
-      );
-    }
+    if (redirectingRef.current || !user || !dbUser || isSubmitting) return;
+    redirectingRef.current = true;
+    router.replace(
+      resolveAuthSuccessRedirect({
+        mode: 'login',
+        redirectTo,
+        firstName: dbUser.firstName,
+        shouldOnboard: false,
+      }),
+    );
   }, [user, dbUser, isSubmitting, router, redirectTo]);
 
   useEffect(() => {
-    if (!user || dbUser || isSubmitting || googleLoading) return;
+    if (redirectingRef.current || !user || dbUser || isSubmitting || googleLoading) return;
 
     let cancelled = false;
+    redirectingRef.current = true;
 
     void (async () => {
       const finalized = await finalizeSession(user, { mode: 'login' });
       if (cancelled || !finalized.ok) {
+        redirectingRef.current = false;
         if (!cancelled && !finalized.ok) {
           showError(finalized.message);
         }
@@ -126,6 +128,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
       if (cancelled) return;
 
       if (resolution.status === 'success') {
+        redirectingRef.current = true;
         const target = resolveAuthSuccessRedirect({
           mode: 'login',
           redirectTo,
@@ -148,7 +151,6 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
         sessionStorage.removeItem('tapok_google_redirect_pending');
       }
       setGoogleLoading(false);
-      setGoogleRedirectResolved(true);
     })();
 
     return () => {
@@ -176,6 +178,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
         return;
       }
 
+      redirectingRef.current = true;
       toast.success('WELCOME BACK');
       clearForm();
       const target = resolveAuthSuccessRedirect({
@@ -214,6 +217,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
         return;
       }
 
+      redirectingRef.current = true;
       toast.success('WELCOME BACK');
       clearForm();
       const target = resolveAuthSuccessRedirect({
