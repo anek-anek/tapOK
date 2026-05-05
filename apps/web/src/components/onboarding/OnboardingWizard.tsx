@@ -20,6 +20,7 @@ import { toast } from 'react-hot-toast';
 import type { Drop } from '@/types/drop';
 import { DropModal } from '@/components/drop-modal';
 import { sanitizeRedirectTo } from '@/lib/auth/redirects';
+import { authClient } from '@/lib/auth-client';
 
 const slide = {
   enter: { opacity: 0, y: 15 },
@@ -149,6 +150,7 @@ function JoinModal({ onClose }: { onClose: () => void }) {
     try {
       const drop = await dropsService.getByJoinCode(trimmed);
       track('crew_code_submitted', { code: trimmed, dropId: drop.id });
+      await authClient.updateUser({ onboardingCompleted: true }).catch(() => {});
       toast.success('DROP FOUND! TAPPING YOU IN...');
       router.push(`/drops/join/${trimmed}`);
     } catch (err: unknown) {
@@ -402,10 +404,16 @@ export function OnboardingWizard() {
 
   useEffect(() => { track('onboarding_started'); }, []);
 
-  const handleLive = (drop: Drop) => {
+  const handleLive = async (drop: Drop) => {
+    await authClient.updateUser({ onboardingCompleted: true }).catch(() => {});
     setLiveDrop(drop);
     setStep(2);
     setShowModal(false);
+  };
+
+  const handleSkip = async () => {
+    await authClient.updateUser({ onboardingCompleted: true }).catch(() => {});
+    router.push(redirectTo);
   };
 
   const handleChiefStart = () => {
@@ -421,7 +429,7 @@ export function OnboardingWizard() {
           <OutcomeSplash
             onChief={handleChiefStart}
             onCrew={() => { setPath('crew'); setStep(1); setShowModal(true); }}
-            onSkip={() => router.push(redirectTo)}
+            onSkip={handleSkip}
           />
         )}
 

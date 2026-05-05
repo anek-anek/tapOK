@@ -6,8 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { LogOut, User as IconUser, Menu, X } from 'lucide-react';
-import { signOut } from 'firebase/auth';
-import { getFirebaseAuth } from '@/lib/firebase';
+import { signOut } from '@/lib/auth-client';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -92,8 +91,7 @@ export function TapokNavbar() {
   async function handleLogout() {
     setOpen(false);
     setMobileMenuOpen(false);
-    await signOut(getFirebaseAuth());
-    await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => undefined);
+    await signOut();
     router.push('/login');
   }
 

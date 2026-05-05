@@ -7,11 +7,9 @@ export interface DropOrganiser {
   lastName: string;
   email: string;
   avatar?: string;
-  firebaseUid?: string;
   userHandle?: string;
   dropCount?: number;
   crewReached?: number;
-  /** Returned on full organiser payloads when available */
   gender?: string;
   birthday?: string | Date;
   createdAt?: string;

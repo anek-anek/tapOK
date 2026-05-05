@@ -15,8 +15,7 @@ import {
 } from '@/components/auth/AuthPageShell';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useAuthFormReset } from '@/lib/auth/use-auth-form-reset';
-import { getForgotPasswordError } from '@/lib/auth/firebase-auth-errors';
-import { getFirebaseAuth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/config';
 
 const forgotSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -54,7 +53,7 @@ const successChecks = [
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const { user, dbUser, loading } = useAuth();
+  const { dbUser, loading } = useAuth();
   const [sentTo, setSentTo] = useState<string | null>(null);
 
   const {
@@ -74,16 +73,14 @@ export default function ForgotPasswordPage() {
   const { formRef, clearForm } = useAuthFormReset(resetFormState);
 
   useEffect(() => {
-    if (!loading && user && dbUser) {
+    if (!loading && dbUser) {
       router.replace('/drops');
     }
-  }, [dbUser, loading, router, user]);
+  }, [dbUser, loading, router]);
 
   const onSubmit = async (values: ForgotFormValues) => {
     try {
-      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const apiUrl = (rawApiUrl.split(',')[0] || '').trim();
-
+      const apiUrl = getApiUrl().replace(/\/$/, '');
       const response = await fetch(`${apiUrl}/auth/email/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -110,7 +107,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthPageShell>
-      {loading && !user && (
+      {loading && (
         <p
           className="auth-panel-in mb-4 text-center font-inter text-xs uppercase tracking-[0.16em] text-tok-black/45 lg:mb-3"
           aria-live="polite"

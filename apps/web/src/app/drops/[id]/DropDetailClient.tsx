@@ -416,7 +416,7 @@ function PageSkeleton() {
 export default function DropDetailClient({ id }: { id: string }) {
   const router = useRouter();
   const mounted = useMounted();
-  const { user, dbUser, loading: authLoading, isReady } = useAuth();
+  const { dbUser, loading: authLoading, isReady } = useAuth();
   const { data: drop, isError, isLoading: dropLoading } = useDrop(id);
 
   // Initial loading is handled by Suspense
@@ -534,7 +534,7 @@ export default function DropDetailClient({ id }: { id: string }) {
 
   const pendingMembers = crew?.filter((m) => m.status === 'pending') ?? [];
   if (!mounted || !isReady || authLoading) return <PageSkeleton />;
-  if (!user) {
+  if (!dbUser) {
     return (
       <div className="min-h-screen bg-tok-cream text-tok-black">
         <TapokNavbar />

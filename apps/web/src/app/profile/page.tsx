@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
-import { getFirebaseAuth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/config';
 import { ListDropCard, ListCardSkeleton } from '@/components/drops/drop-cards';
 import {
   Popover,
@@ -631,18 +631,11 @@ export default function ProfilePage() {
                     btn.innerHTML = 'SENDING...';
 
                     try {
-                      const auth = getFirebaseAuth();
-                      const token = await auth.currentUser?.getIdToken();
-
-                      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-                      const apiUrl = (rawApiUrl.split(',')[0] || '').trim();
-
+                      const apiUrl = getApiUrl().replace(/\/$/, '');
                       const response = await fetch(`${apiUrl}/auth/email/verify-email`, {
                         method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                        },
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
                         body: JSON.stringify({ email: displayUser.email }),
                       });
 
@@ -683,9 +676,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={async () => {
                       try {
-                        const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-                        const apiUrl = (rawApiUrl.split(',')[0] || '').trim();
-
+                        const apiUrl = getApiUrl().replace(/\/$/, '');
                         const response = await fetch(`${apiUrl}/auth/email/reset-password`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },

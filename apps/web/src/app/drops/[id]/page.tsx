@@ -399,7 +399,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
 function DropDetailContent({ id }: { id: string }) {
   const router = useRouter();
-  const { user, dbUser, loading: authLoading, isReady } = useAuth();
+  const { dbUser, loading: authLoading, isReady } = useAuth();
   const { data: drop, isError } = useDrop(id);
   const {
     data: crewStatus,

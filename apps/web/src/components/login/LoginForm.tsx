@@ -5,33 +5,25 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { getFirebaseAuth } from '@/lib/firebase';
-import { loginSchema, type LoginFormValues } from '@/lib/validations/auth';
+import { signIn, authClient } from '@/lib/auth-client';
 import { useAuth } from '@/components/providers/auth-provider';
-import { finalizeSession } from '@/lib/auth/finalize-session';
-import { getLoginFirebaseError } from '@/lib/auth/firebase-auth-errors';
-import { resolveGoogleRedirectSession } from '@/lib/auth/google-redirect';
-import {
-  shouldDeleteGoogleUserOnFinalizeFailure,
-  signInWithGoogleInteractive,
-} from '@/lib/auth/google-signin';
+import { loginSchema, type LoginFormValues } from '@/lib/validations/auth';
 import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { useAuthFormReset } from '@/lib/auth/use-auth-form-reset';
 import { toast } from 'react-hot-toast';
 
 interface LoginFormProps {
-  searchParams: Promise<{ redirectTo?: string }>;
+  searchParams: Promise<{ redirectTo?: string; error?: string }>;
 }
 
 const LOGIN_DEFAULT_VALUES: LoginFormValues = { email: '', password: '' };
 
 export default function LoginForm({ searchParams }: LoginFormProps) {
-  const { redirectTo = '/drops' } = use(searchParams);
+  const { redirectTo = '/drops', error } = use(searchParams);
   const router = useRouter();
-  const { user, dbUser, setSession } = useAuth();
+  const { dbUser } = useAuth();
 
   const {
     register,
@@ -45,12 +37,7 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('tapok_google_redirect_pending') === 'true';
-    }
-    return false;
-  });
+  const [googleLoading, setGoogleLoading] = useState(false);
   const redirectingRef = useRef(false);
 
   const showError = useCallback((message: string) => {
@@ -65,198 +52,110 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   const { formRef, clearForm } = useAuthFormReset(resetFormState);
 
   useEffect(() => {
-    const target = resolveAuthSuccessRedirect({
-      mode: 'login',
-      redirectTo,
-      firstName: '',
-      shouldOnboard: false,
-    });
-    void router.prefetch(target);
-  }, [router, redirectTo]);
+    if (error === 'signup_disabled') {
+      toast.error('No TapOK account found. Please Sign up using Google first.'.toUpperCase());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Prefetch the post-login destination
   useEffect(() => {
-    if (redirectingRef.current || !user || !dbUser || isSubmitting) return;
+    void router.prefetch(
+      resolveAuthSuccessRedirect({ mode: 'login', redirectTo, firstName: '', shouldOnboard: !dbUser?.onboardingCompleted }),
+    );
+  }, [router, redirectTo, dbUser?.onboardingCompleted]);
+
+  // If session already exists, redirect immediately
+  useEffect(() => {
+    if (redirectingRef.current || !dbUser || isSubmitting) return;
     redirectingRef.current = true;
     router.replace(
       resolveAuthSuccessRedirect({
         mode: 'login',
         redirectTo,
         firstName: dbUser.firstName,
-        shouldOnboard: false,
+        shouldOnboard: !dbUser.onboardingCompleted,
       }),
     );
-  }, [user, dbUser, isSubmitting, router, redirectTo]);
+  }, [dbUser, isSubmitting, router, redirectTo]);
 
-  useEffect(() => {
-    if (redirectingRef.current || !user || dbUser || isSubmitting || googleLoading) return;
+  const syncAndRedirect = useCallback(
+    async (firstName: string, mode: 'login' | 'signup' = 'login') => {
+      // Sync profile row
+      await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload: {} }),
+        credentials: 'include',
+      }).catch(() => undefined);
 
-    let cancelled = false;
-    redirectingRef.current = true;
-
-    void (async () => {
-      const finalized = await finalizeSession(user, { mode: 'login' });
-      if (cancelled || !finalized.ok) {
-        redirectingRef.current = false;
-        if (!cancelled && !finalized.ok) {
-          showError(finalized.message);
-        }
-        return;
-      }
-
-      const target = resolveAuthSuccessRedirect({
-        mode: 'login',
-        redirectTo,
-        firstName: finalized.dbUser.firstName,
-        shouldOnboard: false,
-      });
-      router.replace(target);
-      startTransition(() => {
-        setSession(user, finalized.dbUser);
-      });
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, dbUser, isSubmitting, googleLoading, redirectTo, router, setSession, showError]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void (async () => {
-      const resolution = await resolveGoogleRedirectSession('login');
-      if (cancelled) return;
-
-      if (resolution.status === 'success') {
-        redirectingRef.current = true;
-        const target = resolveAuthSuccessRedirect({
-          mode: 'login',
-          redirectTo,
-          firstName: resolution.finalized.dbUser.firstName,
-          shouldOnboard: false,
-        });
-        router.replace(target);
-        setSession(resolution.user, resolution.finalized.dbUser);
-        toast.success('WELCOME BACK');
-      } else if (resolution.status === 'finalize_error') {
-        showError(resolution.finalized.message);
-      } else if (
-        resolution.status === 'firebase_error' &&
-        resolution.code !== 'auth/popup-closed-by-user'
-      ) {
-        showError(getLoginFirebaseError(resolution.code));
-      }
-
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('tapok_google_redirect_pending');
-      }
-      setGoogleLoading(false);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [router, redirectTo, setSession, showError]);
-
-  const handleGoogleSignIn = async () => {
-    const normalizedEmail = getValues('email').trim().toLowerCase();
-
-    setGoogleLoading(true);
-    try {
-      const outcome = await signInWithGoogleInteractive(normalizedEmail);
-      if (outcome === 'redirect') return;
-
-      const finalized = await finalizeSession(outcome.user, {
-        mode: 'login',
-        provider: 'google',
-        payload: { email: normalizedEmail },
-        deleteCreatedUserOnFailure: shouldDeleteGoogleUserOnFinalizeFailure(outcome),
-      });
-
-      if (!finalized.ok) {
-        showError(finalized.message);
-        return;
-      }
+      // Fetch fresh session to evaluate onboarding status
+      const sessionRes = await authClient.getSession();
+      const isCompleted = sessionRes?.data?.user?.onboardingCompleted ?? false;
 
       redirectingRef.current = true;
-      toast.success('WELCOME BACK');
-      clearForm();
-      const target = resolveAuthSuccessRedirect({
-        mode: 'login',
-        redirectTo,
-        firstName: finalized.dbUser.firstName,
-        shouldOnboard: false,
+      const target = resolveAuthSuccessRedirect({ mode, redirectTo, firstName, shouldOnboard: !isCompleted });
+      startTransition(() => router.replace(target));
+    },
+    [redirectTo, router],
+  );
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      await signIn.social({
+        provider: 'google',
+        callbackURL: `${origin}/auth/google/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
       });
-      router.replace(target);
-      startTransition(() => {
-        setSession(outcome.user, finalized.dbUser);
-      });
-    } catch (error: unknown) {
-      const code = (error as { code?: string }).code ?? '';
-      if (code === 'auth/popup-closed-by-user') return;
-      showError(getLoginFirebaseError(code));
-    } finally {
+      // social() triggers a redirect — execution stops here
+    } catch {
+      showError('Google sign-in failed. Please try again.');
       setGoogleLoading(false);
     }
   };
 
   const onSubmit = async (values: LoginFormValues) => {
     try {
-      const { user } = await signInWithEmailAndPassword(
-        getFirebaseAuth(),
-        values.email,
-        values.password,
-      );
-      const finalized = await finalizeSession(user, {
-        mode: 'login',
-        provider: 'password',
+      const result = await signIn.email({
+        email: values.email,
+        password: values.password,
       });
 
-      if (!finalized.ok) {
-        showError(finalized.message);
+      if (result.error) {
+        const code = result.error.code ?? '';
+        if (code === 'EMAIL_NOT_VERIFIED') {
+          showError('Please verify your email before signing in.');
+        } else if (code === 'INVALID_EMAIL_OR_PASSWORD') {
+          // Check if the email exists with a different provider
+          try {
+            const checkRes = await fetch('/api/users/auth-provider-check', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: values.email }),
+            });
+            if (checkRes.ok) {
+              const data = await checkRes.json();
+              if (data.exists && data.authProvider === 'google') {
+                showError('This email is registered with Google. Continue with Google sign-in instead.');
+                return;
+              }
+            }
+          } catch {
+            // fall through to generic error
+          }
+          showError('No TapOK account found or incorrect password.');
+        } else {
+          showError(result.error.message ?? 'Something went wrong. Please try again.');
+        }
         return;
       }
 
-      redirectingRef.current = true;
       toast.success('WELCOME BACK');
       clearForm();
-      const target = resolveAuthSuccessRedirect({
-        mode: 'login',
-        redirectTo,
-        firstName: finalized.dbUser.firstName,
-        shouldOnboard: false,
-      });
-      router.replace(target);
-      startTransition(() => {
-        setSession(user, finalized.dbUser);
-      });
-    } catch (error: unknown) {
-      const code = (error as { code?: string }).code ?? '';
-
-      // If it's a generic "invalid credentials" error from Firebase,
-      // it might be because the account exists but uses a different provider (e.g. Google).
-      if (code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/invalid-login-credentials') {
-        try {
-          const checkRes = await fetch('/api/users/auth-provider-check', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: values.email }),
-          });
-
-          if (checkRes.ok) {
-            const data = await checkRes.json();
-            if (data.exists && data.authProvider === 'google') {
-              showError('This email is registered with Google. Continue with Google sign-in instead.');
-              return;
-            }
-          }
-        } catch (checkError) {
-          // Fallback to generic error if check fails
-          console.error('Provider check failed:', checkError);
-        }
-      }
-
-      showError(getLoginFirebaseError(code));
+      await syncAndRedirect('', 'login');
+    } catch (error: any) {
+      showError(error?.message || 'Network error: Failed to reach the authentication server.');
     }
   };
 

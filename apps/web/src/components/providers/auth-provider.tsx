@@ -1,13 +1,9 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { onAuthStateChanged, type User } from 'firebase/auth';
+import { createContext, useCallback, useContext, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getFirebaseAuth } from '@/lib/firebase';
-import { setAuthToken } from '@/services/api';
-import { finalizeSession } from '@/lib/auth/finalize-session';
-import { applyIdTokenToAxiosAndSessionCookie } from '@/lib/auth/session-cookie';
-import { isAuthRoute } from '@/lib/constants/routes';
+import { useSession } from '@/lib/auth-client';
+import { api } from '@/services/api';
 
 export type UserRole = 'admin' | 'participant';
 export type AuthProvider = 'password' | 'google';
@@ -22,6 +18,7 @@ export interface DbUser {
   role: UserRole;
   isEmailVerified: boolean;
   isActive: boolean;
+  onboardingCompleted: boolean;
   createdAt: string;
   updatedAt: string;
   birthday?: string;
@@ -35,20 +32,16 @@ export interface DbUser {
 }
 
 interface AuthContextValue {
-  user: User | null;
   dbUser: DbUser | null;
   loading: boolean;
   isReady: boolean;
-  setSession: (firebaseUser: User, dbUser: DbUser) => void;
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
-  user: null,
   dbUser: null,
   loading: true,
   isReady: false,
-  setSession: () => undefined,
   refreshUser: async () => undefined,
 });
 
@@ -59,111 +52,68 @@ export function AuthProvider({
   children: React.ReactNode;
   initialDbUser?: DbUser | null;
 }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [dbUser, setDbUser] = useState<DbUser | null>(initialDbUser);
-  const [loading, setLoading] = useState(false);
-  const [isReady, setIsReady] = useState(true);
+  const { data: session, isPending } = useSession();
   const queryClient = useQueryClient();
-  const prevUidRef = useRef<string | null>(null);
-  const lastSyncRef = useRef<number>(0);
-  const SYNC_THROTTLE_MS = 10 * 60 * 1000;
+  const prevUserIdRef = useRef<string | null>(null);
+  const cachedDbUserRef = useRef<DbUser | null>(initialDbUser);
 
+  // Clear query cache when the authenticated user changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), async (firebaseUser) => {
-      if (firebaseUser) {
-        const bootstrapToken = await firebaseUser.getIdToken();
-        setAuthToken(bootstrapToken);
-
-        setUser(firebaseUser);
-
-        if (prevUidRef.current !== null && prevUidRef.current !== firebaseUser.uid) {
-          queryClient.clear();
-        }
-        prevUidRef.current = firebaseUser.uid;
-
-        // Login/Registration handle their own finalization/sync logic to avoid race conditions.
-        if (isAuthRoute(window.location.pathname)) {
-          setLoading(false);
-          setIsReady(true);
-          return;
-        }
-
-        const result = await finalizeSession(firebaseUser, { mode: 'login' });
-
-        if (result.ok) {
-          lastSyncRef.current = Date.now();
-          setDbUser(result.dbUser);
-          setUser(firebaseUser);
-        } else {
-          const transientReasons = ['rate_limited', 'backend_unavailable', 'error'];
-          if (transientReasons.includes(result.reason)) {
-            console.warn(`[AuthProvider] Transient session failure (${result.reason}). Preserving current state.`);
-          } else {
-            setDbUser(null);
-            setUser(null);
-            await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => undefined);
-          }
-        }
-      } else {
-        queryClient.clear();
-        prevUidRef.current = null;
-        lastSyncRef.current = 0;
-        setAuthToken(null);
-        setDbUser(null);
-        setUser(null);
-        await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => undefined);
-      }
-
-      setLoading(false);
-      setIsReady(true);
-    });
-
-    return unsubscribe;
-  }, [queryClient]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const onVisible = () => {
-      if (document.visibilityState !== 'visible') return;
-
-      const now = Date.now();
-      if (now - lastSyncRef.current < SYNC_THROTTLE_MS) return;
-
-      void (async () => {
-        try {
-          const fresh = await user.getIdToken();
-          const ok = await applyIdTokenToAxiosAndSessionCookie(fresh);
-          if (ok) {
-            lastSyncRef.current = Date.now();
-          }
-        } catch {
-          // ignore — next finalizeSession or API 401 path will recover
-        }
-      })();
-    };
-
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [user]);
-
-  const setSession = useCallback((firebaseUser: User, dbUser: DbUser) => {
-    setUser(firebaseUser);
-    setDbUser(dbUser);
-    setLoading(false);
-    setIsReady(true);
-  }, []);
+    const currentId = session?.user?.id ?? null;
+    if (prevUserIdRef.current !== null && prevUserIdRef.current !== currentId) {
+      queryClient.clear();
+      cachedDbUserRef.current = null;
+    }
+    prevUserIdRef.current = currentId;
+  }, [session?.user?.id, queryClient]);
 
   const refreshUser = useCallback(async () => {
-    if (!user) return;
-    const result = await finalizeSession(user, { mode: 'login', sync: false });
-    if (result.ok) {
-      setDbUser(result.dbUser);
+    try {
+      const res = await api.get<DbUser>('/users/me');
+      cachedDbUserRef.current = res.data;
+    } catch {
+      // non-fatal
     }
-  }, [user]);
+  }, []);
+
+  const sessionUser = session?.user ?? null;
+
+  // Map BetterAuth session user → DbUser shape the rest of the app expects
+  const dbUser: DbUser | null = sessionUser
+    ? {
+        id: sessionUser.id,
+        email: sessionUser.email,
+        authProvider: ((sessionUser as any).authProvider as AuthProvider) ?? 'password',
+        firstName: (sessionUser as any).firstName ?? sessionUser.name?.split(' ')[0] ?? '',
+        lastName:
+          (sessionUser as any).lastName ?? sessionUser.name?.split(' ').slice(1).join(' ') ?? '',
+        avatar: sessionUser.image ?? undefined,
+        role: ((sessionUser as any).role as UserRole) ?? 'participant',
+        isEmailVerified: sessionUser.emailVerified ?? false,
+        isActive: true,
+        onboardingCompleted: (sessionUser as any).onboardingCompleted ?? false,
+        createdAt: (sessionUser as any).createdAt ?? new Date().toISOString(),
+        updatedAt: (sessionUser as any).updatedAt ?? new Date().toISOString(),
+        birthday: (sessionUser as any).birthday,
+        gender: (sessionUser as any).gender,
+        phone: (sessionUser as any).phone,
+        userHandle: (sessionUser as any).userHandle,
+        termsAccepted: (sessionUser as any).termsAccepted ?? false,
+        termsAcceptedAt: (sessionUser as any).termsAcceptedAt,
+        privacyPolicyAccepted: (sessionUser as any).privacyPolicyAccepted ?? false,
+        privacyPolicyAcceptedAt: (sessionUser as any).privacyPolicyAcceptedAt,
+      }
+    : null;
 
   return (
-    <AuthContext.Provider value={{ user, dbUser, loading, isReady, setSession, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        dbUser,
+        loading: isPending,
+        isReady: !isPending,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

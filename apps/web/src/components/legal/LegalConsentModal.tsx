@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
-import { usersService } from '@/services/users.service';
+import { authClient } from '@/lib/auth-client';
 import { toast } from 'react-hot-toast';
 import { Loader2, ShieldCheck, X, ChevronDown } from 'lucide-react';
 import { TermsContent } from './TermsContent';
@@ -48,12 +48,6 @@ export function LegalConsentModal() {
       return;
     }
 
-    const isDismissed = sessionStorage.getItem('tapok_legal_dismissed') === 'true';
-    if (isDismissed) {
-      setIsVisible(false);
-      return;
-    }
-
     setIsVisible(true);
   }, [dbUser, isReady, pathname]);
 
@@ -77,10 +71,6 @@ export function LegalConsentModal() {
     }
   };
 
-  const handleDismiss = () => {
-    sessionStorage.setItem('tapok_legal_dismissed', 'true');
-    setIsVisible(false);
-  };
 
   const handleAccept = async () => {
     if (!dbUser || !hasScrolledToBottom) return;
@@ -88,19 +78,18 @@ export function LegalConsentModal() {
 
     try {
       const now = new Date().toISOString();
-      // Using the correct field names that match the backend DTO and DB schema
-      await usersService.update(dbUser.id, {
+      await authClient.updateUser({
         termsAccepted: true,
         termsAcceptedAt: now,
         privacyPolicyAccepted: true,
         privacyPolicyAcceptedAt: now,
       });
 
-      toast.success('PREFERENCES UPDATED');
+      toast.success('LEGAL COMPLIANCE ACCEPTED');
       await refreshUser();
       setIsVisible(false);
     } catch (error) {
-      toast.error('FAILED TO UPDATE PREFERENCES');
+      toast.error('FAILED TO ACCEPT LEGAL COMPLIANCE');
       console.error('Legal acceptance failed:', error);
     } finally {
       setIsAccepting(false);
@@ -128,13 +117,6 @@ export function LegalConsentModal() {
               <p className="font-inter text-[10px] uppercase font-bold tracking-widest opacity-80 mt-1">Review & Acceptance Required</p>
             </div>
           </div>
-          <button
-            onClick={handleDismiss}
-            className="rounded-full p-1 transition-all hover:bg-white/20 active:scale-95"
-            aria-label="Dismiss"
-          >
-            <X size={24} />
-          </button>
         </div>
 
         {/* Scrollable Content */}
@@ -179,13 +161,6 @@ export function LegalConsentModal() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <button
-              onClick={handleDismiss}
-              disabled={isAccepting}
-              className="w-full sm:w-auto rounded-lg border-2 border-tok-black bg-white px-6 py-3 font-passion text-xl uppercase tracking-wider text-tok-black transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#262624] active:translate-y-0 active:shadow-none disabled:opacity-50"
-            >
-              Later
-            </button>
             <button
               onClick={handleAccept}
               disabled={isAccepting || !hasScrolledToBottom}

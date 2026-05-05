@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthEmailService } from './auth-email.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthUser } from '../../common/decorators/auth-user.decorator';
-import type { DecodedIdToken } from 'firebase-admin/auth';
+import type { BetterAuthUser } from '../../common';
 
 @ApiTags('Auth Email')
 @Controller('auth/email')
@@ -13,7 +13,7 @@ export class AuthEmailController {
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Send password reset email via Resend' })
+  @ApiOperation({ summary: 'Send password reset email' })
   async sendResetEmail(@Body('email') email: string) {
     await this.authEmailService.sendPasswordResetEmail(email);
     return { success: true, message: 'If an account exists, a reset link has been sent.' };
@@ -21,21 +21,9 @@ export class AuthEmailController {
 
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Send email verification via Resend' })
-  async sendVerification(
-    @AuthUser() user: DecodedIdToken,
-    @Body('email') email: string
-  ) {
-    await this.authEmailService.sendVerificationEmail(email, user.uid);
+  @ApiOperation({ summary: 'Resend email verification' })
+  async sendVerification(@AuthUser() user: BetterAuthUser) {
+    await this.authEmailService.sendVerificationEmail(user.id);
     return { success: true, message: 'Verification email sent.' };
-  }
-
-  @Public()
-  @Post('confirm-email')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Confirm email address using a verification token' })
-  async confirmEmail(@Body('token') token: string) {
-    await this.authEmailService.confirmEmailToken(token);
-    return { success: true };
   }
 }

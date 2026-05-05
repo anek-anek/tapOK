@@ -23,10 +23,6 @@ export class UsersRepository {
     return this.repo.findOneBy({ id });
   }
 
-  findByFirebaseUid(firebaseUid: string): Promise<User | null> {
-    return this.repo.findOneBy({ firebaseUid });
-  }
-
   findByEmail(email: string): Promise<User | null> {
     return this.repo.findOne({
       where: { email: ILike(email.trim()) },

@@ -5,21 +5,17 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import * as admin from 'firebase-admin';
-import type { DecodedIdToken } from 'firebase-admin/auth';
 import { DataSource } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dto/create-user.dto';
-import { SyncAuthMode, SyncUserDto } from './dto/sync-user.dto';
+import { SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { FrequentCrewDto } from './dto/frequent-crew.dto';
-import { AuthProvider, MediaAssetsService, UserRole } from '../../common';
+import { AuthProvider, BetterAuthUser, MediaAssetsService } from '../../common';
 import { CreateAvatarUploadDto } from './dto/create-avatar-upload.dto';
 import { AvatarUploadSessionDto } from './dto/avatar-upload-session.dto';
-
-const SESSION_COOKIE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class UsersService {
@@ -35,18 +31,16 @@ export class UsersService {
     if (!avatar) return undefined;
     const storagePath = this.mediaAssets.extractStoragePath(avatar);
     if (!storagePath) return avatar;
-    const resolved = await this.mediaAssets.tryResolveReadUrl(storagePath);
-    return resolved ?? undefined;
+    return (await this.mediaAssets.tryResolveReadUrl(storagePath)) ?? undefined;
   }
 
-  findAll(page: number = 1, limit: number = 100): Promise<User[]> {
-    return this.usersRepository.findAll(page, limit).then((users) =>
-      Promise.all(
-        users.map(async (user) => ({
-          ...user,
-          avatar: await this.resolveAvatarReference(user.avatar),
-        })),
-      ),
+  async findAll(page: number = 1, limit: number = 100): Promise<User[]> {
+    const users = await this.usersRepository.findAll(page, limit);
+    return Promise.all(
+      users.map(async (user) => ({
+        ...user,
+        avatar: await this.resolveAvatarReference(user.avatar),
+      })),
     );
   }
 
@@ -56,97 +50,115 @@ export class UsersService {
     return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
   }
 
-  findByFirebaseUid(firebaseUid: string): Promise<User | null> {
-    return this.usersRepository.findByFirebaseUid(firebaseUid).then(async (user) => {
-      if (!user) return null;
-      return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
-    });
-  }
-
   async findExistingAuthProviderByEmail(email: string): Promise<AuthProvider | null> {
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail) return null;
-
-    // 1. Check our database first
     const user = await this.usersRepository.findByEmail(normalizedEmail);
-    if (user) return user.authProvider;
-
-    // 2. Fallback: Check Firebase Auth directly (for accounts not yet synced to DB)
-    try {
-      const userRecord = await admin.auth().getUserByEmail(normalizedEmail);
-      const firstProvider = userRecord.providerData?.[0];
-      
-      if (firstProvider) {
-        const providerId = firstProvider.providerId;
-        if (providerId === 'google.com') return AuthProvider.GOOGLE;
-        if (providerId === 'password') return AuthProvider.PASSWORD;
-      }
-    } catch (err) {
-      // User not found in Firebase or other error
-      this.logger.debug(`Firebase lookup failed for ${normalizedEmail}: ${err}`);
-    }
-
-    return null;
+    return user?.authProvider ?? null;
   }
 
-  async findMe(token: DecodedIdToken): Promise<UserProfileDto> {
-    const firebaseUid = token.uid;
-    const user = await this.usersRepository.findByFirebaseUid(firebaseUid);
+  async findMe(betterAuthUser: BetterAuthUser): Promise<UserProfileDto> {
+    const user = await this.usersRepository.findById(betterAuthUser.id);
     if (!user) throw new NotFoundException('No account found for this user.');
 
-    const [{ dropCount, crewReached }] = await this.dataSource.query<[{ dropCount: string, crewReached: string }]>(
+    const [{ dropCount, crewReached }] = await this.dataSource.query<
+      [{ dropCount: string; crewReached: string }]
+    >(
       `
-      SELECT 
+      SELECT
         (SELECT COUNT(*) FROM drops WHERE "organiserId" = $1) as "dropCount",
-        (SELECT COUNT(DISTINCT c."userId") 
-         FROM drop_crew c 
+        (SELECT COUNT(DISTINCT c."userId")
+         FROM drop_crew c
          WHERE c."dropId" IN (SELECT id FROM drops WHERE "organiserId" = $1)
          AND c.status = 'in') as "crewReached"
       `,
       [user.id],
     );
 
-    return { 
+    return {
       ...user,
       avatar: await this.resolveAvatarReference(user.avatar),
       dropCount: parseInt(dropCount, 10),
-      crewReached: parseInt(crewReached, 10)
+      crewReached: parseInt(crewReached, 10),
     };
-  }
-
-  async createSessionCookie(idToken: string): Promise<{ sessionCookie: string; expiresIn: number }> {
-    try {
-      await admin.auth().verifyIdToken(idToken);
-      const sessionCookie = await admin.auth().createSessionCookie(idToken, {
-        expiresIn: SESSION_COOKIE_TTL_MS,
-      });
-
-      return {
-        sessionCookie,
-        expiresIn: Math.floor(SESSION_COOKIE_TTL_MS / 1000),
-      };
-    } catch (err) {
-      this.logger.warn(`Failed to create Firebase session cookie: ${err}`);
-      throw new BadRequestException({
-        message: 'Invalid or expired token',
-        code: 'INVALID_OR_EXPIRED_TOKEN',
-      });
-    }
   }
 
   create(dto: CreateUserDto): Promise<User> {
     return this.usersRepository.create(dto);
   }
 
-  async assertOwnership(id: string, firebaseUid: string): Promise<User> {
+  async syncUser(betterAuthUser: BetterAuthUser, dto: SyncUserDto = {}): Promise<User> {
+    const email = betterAuthUser.email.trim().toLowerCase();
+    const authProvider = betterAuthUser.email
+      ? (betterAuthUser as any).accounts?.[0]?.providerId === 'google'
+        ? AuthProvider.GOOGLE
+        : AuthProvider.PASSWORD
+      : AuthProvider.PASSWORD;
+
+    const existing = await this.usersRepository.findByEmail(email);
+
+    if (existing) {
+      const updated = Object.assign(existing, {
+        firstName: dto.firstName?.trim() || existing.firstName,
+        lastName: dto.lastName?.trim() || existing.lastName,
+        avatar: betterAuthUser.image || existing.avatar,
+        isEmailVerified: betterAuthUser.emailVerified ?? existing.isEmailVerified,
+        emailVerifiedAt:
+          betterAuthUser.emailVerified && !existing.emailVerifiedAt
+            ? new Date()
+            : existing.emailVerifiedAt,
+        gender: dto.gender ?? existing.gender,
+        birthday: dto.birthday ? new Date(dto.birthday) : existing.birthday,
+        userHandle: dto.userHandle?.trim() || existing.userHandle,
+        termsAccepted: dto.termsAccepted ?? existing.termsAccepted ?? false,
+        termsAcceptedAt: dto.termsAcceptedAt
+          ? new Date(dto.termsAcceptedAt)
+          : existing.termsAcceptedAt,
+        privacyPolicyAccepted:
+          dto.privacyPolicyAccepted ?? existing.privacyPolicyAccepted ?? false,
+        privacyPolicyAcceptedAt: dto.privacyPolicyAcceptedAt
+          ? new Date(dto.privacyPolicyAcceptedAt)
+          : existing.privacyPolicyAcceptedAt,
+      });
+      const user = await this.usersRepository.save(updated);
+      return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
+    }
+
+    // First sync after signup — create the profile row
+    const [tokenFirst = '', ...rest] = (betterAuthUser.name ?? '').split(' ');
+    const tokenLast = rest.join(' ');
+
+    const user = await this.usersRepository.create({
+      id: betterAuthUser.id,
+      email,
+      authProvider,
+      firstName: dto.firstName?.trim() || tokenFirst,
+      lastName: dto.lastName?.trim() || tokenLast,
+      avatar: betterAuthUser.image ?? undefined,
+      isEmailVerified: betterAuthUser.emailVerified ?? false,
+      emailVerifiedAt: betterAuthUser.emailVerified ? new Date() : undefined,
+      gender: dto.gender,
+      birthday: dto.birthday ? new Date(dto.birthday) : undefined,
+      userHandle: dto.userHandle?.trim(),
+      termsAccepted: dto.termsAccepted ?? false,
+      termsAcceptedAt: dto.termsAcceptedAt ? new Date(dto.termsAcceptedAt) : undefined,
+      privacyPolicyAccepted: dto.privacyPolicyAccepted ?? false,
+      privacyPolicyAcceptedAt: dto.privacyPolicyAcceptedAt
+        ? new Date(dto.privacyPolicyAcceptedAt)
+        : undefined,
+    });
+    return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
+  }
+
+  async assertOwnership(id: string, requesterId: string): Promise<User> {
     const user = await this.usersRepository.findById(id);
     if (!user) throw new NotFoundException(`User ${id} not found`);
-    if (user.firebaseUid !== firebaseUid) throw new ForbiddenException('Access denied');
+    if (user.id !== requesterId) throw new ForbiddenException('Access denied');
     return user;
   }
 
-  async update(id: string, dto: UpdateUserDto, firebaseUid: string): Promise<User> {
-    await this.assertOwnership(id, firebaseUid);
+  async update(id: string, dto: UpdateUserDto, requesterId: string): Promise<User> {
+    await this.assertOwnership(id, requesterId);
     const user = await this.usersRepository.update(id, dto);
     if (!user) throw new NotFoundException(`User ${id} not found`);
     return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
@@ -154,10 +166,10 @@ export class UsersService {
 
   async createAvatarUploadSession(
     id: string,
-    firebaseUid: string,
+    requesterId: string,
     dto: CreateAvatarUploadDto,
   ): Promise<AvatarUploadSessionDto> {
-    const user = await this.assertOwnership(id, firebaseUid);
+    const user = await this.assertOwnership(id, requesterId);
     const mimeType = dto.mimeType === 'image/jpg' ? 'image/jpeg' : dto.mimeType;
     if (!['image/jpeg', 'image/png'].includes(mimeType)) {
       throw new BadRequestException('Invalid image format: Only JPG and PNG are allowed');
@@ -168,9 +180,10 @@ export class UsersService {
     return { userId: user.id, storagePath, uploadToken: token };
   }
 
-  async completeAvatarUpload(id: string, firebaseUid: string): Promise<User> {
-    const user = await this.assertOwnership(id, firebaseUid);
-    const storagePath = user.avatarStoragePath ?? this.mediaAssets.extractStoragePath(user.avatar ?? '');
+  async completeAvatarUpload(id: string, requesterId: string): Promise<User> {
+    const user = await this.assertOwnership(id, requesterId);
+    const storagePath =
+      user.avatarStoragePath ?? this.mediaAssets.extractStoragePath(user.avatar ?? '');
     if (!storagePath) {
       throw new BadRequestException('Avatar upload session not found');
     }
@@ -197,240 +210,13 @@ export class UsersService {
     return { ...saved, avatar: await this.resolveAvatarReference(saved.avatar) };
   }
 
-  async remove(id: string, firebaseUid: string): Promise<void> {
-    await this.assertOwnership(id, firebaseUid);
+  async remove(id: string, requesterId: string): Promise<void> {
+    await this.assertOwnership(id, requesterId);
     await this.usersRepository.remove(id);
   }
 
-  private getAuthProviderFromToken(token: DecodedIdToken): AuthProvider {
-    const signInProvider = token.firebase.sign_in_provider;
-
-    if (signInProvider === 'google.com') return AuthProvider.GOOGLE;
-    if (signInProvider === 'password') return AuthProvider.PASSWORD;
-
-    throw new BadRequestException({
-      message: 'This sign-in method is not supported on TapOK.',
-      code: 'INVALID_CREDENTIALS',
-    });
-  }
-
-  private getProviderMismatchMessage(existingProvider: AuthProvider): string {
-    if (existingProvider === AuthProvider.GOOGLE) {
-      return 'This email is registered with Google. Continue with Google sign-in instead.';
-    }
-
-    return 'This email is registered with email and password. Sign in with your password instead.';
-  }
-
-  private buildSyncedProfile(
-    token: DecodedIdToken,
-    dto: SyncUserDto,
-    existingUser: User | null,
-    authProvider: AuthProvider,
-  ): Partial<User> {
-    const [tokenFirst = '', ...rest] = (token.name ?? '').split(' ');
-    const tokenLast = rest.join(' ');
-
-    const isEmailVerified = existingUser?.isEmailVerified ?? false;
-    const emailVerifiedAt = existingUser?.emailVerifiedAt;
-
-    return {
-      email: token.email ?? existingUser?.email ?? '',
-      authProvider,
-      firstName: dto.firstName?.trim() || existingUser?.firstName || tokenFirst,
-      lastName: dto.lastName?.trim() || existingUser?.lastName || tokenLast,
-      avatar: token.picture || existingUser?.avatar,
-      googleId: authProvider === AuthProvider.GOOGLE ? token.uid : existingUser?.googleId,
-      isEmailVerified,
-      emailVerifiedAt,
-      gender: dto.gender ?? existingUser?.gender,
-      birthday: dto.birthday ? new Date(dto.birthday) : existingUser?.birthday,
-      userHandle: dto.userHandle?.trim() || existingUser?.userHandle,
-      termsAccepted: dto.termsAccepted ?? existingUser?.termsAccepted ?? false,
-      termsAcceptedAt: dto.termsAcceptedAt
-        ? new Date(dto.termsAcceptedAt)
-        : existingUser?.termsAcceptedAt,
-      privacyPolicyAccepted:
-        dto.privacyPolicyAccepted ?? existingUser?.privacyPolicyAccepted ?? false,
-      privacyPolicyAcceptedAt: dto.privacyPolicyAcceptedAt
-        ? new Date(dto.privacyPolicyAcceptedAt)
-        : existingUser?.privacyPolicyAcceptedAt,
-    };
-  }
-
-  async isLinkExpired(email: string, type: 'reset' | 'verify'): Promise<boolean> {
-    const user = await this.usersRepository.findByEmail(email);
-    if (!user) return true;
-
-    const sentAt = type === 'reset' ? user.passwordResetSentAt : user.emailVerificationSentAt;
-    if (!sentAt) return true;
-
-    const EXPIRY_MS = 10 * 60 * 1000;
-    return (new Date().getTime() - new Date(sentAt).getTime()) > EXPIRY_MS;
-  }
-
-  async syncFromFirebase(token: DecodedIdToken, dto: SyncUserDto = {}): Promise<User> {
-    const firebaseUid = token.uid;
-    let tokenEmail = (
-      token.email ||
-      token.firebase?.identities?.['email']?.[0] ||
-      ''
-    )
-      .trim()
-      .toLowerCase();
-
-    if (!tokenEmail) {
-      try {
-        const userRecord = await admin.auth().getUser(firebaseUid);
-        tokenEmail = (userRecord.email ?? '').trim().toLowerCase();
-
-        // If primary email is missing, check provider-specific data
-        if (!tokenEmail && userRecord.providerData) {
-          const providerEmail = userRecord.providerData.find((p) => p.email)?.email;
-          if (providerEmail) tokenEmail = providerEmail.trim().toLowerCase();
-        }
-      } catch (err) {
-        this.logger.warn(`Failed to fetch user record for ${firebaseUid}: ${err}`);
-      }
-    }
-
-    const email = (tokenEmail || (dto.email ?? '')).trim().toLowerCase();
-    const isEmailVerified = token.email_verified ?? false;
-    const authMode = dto.authMode ?? SyncAuthMode.LOGIN;
-
-    let tokenAuthProvider: AuthProvider;
-    try {
-      tokenAuthProvider = this.getAuthProviderFromToken(token);
-    } catch (err) {
-      this.logger.error(`Failed to detect auth provider from token: ${err}`);
-      throw new BadRequestException({
-        message: 'Invalid authentication token. Please try signing in again.',
-        code: 'INVALID_CREDENTIALS',
-      });
-    }
-
-    const requestedAuthProvider = dto.authProvider ?? tokenAuthProvider;
-
-    if (requestedAuthProvider !== tokenAuthProvider) {
-      throw new BadRequestException({
-        message: 'Auth provider mismatch between request and token.',
-        code: 'INVALID_CREDENTIALS',
-      });
-    }
-
-    const existingByUid = await this.usersRepository.findByFirebaseUid(firebaseUid);
-    const existingByEmail = !existingByUid && email
-      ? await this.usersRepository.findByEmail(email)
-      : null;
-
-    if (existingByUid) {
-      if (existingByUid.authProvider !== requestedAuthProvider) {
-        throw new ForbiddenException({
-          message: this.getProviderMismatchMessage(existingByUid.authProvider),
-          code: 'AUTH_PROVIDER_MISMATCH',
-        });
-      }
-
-      const syncedUser = Object.assign(
-        existingByUid,
-        this.buildSyncedProfile(token, dto, existingByUid, requestedAuthProvider),
-      );
-      const user = await this.usersRepository.save(syncedUser);
-
-      try {
-        await admin.auth().setCustomUserClaims(token.uid, { role: user.role });
-      } catch (err) {
-        this.logger.warn(`Failed to set custom claims for ${token.uid}: ${err}`);
-      }
-
-      return {
-        ...user,
-        avatar: await this.resolveAvatarReference(user.avatar),
-      };
-    }
-
-    if (existingByEmail && existingByEmail.authProvider !== requestedAuthProvider) {
-      throw new ForbiddenException({
-        message: this.getProviderMismatchMessage(existingByEmail.authProvider),
-        code: 'AUTH_PROVIDER_MISMATCH',
-      });
-    }
-
-    if (!email) {
-      throw new BadRequestException({
-        message: 'Google did not share your email address. Please enter your email in the field to continue.',
-        code: 'INVALID_CREDENTIALS',
-      });
-    }
-
-    if (!existingByEmail) {
-      if (authMode === SyncAuthMode.LOGIN) {
-        throw new NotFoundException({
-          message: 'No TapOK account found. Please sign up first.',
-          code: 'NO_ACCOUNT',
-        });
-      }
-
-      const user = await this.usersRepository.create({
-        ...this.buildSyncedProfile(token, dto, null, requestedAuthProvider),
-        email,
-        firebaseUid,
-      });
-
-      try {
-        await admin.auth().setCustomUserClaims(token.uid, { role: user.role });
-      } catch (err) {
-        this.logger.warn(`Failed to set custom claims for ${token.uid}: ${err}`);
-      }
-
-      return {
-        ...user,
-        avatar: await this.resolveAvatarReference(user.avatar),
-      };
-    }
-
-    if (existingByEmail.firebaseUid && existingByEmail.firebaseUid !== firebaseUid) {
-      throw new ForbiddenException({
-        message: 'This email is already connected to a different TapOK account.',
-        code: 'AUTH_PROVIDER_MISMATCH',
-      });
-    }
-
-    if (!isEmailVerified) {
-      throw new ForbiddenException({
-        message: 'Verification Required: Please verify your email before continuing. You can resend the link from your Profile.',
-        code: 'EMAIL_NOT_VERIFIED',
-      });
-    }
-
-    if (existingByEmail.role === UserRole.ADMIN && !existingByEmail.firebaseUid) {
-      throw new ForbiddenException({
-        message: 'This account must be linked by a platform administrator.',
-        code: 'AUTH_PROVIDER_MISMATCH',
-      });
-    }
-
-    const syncedUser = Object.assign(
-      existingByEmail,
-      this.buildSyncedProfile(token, dto, existingByEmail, requestedAuthProvider),
-      { firebaseUid },
-    );
-    const user = await this.usersRepository.save(syncedUser);
-
-    try {
-      await admin.auth().setCustomUserClaims(token.uid, { role: user.role });
-    } catch (err) {
-      this.logger.warn(`Failed to set custom claims for ${token.uid}: ${err}`);
-    }
-
-    return {
-      ...user,
-      avatar: await this.resolveAvatarReference(user.avatar),
-    };
-  }
-
-  async getFrequentCrew(firebaseUid: string): Promise<FrequentCrewDto[]> {
-    const user = await this.usersRepository.findByFirebaseUid(firebaseUid);
+  async getFrequentCrew(userId: string): Promise<FrequentCrewDto[]> {
+    const user = await this.usersRepository.findById(userId);
     if (!user) throw new NotFoundException('No account found for this user.');
 
     const results = await this.dataSource.query(
@@ -457,10 +243,21 @@ export class UsersService {
       frequencyCount: parseInt(r.frequencyCount, 10),
     }));
     return Promise.all(
-      mapped.map(async (member) => ({
+      mapped.map(async (member: FrequentCrewDto) => ({
         ...member,
         avatar: await this.resolveAvatarReference(member.avatar),
       })),
     );
+  }
+
+  async isLinkExpired(email: string, type: 'reset' | 'verify'): Promise<boolean> {
+    const user = await this.usersRepository.findByEmail(email);
+    if (!user) return true;
+
+    const sentAt = type === 'reset' ? user.passwordResetSentAt : user.emailVerificationSentAt;
+    if (!sentAt) return true;
+
+    const EXPIRY_MS = 10 * 60 * 1000;
+    return new Date().getTime() - new Date(sentAt).getTime() > EXPIRY_MS;
   }
 }

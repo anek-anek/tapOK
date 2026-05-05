@@ -7,6 +7,8 @@ import helmet from 'helmet';
 
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common';
+import { auth } from './lib/auth';
+import { toNodeHandler } from 'better-auth/node';
 
 let app: INestApplication;
 let bootstrapPromise: Promise<void> | null = null;
@@ -32,6 +34,24 @@ async function bootstrap() {
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
 
+  const webOrigin = process.env.WEB_ORIGIN ?? 'http://localhost:4200';
+  const origins = webOrigin.split(',').map((o) => o.trim());
+
+  if (process.env.NODE_ENV === 'production') {
+    if (!origins.includes('https://tapok.app')) {
+      origins.push('https://tapok.app');
+    }
+    if (!origins.includes('https://www.tapok.app')) {
+      origins.push('https://www.tapok.app');
+    }
+  }
+
+  // CORS must be registered before BetterAuth so preflight requests on /api/auth/* are handled correctly
+  app.enableCors({ origin: origins, credentials: true });
+
+  // BetterAuth owns all /api/auth/* routes — bypass NestJS guards/pipes entirely
+  app.use('/api/auth', toNodeHandler(auth));
+
   app.use(
     helmet({
       contentSecurityPolicy: process.env.NODE_ENV === 'production',
@@ -47,20 +67,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
-  const webOrigin = process.env.WEB_ORIGIN ?? 'http://localhost:4200';
-  const origins = webOrigin.split(',').map((o) => o.trim());
-  
-  if (process.env.NODE_ENV === 'production') {
-    if (!origins.includes('https://tapok.app')) {
-      origins.push('https://tapok.app');
-    }
-    if (!origins.includes('https://www.tapok.app')) {
-      origins.push('https://www.tapok.app');
-    }
-  }
-
-  app.enableCors({ origin: origins, credentials: true });
 
   if (process.env.NODE_ENV !== 'production') {
     const document = buildOpenApiDocument(app);
