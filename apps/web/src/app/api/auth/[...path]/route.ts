@@ -19,17 +19,21 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ path: s
 
   const body = req.method !== 'GET' && req.method !== 'HEAD' ? await req.arrayBuffer() : undefined;
 
-  const apiRes = await fetch(url, {
-    method: req.method,
-    headers,
-    body,
-    redirect: 'manual',
-  });
+  let apiRes: Response;
+  try {
+    apiRes = await fetch(url, {
+      method: req.method,
+      headers,
+      body,
+      redirect: 'manual',
+    });
+  } catch (err) {
+    console.error('[auth-proxy] fetch failed', { url, error: err });
+    return new NextResponse(`Auth proxy error: ${String(err)}`, { status: 502 });
+  }
 
   const resHeaders = new Headers();
   apiRes.headers.forEach((value, key) => {
-    // fetch() decompresses the body automatically, so strip encoding headers
-    // to prevent the browser from attempting a second decompression pass
     if (['content-encoding', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) return;
     resHeaders.set(key, value);
   });
