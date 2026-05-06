@@ -37,7 +37,9 @@ export class BetterAuthGuard implements CanActivate {
     const fetchRequest = new Request(url, { headers });
 
     try {
+      this.logger.debug(`[BetterAuthGuard] url=${url} cookie=${headers.get('cookie')?.slice(0, 80)} origin=${headers.get('origin')}`);
       const session = await this.betterAuth.getSession(fetchRequest);
+      this.logger.debug(`[BetterAuthGuard] session=${session ? session.user?.id : 'null'}`);
 
       if (!session) {
         if (isPublic) return true;
