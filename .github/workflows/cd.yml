@@ -70,7 +70,7 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_API }}
-        run: npx vercel deploy --prebuilt ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel deploy --prebuilt --archive=tgz ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}
 
       # --- Deploy Web ---
       - name: Pull Vercel Web environment
@@ -91,4 +91,4 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
-        run: npx vercel deploy --prebuilt ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel deploy --prebuilt --archive=tgz ${{ github.ref_name == 'main' && '--prod' || '--target=preview' }} --token=${{ secrets.VERCEL_TOKEN }}
