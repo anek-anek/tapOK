@@ -55,7 +55,7 @@ export class CreateUserDto {
   @IsOptional()
   @Type(() => Date)
   @IsDate({ message: 'Birthday must be a valid date' })
-  @MaxDate(new Date(), { message: 'Birthday cannot be in the future' })
+  @MaxDate(() => new Date(), { message: 'Birthday cannot be in the future' })
   birthday?: Date;
 
   @ApiPropertyOptional({ example: 'jane_doe' })
