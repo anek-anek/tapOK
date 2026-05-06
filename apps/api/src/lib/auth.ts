@@ -72,12 +72,13 @@ export const auth = betterAuth({
     },
   },
 
+  account: {
+    storeStateStrategy: 'cookie',
+  },
+
   advanced: {
     database: {
       generateId: 'uuid',
-    },
-    oauthConfig: {
-      storeStateStrategy: 'cookie',
     },
   },
 
