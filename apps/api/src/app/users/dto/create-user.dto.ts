@@ -1,17 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsDate,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsOptional,
   IsPhoneNumber,
   IsString,
   Matches,
-  MaxDate,
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { AuthProvider, GenderEnum, UserRole } from '../../../common';
 
 export class CreateUserDto {
@@ -53,10 +51,8 @@ export class CreateUserDto {
 
   @ApiPropertyOptional({ example: '1990-01-01' })
   @IsOptional()
-  @Type(() => Date)
-  @IsDate({ message: 'Birthday must be a valid date' })
-  @MaxDate(() => new Date(), { message: 'Birthday cannot be in the future' })
-  birthday?: Date;
+  @IsDateString({}, { message: 'Birthday must be a valid date' })
+  birthday?: string;
 
   @ApiPropertyOptional({ example: 'jane_doe' })
   @IsOptional()

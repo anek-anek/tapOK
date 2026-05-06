@@ -1,6 +1,5 @@
 import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsOptional, IsPhoneNumber, IsString, Matches, MaxDate, MaxLength, MinLength } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { GenderEnum } from '../../../common';
 import { CreateUserDto } from './create-user.dto';
 
@@ -45,8 +44,6 @@ export class UpdateUserDto extends PartialType(
 
   @ApiPropertyOptional({ example: '1990-01-01' })
   @IsOptional()
-  @Type(() => Date)
-  @IsDate({ message: 'Birthday must be a valid date' })
-  @MaxDate(() => new Date(), { message: 'Birthday cannot be in the future' })
-  declare birthday?: Date;
+  @IsDateString({}, { message: 'Birthday must be a valid date' })
+  declare birthday?: string;
 }
