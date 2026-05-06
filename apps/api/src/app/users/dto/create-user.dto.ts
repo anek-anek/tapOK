@@ -29,11 +29,6 @@ export class CreateUserDto {
   @IsString()
   lastName: string;
 
-  @ApiPropertyOptional({ example: 'firebase-uid-123' })
-  @IsOptional()
-  @IsString()
-  firebaseUid?: string;
-
   @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg' })
   @IsOptional()
   @IsString()

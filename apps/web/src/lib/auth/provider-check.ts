@@ -1,6 +1,6 @@
 'use client';
 
-import type { AuthProvider } from '@/lib/auth/finalize-session';
+import type { AuthProvider } from '@/components/providers/auth-provider';
 
 interface ProviderCheckResult {
   exists: boolean;

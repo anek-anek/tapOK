@@ -5,9 +5,9 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { DecodedIdToken } from 'firebase-admin/auth';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { UserRole } from '../enums/user-role.enum';
+import type { BetterAuthUser } from '../better-auth/better-auth.service';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -23,9 +23,9 @@ export class RolesGuard implements CanActivate {
 
     const request = context
       .switchToHttp()
-      .getRequest<{ user?: DecodedIdToken & { role?: string } }>();
+      .getRequest<{ user?: BetterAuthUser }>();
 
-    const userRole = request.user?.role;
+    const userRole = request.user?.role as string | undefined;
     if (!userRole || !requiredRoles.includes(userRole as UserRole)) {
       throw new ForbiddenException('Insufficient role');
     }

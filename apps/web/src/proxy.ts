@@ -17,14 +17,14 @@ function resolveApiUrl(): string {
 async function getSessionAuth(
   request: NextRequest,
 ): Promise<{ isAuthenticated: boolean; role: UserRole | null }> {
-  const token = request.cookies.get('__session')?.value;
-  if (!token) return { isAuthenticated: false, role: null };
+  const sessionCookie = request.cookies.get('better-auth.session_token')?.value;
+  if (!sessionCookie) return { isAuthenticated: false, role: null };
 
   try {
     const response = await fetch(`${resolveApiUrl().replace(/\/$/, '')}/users/me`, {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${token}`,
+        cookie: request.headers.get('cookie') ?? '',
       },
       cache: 'no-store',
     });

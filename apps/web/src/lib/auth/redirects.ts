@@ -52,16 +52,16 @@ export function resolveAuthSuccessRedirect(options: {
 }): string {
   const safeRedirect = sanitizeRedirectTo(options.redirectTo);
 
+  if (options.shouldOnboard) {
+    return buildOnboardingHref(options.firstName, safeRedirect);
+  }
+
   if (options.mode === 'login') {
     return safeRedirect;
   }
 
   if (isCrewJoinRedirect(safeRedirect)) {
     return safeRedirect;
-  }
-
-  if (options.shouldOnboard) {
-    return buildOnboardingHref(options.firstName, safeRedirect);
   }
 
   return safeRedirect;

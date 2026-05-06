@@ -20,7 +20,7 @@ import {
   Users as IconUsers,
   ShieldCheck as IconShieldCheck,
 } from 'lucide-react';
-import { useDrop, useMyCrewStatus, useDropCrew, useDropActivityLogs } from '@/hooks/queries/use-drops';
+import { useDrop, useMyCrewStatus, useDropCrew } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { DropModal } from '@/components/drop-modal';
@@ -88,17 +88,6 @@ function StatusPill({ status, scheduledAt }: { status: DropStatus; scheduledAt: 
         {meta.label}
       </span>
     </span>
-  );
-}
-
-function getInitials(name: string) {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('') || 'D'
   );
 }
 
@@ -399,7 +388,7 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 
 function DropDetailContent({ id }: { id: string }) {
   const router = useRouter();
-  const { user, dbUser, loading: authLoading, isReady } = useAuth();
+  const { dbUser, loading: authLoading, isReady } = useAuth();
   const { data: drop, isError } = useDrop(id);
   const {
     data: crewStatus,

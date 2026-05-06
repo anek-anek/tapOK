@@ -12,7 +12,7 @@ export const TermsContent = () => (
     <section>
       <h2 className="text-2xl font-passion uppercase mb-2">2. Use License</h2>
       <p>
-        Permission is granted to temporarily use the materials (information or software) on tapOK's website for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
+        Permission is granted to temporarily use the materials (information or software) on tapOK&apos;s website for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
       </p>
       <ul className="list-disc pl-5 mt-4 space-y-2">
         <li>Modify or copy the materials;</li>
@@ -32,7 +32,7 @@ export const TermsContent = () => (
       </p>
       <ul className="list-disc pl-5 mt-4 space-y-2">
         <li>Post content that is defamatory, obscene, or infringing on intellectual property.</li>
-        <li>Engage in any form of "spamming" or unauthorized marketing.</li>
+        <li>Engage in any form of &quot;spamming&quot; or unauthorized marketing.</li>
         <li>Impersonate any person or entity.</li>
       </ul>
     </section>
@@ -47,7 +47,7 @@ export const TermsContent = () => (
     <section>
       <h2 className="text-2xl font-passion uppercase mb-2">5. Disclaimer and Limitation of Liability</h2>
       <p>
-        The materials on tapOK's website are provided on an 'as is' basis. tapOK makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
+        The materials on tapOK&apos;s website are provided on an &apos;as is&apos; basis. tapOK makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
       </p>
       <p className="mt-4">
         In no event shall tapOK or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to service interruption) arising out of the use or inability to use the materials on tapOK.

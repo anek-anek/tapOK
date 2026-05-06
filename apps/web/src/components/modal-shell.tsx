@@ -31,7 +31,6 @@ export function ModalShell({
 
     // Lock scroll - more aggressive for cross-browser support
     const originalBodyOverflow = document.body.style.overflow;
-    const originalHtmlOverflow = document.documentElement.style.overflow;
     const originalPaddingRight = document.body.style.paddingRight;
 
     // Calculate scrollbar width to prevent layout shift

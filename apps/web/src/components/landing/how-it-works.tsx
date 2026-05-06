@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/auth-provider';
-import { useMounted } from '@/hooks/use-mounted';
-
 const SHARE_CARD_INK = '#3a3a36';
 
 const flipSteps = [

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/auth-provider';
-import { useMounted } from '@/hooks/use-mounted';
 
 export function HeroActions() {
   const { dbUser, loading } = useAuth();

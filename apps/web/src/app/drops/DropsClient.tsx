@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ClipboardEvent, type FormEvent } from 'react';
-import { useMounted } from '@/hooks/use-mounted';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -48,29 +47,6 @@ function sanitizeJoinCode(raw: string): string {
     .toUpperCase()
     .replace(/[^A-F0-9]/g, '')
     .slice(0, 16);
-}
-
-function handleJoinCodePaste(
-  e: ClipboardEvent<HTMLInputElement>,
-  currentValue: string,
-  setValue: (next: string) => void,
-) {
-  const pasted = e.clipboardData?.getData('text/plain');
-  if (pasted == null || pasted === '') return;
-  e.preventDefault();
-  const el = e.currentTarget;
-  const start = typeof el.selectionStart === 'number' ? el.selectionStart : currentValue.length;
-  const end = typeof el.selectionEnd === 'number' ? el.selectionEnd : currentValue.length;
-  const merged = sanitizeJoinCode(currentValue.slice(0, start) + pasted + currentValue.slice(end));
-  setValue(merged);
-  queueMicrotask(() => {
-    try {
-      const caret = merged.length;
-      el.setSelectionRange(caret, caret);
-    } catch {
-      /* Safari / some webviews may throw if input lost focus */
-    }
-  });
 }
 
 function DropsDotGrid() {
@@ -261,7 +237,6 @@ export default function DropsClient() {
     enabled: isReady && Boolean(dbUser),
   });
 
-  const drops = data ?? [];
   const showBoardBodySkeleton = isPending;
 
   const [shareModalDrop, setShareModalDrop] = useState<Drop | null>(null);
@@ -278,6 +253,7 @@ export default function DropsClient() {
   }, [pathname]);
 
   const { activeDrops, completedDrops, focusDrop, upcomingCount, pastCount } = useMemo(() => {
+    const drops = data ?? [];
     const current = drops
       .filter((d) => d.status === 'active' || d.status === 'ongoing')
       .sort(sortByScheduledAtAsc);
@@ -292,7 +268,7 @@ export default function DropsClient() {
       upcomingCount: current.length,
       pastCount: past.length,
     };
-  }, [drops]);
+  }, [data]);
 
   const handleShare = (drop: Drop) => setShareModalDrop(drop);
 

@@ -1,25 +1,14 @@
 'use client';
 
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { startTransition, use, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from 'firebase/auth';
 import { Eye, EyeOff, Loader2, Check } from 'lucide-react';
-import { getFirebaseAuth } from '@/lib/firebase';
-import { signUpSchema, type SignUpFormValues } from '@/lib/validations/auth';
+import { signIn, signUp } from '@/lib/auth-client';
 import { useAuth } from '@/components/providers/auth-provider';
-import { finalizeSession } from '@/lib/auth/finalize-session';
-import { getRegisterFirebaseError } from '@/lib/auth/firebase-auth-errors';
-import { resolveGoogleRedirectSession } from '@/lib/auth/google-redirect';
-import {
-  shouldDeleteGoogleUserOnFinalizeFailure,
-  signInWithGoogleInteractive,
-} from '@/lib/auth/google-signin';
+import { signUpSchema, type SignUpFormValues } from '@/lib/validations/auth';
 import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
 import { AuthFormField, AuthPageShell, authInputClass } from '@/components/auth/AuthPageShell';
 import { useAuthFormReset } from '@/lib/auth/use-auth-form-reset';
@@ -29,7 +18,6 @@ interface RegisterFormProps {
   searchParams: Promise<{ redirectTo?: string }>;
 }
 
-const PENDING_SIGNUP_CLEANUP_KEY = 'tapok:pending-signup-cleanup';
 const SIGN_UP_DEFAULT_VALUES: SignUpFormValues = {
   firstName: '',
   lastName: '',
@@ -38,20 +26,15 @@ const SIGN_UP_DEFAULT_VALUES: SignUpFormValues = {
   termsAccepted: false,
 };
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export default function RegisterForm({ searchParams }: RegisterFormProps) {
   const { redirectTo = '/drops' } = use(searchParams);
   const router = useRouter();
-  const { user, dbUser, setSession } = useAuth();
+  const { dbUser } = useAuth();
   const handledSuccessRedirectRef = useRef(false);
 
   const {
     register,
     handleSubmit,
-    getValues,
     setValue,
     watch,
     reset,
@@ -63,13 +46,7 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
 
   const termsAccepted = watch('termsAccepted');
   const [showPassword, setShowPassword] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('tapok_google_redirect_pending') === 'true';
-    }
-    return false;
-  });
-  const [googleRedirectResolved, setGoogleRedirectResolved] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const showError = useCallback((message: string) => {
     toast.error(message.toUpperCase());
@@ -82,228 +59,69 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
 
   const { formRef, clearForm } = useAuthFormReset(resetFormState);
 
-  const completeSuccessfulSignUp = (
-    firebaseUser: Parameters<typeof setSession>[0],
-    result: Extract<Awaited<ReturnType<typeof finalizeSession>>, { ok: true }>,
-    fallbackFirstName: string,
-  ) => {
-    toast.success('ACCOUNT CREATED');
-    setSession(firebaseUser, result.dbUser);
-    handledSuccessRedirectRef.current = true;
+  // If already authenticated, redirect immediately
+  useEffect(() => {
+    if (handledSuccessRedirectRef.current || !dbUser || isSubmitting) return;
     router.replace(
       resolveAuthSuccessRedirect({
-        mode: 'signup',
+        mode: 'login',
         redirectTo,
-        firstName: result.dbUser.firstName || fallbackFirstName,
-        shouldOnboard: result.shouldOnboard,
+        firstName: dbUser.firstName,
+        shouldOnboard: !dbUser.onboardingCompleted,
       }),
     );
-  };
+  }, [dbUser, isSubmitting, router, redirectTo]);
 
-  const rememberPendingSignupCleanup = useCallback((email: string) => {
-    sessionStorage.setItem(
-      PENDING_SIGNUP_CLEANUP_KEY,
-      JSON.stringify({ email, timestamp: Date.now() }),
-    );
-  }, []);
+  const syncAndRedirect = useCallback(
+    async (firstName: string, mode: 'login' | 'signup' = 'signup') => {
+      // Sync profile row — BetterAuth session cookie is sent automatically
+      await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload: {} }),
+        credentials: 'include',
+      }).catch(() => undefined);
 
-  const clearPendingSignupCleanup = useCallback(() => {
-    sessionStorage.removeItem(PENDING_SIGNUP_CLEANUP_KEY);
-  }, []);
-
-  const hasRecentPendingSignupCleanup = useCallback((email: string) => {
-    const raw = sessionStorage.getItem(PENDING_SIGNUP_CLEANUP_KEY);
-    if (!raw) return false;
-
-    try {
-      const parsed = JSON.parse(raw) as { email?: string; timestamp?: number };
-      return parsed.email === email && typeof parsed.timestamp === 'number' && Date.now() - parsed.timestamp < 5 * 60_000;
-    } catch {
-      return false;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (handledSuccessRedirectRef.current) return;
-
-    if (user && dbUser && !isSubmitting) {
-      router.replace(
-        resolveAuthSuccessRedirect({
-          mode: 'login',
-          redirectTo,
-          firstName: dbUser.firstName,
-          shouldOnboard: false,
-        }),
-      );
-    }
-  }, [user, dbUser, isSubmitting, router, redirectTo]);
-
-  useEffect(() => {
-    if (
-      handledSuccessRedirectRef.current ||
-      !user ||
-      dbUser ||
-      isSubmitting ||
-      googleLoading
-    ) {
-      return;
-    }
-
-    let cancelled = false;
-
-    void (async () => {
-      const finalized = await finalizeSession(user, { mode: 'login' });
-      if (cancelled || !finalized.ok) {
-        if (!cancelled && !finalized.ok) {
-          showError(finalized.message);
-        }
-        return;
-      }
-
-      setSession(user, finalized.dbUser);
-      router.replace(
-        resolveAuthSuccessRedirect({
-          mode: 'login',
-          redirectTo,
-          firstName: finalized.dbUser.firstName,
-          shouldOnboard: false,
-        }),
-      );
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, dbUser, isSubmitting, googleLoading, redirectTo, router, setSession, showError]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void (async () => {
-      const resolution = await resolveGoogleRedirectSession('signup');
-      if (cancelled) return;
-
-      if (resolution.status === 'success') {
-        const target = resolveAuthSuccessRedirect({
-          mode: 'signup',
-          redirectTo,
-          firstName: resolution.finalized.dbUser.firstName,
-          shouldOnboard: resolution.finalized.shouldOnboard,
-        });
-        router.replace(target);
-        setSession(resolution.user, resolution.finalized.dbUser);
-        toast.success('WELCOME TO TAPOK');
-      } else if (resolution.status === 'finalize_error') {
-        showError(resolution.finalized.message);
-      } else if (
-        resolution.status === 'firebase_error' &&
-        resolution.code !== 'auth/popup-closed-by-user'
-      ) {
-        showError(getRegisterFirebaseError(resolution.code));
-      }
-
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('tapok_google_redirect_pending');
-      }
-      setGoogleLoading(false);
-      setGoogleRedirectResolved(true);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [router, redirectTo, setSession, showError]);
+      handledSuccessRedirectRef.current = true;
+      const target = resolveAuthSuccessRedirect({ mode, redirectTo, firstName, shouldOnboard: true });
+      startTransition(() => router.replace(target));
+    },
+    [redirectTo, router],
+  );
 
   const handleGoogleSignUp = async () => {
-    const normalizedEmail = getValues('email').trim().toLowerCase();
-
     setGoogleLoading(true);
     try {
-      const outcome = await signInWithGoogleInteractive(normalizedEmail);
-      if (outcome === 'redirect') return;
-
-      const finalized = await finalizeSession(outcome.user, {
-        mode: 'signup',
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      await signIn.social({
         provider: 'google',
-        payload: {
-          email: normalizedEmail,
-          termsAccepted: true,
-          termsAcceptedAt: new Date().toISOString(),
-          privacyPolicyAccepted: true,
-          privacyPolicyAcceptedAt: new Date().toISOString(),
-        },
-        deleteCreatedUserOnFailure: shouldDeleteGoogleUserOnFinalizeFailure(outcome),
+        requestSignUp: true,
+        callbackURL: `${origin}/auth/google/callback?redirectTo=${encodeURIComponent(redirectTo)}&mode=signup`,
       });
-
-      if (!finalized.ok) {
-        showError(finalized.message);
-        return;
-      }
-
-      toast.success('WELCOME TO TAPOK');
-      clearForm();
-      setSession(outcome.user, finalized.dbUser);
-      handledSuccessRedirectRef.current = true;
-      router.replace(
-        resolveAuthSuccessRedirect({
-          mode: 'signup',
-          redirectTo,
-          firstName: finalized.dbUser.firstName,
-          shouldOnboard: finalized.shouldOnboard,
-        }),
-      );
-    } catch (error: unknown) {
-      const code = (error as { code?: string }).code ?? '';
-      if (code !== 'auth/popup-closed-by-user') {
-        showError(getRegisterFirebaseError(code));
-      }
-    } finally {
+      // triggers a redirect — execution stops here
+    } catch {
+      showError('Google sign-up failed. Please try again.');
       setGoogleLoading(false);
     }
   };
 
   const onSubmit = async (values: SignUpFormValues) => {
-    try {
-      const { user } = await createUserWithEmailAndPassword(
-        getFirebaseAuth(),
-        values.email,
-        values.password,
-      );
-      const finalized = await finalizeSession(user, {
-        mode: 'signup',
-        provider: 'password',
-        payload: {
-          firstName: values.firstName.trim(),
-          lastName: values.lastName.trim(),
-          termsAccepted: true,
-          termsAcceptedAt: new Date().toISOString(),
-          privacyPolicyAccepted: true,
-          privacyPolicyAcceptedAt: new Date().toISOString(),
-        },
-        deleteCreatedUserOnFailure: true,
-      });
+    const result = await signUp.email({
+      email: values.email,
+      password: values.password,
+      name: `${values.firstName.trim()} ${values.lastName.trim()}`,
+    });
 
-      if (!finalized.ok) {
-        rememberPendingSignupCleanup(values.email);
-        showError(finalized.message);
-        return;
-      }
-
-      clearPendingSignupCleanup();
-      clearForm();
-      completeSuccessfulSignUp(user, finalized, values.firstName.trim());
-    } catch (error: unknown) {
-      const code = (error as { code?: string }).code ?? '';
-
-      if (code === 'auth/email-already-in-use') {
-        // Check for provider mismatch on our backend
+    if (result.error) {
+      const code = result.error.code ?? '';
+      if (code === 'USER_ALREADY_EXISTS') {
+        // Check if the existing account uses Google
         try {
           const checkRes = await fetch('/api/users/auth-provider-check', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: values.email }),
           });
-
           if (checkRes.ok) {
             const data = await checkRes.json();
             if (data.exists && data.authProvider === 'google') {
@@ -311,46 +129,19 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
               return;
             }
           }
-        } catch (checkError) {
-          console.error('Provider check failed:', checkError);
+        } catch {
+          // fall through
         }
-
-        try {
-          if (hasRecentPendingSignupCleanup(values.email)) {
-            await delay(500);
-
-            const recovered = await signInWithEmailAndPassword(
-              getFirebaseAuth(),
-              values.email,
-              values.password,
-            );
-            const finalized = await finalizeSession(recovered.user, {
-              mode: 'signup',
-              provider: 'password',
-              payload: { firstName: values.firstName.trim(), lastName: values.lastName.trim() },
-              deleteCreatedUserOnFailure: true,
-            });
-
-            if (!finalized.ok) {
-              rememberPendingSignupCleanup(values.email);
-              showError(finalized.message);
-              return;
-            }
-
-            clearPendingSignupCleanup();
-            clearForm();
-            completeSuccessfulSignUp(recovered.user, finalized, values.firstName.trim());
-            return;
-          }
-        } catch (retryError: unknown) {
-          const retryCode = (retryError as { code?: string }).code ?? '';
-          showError(getRegisterFirebaseError(retryCode || code));
-          return;
-        }
+        showError('This email is already registered. Sign in instead.');
+      } else {
+        showError(result.error.message ?? 'Something went wrong. Please try again.');
       }
-
-      showError(getRegisterFirebaseError(code));
+      return;
     }
+
+    toast.success('ACCOUNT CREATED');
+    clearForm();
+    await syncAndRedirect(values.firstName, 'signup');
   };
 
   return (
@@ -435,10 +226,8 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
       {/* Form */}
       <form
         ref={formRef}
-        onSubmit={handleSubmit(onSubmit, (errors) => {
-          if (errors.termsAccepted) {
-            showError(errors.termsAccepted.message as string);
-          }
+        onSubmit={handleSubmit(onSubmit, (errs) => {
+          if (errs.termsAccepted) showError(errs.termsAccepted.message as string);
         })}
         method="post"
         noValidate

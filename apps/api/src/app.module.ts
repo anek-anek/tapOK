@@ -6,7 +6,7 @@ import { APP_GUARD } from '@nestjs/core';
 
 import { ScheduleModule } from '@nestjs/schedule';
 
-import { FirebaseAuthGuard, FirebaseModule, THROTTLE_DEFAULT, THROTTLE_STRICT } from './common';
+import { BetterAuthGuard, BetterAuthModule, THROTTLE_DEFAULT, THROTTLE_STRICT } from './common';
 import { AppController } from './app.controller';
 import { HealthModule } from './app/health/health.module';
 import { UsersModule } from './app/users/users.module';
@@ -42,7 +42,7 @@ import { AuthEmailModule } from './app/auth-email/auth-email.module';
         synchronize: false,
       }),
     }),
-    FirebaseModule,
+    BetterAuthModule,
     EmailModule,
     AuthEmailModule,
     HealthModule,
@@ -51,7 +51,7 @@ import { AuthEmailModule } from './app/auth-email/auth-email.module';
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    { provide: APP_GUARD, useClass: FirebaseAuthGuard },
+    { provide: APP_GUARD, useClass: BetterAuthGuard },
   ],
 })
 export class AppModule {}

@@ -111,15 +111,6 @@ export function DropMemberProfileModal({ subject, onClose }: DropMemberProfileMo
         : 'Crew · This drop'
       : null;
 
-  const crewRoleBadge =
-    subject.kind === 'crew'
-      ? subject.member.memberRole === 'chief'
-        ? 'CHIEF'
-        : subject.member.memberRole === 'co_chief'
-          ? 'CO-CHIEF'
-          : 'CREW'
-      : null;
-
   const crewJoinedHead =
     subject.kind === 'crew' ? formatJoinedDropHeadline(subject.member.joinedAt) : null;
 

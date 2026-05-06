@@ -412,13 +412,13 @@ function GateCard() {
 
 export default function ActivityClient() {
   const mounted = useMounted();
-  const { user, dbUser, loading, isReady } = useAuth();
+  const { dbUser, loading, isReady } = useAuth();
   const {
     data: activityLogs = [],
     isLoading: activityLoading,
     isError: activityError,
     isFetched: activityFetched,
-  } = useMyActivity({ enabled: Boolean(user) && !loading });
+  } = useMyActivity({ enabled: Boolean(dbUser) && !loading });
 
   // Show skeleton if we're fetching the first batch of data or if the query hasn't run yet
   const isHardLoading = !activityFetched || (activityLoading && !activityLogs.length);

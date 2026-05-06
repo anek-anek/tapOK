@@ -1,25 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { randomBytes } from 'crypto';
-import * as admin from 'firebase-admin';
-import { EmailService } from '../../common/email/email.service';
+import { auth } from '../../lib/auth';
 import { UsersRepository } from '../users/users.repository';
-
-const TOKEN_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 @Injectable()
 export class AuthEmailService {
-  private readonly webOrigin: string;
-
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly emailService: EmailService,
-    private readonly usersRepository: UsersRepository,
-  ) {
-    const rawOrigin = this.configService.get<string>('WEB_ORIGIN') || 'http://localhost:4200';
-    const firstOrigin = rawOrigin.split(',')[0] || 'http://localhost:4200';
-    this.webOrigin = firstOrigin.trim();
-  }
+  constructor(private readonly usersRepository: UsersRepository) {}
 
   private checkCooldown(lastSentAt: Date | undefined, cooldownMs: number = 600000) {
     if (!lastSentAt) return;
@@ -42,91 +27,39 @@ export class AuthEmailService {
   }
 
   async sendPasswordResetEmail(email: string) {
-    let userRecord: admin.auth.UserRecord;
-    try {
-      userRecord = await admin.auth().getUserByEmail(email);
-    } catch {
-      return;
-    }
-
     const user = await this.usersRepository.findByEmail(email);
     if (user) {
       this.checkCooldown(user.passwordResetSentAt);
     }
 
-    const actionCodeSettings = { url: `${this.webOrigin}/login` };
-    const firebaseLink = await admin.auth().generatePasswordResetLink(email, actionCodeSettings);
-
-    const url = new URL(firebaseLink);
-    const oobCode = url.searchParams.get('oobCode');
-    const customLink = `${this.webOrigin}/reset-password?oobCode=${oobCode}&email=${email}`;
-
-    await this.emailService.sendPasswordResetEmail(email, customLink);
+    // BetterAuth triggers our sendResetPassword callback in auth.ts
+    await auth.api.requestPasswordReset({
+      body: { email, redirectTo: '/reset-password' },
+    });
 
     if (user) {
       await this.usersRepository.update(user.id, { passwordResetSentAt: new Date() } as any);
     }
-
-    // suppress unused-variable warning; userRecord is fetched only to validate existence
-    void userRecord;
   }
 
-  async sendVerificationEmail(email: string, firebaseUid?: string) {
-    const normalizedEmail = email.trim().toLowerCase();
-    const user = await this.usersRepository.findByEmail(normalizedEmail);
+  async sendVerificationEmail(userId: string) {
+    const user = await this.usersRepository.findById(userId);
     if (user) {
       this.checkCooldown(user.emailVerificationSentAt);
     }
 
-    let targetEmail = normalizedEmail;
-
-    // Resolve the authoritative email from Firebase
-    if (firebaseUid) {
-      const userRecord = await admin.auth().getUser(firebaseUid);
-      if (userRecord.email) {
-        targetEmail = userRecord.email;
-      }
-    }
-
-    const token = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
+    const baseUrl = (process.env.WEB_ORIGIN ?? 'http://localhost:4200').split(',')[0]?.trim() ?? 'http://localhost:4200';
+    
+    // BetterAuth triggers our sendVerificationEmail callback in auth.ts
+    await auth.api.sendVerificationEmail({
+      body: {
+        email: user?.email ?? '',
+        callbackURL: `${baseUrl}/verify-email?verified=true`,
+      },
+    });
 
     if (user) {
-      await this.usersRepository.update(user.id, {
-        emailVerificationToken: token,
-        emailVerificationTokenExpiresAt: expiresAt,
-        emailVerificationSentAt: new Date(),
-      } as any);
-    }
-
-    const link = `${this.webOrigin}/verify-email?token=${token}&email=${encodeURIComponent(targetEmail)}`;
-    await this.emailService.sendVerificationEmail(targetEmail, link);
-  }
-
-  async confirmEmailToken(token: string) {
-    const user = await this.usersRepository.findByEmailVerificationToken(token);
-
-    if (!user) {
-      throw new BadRequestException({ message: 'Invalid or expired verification link.', code: 'INVALID_TOKEN' });
-    }
-
-    if (!user.emailVerificationTokenExpiresAt || user.emailVerificationTokenExpiresAt < new Date()) {
-      throw new BadRequestException({ message: 'This verification link has expired. Please request a new one.', code: 'TOKEN_EXPIRED' });
-    }
-
-    user.isEmailVerified = true;
-    user.emailVerifiedAt = new Date();
-    user.emailVerificationToken = undefined;
-    user.emailVerificationTokenExpiresAt = undefined;
-    await this.usersRepository.save(user);
-
-    // Keep Firebase in sync
-    if (user.firebaseUid) {
-      try {
-        await admin.auth().updateUser(user.firebaseUid, { emailVerified: true });
-      } catch {
-        // non-fatal — DB is source of truth
-      }
+      await this.usersRepository.update(user.id, { emailVerificationSentAt: new Date() } as any);
     }
   }
 }

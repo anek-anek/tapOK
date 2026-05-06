@@ -1,40 +1,11 @@
 import axios from 'axios';
-import { getFirebaseAuth } from '@/lib/firebase';
-
 import { getApiUrl } from '@/lib/config';
-import { applyIdTokenToAxiosAndSessionCookie } from '@/lib/auth/session-cookie';
 
 export const api = axios.create({
   baseURL: getApiUrl(),
-  withCredentials: true,
+  withCredentials: true, // sends better-auth.session_token cookie on every request
 });
 
-export function setAuthToken(token: string | null) {
-  if (token) {
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  } else {
-    delete api.defaults.headers.common['Authorization'];
-  }
-}
-
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (
-      typeof window !== 'undefined' &&
-      error.response?.status === 401 &&
-      !originalRequest._retried
-    ) {
-      originalRequest._retried = true;
-      const currentUser = getFirebaseAuth().currentUser;
-      if (currentUser) {
-        const freshToken = await currentUser.getIdToken(true);
-        await applyIdTokenToAxiosAndSessionCookie(freshToken);
-        originalRequest.headers['Authorization'] = `Bearer ${freshToken}`;
-        return api(originalRequest);
-      }
-    }
-    return Promise.reject(error);
-  },
-);
+// Kept for backward compat — BetterAuth uses cookies, not Bearer tokens.
+// Callers that still call setAuthToken() are no-ops until cleaned up.
+export function setAuthToken(_token: string | null) {}

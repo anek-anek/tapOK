@@ -169,46 +169,6 @@
         ]
       }
     },
-    "/users/session-cookie": {
-      "post": {
-        "operationId": "UsersController_createSessionCookie",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSessionCookieDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "example": {
-                    "sessionCookie": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...",
-                    "expiresIn": 604800
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Exchange a Firebase ID token for a 7-day session cookie",
-        "tags": [
-          "users"
-        ]
-      }
-    },
     "/users/{id}": {
       "get": {
         "operationId": "UsersController_findOne",
@@ -365,7 +325,7 @@
             "bearer": []
           }
         ],
-        "summary": "Upsert the authenticated Firebase user into the DB",
+        "summary": "Upsert the authenticated user profile into the DB",
         "tags": [
           "users"
         ]
@@ -1651,6 +1611,36 @@
           "drops"
         ]
       }
+    },
+    "/auth/email/reset-password": {
+      "post": {
+        "operationId": "AuthEmailController_sendResetEmail",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Send password reset email",
+        "tags": [
+          "Auth Email"
+        ]
+      }
+    },
+    "/auth/email/verify-email": {
+      "post": {
+        "operationId": "AuthEmailController_sendVerification",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Resend email verification",
+        "tags": [
+          "Auth Email"
+        ]
+      }
     }
   },
   "info": {
@@ -1716,14 +1706,12 @@
             "format": "date-time",
             "type": "string"
           },
-          "googleId": {
-            "type": "string"
-          },
-          "firebaseUid": {
-            "type": "string"
-          },
           "isActive": {
             "type": "boolean"
+          },
+          "onboardingCompleted": {
+            "type": "boolean",
+            "description": "Whether the user has completed onboarding"
           },
           "createdAt": {
             "format": "date-time",
@@ -1780,6 +1768,7 @@
           "role",
           "isEmailVerified",
           "isActive",
+          "onboardingCompleted",
           "createdAt",
           "updatedAt",
           "termsAccepted",
@@ -1921,19 +1910,6 @@
           "email"
         ]
       },
-      "CreateSessionCookieDto": {
-        "type": "object",
-        "properties": {
-          "idToken": {
-            "type": "string",
-            "description": "Firebase ID token from the authenticated client session.",
-            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
-          }
-        },
-        "required": [
-          "idToken"
-        ]
-      },
       "SyncUserDto": {
         "type": "object",
         "properties": {
@@ -1980,6 +1956,22 @@
           "email": {
             "type": "string",
             "example": "user@example.com"
+          },
+          "termsAccepted": {
+            "type": "boolean",
+            "example": true
+          },
+          "termsAcceptedAt": {
+            "type": "string",
+            "example": "2026-05-04T10:42:00.000Z"
+          },
+          "privacyPolicyAccepted": {
+            "type": "boolean",
+            "example": true
+          },
+          "privacyPolicyAcceptedAt": {
+            "type": "string",
+            "example": "2026-05-04T10:42:00.000Z"
           }
         }
       },
@@ -2005,10 +1997,6 @@
           "lastName": {
             "type": "string",
             "example": "Doe"
-          },
-          "firebaseUid": {
-            "type": "string",
-            "example": "firebase-uid-123"
           },
           "avatar": {
             "type": "string",

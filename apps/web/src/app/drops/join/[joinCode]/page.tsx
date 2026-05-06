@@ -227,7 +227,7 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   const mounted = useMounted();
 
   const { data: drop, isError: isDropError, isLoading: isDropLoading } = useDropByJoinCode(joinCode);
-  const { user, dbUser, loading: authLoading } = useAuth();
+  const { dbUser, loading: authLoading } = useAuth();
 
   const { data: crewStatus, isLoading: isCrewStatusLoading } = useMyCrewStatus(
     drop?.id ?? '',

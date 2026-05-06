@@ -170,9 +170,8 @@ export class DropsService {
     return Object.fromEntries(safeKeys.map((key) => [key, true])) as Record<string, true>;
   }
 
-  private async assertCanViewDropActivity(dropId: string, firebaseUid: string): Promise<void> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
-    if (!user) throw new NotFoundException('Authenticated user not found in database');
+  private async assertCanViewDropActivity(dropId: string, userId: string): Promise<void> {
+    const user = await this.usersService.findOne(userId);
 
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
@@ -220,9 +219,8 @@ export class DropsService {
     this.logger.log(`Drop action: ${JSON.stringify({ action, dropId, userId, ...extra })}`);
   }
 
-  async create(dto: CreateDropDto, firebaseUid: string): Promise<Drop> {
-    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
-    if (!organiser) throw new NotFoundException('Authenticated user not found in database');
+  async create(dto: CreateDropDto, userId: string): Promise<Drop> {
+    const organiser = await this.usersService.findOne(userId);
 
     this.assertUserIsVerified(organiser, 'create a drop');
 
@@ -291,7 +289,6 @@ export class DropsService {
         await this.mediaAssets.uploadImage(coverPath, buffer, mimeType);
         await this.dropsRepository.update(drop.id, { coverPhoto: coverPath });
       } else {
-        const origin = baseUrl.replace(/\/$/, '');
         const defaultCover =
           dto.category === DropCategory.HANGOUT
             ? '/tapok-hangout.png'
@@ -310,19 +307,18 @@ export class DropsService {
     }
   }
 
-  async findOne(id: string, firebaseUid?: string): Promise<Drop> {
+  async findOne(id: string, userId?: string): Promise<Drop> {
     const drop = await this.dropsRepository.findById(id);
     if (!drop) throw new NotFoundException(`Drop ${id} not found`);
 
-    if (!drop.isPublic && firebaseUid) {
-      const user = await this.usersService.findByFirebaseUid(firebaseUid);
-      if (user && drop.organiserId !== user.id) {
-        const activeCrew = await this.dropsRepository.findActiveInCrewMember(id, user.id);
+    if (!drop.isPublic && userId) {
+      if (drop.organiserId !== userId) {
+        const activeCrew = await this.dropsRepository.findActiveInCrewMember(id, userId);
         if (!activeCrew) {
           throw new NotFoundException(`Drop ${id} not found`);
         }
       }
-    } else if (!drop.isPublic && !firebaseUid) {
+    } else if (!drop.isPublic && !userId) {
       throw new NotFoundException(`Drop ${id} not found`);
     }
 
@@ -347,9 +343,8 @@ export class DropsService {
     return this.resolveDropOrganiserAvatar(dropWithCover);
   }
 
-  async findMyDrops(firebaseUid: string): Promise<Drop[]> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
-    if (!user) throw new NotFoundException('Authenticated user not found in database');
+  async findMyDrops(userId: string): Promise<Drop[]> {
+    const user = await this.usersService.findOne(userId);
 
     const drops = await this.dropsRepository.findFeed(user.id);
     if (drops.length === 0) {
@@ -369,15 +364,14 @@ export class DropsService {
     return Promise.all(drops.map((drop) => this.resolveDropCoverPhoto(drop)));
   }
 
-  async findByJoinCode(joinCode: string, firebaseUid?: string): Promise<Drop> {
+  async findByJoinCode(joinCode: string, userId?: string): Promise<Drop> {
     const drop = await this.dropsRepository.findByJoinCode(joinCode);
     if (!drop) throw new NotFoundException(`Drop with join code ${joinCode} not found`);
 
     if (!drop.isPublic) {
-      if (!firebaseUid) throw new NotFoundException(`Drop with join code ${joinCode} not found`);
-      const user = await this.usersService.findByFirebaseUid(firebaseUid);
-      if (user && drop.organiserId !== user.id) {
-        const activeCrew = await this.dropsRepository.findActiveInCrewMember(drop.id, user.id);
+      if (!userId) throw new NotFoundException(`Drop with join code ${joinCode} not found`);
+      if (drop.organiserId !== userId) {
+        const activeCrew = await this.dropsRepository.findActiveInCrewMember(drop.id, userId);
         if (!activeCrew) {
           throw new NotFoundException(`Drop with join code ${joinCode} not found`);
         }
@@ -388,7 +382,7 @@ export class DropsService {
     return this.resolveDropCoverPhoto(drop);
   }
 
-  async update(id: string, dto: UpdateDropDto, firebaseUid: string): Promise<Drop> {
+  async update(id: string, dto: UpdateDropDto, userId: string): Promise<Drop> {
     const drop = await this.dropsRepository.findById(id);
     if (!drop) throw new NotFoundException(`Drop ${id} not found`);
 
@@ -396,7 +390,7 @@ export class DropsService {
       throw new BadRequestException('Completed drops cannot be edited');
     }
 
-    if (drop.organiser.firebaseUid !== firebaseUid) {
+    if (drop.organiserId !== userId) {
       throw new ForbiddenException('Only the organiser can edit this drop');
     }
 
@@ -451,11 +445,11 @@ export class DropsService {
     return this.dropsRepository.findById(id) as Promise<Drop>;
   }
 
-  async delete(id: string, firebaseUid: string): Promise<void> {
+  async delete(id: string, userId: string): Promise<void> {
     const drop = await this.dropsRepository.findById(id);
     if (!drop) throw new NotFoundException(`Drop ${id} not found`);
 
-    if (drop.organiser.firebaseUid !== firebaseUid) {
+    if (drop.organiserId !== userId) {
       throw new ForbiddenException('Only the organiser can delete this drop');
     }
 
@@ -490,19 +484,16 @@ export class DropsService {
     this.logDropAction('drop_deleted', id, drop.organiserId);
   }
 
-  async inviteToDrop(dropId: string, userId: string, firebaseUid: string): Promise<void> {
+  async inviteToDrop(dropId: string, userId: string, requesterId: string): Promise<void> {
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
-    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
-    const organiserId = organiser?.id;
-    if (drop.organiserId !== organiserId) {
+    if (drop.organiserId !== requesterId) {
       throw new ForbiddenException('Only the organiser can invite people');
     }
 
-    if (organiser) {
-      this.assertUserIsVerified(organiser, 'invite people to a drop');
-    }
+    const organiser = await this.usersService.findOne(requesterId);
+    this.assertUserIsVerified(organiser, 'invite people to a drop');
 
     const existing = await this.dropsRepository.findCrewMember(dropId, userId);
     if (existing) {
@@ -518,15 +509,14 @@ export class DropsService {
 
     await this.recordDropActivity({
       dropId,
-      userId: organiserId!,
+      userId: requesterId,
       action: 'invited_member',
       changedFields: { invitedUserId: userId },
     });
   }
 
-  async joinDrop(dropId: string, firebaseUid: string): Promise<DropCrew> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
-    if (!user) throw new NotFoundException('Authenticated user not found in database');
+  async joinDrop(dropId: string, userId: string): Promise<DropCrew> {
+    const user = await this.usersService.findOne(userId);
 
     const joinKey = `join:${dropId}:${user.id}`;
     if (this._createInFlight.has(joinKey)) {
@@ -589,9 +579,8 @@ export class DropsService {
     }
   }
 
-  async leaveDrop(dropId: string, firebaseUid: string): Promise<void> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
-    if (!user) throw new NotFoundException('Authenticated user not found in database');
+  async leaveDrop(dropId: string, userId: string): Promise<void> {
+    const user = await this.usersService.findOne(userId);
 
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
@@ -612,8 +601,8 @@ export class DropsService {
     });
   }
 
-  async getDropCrew(dropId: string, firebaseUid: string): Promise<DropCrew[]> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+  async getDropCrew(dropId: string, userId: string): Promise<DropCrew[]> {
+    const user = await this.usersService.findOne(userId);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
 
     const drop = await this.dropsRepository.findById(dropId);
@@ -638,8 +627,8 @@ export class DropsService {
     );
   }
 
-  async rejectPendingMember(dropId: string, targetUserId: string, firebaseUid: string): Promise<void> {
-    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
+  async rejectPendingMember(dropId: string, targetUserId: string, userId: string): Promise<void> {
+    const organiser = await this.usersService.findOne(userId);
     if (!organiser) throw new NotFoundException('Authenticated user not found in database');
 
     const drop = await this.dropsRepository.findById(dropId);
@@ -668,8 +657,8 @@ export class DropsService {
     });
   }
 
-  async approvePendingMember(dropId: string, targetUserId: string, firebaseUid: string): Promise<void> {
-    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
+  async approvePendingMember(dropId: string, targetUserId: string, userId: string): Promise<void> {
+    const organiser = await this.usersService.findOne(userId);
     if (!organiser) throw new NotFoundException('Authenticated user not found in database');
 
     const drop = await this.dropsRepository.findById(dropId);
@@ -698,8 +687,8 @@ export class DropsService {
     });
   }
 
-  async removeCrewMember(dropId: string, targetUserId: string, firebaseUid: string): Promise<void> {
-    const organiser = await this.usersService.findByFirebaseUid(firebaseUid);
+  async removeCrewMember(dropId: string, targetUserId: string, userId: string): Promise<void> {
+    const organiser = await this.usersService.findOne(userId);
     if (!organiser) throw new NotFoundException('Authenticated user not found in database');
 
     const drop = await this.dropsRepository.findById(dropId);
@@ -726,8 +715,8 @@ export class DropsService {
     });
   }
 
-  async getMyCrewStatus(dropId: string, firebaseUid: string): Promise<DropCrew> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+  async getMyCrewStatus(dropId: string, userId: string): Promise<DropCrew> {
+    const user = await this.usersService.findOne(userId);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
 
     const crewMember = await this.dropsRepository.findCrewMember(dropId, user.id);
@@ -736,8 +725,8 @@ export class DropsService {
     return crewMember;
   }
 
-  async updatePresence(dropId: string, firebaseUid: string, isPresent: boolean): Promise<void> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+  async updatePresence(dropId: string, userId: string, isPresent: boolean): Promise<void> {
+    const user = await this.usersService.findOne(userId);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
 
     const member = await this.dropsRepository.findCrewMember(dropId, user.id);
@@ -758,11 +747,11 @@ export class DropsService {
 
   async findDropActivityLogs(
     dropId: string,
-    firebaseUid: string,
+    userId: string,
     page: number,
     limit: number,
   ): Promise<ActivityLogsPageDto> {
-    await this.assertCanViewDropActivity(dropId, firebaseUid);
+    await this.assertCanViewDropActivity(dropId, userId);
     const logsPage = await this.dropsRepository.findPaginatedActivityLogs(dropId, page, limit);
 
     return {
@@ -772,22 +761,22 @@ export class DropsService {
   }
 
   async findMyActivityLogs(
-    firebaseUid: string,
+    userId: string,
     page: number = 1,
     limit: number = 50,
   ): Promise<DropActivityLog[]> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    const user = await this.usersService.findOne(userId);
     if (!user) throw new NotFoundException('Authenticated user not found in database');
     return this.dropsRepository.findActivityFeedForUser(user.id, page, limit);
   }
 
   async discover(
-    firebaseUid?: string,
+    userId?: string,
     page = 1,
     limit = 15,
     category?: DropCategory,
   ): Promise<DiscoverDropsResponseDto> {
-    const user = firebaseUid ? await this.usersService.findByFirebaseUid(firebaseUid) : null;
+    const user = userId ? await this.usersService.findOne(userId).catch(() => null) : null;
     const joinedIds = user ? await this.dropsRepository.findJoinedDropIds(user.id) : [];
 
     // 1. Parallel: featured, chiefIds, public stream
@@ -840,11 +829,11 @@ export class DropsService {
     };
   }
 
-  async uploadCoverPhoto(id: string, firebaseUid: string, buffer: Buffer, mimeType: string): Promise<Drop> {
+  async uploadCoverPhoto(id: string, userId: string, buffer: Buffer, mimeType: string): Promise<Drop> {
     const drop = await this.dropsRepository.findById(id);
     if (!drop) throw new NotFoundException(`Drop ${id} not found`);
 
-    if (drop.organiser.firebaseUid !== firebaseUid) {
+    if (drop.organiserId !== userId) {
       throw new ForbiddenException('Only the organiser can update the cover photo');
     }
 
@@ -863,11 +852,11 @@ export class DropsService {
     return this.resolveDropCoverPhoto(savedDrop);
   }
 
-  async deleteCoverPhoto(id: string, firebaseUid: string): Promise<void> {
+  async deleteCoverPhoto(id: string, userId: string): Promise<void> {
     const drop = await this.dropsRepository.findById(id);
     if (!drop) throw new NotFoundException(`Drop ${id} not found`);
 
-    if (drop.organiser.firebaseUid !== firebaseUid) {
+    if (drop.organiserId !== userId) {
       throw new ForbiddenException('Only the organiser can delete the cover photo');
     }
 
@@ -889,8 +878,8 @@ export class DropsService {
     await this.dropsRepository.deleteNonFeaturedPhotosForDrops(dropIds);
   }
 
-  private async assertCanUploadPhoto(dropId: string, firebaseUid: string): Promise<{ user: User }> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+  private async assertCanUploadPhoto(dropId: string, userId: string): Promise<{ user: User }> {
+    const user = await this.usersService.findOne(userId);
     if (!user) throw new NotFoundException('User not found');
 
     this.assertUserIsVerified(user, 'upload photos');
@@ -927,10 +916,10 @@ export class DropsService {
 
   async createPhotoUploadSession(
     dropId: string,
-    firebaseUid: string,
+    userId: string,
     dto: CreatePhotoUploadDto,
   ): Promise<PhotoUploadSessionDto> {
-    const { user } = await this.assertCanUploadPhoto(dropId, firebaseUid);
+    const { user } = await this.assertCanUploadPhoto(dropId, userId);
 
     const mimeType = dto.mimeType === 'image/jpg' ? 'image/jpeg' : dto.mimeType;
     if (!['image/jpeg', 'image/png'].includes(mimeType)) {
@@ -960,9 +949,9 @@ export class DropsService {
   async completePhotoUpload(
     dropId: string,
     photoId: string,
-    firebaseUid: string,
+    userId: string,
   ): Promise<DropPhotoPublicDto> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+    const user = await this.usersService.findOne(userId);
     if (!user) throw new NotFoundException('User not found');
 
     const photo = await this.dropsRepository.findPhotoById(photoId);
@@ -981,8 +970,8 @@ export class DropsService {
     return this.toPhotoPublicDto(await this.ensurePhotoHasStorageUrl(photo));
   }
 
-  async uploadPhoto(dropId: string, firebaseUid: string, base64: string): Promise<DropPhoto> {
-    const { user } = await this.assertCanUploadPhoto(dropId, firebaseUid);
+  async uploadPhoto(dropId: string, userId: string, base64: string): Promise<DropPhoto> {
+    const { user } = await this.assertCanUploadPhoto(dropId, userId);
 
     const { buffer, mimeType } = this.coverBufferFromDataUrl(base64);
     const photo = await this.dropsRepository.addPhoto({
@@ -1016,11 +1005,11 @@ export class DropsService {
 
   async getPhotos(
     dropId: string,
-    firebaseUid: string,
+    userId: string,
     page: number = 1,
     limit: number = 20,
   ): Promise<{ data: DropPhotoPublicDto[]; total: number; page: number; totalPages: number }> {
-    await this.findOne(dropId, firebaseUid);
+    await this.findOne(dropId, userId);
     const result = await this.dropsRepository.findPhotos(dropId, page, limit);
     const hydrated = await Promise.all(result.data.map((photo) => this.ensurePhotoHasStorageUrl(photo)));
     return {
@@ -1029,8 +1018,8 @@ export class DropsService {
     };
   }
 
-  async getPhotoDetail(dropId: string, photoId: string, firebaseUid: string): Promise<DropPhotoPublicDto> {
-    await this.findOne(dropId, firebaseUid);
+  async getPhotoDetail(dropId: string, photoId: string, userId: string): Promise<DropPhotoPublicDto> {
+    await this.findOne(dropId, userId);
     const photo = await this.dropsRepository.findPhotoById(photoId);
     if (!photo || photo.dropId !== dropId) {
       throw new NotFoundException('Photo not found');
@@ -1093,7 +1082,7 @@ export class DropsService {
     };
   }
 
-  async featurePhoto(dropId: string, photoId: string, firebaseUid: string): Promise<DropPhoto> {
+  async featurePhoto(dropId: string, photoId: string, userId: string): Promise<DropPhoto> {
     const featureKey = `${dropId}:${photoId}`;
     if (this._featureInFlight.has(featureKey)) {
       // Just return the current state of the photo if already processing
@@ -1102,7 +1091,7 @@ export class DropsService {
     this._featureInFlight.add(featureKey);
 
     try {
-      const user = await this.usersService.findByFirebaseUid(firebaseUid);
+      const user = await this.usersService.findOne(userId);
     if (!user) throw new NotFoundException('User not found');
 
     const drop = await this.dropsRepository.findById(dropId);
@@ -1149,8 +1138,8 @@ export class DropsService {
     }
   }
 
-  async deletePhoto(dropId: string, photoId: string, firebaseUid: string): Promise<void> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+  async deletePhoto(dropId: string, photoId: string, userId: string): Promise<void> {
+    const user = await this.usersService.findOne(userId);
     if (!user) throw new NotFoundException('User not found');
 
     const drop = await this.dropsRepository.findById(dropId);
@@ -1190,11 +1179,11 @@ export class DropsService {
     );
   }
 
-  async sparkDrop(dropId: string, firebaseUid: string): Promise<void> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+  async sparkDrop(dropId: string, userId: string): Promise<void> {
+    const user = await this.usersService.findOne(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    await this.findOne(dropId, firebaseUid);
+    await this.findOne(dropId, userId);
 
     const existing = await this.dropsRepository.findSpark(dropId, user.id);
     if (existing) return;
@@ -1203,11 +1192,11 @@ export class DropsService {
     this.logDropAction('spark', dropId, user.id);
   }
 
-  async unsparkDrop(dropId: string, firebaseUid: string): Promise<void> {
-    const user = await this.usersService.findByFirebaseUid(firebaseUid);
+  async unsparkDrop(dropId: string, userId: string): Promise<void> {
+    const user = await this.usersService.findOne(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    await this.findOne(dropId, firebaseUid);
+    await this.findOne(dropId, userId);
     await this.dropsRepository.removeSpark(dropId, user.id);
     this.logDropAction('unspark', dropId, user.id);
   }

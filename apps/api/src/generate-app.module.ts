@@ -6,6 +6,9 @@ import { UsersController } from './app/users/users.controller';
 import { UsersService } from './app/users/users.service';
 import { UsersRepository } from './app/users/users.repository';
 import { User } from './app/users/entities/user.entity';
+import { AuthEmailController } from './app/auth-email/auth-email.controller';
+import { AuthEmailService } from './app/auth-email/auth-email.service';
+import { BetterAuthService } from './common/better-auth/better-auth.service';
 import { DropsController } from './app/drops/drops.controller';
 import { DropsService } from './app/drops/drops.service';
 import { DropsCronService } from './app/drops/drops-cron.service';
@@ -34,9 +37,11 @@ function stub<T>(token: T): { provide: T; useValue: object } {
       { name: 'strict', ...THROTTLE_STRICT },
     ]),
   ],
-  controllers: [UsersController, DropsController],
+  controllers: [UsersController, DropsController, AuthEmailController],
   providers: [
     stub(UsersService),
+    stub(AuthEmailService),
+    stub(BetterAuthService),
     stub(UsersRepository),
     stub(getRepositoryToken(User)),
     stub(DropsService),

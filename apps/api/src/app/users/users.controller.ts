@@ -24,9 +24,9 @@ import {
 import type { Request } from 'express';
 
 import { Throttle } from '@nestjs/throttler';
-import type { DecodedIdToken } from 'firebase-admin/auth';
 import {
-  FirebaseAuthGuard,
+  BetterAuthGuard,
+  BetterAuthUser,
   RolesGuard,
   Roles,
   UserRole,
@@ -35,7 +35,6 @@ import {
   THROTTLE_STRICT,
 } from '../../common';
 import { CheckAuthProviderDto } from './dto/check-auth-provider.dto';
-import { CreateSessionCookieDto } from './dto/create-session-cookie.dto';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SyncUserDto } from './dto/sync-user.dto';
@@ -47,7 +46,7 @@ import { CreateAvatarUploadDto } from './dto/create-avatar-upload.dto';
 import { AvatarUploadSessionDto } from './dto/avatar-upload-session.dto';
 
 interface RequestWithUser extends Request {
-  user: DecodedIdToken;
+  user: BetterAuthUser;
 }
 
 @ApiTags('users')
@@ -57,7 +56,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @UseGuards(BetterAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'List all users' })
   @ApiResponse({ status: 200, type: [User] })
@@ -69,7 +68,6 @@ export class UsersController {
   }
 
   @Get('me')
-  @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Get the authenticated user — 404 if not in DB' })
   @ApiResponse({ status: 200, type: UserProfileDto })
   @ApiResponse({ status: 404, description: 'User not found.' })
@@ -78,11 +76,10 @@ export class UsersController {
   }
 
   @Get('me/frequent-crew')
-  @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Get the frequently seen crew for the authenticated user' })
   @ApiResponse({ status: 200, type: [FrequentCrewDto] })
   getFrequentCrew(@Req() request: RequestWithUser): Promise<FrequentCrewDto[]> {
-    return this.usersService.getFrequentCrew(request.user.uid);
+    return this.usersService.getFrequentCrew(request.user.id);
   }
 
   @Post('auth-provider-check')
@@ -91,53 +88,27 @@ export class UsersController {
   @ApiOperation({ summary: 'Check whether an email already belongs to an existing auth provider' })
   @ApiResponse({
     status: 201,
-    schema: {
-      example: {
-        exists: true,
-        authProvider: 'password',
-      },
-    },
+    schema: { example: { exists: true, authProvider: 'password' } },
   })
   async checkAuthProvider(@Body() dto: CheckAuthProviderDto): Promise<{
     exists: boolean;
     authProvider: 'password' | 'google' | null;
   }> {
     const authProvider = await this.usersService.findExistingAuthProviderByEmail(dto.email);
-    return {
-      exists: authProvider !== null,
-      authProvider,
-    };
-  }
-
-  @Post('session-cookie')
-  @Public()
-  @Throttle({ strict: THROTTLE_STRICT })
-  @ApiOperation({ summary: 'Exchange a Firebase ID token for a 7-day session cookie' })
-  @ApiResponse({
-    status: 201,
-    schema: {
-      example: {
-        sessionCookie: 'eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...',
-        expiresIn: 604800,
-      },
-    },
-  })
-  createSessionCookie(@Body() dto: CreateSessionCookieDto): Promise<{ sessionCookie: string; expiresIn: number }> {
-    return this.usersService.createSessionCookie(dto.idToken);
+    return { exists: authProvider !== null, authProvider };
   }
 
   @Get(':id')
-  @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Get a user by id' })
   @ApiResponse({ status: 200, type: User })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @AuthUser() authUser: DecodedIdToken,
+    @AuthUser() authUser: BetterAuthUser,
   ): Promise<User> {
     const user = await this.usersService.findOne(id);
-    if (authUser.role !== UserRole.ADMIN && user.firebaseUid !== authUser.uid) {
+    if ((authUser.role as string) !== UserRole.ADMIN && user.id !== authUser.id) {
       throw new ForbiddenException('Access denied');
     }
     return user;
@@ -145,15 +116,14 @@ export class UsersController {
 
   @Post('sync')
   @Throttle({ strict: THROTTLE_STRICT })
-  @UseGuards(FirebaseAuthGuard)
-  @ApiOperation({ summary: 'Upsert the authenticated Firebase user into the DB' })
+  @ApiOperation({ summary: 'Upsert the authenticated user profile into the DB' })
   @ApiResponse({ status: 201, type: User })
   sync(@Req() request: RequestWithUser, @Body() dto: SyncUserDto): Promise<User> {
-    return this.usersService.syncFromFirebase(request.user, dto);
+    return this.usersService.syncUser(request.user, dto);
   }
 
   @Post()
-  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @UseGuards(BetterAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, type: User })
@@ -163,7 +133,6 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Update a user' })
   @ApiResponse({ status: 200, type: User })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
@@ -173,11 +142,10 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
     @Req() request: RequestWithUser,
   ): Promise<User> {
-    return this.usersService.update(id, dto, request.user.uid);
+    return this.usersService.update(id, dto, request.user.id);
   }
 
   @Post(':id/avatar/upload-url')
-  @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Create signed upload session for profile avatar' })
   @ApiResponse({ status: 201, type: AvatarUploadSessionDto })
   createAvatarUploadSession(
@@ -185,22 +153,20 @@ export class UsersController {
     @Body() dto: CreateAvatarUploadDto,
     @Req() request: RequestWithUser,
   ): Promise<AvatarUploadSessionDto> {
-    return this.usersService.createAvatarUploadSession(id, request.user.uid, dto);
+    return this.usersService.createAvatarUploadSession(id, request.user.id, dto);
   }
 
   @Post(':id/avatar/complete')
-  @UseGuards(FirebaseAuthGuard)
   @ApiOperation({ summary: 'Finalize signed avatar upload and replace previous avatar' })
   @ApiResponse({ status: 200, type: User })
   completeAvatarUpload(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: RequestWithUser,
   ): Promise<User> {
-    return this.usersService.completeAvatarUpload(id, request.user.uid);
+    return this.usersService.completeAvatarUpload(id, request.user.id);
   }
 
   @Delete(':id')
-  @UseGuards(FirebaseAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a user' })
   @ApiResponse({ status: 204 })
@@ -210,6 +176,6 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: RequestWithUser,
   ): Promise<void> {
-    return this.usersService.remove(id, request.user.uid);
+    return this.usersService.remove(id, request.user.id);
   }
 }

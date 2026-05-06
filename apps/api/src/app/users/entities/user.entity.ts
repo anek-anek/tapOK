@@ -58,17 +58,13 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true })
   passwordResetSentAt?: Date;
 
-  @ApiProperty({ required: false })
-  @Column({ nullable: true })
-  googleId?: string;
-
-  @ApiProperty({ required: false })
-  @Column({ nullable: true, unique: true })
-  firebaseUid?: string;
-
   @ApiProperty()
   @Column({ default: true })
   isActive: boolean;
+
+  @ApiProperty({ description: 'Whether the user has completed onboarding' })
+  @Column({ default: false })
+  onboardingCompleted: boolean;
 
   @ApiProperty()
   @CreateDateColumn({ type: 'timestamptz' })

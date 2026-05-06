@@ -73,23 +73,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/users/session-cookie": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Exchange a Firebase ID token for a 7-day session cookie */
-        post: operations["UsersController_createSessionCookie"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/users/{id}": {
         parameters: {
             query?: never;
@@ -118,7 +101,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Upsert the authenticated Firebase user into the DB */
+        /** Upsert the authenticated user profile into the DB */
         post: operations["UsersController_sync"];
         delete?: never;
         options?: never;
@@ -558,6 +541,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/email/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send password reset email */
+        post: operations["AuthEmailController_sendResetEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/email/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resend email verification */
+        post: operations["AuthEmailController_sendVerification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -579,9 +596,9 @@ export interface components {
             emailVerificationSentAt?: string;
             /** Format: date-time */
             passwordResetSentAt?: string;
-            googleId?: string;
-            firebaseUid?: string;
             isActive: boolean;
+            /** @description Whether the user has completed onboarding */
+            onboardingCompleted: boolean;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -654,13 +671,6 @@ export interface components {
             /** @example user@example.com */
             email: string;
         };
-        CreateSessionCookieDto: {
-            /**
-             * @description Firebase ID token from the authenticated client session.
-             * @example eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...
-             */
-            idToken: string;
-        };
         SyncUserDto: {
             /** @example John */
             firstName?: string;
@@ -678,6 +688,14 @@ export interface components {
             authProvider?: "password" | "google";
             /** @example user@example.com */
             email?: string;
+            /** @example true */
+            termsAccepted?: boolean;
+            /** @example 2026-05-04T10:42:00.000Z */
+            termsAcceptedAt?: string;
+            /** @example true */
+            privacyPolicyAccepted?: boolean;
+            /** @example 2026-05-04T10:42:00.000Z */
+            privacyPolicyAcceptedAt?: string;
         };
         CreateUserDto: {
             /** @example user@example.com */
@@ -691,8 +709,6 @@ export interface components {
             firstName: string;
             /** @example Doe */
             lastName: string;
-            /** @example firebase-uid-123 */
-            firebaseUid?: string;
             /** @example https://example.com/avatar.jpg */
             avatar?: string;
             /**
@@ -1125,29 +1141,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["CheckAuthProviderDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    UsersController_createSessionCookie: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateSessionCookieDto"];
             };
         };
         responses: {
@@ -2219,6 +2212,40 @@ export interface operations {
         responses: {
             /** @description Dropped unsparked. */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthEmailController_sendResetEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthEmailController_sendVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

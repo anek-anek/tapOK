@@ -1,4 +1,4 @@
-export const PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/forbidden', '/privacy', '/terms'] as const;
+export const PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/forbidden', '/privacy', '/terms', '/auth/google/callback'] as const;
 
 export type PublicRoute = (typeof PUBLIC_ROUTES)[number];
 

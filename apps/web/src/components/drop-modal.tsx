@@ -164,12 +164,10 @@ function getUpdatedExpectedHeadcount(
 function DateTimePicker({
   value,
   onChange,
-  error,
   id,
 }: {
   value: string;
   onChange: (val: string) => void;
-  error?: string;
   id?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -728,7 +726,6 @@ export function DropModal({
                           id="drop-modal"
                           value={field.value}
                           onChange={field.onChange}
-                          error={errors.scheduledAt?.message}
                         />
                       )}
                     />

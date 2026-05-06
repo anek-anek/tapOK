@@ -1,49 +1,80 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "globalDependencies": ["**/.env.*local"],
+  "globalDependencies": [
+    "**/.env.*local"
+  ],
   "tasks": {
     "dev": {
       "cache": false,
       "persistent": true
     },
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**"
+      ],
       "env": [
         "NODE_ENV",
         "PORT",
         "WEB_ORIGIN",
+        "WEB_URL",
+        "API_BASE_URL",
         "DB_HOST",
         "DB_PORT",
         "DB_USERNAME",
         "DB_PASSWORD",
         "DB_DATABASE",
-        "FIREBASE_PROJECT_ID",
-        "FIREBASE_CLIENT_EMAIL",
-        "FIREBASE_PRIVATE_KEY",
         "SUPABASE_URL",
         "SUPABASE_SERVICE_ROLE_KEY",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "BETTER_AUTH_SECRET",
+        "CRON_SECRET",
+        "RESEND_API_KEY",
+        "NEXT_PUBLIC_API_URL",
+        "NEXT_PUBLIC_WEB_URL",
         "NEXT_PUBLIC_SUPABASE_URL",
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "TZ"
       ]
     },
     "lint": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     },
     "typecheck": {
-      "dependsOn": ["^build", "^generate", "generate"]
+      "dependsOn": [
+        "^build",
+        "^generate",
+        "generate"
+      ]
     },
     "generate": {
-      "dependsOn": ["^generate"]
+      "dependsOn": [
+        "^generate"
+      ]
     },
     "api#generate": {
-      "outputs": ["../../packages/api/openapi.json"]
+      "outputs": [
+        "../../packages/api/openapi.json"
+      ]
     },
     "@repo/api#generate": {
-      "dependsOn": ["api#generate"],
-      "inputs": ["../../packages/api/openapi.json"],
-      "outputs": ["src/schema.d.ts"]
+      "dependsOn": [
+        "api#generate"
+      ],
+      "inputs": [
+        "../../packages/api/openapi.json"
+      ],
+      "outputs": [
+        "src/schema.d.ts"
+      ]
     },
     "e2e": {
       "cache": false

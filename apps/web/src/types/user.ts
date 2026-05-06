@@ -16,7 +16,6 @@ export interface User {
   emailVerifiedAt?: string;
   emailVerificationSentAt?: string;
   googleId?: string;
-  firebaseUid?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -49,7 +48,6 @@ export interface CreateUserDto {
   authProvider?: AuthProvider;
   firstName: string;
   lastName: string;
-  firebaseUid?: string;
   avatar?: string;
   role?: UserRole;
   gender?: GenderEnum;

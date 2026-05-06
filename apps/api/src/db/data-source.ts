@@ -11,7 +11,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_DATABASE || 'tapok',
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: (process.env.DB_HOST ?? 'localhost') !== 'localhost' ? { rejectUnauthorized: false } : false,
   synchronize: false,
   entities: [resolve(__dirname, '../app/**/*.entity{.ts,.js}')],
   migrations: [resolve(__dirname, './migrations/*{.ts,.js}')],

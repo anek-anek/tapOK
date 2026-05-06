@@ -23,10 +23,11 @@ export function useAuthFormReset(resetFields: () => void) {
     window.addEventListener('pageshow', handlePageShow);
     window.addEventListener('pagehide', handlePageHide);
 
+    const form = formRef.current;
     return () => {
       window.removeEventListener('pageshow', handlePageShow);
       window.removeEventListener('pagehide', handlePageHide);
-      formRef.current?.reset();
+      form?.reset();
     };
   }, [clearForm]);
 

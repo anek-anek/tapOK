@@ -3,6 +3,7 @@
 import { Mail, Phone, Calendar as IconCalendar, Pencil, X, Check, User, ChevronDown, Camera, ShieldCheck, LockKeyhole, AlertCircle } from 'lucide-react';
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { useCurrentUser, useFrequentCrew } from '@/hooks/queries/use-users';
@@ -14,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
-import { getFirebaseAuth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/config';
 import { ListDropCard, ListCardSkeleton } from '@/components/drops/drop-cards';
 import {
   Popover,
@@ -371,10 +372,11 @@ export default function ProfilePage() {
               <div className="relative group">
                 <div className="flex h-32 w-32 items-center justify-center overflow-hidden border-4 border-tok-black bg-tok-teal-pale font-passion text-5xl text-tok-teal shadow-[4px_4px_0px_0px_#262624]">
                   {(editing ? form.avatar : profile?.avatar) ? (
-                    <img
-                      src={editing ? form.avatar : profile?.avatar}
+                    <Image
+                      src={(editing ? form.avatar : profile?.avatar) as string}
                       alt={fullName}
-                      className="h-full w-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   ) : (
                     initials
@@ -631,18 +633,11 @@ export default function ProfilePage() {
                     btn.innerHTML = 'SENDING...';
 
                     try {
-                      const auth = getFirebaseAuth();
-                      const token = await auth.currentUser?.getIdToken();
-
-                      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-                      const apiUrl = (rawApiUrl.split(',')[0] || '').trim();
-
+                      const apiUrl = getApiUrl().replace(/\/$/, '');
                       const response = await fetch(`${apiUrl}/auth/email/verify-email`, {
                         method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                        },
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
                         body: JSON.stringify({ email: displayUser.email }),
                       });
 
@@ -683,9 +678,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={async () => {
                       try {
-                        const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-                        const apiUrl = (rawApiUrl.split(',')[0] || '').trim();
-
+                        const apiUrl = getApiUrl().replace(/\/$/, '');
                         const response = await fetch(`${apiUrl}/auth/email/reset-password`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
@@ -816,7 +809,7 @@ export default function ProfilePage() {
                   <div key={member.id} className="flex items-center gap-4 border-2 border-tok-black bg-tok-white p-4 shadow-[4px_4px_0px_0px_#262624]">
                     <div className="flex h-12 w-12 items-center justify-center border-2 border-tok-black bg-tok-teal-pale overflow-hidden">
                       {member.avatar ? (
-                        <img src={member.avatar} alt="" className="h-full w-full object-cover" />
+                        <Image src={member.avatar} alt="" fill className="object-cover" />
                       ) : (
                         <span className="font-passion text-lg text-tok-teal">
                           {member.firstName[0]}{member.lastName[0]}

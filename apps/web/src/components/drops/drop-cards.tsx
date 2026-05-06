@@ -6,12 +6,10 @@ import Image from 'next/image';
 import {
   ArrowRight,
   CalendarDays,
-  Edit3,
   Lock,
   MapPin,
   Users,
   Share,
-  Trash2,
 } from 'lucide-react';
 import { coverPhotoSrcForNextImage } from '@/lib/config';
 import { cn } from '@/lib/utils';
@@ -182,12 +180,6 @@ export function HeroDropCard({
   const isLocalFallback = !!displaySrc && displaySrc.startsWith('/');
 
   const [imgError, setImgError] = useState(false);
-
-  const handleShare = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isShareableDrop(drop)) onShare?.(drop);
-  };
 
   // Reset error state if displaySrc changes
   useEffect(() => {
@@ -396,8 +388,6 @@ export function ListDropCard({
   drop,
   viewerId,
   onShare,
-  onEdit,
-  onDelete,
   showShareEditDelete = true,
   layout = 'list',
   coverPriority = false,
@@ -405,8 +395,6 @@ export function ListDropCard({
   drop: DropCardModel;
   viewerId?: string | null;
   onShare?: (drop: Drop) => void;
-  onEdit?: (drop: Drop) => void;
-  onDelete?: (drop: Drop) => void;
   showShareEditDelete?: boolean;
   layout?: 'list' | 'masonry' | 'grid';
   coverPriority?: boolean;
@@ -417,31 +405,10 @@ export function ListDropCard({
   const displaySrc = drop.coverPhoto ? coverPhotoSrcForNextImage(drop.coverPhoto) : fallbackSrc;
   const isLocalFallback = !!displaySrc && displaySrc.startsWith('/');
 
-  const isOrganiser = !!viewerId && drop.organiserId === viewerId;
-  const canEdit = isOrganiser && drop.status !== 'completed' && isShareableDrop(drop);
-  const canDelete = isOrganiser && onDelete && isShareableDrop(drop);
   const isCompleted = drop.status === 'completed';
   const isMasonry = layout === 'masonry';
   const isGrid = layout === 'grid';
   const isVertical = isMasonry || isGrid;
-
-  const handleShare = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isShareableDrop(drop)) onShare?.(drop);
-  };
-
-  const handleEdit = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isShareableDrop(drop)) onEdit?.(drop);
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isShareableDrop(drop)) onDelete?.(drop);
-  };
 
   const [masonryCoverAspect, setMasonryCoverAspect] = useState<number | null>(null);
   const [imgError, setImgError] = useState(false);

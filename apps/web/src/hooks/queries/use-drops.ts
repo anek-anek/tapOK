@@ -8,7 +8,7 @@ import {
 import axios from 'axios';
 import { dropsService } from '@/services/drops.service';
 import { useAuth } from '@/components/providers/auth-provider';
-import type { CrewMember, DiscoverDropsPayload, DropCrew } from '@/types/drop';
+import type { CrewMember, DropCrew } from '@/types/drop';
 
 export const dropKeys = {
   mine: (uid: string) => ['drops', 'mine', uid] as const,
@@ -71,13 +71,13 @@ export function useMyDrops(options?: { enabled?: boolean }) {
 }
 
 
-function useFirebaseAuthReadyForProtectedDropRoutes() {
-  const { user, loading } = useAuth();
-  return !loading && Boolean(user);
+function useAuthReadyForProtectedDropRoutes() {
+  const { dbUser, loading } = useAuth();
+  return !loading && Boolean(dbUser);
 }
 
 export function useDrop(id: string, options?: { enabled?: boolean }) {
-  const authOk = useFirebaseAuthReadyForProtectedDropRoutes();
+  const authOk = useAuthReadyForProtectedDropRoutes();
   return useQuery({
     queryKey: dropKeys.detail(id),
     queryFn: () => dropsService.getOne(id),
@@ -93,7 +93,7 @@ export function useSuspenseDrop(id: string) {
 }
 
 export function useDropByJoinCode(joinCode: string, options?: { enabled?: boolean }) {
-  const authOk = useFirebaseAuthReadyForProtectedDropRoutes();
+  const authOk = useAuthReadyForProtectedDropRoutes();
   return useQuery({
     queryKey: dropKeys.byJoinCode(joinCode),
     queryFn: () => dropsService.getByJoinCode(joinCode),
@@ -104,8 +104,8 @@ export function useDropByJoinCode(joinCode: string, options?: { enabled?: boolea
 }
 
 export function useMyActivity(options?: { enabled?: boolean, page?: number, limit?: number }) {
-  const { user } = useAuth();
-  const uid = user?.uid ?? '';
+  const { dbUser } = useAuth();
+  const uid = dbUser?.id ?? '';
   const page = options?.page ?? 1;
   const limit = options?.limit ?? 15;
   return useQuery({
@@ -118,7 +118,7 @@ export function useMyActivity(options?: { enabled?: boolean, page?: number, limi
 }
 
 export function useMyCrewStatus(dropId: string, options?: { enabled?: boolean }) {
-  const authOk = useFirebaseAuthReadyForProtectedDropRoutes();
+  const authOk = useAuthReadyForProtectedDropRoutes();
   return useQuery({
     queryKey: dropKeys.crewMe(dropId),
     queryFn: async (): Promise<DropCrew | null> => {
@@ -140,7 +140,7 @@ export function useMyCrewStatus(dropId: string, options?: { enabled?: boolean })
 }
 
 export function useDropActivityLogs(dropId: string, page: number, options?: { enabled?: boolean, limit?: number }) {
-  const authOk = useFirebaseAuthReadyForProtectedDropRoutes();
+  const authOk = useAuthReadyForProtectedDropRoutes();
   const limit = options?.limit ?? 5;
   return useQuery({
     queryKey: dropKeys.activityLogs(dropId, page),
@@ -159,7 +159,7 @@ export function useSuspenseDropActivityLogs(dropId: string, page: number) {
 }
 
 export function useDropCrew(dropId: string, options?: { enabled?: boolean }): UseQueryResult<CrewMember[]> {
-  const authOk = useFirebaseAuthReadyForProtectedDropRoutes();
+  const authOk = useAuthReadyForProtectedDropRoutes();
   return useQuery({
     queryKey: dropKeys.crew(dropId),
     queryFn: () => dropsService.getCrew(dropId),
@@ -175,7 +175,7 @@ export function useSuspenseDropCrew(dropId: string) {
 }
 
 export function useInfinitePhotos(dropId: string, options?: { enabled?: boolean; limit?: number }) {
-  const authOk = useFirebaseAuthReadyForProtectedDropRoutes();
+  const authOk = useAuthReadyForProtectedDropRoutes();
   const limit = options?.limit ?? 20;
 
   return useInfiniteQuery({
@@ -196,7 +196,7 @@ export function useInfinitePhotos(dropId: string, options?: { enabled?: boolean;
 }
 
 export function usePhotoDetail(dropId: string, photoId: string, options?: { enabled?: boolean }) {
-  const authOk = useFirebaseAuthReadyForProtectedDropRoutes();
+  const authOk = useAuthReadyForProtectedDropRoutes();
   return useQuery({
     queryKey: dropKeys.photoDetail(dropId, photoId),
     queryFn: () => dropsService.getPhotoDetail(dropId, photoId),
