@@ -7,26 +7,15 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const payload = body?.payload ?? {};
 
-  // The bearer plugin on the API exposes the signed session token in the
-  // set-auth-token response header after sign-in. The client passes it here
-  // so we can forward it as Authorization: Bearer — the bearer plugin converts
-  // it back to the signed cookie internally, allowing BetterAuthGuard to work.
-  const bearerToken: string | undefined = body?.bearerToken;
-
   try {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (bearerToken) {
-      headers['Authorization'] = `Bearer ${bearerToken}`;
-    } else {
-      headers['cookie'] = req.headers.get('cookie') ?? '';
-    }
-
+    // /api/auth/* is proxied through Next.js (next.config.js rewrites), so the
+    // session cookie is now same-origin (tapok.app). Forward it directly.
     const res = await fetch(`${API_URL}/users/sync`, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: req.headers.get('cookie') ?? '',
+      },
       body: JSON.stringify(payload),
       cache: 'no-store',
     });
@@ -52,21 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     const dbUser = await res.json();
-    const response = NextResponse.json({ ok: true, dbUser });
-
-    // Mirror the session cookie onto the web domain so Next.js middleware
-    // (proxy.ts) can read it for route protection.
-    if (bearerToken) {
-      response.cookies.set('__Secure-better-auth.session_token', bearerToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7,
-      });
-    }
-
-    return response;
+    return NextResponse.json({ ok: true, dbUser });
   } catch {
     return NextResponse.json(
       { error: 'API_UNAVAILABLE', message: 'Cannot reach the backend API.' },

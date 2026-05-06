@@ -80,19 +80,10 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
 
   const syncAndRedirect = useCallback(
     async (firstName: string, mode: 'login' | 'signup' = 'login') => {
-      // The bearer plugin exposes the signed token in set-auth-token response header.
-      // We use native fetch (not authClient) to access response headers.
-      let bearerToken: string | undefined;
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL?.split(',')[0]?.trim() ?? 'http://localhost:3000';
-        const sessionRes = await fetch(`${apiUrl}/api/auth/get-session`, { credentials: 'include', cache: 'no-store' });
-        bearerToken = sessionRes.headers.get('set-auth-token') ?? undefined;
-      } catch { /* non-fatal */ }
-
       await fetch('/api/auth/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload: {}, bearerToken }),
+        body: JSON.stringify({ payload: {} }),
         credentials: 'include',
       }).catch(() => undefined);
 

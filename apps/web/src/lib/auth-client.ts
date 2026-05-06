@@ -1,10 +1,12 @@
 import { createAuthClient } from 'better-auth/react';
 import { inferAdditionalFields } from 'better-auth/client/plugins';
 import type { Auth } from '../../../api/src/lib/auth';
-import { getApiUrl } from '@/lib/config';
+import { getBaseUrl } from '@/lib/config';
 
+// Point at the same-origin /api/auth proxy (apps/web/src/app/api/auth/[...path]/route.ts)
+// so BetterAuth session cookies land on tapok.app, not tapok-api.vercel.app.
 export const authClient = createAuthClient({
-  baseURL: `${getApiUrl()}/api/auth`,
+  baseURL: `${getBaseUrl()}/api/auth`,
   plugins: [inferAdditionalFields<Auth>()],
 });
 

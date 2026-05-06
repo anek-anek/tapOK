@@ -4,9 +4,6 @@ import { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { resolveAuthSuccessRedirect, sanitizeRedirectTo } from '@/lib/auth/redirects';
-import { getApiUrl } from '@/lib/config';
-
-const API_URL = getApiUrl().replace(/\/$/, '');
 
 export default function GoogleCallbackPage() {
   const router = useRouter();
@@ -25,20 +22,12 @@ export default function GoogleCallbackPage() {
       let shouldOnboard = true;
 
       try {
-        const sessionRes = await fetch(`${API_URL}/api/auth/get-session`, {
-          credentials: 'include',
-          cache: 'no-store',
-        });
-
-        let bearerToken: string | undefined;
-        if (sessionRes.ok) {
-          bearerToken = sessionRes.headers.get('set-auth-token') ?? undefined;
-        }
-
+        // /api/auth/* is proxied to the API via next.config.js rewrites, so cookies
+        // are now same-origin (tapok.app) and no cross-origin handling is needed.
         const res = await fetch('/api/auth/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payload: {}, bearerToken }),
+          body: JSON.stringify({ payload: {} }),
           credentials: 'include',
         });
 
