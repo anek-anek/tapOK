@@ -21,7 +21,24 @@ export const auth = betterAuth({
 
   trustedOrigins: (process.env.WEB_ORIGIN ?? 'http://localhost:4200')
     .split(',')
-    .map((o) => o.trim()),
+    .flatMap((o) => {
+      const trimmed = o.trim();
+      try {
+        const url = new URL(trimmed);
+        // Automatically trust both apex and www variants
+        if (!url.hostname.startsWith('www.')) {
+          const wwwVariant = `${url.protocol}//www.${url.hostname}${url.port ? `:${url.port}` : ''}`;
+          return [trimmed, wwwVariant];
+        }
+        if (url.hostname.startsWith('www.')) {
+          const apexVariant = `${url.protocol}//${url.hostname.slice(4)}${url.port ? `:${url.port}` : ''}`;
+          return [trimmed, apexVariant];
+        }
+      } catch {
+        // ignore invalid URLs
+      }
+      return [trimmed];
+    }),
 
   onAPIError: {
     errorURL: `${(process.env.WEB_ORIGIN ?? 'http://localhost:4200').split(',')[0]?.trim() ?? 'http://localhost:4200'}/login`,
