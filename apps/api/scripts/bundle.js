@@ -1,8 +1,9 @@
 /**
  * Two-step Vercel build:
  * 1. tsc compiles TypeScript with emitDecoratorMetadata (required by TypeORM)
- * 2. esbuild re-bundles the compiled dist/main.js, inlining ESM node_modules
- *    (like better-auth) into a single CJS output that Vercel Node 24 can load.
+ * 2. esbuild re-bundles dist/main.js, inlining only ESM-only packages (like
+ *    better-auth) while keeping all @nestjs/* and typeorm external so that
+ *    NestJS DI uses a single consistent set of instances from node_modules.
  */
 
 const { execSync } = require('child_process');
@@ -16,7 +17,7 @@ const root = path.resolve(__dirname, '..');
 console.log('Step 1: tsc compile...');
 execSync('npx tsc -p tsconfig.json', { cwd: root, stdio: 'inherit' });
 
-// Step 2: esbuild bundles dist/main.js, resolving ESM node_modules into CJS
+// Step 2: esbuild bundles dist/main.js, inlining ESM packages into CJS output
 console.log('Step 2: esbuild bundle...');
 
 const distMain = path.join(root, 'dist', 'main.js');
@@ -29,19 +30,27 @@ esbuild.build({
   target: 'node22',
   format: 'cjs',
   outfile,
-  // Resolve ESM packages from node_modules relative to source root
   nodePaths: [path.join(root, 'node_modules'), path.join(root, '../../node_modules')],
-  // Keep optional/native deps external
   external: [
-    'pg-native',
-    'class-transformer/storage',
+    '@nestjs/common',
+    '@nestjs/core',
+    '@nestjs/platform-express',
+    '@nestjs/config',
+    '@nestjs/swagger',
+    '@nestjs/typeorm',
+    '@nestjs/terminus',
+    '@nestjs/throttler',
+    '@nestjs/schedule',
     '@nestjs/websockets',
     '@nestjs/microservices',
     '@nestjs/sequelize',
     '@nestjs/mongoose',
-    '@nestjs/typeorm',
-    '@mikro-orm/core',
+    '@nestjs/schematics',
+    '@nestjs/cli',
     'typeorm',
+    '@mikro-orm/core',
+    'pg-native',
+    'class-transformer/storage',
     'cache-manager',
     'ioredis',
     'redis',
@@ -55,7 +64,6 @@ esbuild.build({
   conditions: ['require', 'node', 'default'],
   logLevel: 'info',
 }).then(() => {
-  // Replace dist/main.js with the bundled output
   fs.renameSync(outfile, distMain);
   console.log('Done: dist/main.js is ready for Vercel.');
 }).catch(() => process.exit(1));
