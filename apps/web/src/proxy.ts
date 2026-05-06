@@ -23,10 +23,12 @@ async function getSessionAuth(
   if (!sessionCookie) return { isAuthenticated: false, role: null };
 
   try {
+    const origin = `https://${request.headers.get('host') ?? 'tapok.app'}`;
     const response = await fetch(`${resolveApiUrl().replace(/\/$/, '')}/users/me`, {
       method: 'GET',
       headers: {
         cookie: request.headers.get('cookie') ?? '',
+        origin,
       },
       cache: 'no-store',
     });

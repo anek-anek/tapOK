@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiUrl } from '@/lib/config';
+import { getApiUrl, getBaseUrl } from '@/lib/config';
 
 const API_URL = getApiUrl().replace(/\/$/, '');
 
@@ -10,11 +10,15 @@ export async function POST(req: NextRequest) {
   try {
     // /api/auth/* is proxied through Next.js (next.config.js rewrites), so the
     // session cookie is now same-origin (tapok.app). Forward it directly.
+    // The explicit `origin` header is required so BetterAuth's CSRF check passes
+    // on this server-to-server call (no browser origin header is sent otherwise).
+    const origin = req.headers.get('origin') ?? getBaseUrl();
     const res = await fetch(`${API_URL}/users/sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         cookie: req.headers.get('cookie') ?? '',
+        origin,
       },
       body: JSON.stringify(payload),
       cache: 'no-store',
