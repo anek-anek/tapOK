@@ -6,6 +6,9 @@ import { StorageClient } from '@supabase/storage-js';
 export class SupabaseStorageService {
   public readonly storage: StorageClient;
   private readonly bucket = 'drops';
+  private readonly signedReadUrlCache = new Map<string, { url: string; expiresAt: number }>();
+  private static readonly SIGNED_READ_URL_TTL_SECONDS = 60 * 60;
+  private static readonly SIGNED_READ_URL_CACHE_SKEW_MS = 5 * 60 * 1000;
 
   constructor(private readonly config: ConfigService) {
     const url = config.getOrThrow<string>('SUPABASE_URL');
@@ -86,20 +89,52 @@ export class SupabaseStorageService {
   }
 
   async resolvePhotoReadUrl(storagePath: string): Promise<string> {
-    const { data, error } = await this.storage.from(this.bucket).createSignedUrl(storagePath, 60 * 60);
+    const now = Date.now();
+    const cached = this.signedReadUrlCache.get(storagePath);
+    if (cached && cached.expiresAt > now) {
+      return cached.url;
+    }
+
+    const { data, error } = await this.storage
+      .from(this.bucket)
+      .createSignedUrl(storagePath, SupabaseStorageService.SIGNED_READ_URL_TTL_SECONDS);
     if (error || !data?.signedUrl) {
       throw new InternalServerErrorException(
         `Storage signed read URL creation failed: ${error?.message ?? 'missing signed URL'}`,
       );
     }
+
+    this.signedReadUrlCache.set(storagePath, {
+      url: data.signedUrl,
+      expiresAt:
+        now +
+        SupabaseStorageService.SIGNED_READ_URL_TTL_SECONDS * 1000 -
+        SupabaseStorageService.SIGNED_READ_URL_CACHE_SKEW_MS,
+    });
     return data.signedUrl;
   }
 
   async tryResolvePhotoReadUrl(storagePath: string): Promise<string | null> {
-    const { data, error } = await this.storage.from(this.bucket).createSignedUrl(storagePath, 60 * 60);
+    const now = Date.now();
+    const cached = this.signedReadUrlCache.get(storagePath);
+    if (cached && cached.expiresAt > now) {
+      return cached.url;
+    }
+
+    const { data, error } = await this.storage
+      .from(this.bucket)
+      .createSignedUrl(storagePath, SupabaseStorageService.SIGNED_READ_URL_TTL_SECONDS);
     if (error || !data?.signedUrl) {
       return null;
     }
+
+    this.signedReadUrlCache.set(storagePath, {
+      url: data.signedUrl,
+      expiresAt:
+        now +
+        SupabaseStorageService.SIGNED_READ_URL_TTL_SECONDS * 1000 -
+        SupabaseStorageService.SIGNED_READ_URL_CACHE_SKEW_MS,
+    });
     return data.signedUrl;
   }
 }

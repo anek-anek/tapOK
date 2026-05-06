@@ -28,6 +28,8 @@ export function useCurrentUser(): UseQueryResult<UserProfile> {
   return useQuery({
     queryKey: userKeys.me,
     queryFn: () => usersService.getMe(),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -35,5 +37,7 @@ export function useFrequentCrew(): UseQueryResult<FrequentCrewMember[]> {
   return useQuery({
     queryKey: userKeys.meFrequentCrew,
     queryFn: () => usersService.getFrequentCrew(),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 }
