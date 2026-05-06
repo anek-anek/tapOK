@@ -80,6 +80,10 @@ export const auth = betterAuth({
     database: {
       generateId: 'uuid',
     },
+    defaultCookieAttributes: {
+      sameSite: 'none',
+      secure: true,
+    },
   },
 
   user: {
