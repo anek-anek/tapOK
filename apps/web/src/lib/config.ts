@@ -19,17 +19,16 @@ export function getBaseUrl(): string {
 }
 
 export function getApiUrl(): string {
+  // In production, route all API calls through the same-origin Next.js rewrite
+  // (/api/v1/* → tapok-api.vercel.app/*) so session cookies are always same-origin.
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    return '/api/v1';
+  }
+
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!envUrl) return 'http://localhost:3000';
-  
-  const urls = envUrl.split(',').map(u => u.trim()).filter(Boolean);
-  
-  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-    const prodUrl = urls.find(u => !u.includes('localhost'));
-    if (prodUrl) return prodUrl;
-  }
-  
-  return urls[0] || 'http://localhost:3000';
+
+  return envUrl.split(',').map(u => u.trim()).filter(Boolean)[0] || 'http://localhost:3000';
 }
 
 export const PRIMARY_DOMAIN = getBaseUrl();

@@ -2,6 +2,19 @@
 const nextConfig = {
   allowedDevOrigins: ['http://localhost:3000', 'https://tapok.app', 'http://tapok.app'],
   productionBrowserSourceMaps: false,
+  async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL
+      ? process.env.NEXT_PUBLIC_API_URL.split(',').find((u) => !u.includes('localhost'))?.trim() ??
+        process.env.NEXT_PUBLIC_API_URL.split(',')[0].trim()
+      : 'http://localhost:3000';
+
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: `${apiUrl}/:path*`,
+      },
+    ];
+  },
   async headers() {
     return [
       {
