@@ -28,7 +28,6 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
   const {
     register,
     handleSubmit,
-    getValues,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({

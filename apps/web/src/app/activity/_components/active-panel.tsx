@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { CalendarDays, MapPin, TrendingUp, Users } from 'lucide-react';
 import { useMyDrops } from '@/hooks/queries/use-drops';
 import { useFrequentCrew } from '@/hooks/queries/use-users';
@@ -200,10 +201,11 @@ export function ActivePanel({
                 <div className="relative">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden border-2 border-tok-black bg-tok-teal-pale font-passion text-xs font-bold text-tok-teal shadow-[2px_2px_0px_0px_#262624] transition-transform group-hover:-translate-y-0.5">
                     {member.avatar ? (
-                      <img
+                      <Image
                         src={member.avatar}
                         alt={member.firstName}
-                        className="h-full w-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     ) : (
                       getInitials(member.firstName, member.lastName)

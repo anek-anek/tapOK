@@ -3,6 +3,7 @@
 import { Mail, Phone, Calendar as IconCalendar, Pencil, X, Check, User, ChevronDown, Camera, ShieldCheck, LockKeyhole, AlertCircle } from 'lucide-react';
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { useCurrentUser, useFrequentCrew } from '@/hooks/queries/use-users';
@@ -371,10 +372,11 @@ export default function ProfilePage() {
               <div className="relative group">
                 <div className="flex h-32 w-32 items-center justify-center overflow-hidden border-4 border-tok-black bg-tok-teal-pale font-passion text-5xl text-tok-teal shadow-[4px_4px_0px_0px_#262624]">
                   {(editing ? form.avatar : profile?.avatar) ? (
-                    <img
-                      src={editing ? form.avatar : profile?.avatar}
+                    <Image
+                      src={(editing ? form.avatar : profile?.avatar) as string}
                       alt={fullName}
-                      className="h-full w-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   ) : (
                     initials
@@ -807,7 +809,7 @@ export default function ProfilePage() {
                   <div key={member.id} className="flex items-center gap-4 border-2 border-tok-black bg-tok-white p-4 shadow-[4px_4px_0px_0px_#262624]">
                     <div className="flex h-12 w-12 items-center justify-center border-2 border-tok-black bg-tok-teal-pale overflow-hidden">
                       {member.avatar ? (
-                        <img src={member.avatar} alt="" className="h-full w-full object-cover" />
+                        <Image src={member.avatar} alt="" fill className="object-cover" />
                       ) : (
                         <span className="font-passion text-lg text-tok-teal">
                           {member.firstName[0]}{member.lastName[0]}

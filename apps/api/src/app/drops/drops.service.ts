@@ -289,7 +289,6 @@ export class DropsService {
         await this.mediaAssets.uploadImage(coverPath, buffer, mimeType);
         await this.dropsRepository.update(drop.id, { coverPhoto: coverPath });
       } else {
-        const origin = baseUrl.replace(/\/$/, '');
         const defaultCover =
           dto.category === DropCategory.HANGOUT
             ? '/tapok-hangout.png'

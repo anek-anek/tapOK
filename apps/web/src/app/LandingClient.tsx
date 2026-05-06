@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { CurrentYear } from '@/components/CurrentYear';
 import { ShieldCheck, Headphones, Smartphone } from 'lucide-react';

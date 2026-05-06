@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo, type MouseEvent, type DragEvent } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import NextImage from 'next/image';
 import axios from 'axios';
 import {
@@ -14,8 +14,7 @@ import {
   ChevronRight as IconChevronRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { dropsService } from '@/services/drops.service';
-import { useUploadPhoto, useFeaturePhoto, useDeletePhoto } from '@/hooks/mutations/use-drop-mutations';
+import { useUploadPhoto, useFeaturePhoto } from '@/hooks/mutations/use-drop-mutations';
 import { useInfinitePhotos, usePhotoDetail } from '@/hooks/queries/use-drops';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
@@ -633,7 +632,7 @@ function PhotoViewerModal({
 }) {
   const { data: photo, isLoading } = usePhotoDetail(dropId, photoId);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
-  const [aspectRatio, setAspectRatio] = useState(1);
+  const [, setAspectRatio] = useState<number>(1);
 
   const isLandscape = orientation === 'landscape';
 

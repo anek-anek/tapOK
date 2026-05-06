@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 import { Calendar, User as UserIcon } from 'lucide-react';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { useUser } from '@/hooks/queries/use-users';
@@ -72,10 +73,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
         <div className="mb-8 flex items-center gap-6">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-[#2a2118]/20 bg-[#2a2118] font-inter text-2xl font-bold text-[#F0E9C8] overflow-hidden">
             {user.avatar ? (
-              <img
+              <Image
                 src={user.avatar}
                 alt={user.firstName}
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
               />
             ) : (
               initials

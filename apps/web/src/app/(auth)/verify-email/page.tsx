@@ -49,7 +49,7 @@ export default function VerifyEmailPage() {
               className="font-passion font-bold uppercase leading-none text-tok-black"
               style={{ fontSize: 'clamp(32px, 4vw, 48px)', letterSpacing: '-0.01em' }}
             >
-              YOU'RE IN.
+              YOU&apos;RE IN.
             </h1>
 
             <p className="mt-3 max-w-sm font-inter text-sm leading-relaxed text-tok-black/55 lg:mt-2 lg:text-[13px]">

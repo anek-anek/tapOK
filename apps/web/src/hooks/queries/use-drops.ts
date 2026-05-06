@@ -8,7 +8,7 @@ import {
 import axios from 'axios';
 import { dropsService } from '@/services/drops.service';
 import { useAuth } from '@/components/providers/auth-provider';
-import type { CrewMember, DiscoverDropsPayload, DropCrew } from '@/types/drop';
+import type { CrewMember, DropCrew } from '@/types/drop';
 
 export const dropKeys = {
   mine: (uid: string) => ['drops', 'mine', uid] as const,

@@ -597,6 +597,8 @@ export interface components {
             /** Format: date-time */
             passwordResetSentAt?: string;
             isActive: boolean;
+            /** @description Whether the user has completed onboarding */
+            onboardingCompleted: boolean;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */

@@ -35,7 +35,6 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
   const {
     register,
     handleSubmit,
-    getValues,
     setValue,
     watch,
     reset,

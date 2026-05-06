@@ -1709,6 +1709,10 @@
           "isActive": {
             "type": "boolean"
           },
+          "onboardingCompleted": {
+            "type": "boolean",
+            "description": "Whether the user has completed onboarding"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -1764,6 +1768,7 @@
           "role",
           "isEmailVerified",
           "isActive",
+          "onboardingCompleted",
           "createdAt",
           "updatedAt",
           "termsAccepted",

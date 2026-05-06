@@ -18,7 +18,7 @@ export const PrivacyContent = () => (
       <ul className="list-disc pl-5 mt-4 space-y-2">
         <li><strong>Personal Data:</strong> Name, email address, contact details, and profile information.</li>
         <li><strong>Usage Data:</strong> Information automatically collected when you visit our site (IP address, browser type, pages viewed).</li>
-        <li><strong>Engagement Data:</strong> Data related to your interactions with "Drops" and missions on the platform.</li>
+        <li><strong>Engagement Data:</strong> Data related to your interactions with &quot;Drops&quot; and missions on the platform.</li>
       </ul>
     </section>
 

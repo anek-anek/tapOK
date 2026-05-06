@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { authClient } from '@/lib/auth-client';
 import { toast } from 'react-hot-toast';
-import { Loader2, ShieldCheck, X, ChevronDown } from 'lucide-react';
+import { Loader2, ShieldCheck, ChevronDown } from 'lucide-react';
+
 import { TermsContent } from './TermsContent';
 import { PrivacyContent } from './PrivacyContent';
 import { PUBLIC_ROUTES } from '@/lib/constants/routes';
@@ -49,7 +50,7 @@ export function LegalConsentModal() {
     }
 
     setIsVisible(true);
-  }, [dbUser, isReady, pathname]);
+  }, [dbUser, isReady, loading, hasSettled, pathname]);
 
   useEffect(() => {
     if (isVisible) {
@@ -77,7 +78,7 @@ export function LegalConsentModal() {
     setIsAccepting(true);
 
     try {
-      const now = new Date().toISOString();
+      const now = new Date();
       await authClient.updateUser({
         termsAccepted: true,
         termsAcceptedAt: now,
@@ -156,7 +157,7 @@ export function LegalConsentModal() {
         <div className="shrink-0 flex flex-col border-t-4 border-tok-black bg-tok-cream p-4 sm:p-6 sm:flex-row sm:gap-4 items-center justify-center">
           <div className="flex-1 mb-4 sm:mb-0 text-center sm:text-left">
             <p className="font-inter text-[11px] leading-relaxed text-tok-black/60">
-              By clicking "Accept & Continue", you confirm that you have read and agree to both the Terms & Conditions and the Privacy Policy.
+              By clicking &quot;Accept &amp; Continue&quot;, you confirm that you have read and agree to both the Terms &amp; Conditions and the Privacy Policy.
             </p>
           </div>
 

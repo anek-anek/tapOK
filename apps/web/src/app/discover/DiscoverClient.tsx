@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useMounted } from '@/hooks/use-mounted';
-import { useRouter } from 'next/navigation';
 import { TapokNavbar } from '@/components/tapok-navbar';
 import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
 import {
@@ -14,11 +13,9 @@ import { DropShareModal } from '@/components/drops/DropShareModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sparkles,
-  ArrowRight,
   Filter,
   Users,
   Loader2,
-  Globe,
 } from 'lucide-react';
 import {
   HeroDropCard,
@@ -179,7 +176,6 @@ function PageSkeleton() {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function DiscoverClient() {
-  const router = useRouter();
   const mounted = useMounted();
   const { dbUser, isReady, loading: authLoading } = useAuth();
   const [category, setCategory] = useState<DropCategory | undefined>(undefined);
