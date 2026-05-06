@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -160,9 +161,21 @@ export class UsersService {
 
   async update(id: string, dto: UpdateUserDto, requesterId: string): Promise<User> {
     await this.assertOwnership(id, requesterId);
-    const user = await this.usersRepository.update(id, dto);
-    if (!user) throw new NotFoundException(`User ${id} not found`);
-    return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
+    try {
+      const user = await this.usersRepository.update(id, dto);
+      if (!user) throw new NotFoundException(`User ${id} not found`);
+      return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
+    } catch (err: any) {
+      if (err.code === '23505') {
+        if (err.detail?.includes('userHandle')) {
+          throw new ConflictException('THIS USER HANDLE IS ALREADY TAKEN');
+        }
+        if (err.detail?.includes('email')) {
+          throw new ConflictException('THIS EMAIL IS ALREADY REGISTERED');
+        }
+      }
+      throw err;
+    }
   }
 
   async createAvatarUploadSession(

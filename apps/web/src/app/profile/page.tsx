@@ -176,9 +176,36 @@ export default function ProfilePage() {
     const tenDigits = form.phone.replace(/\D/g, '').slice(0, 10);
     const profileTen = parsePhoneToTenDigits(profile.phone ?? '');
 
+    if (!form.firstName.trim()) {
+      toast.error('FIRST NAME IS REQUIRED');
+      return;
+    }
+    if (!form.lastName.trim()) {
+      toast.error('LAST NAME IS REQUIRED');
+      return;
+    }
+
     if (tenDigits && !PH_MOBILE_TEN_DIGITS.test(tenDigits)) {
       toast.error('ENTER 10 DIGITS STARTING WITH 9');
       return;
+    }
+
+    if (form.userHandle && !/^[a-zA-Z0-9._]+$/.test(form.userHandle)) {
+      toast.error('HANDLE CAN ONLY CONTAIN LETTERS, NUMBERS, DOTS AND UNDERSCORES');
+      return;
+    }
+
+    if (form.userHandle && form.userHandle.length < 3) {
+      toast.error('HANDLE MUST BE AT LEAST 3 CHARACTERS');
+      return;
+    }
+
+    if (form.birthday) {
+      const bday = new Date(form.birthday);
+      if (bday > new Date()) {
+        toast.error('BIRTHDAY CANNOT BE IN THE FUTURE');
+        return;
+      }
     }
 
     const dto: Record<string, unknown> = {};

@@ -6,7 +6,10 @@ import {
   IsOptional,
   IsPhoneNumber,
   IsString,
+  Matches,
   MaxDate,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { AuthProvider, GenderEnum, UserRole } from '../../../common';
@@ -23,10 +26,14 @@ export class CreateUserDto {
 
   @ApiProperty({ example: 'Jane' })
   @IsString()
+  @MinLength(1, { message: 'First name is required' })
+  @MaxLength(100)
   firstName: string;
 
   @ApiProperty({ example: 'Doe' })
   @IsString()
+  @MinLength(1, { message: 'Last name is required' })
+  @MaxLength(100)
   lastName: string;
 
   @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg' })
@@ -46,19 +53,24 @@ export class CreateUserDto {
 
   @ApiPropertyOptional({ example: '1990-01-01' })
   @IsOptional()
-  @IsDate()
-  @MaxDate(new Date(), { message: 'Birthday cannot be in the future' })
   @Type(() => Date)
+  @IsDate({ message: 'Birthday must be a valid date' })
+  @MaxDate(new Date(), { message: 'Birthday cannot be in the future' })
   birthday?: Date;
 
   @ApiPropertyOptional({ example: 'jane_doe' })
   @IsOptional()
   @IsString()
+  @MinLength(3, { message: 'User handle must be at least 3 characters' })
+  @MaxLength(30, { message: 'User handle cannot exceed 30 characters' })
+  @Matches(/^[a-zA-Z0-9._]+$/, { 
+    message: 'User handle can only contain letters, numbers, dots, and underscores' 
+  })
   userHandle?: string;
 
   @ApiPropertyOptional({ example: '+639123456789' })
   @IsOptional()
-  @IsPhoneNumber()
+  @IsPhoneNumber('PH', { message: 'Invalid phone number format' })
   phone?: string;
 
   @ApiPropertyOptional({ default: false })
