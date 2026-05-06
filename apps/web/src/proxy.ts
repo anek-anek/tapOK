@@ -14,13 +14,61 @@ function resolveApiUrl(): string {
   return urls[0] || 'http://localhost:3000';
 }
 
+async function readSessionDataCookie(
+  raw: string,
+  secret: string,
+): Promise<{ role: UserRole | null } | null> {
+  try {
+    const json = atob(raw.replace(/-/g, '+').replace(/_/g, '/'));
+    const parsed = JSON.parse(json) as {
+      session?: { user?: { role?: string } };
+      expiresAt?: number;
+      signature?: string;
+    };
+
+    if (!parsed.session || !parsed.expiresAt || !parsed.signature) return null;
+    if (parsed.expiresAt < Date.now()) return null;
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify'],
+    );
+    const payload = JSON.stringify({ ...parsed.session, expiresAt: parsed.expiresAt });
+    const sigBytes = Uint8Array.from(atob(parsed.signature.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+    const valid = await crypto.subtle.verify('HMAC', key, sigBytes, new TextEncoder().encode(payload));
+    if (!valid) return null;
+
+    const role = parsed.session.user?.role;
+    return { role: role === 'admin' || role === 'participant' ? role : null };
+  } catch {
+    return null;
+  }
+}
+
 async function getSessionAuth(
   request: NextRequest,
 ): Promise<{ isAuthenticated: boolean; role: UserRole | null }> {
-  const sessionCookie =
+  const sessionToken =
     request.cookies.get('__Secure-better-auth.session_token')?.value ??
     request.cookies.get('better-auth.session_token')?.value;
-  if (!sessionCookie) return { isAuthenticated: false, role: null };
+
+  if (!sessionToken) return { isAuthenticated: false, role: null };
+
+  // Try the 5-minute cookie cache first — no network call needed
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (secret) {
+    const sessionData =
+      request.cookies.get('__Secure-better-auth.session_data')?.value ??
+      request.cookies.get('better-auth.session_data')?.value;
+
+    if (sessionData) {
+      const cached = await readSessionDataCookie(sessionData, secret);
+      if (cached) return { isAuthenticated: true, role: cached.role };
+    }
+  }
 
   try {
     const origin = `https://${request.headers.get('host') ?? 'tapok.app'}`;
@@ -34,14 +82,21 @@ async function getSessionAuth(
     });
 
     if (!response.ok) {
-      return { isAuthenticated: false, role: null };
+      // 401/403 means the session is genuinely invalid — sign out.
+      // Any other error (5xx, network) means the backend is unavailable;
+      // don't sign the user out for that.
+      if (response.status === 401 || response.status === 403) {
+        return { isAuthenticated: false, role: null };
+      }
+      return { isAuthenticated: true, role: null };
     }
 
     const user = await response.json();
     const role = user?.role === 'admin' || user?.role === 'participant' ? user.role : null;
     return { isAuthenticated: true, role };
   } catch {
-    return { isAuthenticated: false, role: null };
+    // Backend unreachable — don't sign out, the session cookie is still present.
+    return { isAuthenticated: true, role: null };
   }
 }
 
