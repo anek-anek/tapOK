@@ -397,7 +397,7 @@ export default function ProfilePage() {
           <section className="border-2 border-tok-black bg-tok-white p-8 shadow-[6px_6px_0px_0px_#262624]">
             <div className="flex flex-col items-center gap-8 sm:flex-row sm:items-start">
               <div className="relative group">
-                <div className="flex h-32 w-32 items-center justify-center overflow-hidden border-4 border-tok-black bg-tok-teal-pale font-passion text-5xl text-tok-teal shadow-[4px_4px_0px_0px_#262624]">
+                <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden border-4 border-tok-black bg-tok-teal-pale font-passion text-5xl text-tok-teal shadow-[4px_4px_0px_0px_#262624]">
                   {(editing ? form.avatar : profile?.avatar) ? (
                     <Image
                       src={(editing ? form.avatar : profile?.avatar) as string}
@@ -834,7 +834,7 @@ export default function ProfilePage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 {frequentCrew.map((member) => (
                   <div key={member.id} className="flex items-center gap-4 border-2 border-tok-black bg-tok-white p-4 shadow-[4px_4px_0px_0px_#262624]">
-                    <div className="flex h-12 w-12 items-center justify-center border-2 border-tok-black bg-tok-teal-pale overflow-hidden">
+                    <div className="relative flex h-12 w-12 items-center justify-center border-2 border-tok-black bg-tok-teal-pale overflow-hidden">
                       {member.avatar ? (
                         <Image src={member.avatar} alt="" fill className="object-cover" />
                       ) : (

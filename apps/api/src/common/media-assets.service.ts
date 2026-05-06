@@ -17,7 +17,7 @@ export class MediaAssetsService {
 
   buildUserAvatarPath(userId: string, mimeType: string): string {
     const ext = mimeType === 'image/png' ? 'png' : 'jpg';
-    return `users/${userId}/avatar.${ext}`;
+    return `users/${userId}/avatar_${Date.now()}.${ext}`;
   }
 
   async uploadImage(path: string, buffer: Buffer, mimeType: string): Promise<string> {
@@ -64,7 +64,7 @@ export class MediaAssetsService {
 
   extractStoragePath(reference: string): string | null {
     if (!reference) return null;
-    if (reference.startsWith('drops/')) return reference;
+    if (reference.startsWith('drops/') || reference.startsWith('users/')) return reference;
 
     try {
       const url = new URL(reference);
