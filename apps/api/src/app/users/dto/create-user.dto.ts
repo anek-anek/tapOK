@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsDate,
   IsDateString,
   IsEmail,
   IsEnum,
@@ -10,6 +11,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { AuthProvider, GenderEnum, UserRole } from '../../../common';
 
 export class CreateUserDto {

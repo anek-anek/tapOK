@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersRepository {
@@ -38,14 +37,14 @@ export class UsersRepository {
     return this.repo.save(user);
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<User | null> {
-    if (Object.keys(dto).length === 0) {
+  async update(id: string, data: Partial<User>): Promise<User | null> {
+    if (Object.keys(data).length === 0) {
       return this.findById(id);
     }
     const user = await this.findById(id);
     if (!user) return null;
-    
-    Object.assign(user, dto);
+
+    Object.assign(user, data);
     return this.repo.save(user);
   }
 

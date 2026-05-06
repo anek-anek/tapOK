@@ -85,8 +85,22 @@ export class UsersService {
     };
   }
 
+  private toUserCreateData(dto: CreateUserDto): Partial<User> {
+    return {
+      ...dto,
+      birthday: dto.birthday ? new Date(dto.birthday) : undefined,
+    };
+  }
+
+  private toUserUpdateData(dto: UpdateUserDto): Partial<User> {
+    return {
+      ...dto,
+      birthday: dto.birthday ? new Date(dto.birthday) : undefined,
+    };
+  }
+
   create(dto: CreateUserDto): Promise<User> {
-    return this.usersRepository.create(dto);
+    return this.usersRepository.create(this.toUserCreateData(dto));
   }
 
   async syncUser(betterAuthUser: BetterAuthUser, dto: SyncUserDto = {}): Promise<User> {
@@ -162,7 +176,7 @@ export class UsersService {
   async update(id: string, dto: UpdateUserDto, requesterId: string): Promise<User> {
     await this.assertOwnership(id, requesterId);
     try {
-      const user = await this.usersRepository.update(id, dto);
+      const user = await this.usersRepository.update(id, this.toUserUpdateData(dto));
       if (!user) throw new NotFoundException(`User ${id} not found`);
       return { ...user, avatar: await this.resolveAvatarReference(user.avatar) };
     } catch (err: any) {

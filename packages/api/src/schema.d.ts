@@ -718,10 +718,7 @@ export interface components {
             role: "admin" | "participant";
             /** @enum {string} */
             gender?: "male" | "female" | "other";
-            /**
-             * Format: date-time
-             * @example 1990-01-01
-             */
+            /** @example 1990-01-01 */
             birthday?: string;
             /** @example jane_doe */
             userHandle?: string;
@@ -745,10 +742,7 @@ export interface components {
             avatar?: string;
             /** @enum {string} */
             gender?: "male" | "female" | "other";
-            /**
-             * Format: date-time
-             * @example 1990-01-01
-             */
+            /** @example 1990-01-01 */
             birthday?: string;
             /** @example jane_doe */
             userHandle?: string;

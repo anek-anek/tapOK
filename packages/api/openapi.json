@@ -2019,7 +2019,6 @@
             ]
           },
           "birthday": {
-            "format": "date-time",
             "type": "string",
             "example": "1990-01-01"
           },
@@ -2078,7 +2077,6 @@
             ]
           },
           "birthday": {
-            "format": "date-time",
             "type": "string",
             "example": "1990-01-01"
           },
