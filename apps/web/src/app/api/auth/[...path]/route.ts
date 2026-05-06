@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiUrl } from '@/lib/config';
+import { getServerApiUrl } from '@/lib/config';
 
-const API_URL = getApiUrl().replace(/\/$/, '');
+const API_URL = getServerApiUrl().replace(/\/$/, '');
 
 // Proxy all /api/auth/* requests to the NestJS API and relay Set-Cookie headers
 // back to the browser on tapok.app. This makes BetterAuth session cookies

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiUrl, getBaseUrl } from '@/lib/config';
+import { getServerApiUrl, getBaseUrl } from '@/lib/config';
 
-const API_URL = getApiUrl().replace(/\/$/, '');
+const API_URL = getServerApiUrl().replace(/\/$/, '');
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);

@@ -19,7 +19,7 @@ export function getBaseUrl(): string {
 }
 
 export function getApiUrl(): string {
-  // In production, route all API calls through the same-origin Next.js rewrite
+  // In production, route all browser API calls through the same-origin Next.js rewrite
   // (/api/v1/* → tapok-api.vercel.app/*) so session cookies are always same-origin.
   if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
     return '/api/v1';
@@ -29,6 +29,19 @@ export function getApiUrl(): string {
   if (!envUrl) return 'http://localhost:3000';
 
   return envUrl.split(',').map(u => u.trim()).filter(Boolean)[0] || 'http://localhost:3000';
+}
+
+// Returns the real absolute API URL for server-side fetch calls (route handlers,
+// middleware). Never returns a relative path — those only work in the browser.
+export function getServerApiUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!envUrl) return 'http://localhost:3000';
+
+  const urls = envUrl.split(',').map(u => u.trim()).filter(Boolean);
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    return urls.find(u => !u.includes('localhost')) ?? urls[0] ?? 'http://localhost:3000';
+  }
+  return urls[0] ?? 'http://localhost:3000';
 }
 
 export const PRIMARY_DOMAIN = getBaseUrl();
