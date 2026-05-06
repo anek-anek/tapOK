@@ -35,7 +35,13 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ path: s
   const resHeaders = new Headers();
   apiRes.headers.forEach((value, key) => {
     if (['content-encoding', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) return;
-    resHeaders.set(key, value);
+    // Use append for Set-Cookie so multiple cookies are all forwarded (set() would
+    // overwrite and only the last cookie would reach the browser).
+    if (key.toLowerCase() === 'set-cookie') {
+      resHeaders.append(key, value);
+    } else {
+      resHeaders.set(key, value);
+    }
   });
 
   return new NextResponse(apiRes.body, {
