@@ -13,7 +13,8 @@ import { SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { FrequentCrewDto } from './dto/frequent-crew.dto';
-import { AuthProvider, BetterAuthUser, MediaAssetsService } from '../../common';
+import { AuthProvider, MediaAssetsService } from '../../common';
+import type { BetterAuthUser } from '../../common/better-auth/better-auth.service';
 import { CreateAvatarUploadDto } from './dto/create-avatar-upload.dto';
 import { AvatarUploadSessionDto } from './dto/avatar-upload-session.dto';
 

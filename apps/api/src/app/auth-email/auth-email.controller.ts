@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthEmailService } from './auth-email.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthUser } from '../../common/decorators/auth-user.decorator';
-import type { BetterAuthUser } from '../../common';
+import type { BetterAuthUser } from '../../common/better-auth/better-auth.service';
 
 @ApiTags('Auth Email')
 @Controller('auth/email')

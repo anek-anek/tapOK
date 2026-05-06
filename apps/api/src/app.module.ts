@@ -6,7 +6,9 @@ import { APP_GUARD } from '@nestjs/core';
 
 import { ScheduleModule } from '@nestjs/schedule';
 
-import { BetterAuthGuard, BetterAuthModule, THROTTLE_DEFAULT, THROTTLE_STRICT } from './common';
+import { THROTTLE_DEFAULT, THROTTLE_STRICT } from './common';
+import { BetterAuthGuard } from './common/guards/better-auth.guard';
+import { BetterAuthModule } from './common/better-auth/better-auth.module';
 import { AppController } from './app.controller';
 import { HealthModule } from './app/health/health.module';
 import { UsersModule } from './app/users/users.module';

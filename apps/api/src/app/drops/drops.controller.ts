@@ -27,7 +27,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { BetterAuthUser, CronGuard, DropCategory, Public } from '../../common';
+import { CronGuard, DropCategory, Public } from '../../common';
+import type { BetterAuthUser } from '../../common/better-auth/better-auth.service';
 import { DropsService } from './drops.service';
 import { DropsCronService } from './drops-cron.service';
 import { CreateDropDto } from './dto/create-drop.dto';

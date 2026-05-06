@@ -25,8 +25,6 @@ import type { Request } from 'express';
 
 import { Throttle } from '@nestjs/throttler';
 import {
-  BetterAuthGuard,
-  BetterAuthUser,
   RolesGuard,
   Roles,
   UserRole,
@@ -34,6 +32,8 @@ import {
   Public,
   THROTTLE_STRICT,
 } from '../../common';
+import { BetterAuthGuard } from '../../common/guards/better-auth.guard';
+import type { BetterAuthUser } from '../../common/better-auth/better-auth.service';
 import { CheckAuthProviderDto } from './dto/check-auth-provider.dto';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
