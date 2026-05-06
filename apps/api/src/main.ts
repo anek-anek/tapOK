@@ -29,6 +29,7 @@ import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   app = await NestFactory.create(AppModule);
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
 
   app.use(compression());
   app.use(json({ limit: '10mb' }));
@@ -49,8 +50,15 @@ async function bootstrap() {
   // CORS must be registered before BetterAuth so preflight requests on /api/auth/* are handled correctly
   app.enableCors({ origin: origins, credentials: true });
 
-  // BetterAuth owns all /api/auth/* routes — bypass NestJS guards/pipes entirely
-  app.use('/api/auth', toNodeHandler(auth));
+  // BetterAuth owns all /api/auth/* routes — bypass NestJS guards/pipes entirely.
+  // We use a root-level middleware instead of app.use('/api/auth', ...) to preserve 
+  // the full URL path, which BetterAuth needs to correctly match routes against its baseURL.
+  app.use((req, res, next) => {
+    if (req.url.startsWith('/api/auth')) {
+      return toNodeHandler(auth)(req, res);
+    }
+    next();
+  });
 
   app.use(
     helmet({
