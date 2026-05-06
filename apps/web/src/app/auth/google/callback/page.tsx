@@ -30,16 +30,15 @@ export default function GoogleCallbackPage() {
           cache: 'no-store',
         });
 
-        let sessionToken: string | undefined;
+        let bearerToken: string | undefined;
         if (sessionRes.ok) {
-          const sessionData = await sessionRes.json();
-          sessionToken = sessionData?.session?.token as string | undefined;
+          bearerToken = sessionRes.headers.get('set-auth-token') ?? undefined;
         }
 
         const res = await fetch('/api/auth/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payload: {}, sessionToken }),
+          body: JSON.stringify({ payload: {}, bearerToken }),
           credentials: 'include',
         });
 
@@ -49,7 +48,7 @@ export default function GoogleCallbackPage() {
           shouldOnboard = data.dbUser?.onboardingCompleted === false;
         }
       } catch {
-        // non-fatal — redirect to login with error
+        // non-fatal
       }
 
       const target = resolveAuthSuccessRedirect({ mode, redirectTo, firstName, shouldOnboard });

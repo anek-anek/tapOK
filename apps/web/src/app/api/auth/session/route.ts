@@ -7,19 +7,26 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const payload = body?.payload ?? {};
 
-  const sessionToken: string | undefined = body?.sessionToken;
+  // The bearer plugin on the API exposes the signed session token in the
+  // set-auth-token response header after sign-in. The client passes it here
+  // so we can forward it as Authorization: Bearer — the bearer plugin converts
+  // it back to the signed cookie internally, allowing BetterAuthGuard to work.
+  const bearerToken: string | undefined = body?.bearerToken;
 
   try {
-    const cookieHeader = sessionToken
-      ? `__Secure-better-auth.session_token=${sessionToken}`
-      : (req.headers.get('cookie') ?? '');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (bearerToken) {
+      headers['Authorization'] = `Bearer ${bearerToken}`;
+    } else {
+      headers['cookie'] = req.headers.get('cookie') ?? '';
+    }
 
     const res = await fetch(`${API_URL}/users/sync`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        cookie: cookieHeader,
-      },
+      headers,
       body: JSON.stringify(payload),
       cache: 'no-store',
     });
@@ -47,10 +54,10 @@ export async function POST(req: NextRequest) {
     const dbUser = await res.json();
     const response = NextResponse.json({ ok: true, dbUser });
 
-    // Mirror the session cookie onto the web domain so the Next.js middleware
-    // can read it for route protection (proxy.ts checks better-auth.session_token).
-    if (sessionToken) {
-      response.cookies.set('__Secure-better-auth.session_token', sessionToken, {
+    // Mirror the session cookie onto the web domain so Next.js middleware
+    // (proxy.ts) can read it for route protection.
+    if (bearerToken) {
+      response.cookies.set('__Secure-better-auth.session_token', bearerToken, {
         httpOnly: true,
         secure: true,
         sameSite: 'lax',
@@ -69,7 +76,5 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  // BetterAuth clears its own cookie via POST /api/auth/sign-out.
-  // This endpoint is kept for legacy callers during the transition.
   return NextResponse.json({ ok: true });
 }

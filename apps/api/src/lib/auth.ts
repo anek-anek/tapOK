@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { betterAuth } from 'better-auth';
+import { bearer } from 'better-auth/plugins';
 import { Pool } from 'pg';
 
 const pool = new Pool({
@@ -71,6 +72,8 @@ export const auth = betterAuth({
       maxAge: 60 * 5,
     },
   },
+
+  plugins: [bearer()],
 
   account: {
     storeStateStrategy: 'cookie',
