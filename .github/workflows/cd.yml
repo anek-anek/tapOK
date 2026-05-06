@@ -55,6 +55,9 @@ jobs:
           fi
           npm run migration:run --workspace=api
 
+      - name: Build NestJS API
+        run: npm run build --workspace=api
+
       - name: Build Vercel API
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
