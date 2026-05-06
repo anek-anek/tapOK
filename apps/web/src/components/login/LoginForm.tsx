@@ -80,11 +80,16 @@ export default function LoginForm({ searchParams }: LoginFormProps) {
 
   const syncAndRedirect = useCallback(
     async (firstName: string, mode: 'login' | 'signup' = 'login') => {
-      // Sync profile row
+      let sessionToken: string | undefined;
+      try {
+        const s = await authClient.getSession();
+        sessionToken = (s?.data?.session as any)?.token as string | undefined;
+      } catch { /* non-fatal */ }
+
       await fetch('/api/auth/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload: {} }),
+        body: JSON.stringify({ payload: {}, sessionToken }),
         credentials: 'include',
       }).catch(() => undefined);
 

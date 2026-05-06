@@ -4,6 +4,9 @@ import { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { resolveAuthSuccessRedirect, sanitizeRedirectTo } from '@/lib/auth/redirects';
+import { getApiUrl } from '@/lib/config';
+
+const API_URL = getApiUrl().replace(/\/$/, '');
 
 export default function GoogleCallbackPage() {
   const router = useRouter();
@@ -22,10 +25,21 @@ export default function GoogleCallbackPage() {
       let shouldOnboard = true;
 
       try {
+        const sessionRes = await fetch(`${API_URL}/api/auth/get-session`, {
+          credentials: 'include',
+          cache: 'no-store',
+        });
+
+        let sessionToken: string | undefined;
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          sessionToken = sessionData?.session?.token as string | undefined;
+        }
+
         const res = await fetch('/api/auth/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payload: {} }),
+          body: JSON.stringify({ payload: {}, sessionToken }),
           credentials: 'include',
         });
 
@@ -35,7 +49,7 @@ export default function GoogleCallbackPage() {
           shouldOnboard = data.dbUser?.onboardingCompleted === false;
         }
       } catch {
-        // non-fatal
+        // non-fatal — redirect to login with error
       }
 
       const target = resolveAuthSuccessRedirect({ mode, redirectTo, firstName, shouldOnboard });

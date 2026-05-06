@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getApiUrl } from '@/lib/config';
 
+const API_URL = getApiUrl().replace(/\/$/, '');
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const payload = body?.payload ?? {};
 
-  const apiUrl = getApiUrl().replace(/\/$/, '');
+  const sessionToken: string | undefined = body?.sessionToken;
 
   try {
-    // Forward the BetterAuth session cookie so the API's BetterAuthGuard can validate it
-    const cookieHeader = req.headers.get('cookie') ?? '';
+    const cookieHeader = sessionToken
+      ? `__Secure-better-auth.session_token=${sessionToken}`
+      : (req.headers.get('cookie') ?? '');
 
-    const res = await fetch(`${apiUrl}/users/sync`, {
+    const res = await fetch(`${API_URL}/users/sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -42,7 +45,21 @@ export async function POST(req: NextRequest) {
     }
 
     const dbUser = await res.json();
-    return NextResponse.json({ ok: true, dbUser });
+    const response = NextResponse.json({ ok: true, dbUser });
+
+    // Mirror the session cookie onto the web domain so the Next.js middleware
+    // can read it for route protection (proxy.ts checks better-auth.session_token).
+    if (sessionToken) {
+      response.cookies.set('__Secure-better-auth.session_token', sessionToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    return response;
   } catch {
     return NextResponse.json(
       { error: 'API_UNAVAILABLE', message: 'Cannot reach the backend API.' },

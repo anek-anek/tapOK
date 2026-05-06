@@ -17,7 +17,9 @@ function resolveApiUrl(): string {
 async function getSessionAuth(
   request: NextRequest,
 ): Promise<{ isAuthenticated: boolean; role: UserRole | null }> {
-  const sessionCookie = request.cookies.get('better-auth.session_token')?.value;
+  const sessionCookie =
+    request.cookies.get('__Secure-better-auth.session_token')?.value ??
+    request.cookies.get('better-auth.session_token')?.value;
   if (!sessionCookie) return { isAuthenticated: false, role: null };
 
   try {

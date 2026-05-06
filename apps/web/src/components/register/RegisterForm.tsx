@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2, Check } from 'lucide-react';
-import { signIn, signUp } from '@/lib/auth-client';
+import { signIn, signUp, authClient } from '@/lib/auth-client';
 import { useAuth } from '@/components/providers/auth-provider';
 import { signUpSchema, type SignUpFormValues } from '@/lib/validations/auth';
 import { buildAuthPageHref, resolveAuthSuccessRedirect } from '@/lib/auth/redirects';
@@ -74,11 +74,16 @@ export default function RegisterForm({ searchParams }: RegisterFormProps) {
 
   const syncAndRedirect = useCallback(
     async (firstName: string, mode: 'login' | 'signup' = 'signup') => {
-      // Sync profile row — BetterAuth session cookie is sent automatically
+      let sessionToken: string | undefined;
+      try {
+        const s = await authClient.getSession();
+        sessionToken = (s?.data?.session as any)?.token as string | undefined;
+      } catch { /* non-fatal */ }
+
       await fetch('/api/auth/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload: {} }),
+        body: JSON.stringify({ payload: {}, sessionToken }),
         credentials: 'include',
       }).catch(() => undefined);
 
