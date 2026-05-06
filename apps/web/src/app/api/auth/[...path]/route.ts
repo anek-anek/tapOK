@@ -12,8 +12,7 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ path: s
 
   const headers = new Headers();
   req.headers.forEach((value, key) => {
-    // Skip headers that would conflict with the proxied request
-    if (!['host', 'connection', 'transfer-encoding'].includes(key.toLowerCase())) {
+    if (!['host', 'connection', 'transfer-encoding', 'accept-encoding'].includes(key.toLowerCase())) {
       headers.set(key, value);
     }
   });
@@ -29,6 +28,9 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ path: s
 
   const resHeaders = new Headers();
   apiRes.headers.forEach((value, key) => {
+    // fetch() decompresses the body automatically, so strip encoding headers
+    // to prevent the browser from attempting a second decompression pass
+    if (['content-encoding', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) return;
     resHeaders.set(key, value);
   });
 
