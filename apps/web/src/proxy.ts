@@ -57,7 +57,6 @@ async function getSessionAuth(
 
   if (!sessionToken) return { isAuthenticated: false, role: null };
 
-  // Try the 5-minute cookie cache first — no network call needed
   const secret = process.env.BETTER_AUTH_SECRET;
   if (secret) {
     const sessionData =
@@ -70,35 +69,9 @@ async function getSessionAuth(
     }
   }
 
-  try {
-    const origin = `https://${request.headers.get('host') ?? 'tapok.app'}`;
-    const response = await fetch(`${resolveApiUrl().replace(/\/$/, '')}/users/me`, {
-      method: 'GET',
-      headers: {
-        cookie: request.headers.get('cookie') ?? '',
-        origin,
-      },
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      // 401/403 means the session is genuinely invalid — sign out.
-      // Any other error (5xx, network) means the backend is unavailable;
-      // don't sign the user out for that.
-      if (response.status === 401 || response.status === 403) {
-        return { isAuthenticated: false, role: null };
-      }
-      return { isAuthenticated: true, role: null };
-    }
-
-    const user = await response.json();
-    const role = user?.role === 'admin' || user?.role === 'participant' ? user.role : null;
-    return { isAuthenticated: true, role };
-  } catch {
-    // Backend unreachable — don't sign out, the session cookie is still present.
-    return { isAuthenticated: true, role: null };
-  }
+  return { isAuthenticated: true, role: null };
 }
+
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;

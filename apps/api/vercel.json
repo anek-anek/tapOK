@@ -18,10 +18,15 @@
       "dest": "dist/main.js"
     }
   ],
+  "regions": ["sin1"],
   "crons": [
     {
       "path": "/drops/cron/transition",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/health",
+      "schedule": "*/4 * * * *"
     }
   ]
 }
