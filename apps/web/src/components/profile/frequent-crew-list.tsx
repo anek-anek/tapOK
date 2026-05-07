@@ -9,7 +9,7 @@ function getInitials(firstName: string, lastName: string): string {
 }
 
 export function FrequentCrewList() {
-  const { data: crew, isLoading } = useFrequentCrew();
+  const { data: crew, isLoading } = useFrequentCrew(['avatar']);
 
   if (isLoading) {
     return (

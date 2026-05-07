@@ -136,7 +136,7 @@ export function ActivePanel({
     )
     .slice(0, 3);
 
-  const { data: frequentlySeen = [], isLoading: crewLoading } = useFrequentCrew();
+  const { data: frequentlySeen = [], isLoading: crewLoading } = useFrequentCrew(['avatar']);
 
   const showDropsSkeleton = !dropsFetched || (dropsLoading && activeDrops.length === 0);
 

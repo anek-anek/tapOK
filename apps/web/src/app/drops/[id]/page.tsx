@@ -681,16 +681,14 @@ function DropDetailContent({ id }: { id: string }) {
                 </div>
 
                 <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
-                  {!isCompleted && (
-                    <button
-                      type="button"
-                      onClick={() => setShareModalOpen(true)}
-                      className="group relative flex h-12 min-w-[100px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6 lg:hidden"
-                    >
-                      <IconShare2 size={16} strokeWidth={2.5} />
-                      <span className="pt-0.5">Share</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShareModalOpen(true)}
+                    className="group relative flex h-12 min-w-[100px] flex-1 items-center justify-center gap-2 rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-black transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none sm:px-6 lg:hidden"
+                  >
+                    <IconShare2 size={16} strokeWidth={2.5} />
+                    <span className="pt-0.5">Share</span>
+                  </button>
                   {/* Primary Action Button (Join/Request/Leave/Awaiting) */}
                   {!isOrganiser && !isCompleted && (
                     <div className="flex-1 sm:flex-none">
@@ -997,10 +995,7 @@ function DropDetailContent({ id }: { id: string }) {
               <DigitalTicket
                 drop={drop}
                 isMember={hasDigitalTicketAccess}
-                className={cn(
-                  'w-full',
-                  !isCompleted && 'hidden lg:block',
-                )}
+                className="hidden w-full lg:block"
               />
 
               {/* Drop command / chief card — desktop only (mobile: tap crew roster rows) */}

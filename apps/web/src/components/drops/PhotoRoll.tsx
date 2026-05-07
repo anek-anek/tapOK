@@ -347,6 +347,8 @@ function PhotoRollEmptyStack({
   reachedUserLimit: boolean;
   onAddClick: () => void;
 }) {
+  const hideEmptyStateActions = isCompleted;
+
   return (
     <div className="relative flex flex-col items-center pt-4 pb-8">
       <div className="relative flex h-[320px] w-[320px] items-center justify-center overflow-visible md:h-[400px] md:w-[400px]">
@@ -376,13 +378,15 @@ function PhotoRollEmptyStack({
                     <p className="font-passion text-sm font-bold uppercase tracking-[1.8px] text-tok-black">
                       {isCompleted && hasExpired ? 'No highlights yet' : 'Photo roll is empty'}
                     </p>
-                    <p className="font-inter text-xs leading-relaxed text-tok-black/50">
-                      {isCompleted && hasExpired
-                        ? 'No featured moments were saved for this drop.'
-                        : 'Be the first to post a moment to the stack.'}
-                    </p>
+                    {!hideEmptyStateActions && (
+                      <p className="font-inter text-xs leading-relaxed text-tok-black/50">
+                        {isCompleted && hasExpired
+                          ? 'No featured moments were saved for this drop.'
+                          : 'Be the first to post a moment to the stack.'}
+                      </p>
+                    )}
                   </div>
-                  {canUpload && !hasExpired && (
+                  {!hideEmptyStateActions && canUpload && !hasExpired && (
                     <button
                       type="button"
                       onClick={onAddClick}
@@ -422,30 +426,32 @@ function PhotoRollEmptyStack({
         })}
       </div>
 
-      <div className="mt-10 flex items-center gap-6">
-        <button
-          type="button"
-          disabled
-          tabIndex={-1}
-          aria-hidden
-          className="flex h-12 w-12 cursor-default items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black opacity-25 shadow-[4px_4px_0px_#1C1C1A]"
-        >
-          <IconChevronLeft size={28} strokeWidth={3} />
-        </button>
-        <div
-          className="flex h-2 min-w-[32px] items-center justify-center rounded-full border border-tok-black/25 bg-tok-black/10 px-2"
-          aria-label="No photos in roll"
-        />
-        <button
-          type="button"
-          disabled
-          tabIndex={-1}
-          aria-hidden
-          className="flex h-12 w-12 cursor-default items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black opacity-25 shadow-[4px_4px_0px_#1C1C1A]"
-        >
-          <IconChevronRight size={28} strokeWidth={3} />
-        </button>
-      </div>
+      {!hideEmptyStateActions && (
+        <div className="mt-10 flex items-center gap-6">
+          <button
+            type="button"
+            disabled
+            tabIndex={-1}
+            aria-hidden
+            className="flex h-12 w-12 cursor-default items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black opacity-25 shadow-[4px_4px_0px_#1C1C1A]"
+          >
+            <IconChevronLeft size={28} strokeWidth={3} />
+          </button>
+          <div
+            className="flex h-2 min-w-[32px] items-center justify-center rounded-full border border-tok-black/25 bg-tok-black/10 px-2"
+            aria-label="No photos in roll"
+          />
+          <button
+            type="button"
+            disabled
+            tabIndex={-1}
+            aria-hidden
+            className="flex h-12 w-12 cursor-default items-center justify-center rounded-sm border-[3px] border-tok-black bg-white text-tok-black opacity-25 shadow-[4px_4px_0px_#1C1C1A]"
+          >
+            <IconChevronRight size={28} strokeWidth={3} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -23,6 +23,18 @@ export function crewFor(drop: DropCardModel): CrewMember[] | undefined {
   return drop.crew.filter((m) => m.status === 'in');
 }
 
+function sortCrewByLatestJoin(crew: CrewMember[]): CrewMember[] {
+  return [...crew].sort((a, b) => {
+    const at = new Date(a.joinedAt).getTime();
+    const bt = new Date(b.joinedAt).getTime();
+    return (Number.isFinite(bt) ? bt : 0) - (Number.isFinite(at) ? at : 0);
+  });
+}
+
+function crewExcludingChief(crew: CrewMember[] = []): CrewMember[] {
+  return crew.filter((m) => m.memberRole !== 'chief' && m.memberRole !== 'co_chief');
+}
+
 function isShareableDrop(drop: DropCardModel): drop is Drop {
   return typeof (drop as Drop).joinCode === 'string' && typeof (drop as Drop).shareUrl === 'string';
 }
@@ -175,6 +187,9 @@ export function HeroDropCard({
 }) {
   const role = getRole(drop, viewerId);
   const crew = crewFor(drop);
+  const nonChiefCrew = crewExcludingChief(crew ?? []);
+  const nonChiefCrewSorted = sortCrewByLatestJoin(nonChiefCrew);
+  const nonChiefCrewCount = nonChiefCrewSorted.length;
   const fallbackSrc = getFallbackCover(drop.category);
   const displaySrc = drop.coverPhoto ? coverPhotoSrcForNextImage(drop.coverPhoto) : fallbackSrc;
   const isLocalFallback = !!displaySrc && displaySrc.startsWith('/');
@@ -303,18 +318,18 @@ export function HeroDropCard({
             </p>
           )}
 
-          {/* Crew Section */}
-          {crew && crew.length > 0 && (
+          {/* Crew Section — hidden when no non-chief crew */}
+          {nonChiefCrewCount > 0 && (
             <div className="mb-6 flex items-center gap-3">
               <div className="flex items-center">
-                {crew.slice(0, 4).map((member, i) => {
+                {nonChiefCrewSorted.slice(0, 3).map((member, i) => {
                   const display = getCrewMemberDisplay(member);
                   return (
                     <div
                       key={member.id}
                       className={cn(
                         "relative h-8 w-8 rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden",
-                        i > 0 && "-ml-4"
+                        i > 0 && "-ml-4",
                       )}
                     >
                       <AvatarImage
@@ -327,16 +342,16 @@ export function HeroDropCard({
                     </div>
                   );
                 })}
-                {crew.length > 4 && (
+                {nonChiefCrewCount > 3 && (
                   <div className="relative -ml-4 flex h-8 w-8 items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion text-[10px] font-bold text-tok-black">
-                    +{crew.length - 4}
+                    +{nonChiefCrewCount - 3}
                   </div>
                 )}
               </div>
 
-
-              <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-cream/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]">
-                {crew.length} in the crew
+              <span className="inline-flex items-center gap-1 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-cream/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]">
+                <Users size={12} className="text-tok-teal" strokeWidth={2.5} />
+                {nonChiefCrewCount} {nonChiefCrewCount === 1 ? 'CREW' : 'CREWS'}
               </span>
             </div>
           )}
@@ -391,6 +406,7 @@ export function ListDropCard({
   showShareEditDelete = true,
   layout = 'list',
   coverPriority = false,
+  showChiefInStack = true,
 }: {
   drop: DropCardModel;
   viewerId?: string | null;
@@ -398,9 +414,13 @@ export function ListDropCard({
   showShareEditDelete?: boolean;
   layout?: 'list' | 'masonry' | 'grid';
   coverPriority?: boolean;
+  showChiefInStack?: boolean;
 }) {
   const role = getRole(drop, viewerId);
   const crew = crewFor(drop);
+  const nonChiefCrew = crewExcludingChief(crew ?? []);
+  const nonChiefCrewSorted = sortCrewByLatestJoin(nonChiefCrew);
+  const nonChiefCrewCount = nonChiefCrewSorted.length;
   const fallbackSrc = getFallbackCover(drop.category);
   const displaySrc = drop.coverPhoto ? coverPhotoSrcForNextImage(drop.coverPhoto) : fallbackSrc;
   const isLocalFallback = !!displaySrc && displaySrc.startsWith('/');
@@ -569,14 +589,6 @@ export function ListDropCard({
           className={cn('relative flex flex-1 flex-col', isVertical ? 'p-3 sm:p-4' : 'p-5 sm:p-6')}
         >
           <div className={cn('flex flex-wrap items-center gap-1.5 sm:gap-2', isVertical ? 'mb-1.5' : 'mb-2')}>
-            <span
-              className={cn(
-                'font-passion font-bold uppercase text-tok-black/50',
-                isVertical ? 'text-[8px] tracking-[1px]' : 'text-[10px] tracking-[1.5px]',
-              )}
-            >
-              {role}
-            </span>
             {drop.category && (
               <span
                 className={cn(
@@ -662,84 +674,110 @@ export function ListDropCard({
           )}
 
           {/* Crew Section */}
-          <div className={cn('mt-auto flex items-center', isVertical ? 'gap-1.5' : 'gap-2')}>
-            <div className="flex items-center">
-              {crew && crew.length > 0 ? (
-                <>
-                  {crew.slice(0, 3).map((member, i) => {
-                    const display = getCrewMemberDisplay(member);
-                    return (
+          {(() => {
+            const isChief = viewerId && drop.organiserId === viewerId;
+            const viewerCrewEntry = !isChief && viewerId && crew
+              ? crew.find((m) => m.userId === viewerId)
+              : null;
+            const viewerStatus: 'in' | 'pending' | 'out' =
+              isChief ? 'in'
+                : viewerCrewEntry?.status === 'in' && viewerCrewEntry.isPresent ? 'in'
+                  : viewerCrewEntry?.status === 'in' && !viewerCrewEntry.isPresent ? 'out'
+                    : viewerCrewEntry?.status === 'pending' ? 'pending'
+                      : 'out';
+
+            // Build avatar stack: viewer leads, then chief (if viewer isn't chief), then remaining crew
+            type AvatarSlot = { key: string; src?: string | null; initials: string; title: string };
+            const slots: AvatarSlot[] = [];
+
+            if (viewerId) {
+              if (isChief && drop.organiser) {
+                // Viewer is chief — put them first
+                slots.push({
+                  key: drop.organiserId,
+                  src: drop.organiser.avatar,
+                  initials: `${drop.organiser.firstName?.[0] || '?'}${drop.organiser.lastName?.[0] || ''}`.toUpperCase(),
+                  title: `${drop.organiser.firstName} ${drop.organiser.lastName}`.trim(),
+                });
+              } else if (viewerCrewEntry) {
+                // Viewer is a crew member — put them first
+                const d = getCrewMemberDisplay(viewerCrewEntry);
+                slots.push({ key: viewerCrewEntry.id, src: d.avatar, initials: d.initials, title: d.fullName });
+              }
+            }
+
+            // Add chief if viewer is not the chief and chief should be in stack
+            if (showChiefInStack && !isChief && drop.organiser) {
+              slots.push({
+                key: drop.organiserId,
+                src: drop.organiser.avatar,
+                initials: `${drop.organiser.firstName?.[0] || '?'}${drop.organiser.lastName?.[0] || ''}`.toUpperCase(),
+                title: `${drop.organiser.firstName} ${drop.organiser.lastName}`.trim(),
+              });
+            }
+
+            // Add remaining non-chief crew (excluding viewer)
+            for (const member of nonChiefCrewSorted) {
+              if (member.userId === viewerId) continue;
+              const d = getCrewMemberDisplay(member);
+              slots.push({ key: member.id, src: d.avatar, initials: d.initials, title: d.fullName });
+            }
+
+            const visibleSlots = slots.slice(0, 3);
+            const overflow = slots.length - 3;
+
+            return (
+              <div className={cn('mt-auto flex items-center gap-2')}>
+                {/* Viewer status pill */}
+                <span
+                  className={cn(
+                    'shrink-0 rounded-sm border-2 border-tok-black font-passion font-bold uppercase tracking-wider shadow-[1.5px_1.5px_0px_#1C1C1A]',
+                    isVertical ? 'px-1.5 py-0.5 text-[8px]' : 'px-2 py-0.5 text-[9px]',
+                    viewerStatus === 'in' && 'bg-emerald-400 text-tok-black',
+                    viewerStatus === 'pending' && 'bg-amber-300 text-tok-black',
+                    viewerStatus === 'out' && 'bg-tok-black/8 text-tok-black/50',
+                  )}
+                >
+                  {viewerStatus === 'in' ? 'Tapped In' : viewerStatus === 'pending' ? 'Pending' : 'Tapped Out'}
+                </span>
+
+                {/* Avatar stack: viewer first, then chief, then rest; max 3 visible + overflow */}
+                {slots.length > 0 && (
+                  <div className="flex items-center">
+                    {visibleSlots.map((slot, i) => (
                       <div
-                        key={member.id}
+                        key={slot.key}
                         className={cn(
                           'relative rounded-full border-2 border-tok-black bg-tok-teal-pale overflow-hidden',
                           isVertical ? 'h-5 w-5' : 'h-6 w-6',
                           i > 0 && (isVertical ? '-ml-2' : '-ml-3'),
                         )}
-                        title={display.fullName}
+                        title={slot.title}
                       >
                         <AvatarImage
-                          src={display.avatar}
-                          initials={display.initials}
+                          src={slot.src}
+                          initials={slot.initials}
                           width={isVertical ? 20 : 24}
                           height={isVertical ? 20 : 24}
                           className={isVertical ? 'text-[7px]' : 'text-[8px]'}
                         />
                       </div>
-                    );
-                  })}
-                  {crew.length > 3 && (
-                    <div
-                      className={cn(
-                        'relative flex items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion font-bold text-tok-black',
-                        isVertical ? '-ml-2 h-5 w-5 text-[7px]' : '-ml-3 h-6 w-6 text-[8px]',
-                      )}
-                    >
-                      +{crew.length - 3}
-                    </div>
-                  )}
-                </>
-              ) : (
-
-
-                <div
-                  className={cn(
-                    'flex items-center justify-center rounded-full border-2 border-tok-black border-dashed bg-tok-black/5 text-tok-black/20',
-                    isVertical ? 'h-5 w-5' : 'h-6 w-6',
-                  )}
-                >
-                  <Users size={isVertical ? 9 : 10} strokeWidth={2.5} />
-                </div>
-              )}
-            </div>
-
-            <div className={cn('h-4 w-px bg-tok-black/10', isVertical ? 'mx-0.5' : 'mx-1')} />
-
-            <div className={cn('flex items-center', isVertical ? 'min-w-0 gap-1' : 'gap-2')}>
-              <div
-                className={cn(
-                  'flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-tok-black bg-tok-teal-pale',
-                  isVertical ? 'h-5 w-5' : 'h-6 w-6',
+                    ))}
+                    {overflow > 0 && (
+                      <div
+                        className={cn(
+                          'relative flex items-center justify-center rounded-full border-2 border-tok-black bg-tok-cream font-passion font-bold text-tok-black',
+                          isVertical ? '-ml-2 h-5 w-5 text-[7px]' : '-ml-3 h-6 w-6 text-[8px]',
+                        )}
+                      >
+                        +{overflow}
+                      </div>
+                    )}
+                  </div>
                 )}
-              >
-                <AvatarImage
-                  src={drop.organiser?.avatar}
-                  initials={`${drop.organiser?.firstName?.[0] || '?'}${drop.organiser?.lastName?.[0] || ''}`}
-                  width={isVertical ? 20 : 24}
-                  height={isVertical ? 20 : 24}
-                  className={isVertical ? 'text-[7px]' : 'text-[8px]'}
-                />
               </div>
-              <p
-                className={cn(
-                  'min-w-0 truncate font-passion font-bold uppercase tracking-[0.08em] text-tok-black/65',
-                  isVertical ? 'text-[9px]' : 'text-[11px] sm:text-xs',
-                )}
-              >
-                Chief {drop.organiser?.firstName}
-              </p>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       </Link >
 

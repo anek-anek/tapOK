@@ -55,6 +55,16 @@ interface RequestWithUser extends Request {
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  private parseIncludeParam(include?: string): Set<string> {
+    if (!include) return new Set();
+    return new Set(
+      include
+        .split(',')
+        .map((part) => part.trim().toLowerCase())
+        .filter(Boolean),
+    );
+  }
+
   @Get()
   @UseGuards(BetterAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -71,15 +81,28 @@ export class UsersController {
   @ApiOperation({ summary: 'Get the authenticated user — 404 if not in DB' })
   @ApiResponse({ status: 200, type: UserProfileDto })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  me(@Req() request: RequestWithUser): Promise<UserProfileDto> {
-    return this.usersService.findMe(request.user);
+  me(
+    @Req() request: RequestWithUser,
+    @Query('include') include?: string,
+  ): Promise<UserProfileDto> {
+    const includes = this.parseIncludeParam(include);
+    return this.usersService.findMe(request.user, {
+      includeStats: includes.has('stats'),
+      includeAvatar: includes.has('avatar'),
+    });
   }
 
   @Get('me/frequent-crew')
   @ApiOperation({ summary: 'Get the frequently seen crew for the authenticated user' })
   @ApiResponse({ status: 200, type: [FrequentCrewDto] })
-  getFrequentCrew(@Req() request: RequestWithUser): Promise<FrequentCrewDto[]> {
-    return this.usersService.getFrequentCrew(request.user.id);
+  getFrequentCrew(
+    @Req() request: RequestWithUser,
+    @Query('include') include?: string,
+  ): Promise<FrequentCrewDto[]> {
+    const includes = this.parseIncludeParam(include);
+    return this.usersService.getFrequentCrew(request.user.id, {
+      includeAvatar: includes.has('avatar'),
+    });
   }
 
   @Post('auth-provider-check')

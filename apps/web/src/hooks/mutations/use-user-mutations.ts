@@ -22,7 +22,8 @@ export function useUpdateUser(id: string): UseMutationResult<User, Error, Update
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: userKeys.all });
       void queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
-      void queryClient.invalidateQueries({ queryKey: userKeys.me });
+      void queryClient.invalidateQueries({ queryKey: userKeys.meBase });
+      void queryClient.invalidateQueries({ queryKey: userKeys.meFrequentCrewBase });
     },
   });
 }

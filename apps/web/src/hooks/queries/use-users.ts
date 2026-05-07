@@ -4,8 +4,10 @@ import type { User, UserProfile, FrequentCrewMember } from '@/types/user';
 
 export const userKeys = {
   all: ['users'] as const,
-  me: ['users', 'me'] as const,
-  meFrequentCrew: ['users', 'me', 'frequent-crew'] as const,
+  meBase: ['users', 'me'] as const,
+  meFrequentCrewBase: ['users', 'me', 'frequent-crew'] as const,
+  me: (include: string) => ['users', 'me', include] as const,
+  meFrequentCrew: (include: string) => ['users', 'me', 'frequent-crew', include] as const,
   detail: (id: string) => ['users', id] as const,
 };
 
@@ -24,19 +26,23 @@ export function useUser(id: string): UseQueryResult<User> {
   });
 }
 
-export function useCurrentUser(): UseQueryResult<UserProfile> {
+export function useCurrentUser(
+  include: Array<'stats' | 'avatar'> = [],
+): UseQueryResult<UserProfile> {
+  const includeKey = include.slice().sort().join(',');
   return useQuery({
-    queryKey: userKeys.me,
-    queryFn: () => usersService.getMe(),
+    queryKey: userKeys.me(includeKey),
+    queryFn: () => usersService.getMe(include),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 }
 
-export function useFrequentCrew(): UseQueryResult<FrequentCrewMember[]> {
+export function useFrequentCrew(include: Array<'avatar'> = []): UseQueryResult<FrequentCrewMember[]> {
+  const includeKey = include.slice().sort().join(',');
   return useQuery({
-    queryKey: userKeys.meFrequentCrew,
-    queryFn: () => usersService.getFrequentCrew(),
+    queryKey: userKeys.meFrequentCrew(includeKey),
+    queryFn: () => usersService.getFrequentCrew(include),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });

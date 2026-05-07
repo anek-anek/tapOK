@@ -1082,7 +1082,9 @@ export interface operations {
     };
     UsersController_me: {
         parameters: {
-            query?: never;
+            query: {
+                include: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1108,7 +1110,9 @@ export interface operations {
     };
     UsersController_getFrequentCrew: {
         parameters: {
-            query?: never;
+            query: {
+                include: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;

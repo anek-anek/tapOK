@@ -87,7 +87,7 @@ export default function ProfilePage() {
   const mounted = useMounted();
   const { dbUser, loading: authLoading, isReady, refreshUser } = useAuth();
   const searchParams = useSearchParams();
-  const { data: profile, isLoading } = useCurrentUser();
+  const { data: profile, isLoading } = useCurrentUser(['stats', 'avatar']);
   const displayUser = profile ?? dbUser;
 
   const [editing, setEditing] = useState(false);
@@ -106,7 +106,7 @@ export default function ProfilePage() {
 
   const updateUser = useUpdateUser(profile?.id ?? '');
   const { data: myDrops = [], isLoading: dropsLoading } = useMyDrops();
-  const { data: frequentCrew = [] } = useFrequentCrew();
+  const { data: frequentCrew = [] } = useFrequentCrew(['avatar']);
 
   const [highlightVerify, setHighlightVerify] = useState(false);
   const verifySectionRef = useRef<HTMLDivElement>(null);

@@ -19,6 +19,15 @@ import type { BetterAuthUser } from '../../common/better-auth/better-auth.servic
 import { CreateAvatarUploadDto } from './dto/create-avatar-upload.dto';
 import { AvatarUploadSessionDto } from './dto/avatar-upload-session.dto';
 
+interface FindMeOptions {
+  includeStats: boolean;
+  includeAvatar: boolean;
+}
+
+interface FrequentCrewOptions {
+  includeAvatar: boolean;
+}
+
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
@@ -59,29 +68,40 @@ export class UsersService {
     return user?.authProvider ?? null;
   }
 
-  async findMe(betterAuthUser: BetterAuthUser): Promise<UserProfileDto> {
+  async findMe(
+    betterAuthUser: BetterAuthUser,
+    options: FindMeOptions = { includeStats: false, includeAvatar: false },
+  ): Promise<UserProfileDto> {
     const user = await this.usersRepository.findById(betterAuthUser.id);
     if (!user) throw new NotFoundException('No account found for this user.');
 
-    const [{ dropCount, crewReached }] = await this.dataSource.query<
-      [{ dropCount: string; crewReached: string }]
-    >(
-      `
-      SELECT
-        (SELECT COUNT(*) FROM drops WHERE "organiserId" = $1) as "dropCount",
-        (SELECT COUNT(DISTINCT c."userId")
-         FROM drop_crew c
-         WHERE c."dropId" IN (SELECT id FROM drops WHERE "organiserId" = $1)
-         AND c.status = 'in') as "crewReached"
-      `,
-      [user.id],
-    );
+    let dropCount = 0;
+    let crewReached = 0;
+    if (options.includeStats) {
+      const [stats] = await this.dataSource.query<
+        [{ dropCount: string; crewReached: string }]
+      >(
+        `
+        SELECT
+          (SELECT COUNT(*) FROM drops WHERE "organiserId" = $1) as "dropCount",
+          (SELECT COUNT(DISTINCT c."userId")
+           FROM drop_crew c
+           WHERE c."dropId" IN (SELECT id FROM drops WHERE "organiserId" = $1)
+           AND c.status = 'in') as "crewReached"
+        `,
+        [user.id],
+      );
+      dropCount = parseInt(stats.dropCount, 10);
+      crewReached = parseInt(stats.crewReached, 10);
+    }
 
     return {
       ...user,
-      avatar: await this.resolveAvatarReference(user.avatar),
-      dropCount: parseInt(dropCount, 10),
-      crewReached: parseInt(crewReached, 10),
+      avatar: options.includeAvatar
+        ? await this.resolveAvatarReference(user.avatar)
+        : (user.avatar ?? undefined),
+      dropCount,
+      crewReached,
     };
   }
 
@@ -243,7 +263,10 @@ export class UsersService {
     await this.usersRepository.remove(id);
   }
 
-  async getFrequentCrew(userId: string): Promise<FrequentCrewDto[]> {
+  async getFrequentCrew(
+    userId: string,
+    options: FrequentCrewOptions = { includeAvatar: false },
+  ): Promise<FrequentCrewDto[]> {
     const user = await this.usersRepository.findById(userId);
     if (!user) throw new NotFoundException('No account found for this user.');
 
@@ -270,6 +293,10 @@ export class UsersService {
       createdAt: r.createdAt,
       frequencyCount: parseInt(r.frequencyCount, 10),
     }));
+    if (!options.includeAvatar) {
+      return mapped;
+    }
+
     return Promise.all(
       mapped.map(async (member: FrequentCrewDto) => ({
         ...member,

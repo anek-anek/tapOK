@@ -72,7 +72,16 @@
     "/users/me": {
       "get": {
         "operationId": "UsersController_me",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "include",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -102,7 +111,16 @@
     "/users/me/frequent-crew": {
       "get": {
         "operationId": "UsersController_getFrequentCrew",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "include",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",

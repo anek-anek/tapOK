@@ -318,6 +318,7 @@ export default function DiscoverClient() {
                           viewerId={dbUser?.id}
                           onShare={handleShare}
                           layout="grid"
+                          showChiefInStack={false}
                         />
                       ))}
                     </div>
@@ -393,6 +394,7 @@ export default function DiscoverClient() {
                           viewerId={dbUser?.id}
                           onShare={handleShare}
                           layout="masonry"
+                          showChiefInStack={false}
                         />
                       </div>
                     ))}

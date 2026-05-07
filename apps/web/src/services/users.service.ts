@@ -16,12 +16,20 @@ interface AvatarUploadSession {
 }
 
 export const usersService = {
-  getMe(): Promise<UserProfile> {
-    return api.get<UserProfile>('/users/me').then((r) => r.data);
+  getMe(include: Array<'stats' | 'avatar'> = []): Promise<UserProfile> {
+    return api
+      .get<UserProfile>('/users/me', {
+        params: include.length > 0 ? { include: include.join(',') } : undefined,
+      })
+      .then((r) => r.data);
   },
 
-  getFrequentCrew(): Promise<FrequentCrewMember[]> {
-    return api.get<FrequentCrewMember[]>('/users/me/frequent-crew').then((r) => r.data);
+  getFrequentCrew(include: Array<'avatar'> = []): Promise<FrequentCrewMember[]> {
+    return api
+      .get<FrequentCrewMember[]>('/users/me/frequent-crew', {
+        params: include.length > 0 ? { include: include.join(',') } : undefined,
+      })
+      .then((r) => r.data);
   },
 
   getAll(): Promise<User[]> {

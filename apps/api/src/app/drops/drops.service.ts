@@ -137,6 +137,18 @@ export class DropsService {
     };
   }
 
+  private async resolveDropCrewAvatars(drop: Drop): Promise<Drop> {
+    if (!drop.crew?.length) return drop;
+    const resolvedCrew = await Promise.all(
+      drop.crew.map(async (member) => {
+        if (!member.user) return member;
+        const resolvedAvatar = await this.resolveAvatarReference(member.user.avatar ?? null);
+        return { ...member, user: { ...member.user, avatar: resolvedAvatar ?? undefined } };
+      }),
+    );
+    return { ...drop, crew: resolvedCrew };
+  }
+
   private async toPublicActivityLog(log: DropActivityLog): Promise<DropActivityLogPublicDto> {
     const safeChangedFields = this.toSafeChangedFields(log.changedFields);
 
@@ -361,7 +373,12 @@ export class DropsService {
       drop.sparkedByViewer = sparked.has(drop.id);
     }
 
-    return Promise.all(drops.map((drop) => this.resolveDropCoverPhoto(drop)));
+    return Promise.all(
+      drops.map(async (drop) => {
+        const withCover = await this.resolveDropCoverPhoto(drop);
+        return this.resolveDropCrewAvatars(withCover);
+      }),
+    );
   }
 
   async findByJoinCode(joinCode: string, userId?: string): Promise<Drop> {
