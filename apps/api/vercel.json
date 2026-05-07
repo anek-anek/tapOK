@@ -23,10 +23,6 @@
     {
       "path": "/drops/cron/transition",
       "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/health",
-      "schedule": "*/4 * * * *"
     }
   ]
 }

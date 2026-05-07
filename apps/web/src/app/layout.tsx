@@ -7,6 +7,7 @@ import { QueryProvider } from '@/components/providers/query-provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { ToastProvider } from '@/components/providers/toast-provider';
 import { LegalConsentModal } from '@/components/legal/LegalConsentModal';
+import { WarmupProvider } from '@/components/providers/warmup-provider';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -73,6 +74,7 @@ export default async function RootLayout({
       <body>
         <QueryProvider>
           <AuthProvider initialDbUser={initialDbUser}>
+            <WarmupProvider />
             {children}
             <LegalConsentModal />
             <ToastProvider />
