@@ -60,7 +60,7 @@ export function NeededItems({
       await assignItem.mutateAsync({
         itemId,
         assignedUserId: member.userId,
-        assignedUser: { id: member.userId, ...member.user },
+        assignedUser: { ...member.user },
       });
       toast.success('ITEM ASSIGNED');
     } catch {
