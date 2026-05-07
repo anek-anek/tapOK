@@ -14,6 +14,7 @@ import { User } from '../../users/entities/user.entity';
 import { DropActivityLog } from './drop-activity-log.entity';
 import { DropCrew } from './drop-crew.entity';
 import { DropSpark } from './drop-spark.entity';
+import { DropItem } from './drop-item.entity';
 
 @Entity('drops')
 export class Drop {
@@ -95,6 +96,10 @@ export class Drop {
   @ApiProperty({ type: () => [DropSpark] })
   @OneToMany(() => DropSpark, (spark) => spark.drop)
   sparks: DropSpark[];
+
+  @ApiProperty({ type: () => [DropItem] })
+  @OneToMany(() => DropItem, (item) => item.drop)
+  neededItems: DropItem[];
 
   @ApiProperty({ required: false })
   sparkCount?: number;

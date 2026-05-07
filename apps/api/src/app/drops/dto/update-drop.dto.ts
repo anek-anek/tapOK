@@ -73,4 +73,12 @@ export class UpdateDropDto {
   @Min(1)
   @Max(99)
   minimumAge?: number | null;
+
+  @ApiPropertyOptional({
+    type: 'array',
+    items: { oneOf: [{ type: 'string' }, { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' } } }] },
+    example: ['New Item', { id: 'uuid', name: 'Existing Item' }],
+  })
+  @IsOptional()
+  neededItems?: (string | { id: string; name: string })[];
 }

@@ -14,6 +14,7 @@ import {
   Lock as IconLock,
   Users as IconUsers,
   ChevronDown as IconChevronDown,
+  Plus as IconPlus,
   ImagePlus as IconImagePlus,
   Trash2 as IconTrash,
 } from 'lucide-react';
@@ -60,6 +61,10 @@ const dropFormSchema = z.object({
   category: z.enum(['hangout', 'party']).optional().nullable(),
   minimumAge: z.union([z.number().int().min(1).max(99), z.null()]).optional(),
   overview: z.string().optional(),
+  neededItems: z.array(z.union([
+    z.string(),
+    z.object({ id: z.string(), name: z.string() })
+  ])).optional(),
 });
 
 const createSchema = dropFormSchema;
@@ -80,6 +85,7 @@ type FormValues = {
   category?: 'hangout' | 'party';
   minimumAge?: number | null;
   overview?: string;
+  neededItems?: (string | { id: string; name: string })[];
 };
 
 const COMPLETE_TIME_PATTERN = /^\d{1,2}:\d{2}$/;
@@ -339,6 +345,7 @@ export function DropModal({
   const [coverPreview, setCoverPreview] = useState<string | null>(drop?.coverPhoto ?? null);
   const [coverError, setCoverError] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -386,6 +393,7 @@ export function DropModal({
     handleSubmit,
     watch,
     setValue,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -400,6 +408,7 @@ export function DropModal({
       category: drop?.category ?? undefined,
       minimumAge: drop?.minimumAge ?? null,
       overview: drop?.overview ?? '',
+      neededItems: drop?.neededItems?.map(item => ({ id: item.id, name: item.name })) ?? [],
     },
   });
 
@@ -458,6 +467,10 @@ export function DropModal({
         const effectiveMinAge = values.category === 'party' ? values.minimumAge ?? null : null;
         if (effectiveMinAge !== (drop.minimumAge ?? null)) {
           dto.minimumAge = effectiveMinAge;
+        }
+
+        if (values.neededItems !== undefined) {
+          dto.neededItems = values.neededItems;
         }
 
         if (Object.keys(dto).length > 0) {
@@ -523,6 +536,7 @@ export function DropModal({
           overview: values.overview,
           idempotencyKey: idempotencyKeyRef.current,
           ...(coverPhotoBase64 ? { coverPhotoBase64 } : {}),
+          neededItems: values.neededItems?.filter((item): item is string => typeof item === 'string') ?? [],
         };
 
         let result: Drop;
@@ -568,8 +582,8 @@ export function DropModal({
     <ModalShell onClose={wrappedClose}>
       {(close) => {
         return (
-          <div className="flex max-h-[inherit] min-w-0 flex-col overflow-hidden rounded-sm border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
-            <div className="grid min-w-0 grid-cols-1 overflow-y-auto overflow-x-hidden sm:grid-cols-[minmax(160px,220px)_minmax(0,1fr)]">
+          <div className="flex h-[640px] w-[95vw] max-w-[900px] min-w-0 flex-col overflow-hidden rounded-sm border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
+            <div className="flex-1 grid min-w-0 grid-cols-1 overflow-hidden sm:grid-cols-[minmax(160px,220px)_minmax(0,1fr)]">
               {/* Left panel — Header on mobile, sidebar on desktop */}
               <aside className="group relative flex min-w-0 flex-col justify-between overflow-hidden bg-tok-teal px-6 py-6 min-h-[140px] sm:min-h-0 sm:py-8 sm:flex">
                 {/* Cover photo background */}
@@ -671,315 +685,450 @@ export function DropModal({
               </aside>
 
               {/* Form panel */}
-              <div className="flex min-w-0 flex-col overflow-x-hidden bg-tok-cream px-6 py-7 sm:px-8 sm:py-8">
-                <div className="mb-6 flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <h2 className="font-passion text-2xl font-bold leading-none tracking-tight text-tok-black sm:text-3xl">
-                      {isEdit ? 'EDIT DROP.' : 'NEW DROP.'}
-                    </h2>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={close}
-                    disabled={isBusy}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40"
-                  >
-                    <IconX size={18} strokeWidth={2.5} />
-                  </button>
-                </div>
-
-                <form onSubmit={onSubmit} className="flex min-w-0 flex-1 flex-col gap-4">
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="drop-modal-name"
-                      className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
+              <form
+                onSubmit={(e) => {
+                  if (step < 3) {
+                    e.preventDefault();
+                    return;
+                  }
+                  onSubmit(e);
+                }}
+                className="flex min-w-0 flex-col bg-tok-cream overflow-hidden h-full sm:min-h-[560px]"
+              >
+                <div className="flex-1 flex flex-col overflow-y-auto px-6 py-7 sm:px-8 sm:py-8">
+                  <div className="mb-6 flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h2 className="font-passion text-2xl font-bold leading-none tracking-tight text-tok-black sm:text-3xl">
+                        {isEdit ? 'EDIT DROP.' : 'NEW DROP.'}
+                      </h2>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={close}
+                      disabled={isBusy}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40"
                     >
-                      Drop Name
-                    </Label>
-                    <Controller
-                      name="name"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="drop-modal-name"
-                          type="text"
-                          placeholder="e.g. Rooftop Drinks"
-                          autoFocus
-                          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
-                      )}
-                    />
-                    {errors.name && (
-                      <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-500">
-                        {errors.name.message}
-                      </p>
-                    )}
+                      <IconX size={18} strokeWidth={2.5} />
+                    </button>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Controller
-                      name="scheduledAt"
-                      control={control}
-                      render={({ field }) => (
-                        <DateTimePicker
-                          id="drop-modal"
-                          value={field.value}
-                          onChange={field.onChange}
-                        />
-                      )}
-                    />
+                  {/* Step Indicators */}
+                  <div className="mb-8 flex items-center gap-2">
+                    {[1, 2, 3].map((s) => (
+                      <div
+                        key={s}
+                        className={cn(
+                          'h-1.5 flex-1 rounded-full transition-all duration-300',
+                          step === s ? 'bg-tok-teal' : step > s ? 'bg-tok-teal/40' : 'bg-tok-black/10'
+                        )}
+                      />
+                    ))}
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="drop-modal-location"
-                      className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
-                    >
-                      Location
-                    </Label>
-                    <Controller
-                      name="location"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="drop-modal-location"
-                          type="text"
-                          placeholder="e.g. Sunset Beach"
-                          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
-                      )}
-                    />
-                    {errors.location && (
-                      <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-500">
-                        {errors.location.message}
-                      </p>
-                    )}
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="drop-modal-overview"
-                      className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
-                    >
-                      Overview <span className="normal-case opacity-40 font-normal">— Optional</span>
-                    </Label>
-                    <Controller
-                      name="overview"
-                      control={control}
-                      render={({ field }) => (
-                        <textarea
-                          {...field}
-                          id="drop-modal-overview"
-                          rows={3}
-                          placeholder="e.g. Bring your own drinks and some snacks to share!"
-                          className="w-full rounded-sm border-[3px] border-tok-black bg-white px-4 py-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
-                        />
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="drop-modal-headcount"
-                      className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
-                    >
-                      Headcount <span className="normal-case opacity-40 font-normal">— Optional</span>
-                    </Label>
-                    <Controller
-                      name="expectedHeadcount"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="drop-modal-headcount"
-                          type="number"
-                          min={1}
-                          placeholder="e.g. 20"
-                          onWheel={(e) => e.currentTarget.blur()}
-                          className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
-                      Category
-                    </Label>
-                    <Controller
-                      name="category"
-                      control={control}
-                      render={({ field }) => (
-                        <div className="flex gap-2">
-                          {(['hangout', 'party'] as const).map((cat) => (
-                            <button
-                              key={cat}
-                              type="button"
-                              onClick={() => field.onChange(field.value === cat ? undefined : cat)}
-                              className={cn(
-                                'h-11 flex-1 rounded-sm border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[1.5px] transition-all',
-                                field.value === cat
-                                  ? 'bg-tok-teal text-tok-cream shadow-none translate-y-0'
-                                  : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
-                              )}
-                            >
-                              {cat}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    />
-                    {category === 'party' && (
-                      <div className="mt-3 space-y-2 border-t-2 border-dashed border-tok-black/20 pt-3">
-                        <div className="flex items-center gap-2">
-                          <Label
-                            htmlFor="drop-modal-headcount"
-                            className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
-                          >
-                            Age floor <span className="normal-case opacity-40 font-normal">— Optional</span>
-                          </Label>
-                        </div>
+                  {step === 1 && (
+                    <div className="flex flex-col gap-4">
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor="drop-modal-name"
+                          className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
+                        >
+                          Drop Name
+                        </Label>
                         <Controller
-                          name="minimumAge"
+                          name="name"
                           control={control}
-                          render={({ field }) => {
-                            const restricted = field.value != null;
-                            return (
-                              <div className="my-1 flex flex-wrap items-stretch gap-2">
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              id="drop-modal-name"
+                              type="text"
+                              placeholder="e.g. Rooftop Drinks"
+                              autoFocus
+                              className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                          )}
+                        />
+                        {errors.name && (
+                          <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-500">
+                            {errors.name.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor="drop-modal-overview"
+                          className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
+                        >
+                          Overview <span className="normal-case font-normal opacity-40">— Optional</span>
+                        </Label>
+                        <Controller
+                          name="overview"
+                          control={control}
+                          render={({ field }) => (
+                            <textarea
+                              {...field}
+                              id="drop-modal-overview"
+                              rows={2}
+                              placeholder="e.g. Bring your own drinks and some snacks to share!"
+                              className="w-full resize-none rounded-sm border-[3px] border-tok-black bg-white px-4 py-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                          )}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Controller
+                          name="scheduledAt"
+                          control={control}
+                          render={({ field }) => (
+                            <DateTimePicker id="drop-modal" value={field.value} onChange={field.onChange} />
+                          )}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor="drop-modal-location"
+                          className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
+                        >
+                          Location
+                        </Label>
+                        <Controller
+                          name="location"
+                          control={control}
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              id="drop-modal-location"
+                              type="text"
+                              placeholder="e.g. Sunset Beach"
+                              className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                          )}
+                        />
+                        {errors.location && (
+                          <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-500">
+                            {errors.location.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {step === 2 && (
+                    <div className="flex flex-col gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
+                          Category
+                        </Label>
+                        <Controller
+                          name="category"
+                          control={control}
+                          render={({ field }) => (
+                            <div className="flex gap-2">
+                              {(['hangout', 'party'] as const).map((cat) => (
                                 <button
+                                  key={cat}
                                   type="button"
-                                  onClick={() => field.onChange(restricted ? null : 20)}
+                                  onClick={() => field.onChange(field.value === cat ? undefined : cat)}
                                   className={cn(
-                                    'h-11 min-w-0 flex-1 rounded-sm border-[3px] border-tok-black px-2 font-passion text-[10px] font-bold uppercase tracking-[1px] transition-all sm:px-3 sm:text-xs',
-                                    restricted
-                                      ? 'bg-tok-black text-tok-cream shadow-none'
-                                      : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]',
+                                    'h-11 flex-1 rounded-sm border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[1.5px] transition-all',
+                                    field.value === cat
+                                      ? 'bg-tok-teal text-tok-cream shadow-none translate-y-0'
+                                      : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
                                   )}
                                 >
-                                  {restricted ? 'Min age set' : 'Any age'}
+                                  {cat}
                                 </button>
-                                {restricted && (
-                                  <div className="flex min-w-0 items-center gap-1.5 rounded-sm border-[3px] border-tok-black bg-white px-2 py-0.5">
-                                    <span className="font-passion text-sm font-bold text-tok-black/50" aria-hidden>
-                                      ≥
-                                    </span>
-                                    <Input
-                                      type="number"
-                                      min={1}
-                                      max={99}
-                                      value={field.value ?? 20}
-                                      onChange={(e) => {
-                                        const n = Number.parseInt(e.target.value, 10);
-                                        if (!Number.isFinite(n)) return;
-                                        field.onChange(Math.min(99, Math.max(1, n)));
-                                      }}
-                                      onWheel={(e) => e.currentTarget.blur()}
-                                      className="h-6 w-11 min-w-0 border-0 bg-transparent p-0 text-center font-passion text-base font-bold text-tok-black shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                      aria-label="Minimum age"
-                                    />
-                                  </div>
+                              ))}
+                            </div>
+                          )}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor="drop-modal-headcount"
+                          className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40"
+                        >
+                          Headcount <span className="normal-case font-normal opacity-40">— Optional</span>
+                        </Label>
+                        <Controller
+                          name="expectedHeadcount"
+                          control={control}
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              id="drop-modal-headcount"
+                              type="number"
+                              min={1}
+                              placeholder="e.g. 20"
+                              onWheel={(e) => e.currentTarget.blur()}
+                              className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                            />
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
+                            Security
+                          </Label>
+                          <Controller
+                            name="isLocked"
+                            control={control}
+                            render={({ field }) => (
+                              <button
+                                type="button"
+                                onClick={() => field.onChange(!field.value)}
+                                className={cn(
+                                  'flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all',
+                                  field.value
+                                    ? 'bg-amber-400 text-tok-black shadow-none translate-y-0'
+                                    : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
                                 )}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <IconLock size={14} strokeWidth={2.5} />
+                                  <span className="font-passion text-sm font-bold uppercase tracking-wider">
+                                    {field.value ? 'Locked' : 'Open'}
+                                  </span>
+                                </div>
+                                <div
+                                  className={cn(
+                                    'h-3.5 w-3.5 rounded-full border-2 border-tok-black',
+                                    field.value ? 'bg-tok-black' : 'bg-white'
+                                  )}
+                                />
+                              </button>
+                            )}
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
+                            Visibility
+                          </Label>
+                          <Controller
+                            name="isPublic"
+                            control={control}
+                            render={({ field }) => (
+                              <button
+                                type="button"
+                                onClick={() => field.onChange(!field.value)}
+                                className={cn(
+                                  'flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all',
+                                  !field.value
+                                    ? 'bg-tok-black text-white shadow-none translate-y-0'
+                                    : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  {!field.value ? (
+                                    <IconLock size={14} strokeWidth={2.5} />
+                                  ) : (
+                                    <IconUsers size={14} strokeWidth={2.5} />
+                                  )}
+                                  <span className="font-passion text-sm font-bold uppercase tracking-wider">
+                                    {field.value ? 'Public' : 'Private'}
+                                  </span>
+                                </div>
+                                <div
+                                  className={cn(
+                                    'h-3.5 w-3.5 rounded-full border-2',
+                                    field.value ? 'border-tok-black bg-white' : 'border-white bg-tok-teal'
+                                  )}
+                                />
+                              </button>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      {category === 'party' && (
+                        <div className="space-y-2">
+                          <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
+                            Age floor <span className="normal-case font-normal opacity-40">— Optional</span>
+                          </Label>
+                          <Controller
+                            name="minimumAge"
+                            control={control}
+                            render={({ field }) => {
+                              const restricted = field.value != null;
+                              return (
+                                <div className="flex flex-wrap items-stretch gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => field.onChange(restricted ? null : 20)}
+                                    className={cn(
+                                      'h-11 min-w-0 flex-1 rounded-sm border-[3px] border-tok-black px-2 font-passion text-[10px] font-bold uppercase tracking-[1px] transition-all sm:px-3 sm:text-xs',
+                                      restricted
+                                        ? 'bg-tok-black text-tok-cream shadow-none'
+                                        : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
+                                    )}
+                                  >
+                                    {restricted ? 'Min age set' : 'Any age'}
+                                  </button>
+                                  {restricted && (
+                                    <div className="flex min-w-0 items-center gap-1.5 rounded-sm border-[3px] border-tok-black bg-white px-2 py-0.5">
+                                      <span className="font-passion text-sm font-bold text-tok-black/50" aria-hidden>
+                                        ≥
+                                      </span>
+                                      <Input
+                                        type="number"
+                                        min={1}
+                                        max={99}
+                                        value={field.value ?? 20}
+                                        onChange={(e) => {
+                                          const n = Number.parseInt(e.target.value, 10);
+                                          if (!Number.isFinite(n)) return;
+                                          field.onChange(Math.min(99, Math.max(1, n)));
+                                        }}
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                        className="h-6 w-11 min-w-0 border-0 bg-transparent p-0 text-center font-passion text-base font-bold text-tok-black shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                        aria-label="Minimum age"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {step === 3 && (
+                    <div className="flex flex-col gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
+                          Needed Items <span className="normal-case font-normal opacity-40">— What should people bring?</span>
+                        </Label>
+                        <Controller
+                          name="neededItems"
+                          control={control}
+                          render={({ field }) => {
+                            const items = field.value || [];
+                            const addItem = (name: string) => {
+                              if (!name.trim()) return;
+                              field.onChange([...items, name.trim()]);
+                            };
+                            const removeItem = (index: number) => {
+                              field.onChange(items.filter((_, i) => i !== index));
+                            };
+
+                            return (
+                              <div className="space-y-6">
+                                <div className="flex flex-col gap-3 my-4">
+                                  {items.map((item, index) => (
+                                    <div
+                                      key={index}
+                                      className="flex items-center justify-between gap-3 rounded-sm border-[3px] border-tok-black bg-white px-4 py-2 shadow-[4px_4px_0px_#1C1C1A]"
+                                    >
+                                      <span className="font-passion text-sm font-bold uppercase tracking-wide text-tok-black">
+                                        {typeof item === 'string' ? item : item.name}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeItem(index)}
+                                        className="text-tok-black/40 transition-colors hover:text-red-500"
+                                      >
+                                        <IconTrash size={16} strokeWidth={2.5} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="relative">
+                                  <Input
+                                    placeholder="Add an item (e.g. Pork, Drinks...)"
+                                    className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 pr-12 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        addItem(e.currentTarget.value);
+                                        e.currentTarget.value = '';
+                                      }
+                                    }}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                      addItem(input.value);
+                                      input.value = '';
+                                    }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm bg-tok-black p-1 text-white"
+                                  >
+                                    <IconPlus size={16} />
+                                  </button>
+                                </div>
+                                <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/30">
+                                  Press Enter to add multiple items.
+                                </p>
                               </div>
                             );
                           }}
                         />
                       </div>
+                    </div>
+                  )}
+                  {/* Step Buttons integrated into form */}
+                  <div className="mt-auto pt-8 flex items-center gap-3">
+                    {step > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => setStep((s) => (s - 1) as any)}
+                        className="h-12 flex-1 rounded-sm border-[3px] border-tok-black bg-white font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+                      >
+                        Back
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={close}
+                        disabled={isBusy}
+                        className="h-12 flex-1 rounded-sm border-[3px] border-tok-black bg-white font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40"
+                      >
+                        Cancel
+                      </button>
+                    )}
+
+                    {step < 3 ? (
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          const fields = step === 1 ? ['name', 'scheduledAt', 'location'] : ['category'];
+                          const isValid = await trigger(fields as any);
+                          if (isValid) setStep((s) => (s + 1) as any);
+                        }}
+                        className="h-12 flex-1 rounded-sm border-[3px] border-tok-black bg-tok-teal font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+                      >
+                        Next
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        disabled={isBusy}
+                        className="flex h-12 flex-1 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal font-passion text-sm font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
+                      >
+                        {isBusy ? (
+                          <>
+                            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-tok-cream/30 border-t-tok-cream" />
+                            <span className="text-sm">...</span>
+                          </>
+                        ) : (
+                          <span className="text-nowrap">{isEdit ? 'Save Drop' : 'Deploy Drop'}</span>
+                        )}
+                      </button>
                     )}
                   </div>
-
-                  <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4">
-                    <div className="min-w-0 space-y-1.5">
-                      <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
-                        Security
-                      </Label>
-                      <Controller
-                        name="isLocked"
-                        control={control}
-                        render={({ field }) => (
-                          <button
-                            type="button"
-                            onClick={() => field.onChange(!field.value)}
-                            className={`flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all ${field.value ? 'bg-amber-400 text-tok-black shadow-none translate-y-0' : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
-                              }`}
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <IconLock size={14} strokeWidth={2.5} />
-                              <span className="font-passion font-bold uppercase tracking-wider text-sm">
-                                {field.value ? 'Locked' : 'Open'}
-                              </span>
-                            </div>
-                            <div
-                              className={`h-3.5 w-3.5 rounded-full border-2 border-tok-black ${field.value ? 'bg-tok-black' : 'bg-white'
-                                }`}
-                            />
-                          </button>
-                        )}
-                      />
-                    </div>
-
-                    <div className="min-w-0 space-y-1.5">
-                      <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
-                        Visibility
-                      </Label>
-                      <Controller
-                        name="isPublic"
-                        control={control}
-                        render={({ field }) => (
-                          <button
-                            type="button"
-                            onClick={() => field.onChange(!field.value)}
-                            className={`flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black px-4 transition-all ${!field.value ? 'bg-tok-black text-white shadow-none translate-y-0' : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
-                              }`}
-                          >
-                            <div className="flex items-center gap-2.5">
-                              {!field.value ? (
-                                <IconLock size={14} strokeWidth={2.5} />
-                              ) : (
-                                <IconUsers size={14} strokeWidth={2.5} />
-                              )}
-                              <span className="font-passion font-bold uppercase tracking-wider text-sm">
-                                {field.value ? 'Public' : 'Private'}
-                              </span>
-                            </div>
-                            <div
-                              className={`h-3.5 w-3.5 rounded-full border-2 ${field.value ? 'bg-white border-tok-black' : 'bg-tok-teal border-white'
-                                }`}
-                            />
-                          </button>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-2 flex min-w-0 items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={close}
-                      disabled={isBusy}
-                      className="h-14 min-h-14 flex-1 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-sm font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-40 sm:h-11 sm:min-h-11 sm:px-8 sm:text-xs"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isBusy}
-                      className="flex h-14 min-h-14 flex-1 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal px-4 font-passion text-base font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50 sm:h-11 sm:min-h-11 sm:px-10 sm:text-sm"
-                    >
-                      {isBusy ? (
-                        <>
-                          <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-tok-cream/30 border-t-tok-cream" />
-                          <span className="text-sm">...</span>
-                        </>
-                      ) : (
-                        <span className="text-nowrap">{isEdit ? 'Save Drop' : 'Deploy Drop'}</span>
-                      )}
-                    </button>
-                  </div>
-                </form>
-
-              </div>
+                </div>
+              </form>
             </div>
           </div>
         );

@@ -17,6 +17,7 @@ import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
 import { DropPhoto } from './entities/drop-photo.entity';
+import { DropItem } from './entities/drop-item.entity';
 import {
   DropCategory,
   DropCrewMemberRole,
@@ -278,6 +279,15 @@ export class DropsService {
         idempotencyKey: dto.idempotencyKey,
       });
 
+      if (dto.neededItems?.length) {
+        for (const itemName of dto.neededItems) {
+          await this.dropsRepository.addItem({
+            dropId: drop.id,
+            name: itemName,
+          });
+        }
+      }
+
       await this.recordDropActivity({
         dropId: drop.id,
         userId: organiser.id,
@@ -445,6 +455,36 @@ export class DropsService {
       ...(dto.overview !== undefined && { overview: dto.overview }),
       ...(nextMinimumAge !== undefined && { minimumAge: nextMinimumAge }),
     });
+
+    if (dto.neededItems !== undefined) {
+      const currentItems = await this.dropsRepository.findItemsByDropId(id);
+      const incomingItems = dto.neededItems;
+
+      // Identify items to remove (those in DB but not in incoming list)
+      const incomingIds = incomingItems
+        .filter((item): item is { id: string; name: string } => typeof item !== 'string')
+        .map((item) => item.id);
+      
+      const toRemove = currentItems.filter((item) => !incomingIds.includes(item.id));
+      for (const item of toRemove) {
+        await this.dropsRepository.deleteItem(item.id);
+      }
+
+      // Add new items (strings) and update existing names if needed
+      for (const item of incomingItems) {
+        if (typeof item === 'string') {
+          await this.dropsRepository.addItem({
+            dropId: id,
+            name: item,
+          });
+        } else {
+          const existing = currentItems.find((ci) => ci.id === item.id);
+          if (existing && existing.name !== item.name) {
+            await this.dropsRepository.updateItem(item.id, { name: item.name });
+          }
+        }
+      }
+    }
     
     const statusActionMap: Partial<Record<DropStatus, string>> = {
       [DropStatus.ONGOING]: 'marked_ongoing',
@@ -1300,5 +1340,163 @@ export class DropsService {
       exists = await this.dropsRepository.joinCodeExists(joinCode);
     } while (exists);
     return joinCode;
+  }
+
+  async addItem(dropId: string, name: string, requesterId: string): Promise<DropItem> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the organiser can add items');
+    }
+
+    const item = await this.dropsRepository.addItem({ dropId, name });
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'item_added',
+      changedFields: { itemName: name },
+    });
+
+    return item;
+  }
+
+  async removeItem(dropId: string, itemId: string, requesterId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the organiser can remove items');
+    }
+
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    await this.dropsRepository.deleteItem(itemId);
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'item_removed',
+      changedFields: { itemName: item.name },
+    });
+  }
+
+  async assignItem(dropId: string, itemId: string, assignedUserId: string, requesterId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the organiser can assign items');
+    }
+
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    const crewMember = await this.dropsRepository.findActiveInCrewMember(dropId, assignedUserId);
+    if (!crewMember) {
+      throw new BadRequestException('Assigned user must be an active crew member');
+    }
+
+    await this.dropsRepository.updateItem(itemId, { assignedUserId });
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'item_assigned',
+      changedFields: { itemId, itemName: item.name, assignedUserId },
+    });
+  }
+
+  async unassignItem(dropId: string, itemId: string, requesterId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the organiser can unassign items');
+    }
+
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    await this.dropsRepository.updateItem(itemId, { assignedUserId: null as any });
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'item_assigned',
+      changedFields: { itemId, itemName: item.name, assignedUserId: null },
+    });
+  }
+
+  async randomAssignItems(dropId: string, requesterId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the organiser can trigger random assignment');
+    }
+
+    const unassignedItems = await this.dropsRepository.findUnassignedItems(dropId);
+    if (!unassignedItems.length) return;
+
+    const activeCrew = await this.dropsRepository.findActiveInCrewWithUsers(dropId);
+    if (!activeCrew.length) throw new BadRequestException('No active crew members to assign items to');
+
+    // Filter out crew who already have an item assigned, then shuffle
+    const allItems = await this.dropsRepository.findItemsByDropId(dropId);
+    const assignedUserIds = new Set(allItems.map(i => i.assignedUserId).filter(Boolean));
+    const eligibleCrew = activeCrew.filter(m => !assignedUserIds.has(m.userId));
+
+    if (!eligibleCrew.length) throw new BadRequestException('All crew members already have an item assigned');
+
+    // Shuffle eligible crew and pair one item per member
+    const shuffled = [...eligibleCrew].sort(() => Math.random() - 0.5);
+    const pairs = unassignedItems.slice(0, shuffled.length);
+
+    for (let i = 0; i < pairs.length; i++) {
+      await this.dropsRepository.updateItem(pairs[i]!.id, { assignedUserId: shuffled[i]!.userId });
+    }
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'items_randomly_assigned',
+    });
+  }
+
+  async pickItem(dropId: string, itemId: string, userId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    const crewMember = await this.dropsRepository.findActiveInCrewMember(dropId, userId);
+    if (!crewMember) {
+      throw new ForbiddenException('Only active crew members can pick items');
+    }
+
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    if (item.assignedUserId) {
+      throw new ConflictException('Item is already assigned');
+    }
+
+    await this.dropsRepository.updateItem(itemId, { assignedUserId: userId });
+
+    await this.recordDropActivity({
+      dropId,
+      userId,
+      action: 'item_picked',
+      changedFields: { itemId, itemName: item.name },
+    });
   }
 }

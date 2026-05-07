@@ -220,3 +220,104 @@ export function useDeletePhoto(dropId: string): UseMutationResult<void, Error, s
     },
   });
 }
+
+export function useAddItem(dropId: string): UseMutationResult<any, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (name: string) => dropsService.addItem(dropId, name),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+export function useRemoveItem(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (itemId: string) => dropsService.removeItem(dropId, itemId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+type AssignItemVars = {
+  itemId: string;
+  assignedUserId: string;
+  assignedUser: { id: string; firstName: string; lastName: string; avatar?: string };
+};
+
+export function useAssignItem(dropId: string): UseMutationResult<void, Error, AssignItemVars> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ itemId, assignedUserId }) => dropsService.assignItem(dropId, itemId, assignedUserId),
+    onSuccess: (_, { itemId, assignedUserId, assignedUser }) => {
+      queryClient.setQueryData<Drop>(dropKeys.detail(dropId), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          neededItems: old.neededItems?.map((item) =>
+            item.id === itemId ? { ...item, assignedUserId, assignedUser } : item
+          ),
+        };
+      });
+    },
+  });
+}
+
+export function useUnassignItem(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (itemId) => dropsService.unassignItem(dropId, itemId),
+    onSuccess: (_, itemId) => {
+      queryClient.setQueryData<Drop>(dropKeys.detail(dropId), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          neededItems: old.neededItems?.map((item) =>
+            item.id === itemId ? { ...item, assignedUserId: null, assignedUser: null } : item
+          ),
+        };
+      });
+    },
+  });
+}
+
+export function useRandomAssignItems(dropId: string): UseMutationResult<void, Error, void> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => dropsService.randomAssignItems(dropId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+type PickItemVars = {
+  itemId: string;
+  user: { id: string; firstName: string; lastName: string; avatar?: string };
+};
+
+export function usePickItem(dropId: string): UseMutationResult<void, Error, PickItemVars> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ itemId }) => dropsService.pickItem(dropId, itemId),
+    onSuccess: (_, { itemId, user }) => {
+      queryClient.setQueryData<Drop>(dropKeys.detail(dropId), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          neededItems: old.neededItems?.map((item) =>
+            item.id === itemId ? { ...item, assignedUserId: user.id, assignedUser: user } : item
+          ),
+        };
+      });
+    },
+  });
+}
