@@ -941,8 +941,8 @@ function DropDetailContent({ id }: { id: string }) {
                 isLoadingStatus={isLoadingCrewStatus}
               />
 
-              {/* Needed Items — visible to organiser always, crew only when items exist */}
-              {(isOrganiser || (crewStatus?.status === 'in' && (drop.neededItems?.length ?? 0) > 0)) && (
+              {/* Needed Items — hidden when there are no items, otherwise visible to organiser and crew */}
+              {(drop.neededItems?.length ?? 0) > 0 && (isOrganiser || crewStatus?.status === 'in') && (
                 <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
                   <NeededItems
                     drop={drop}
