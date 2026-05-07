@@ -74,6 +74,21 @@ export interface DropActivityLog {
   createdAt: string;
 }
 
+export interface DropItem {
+  id: string;
+  name: string;
+  dropId: string;
+  assignedUserId?: string | null;
+  assignedUser?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Drop {
   id: string;
   name: string;
@@ -94,6 +109,7 @@ export interface Drop {
   crew?: CrewMember[];
   activityLogs?: DropActivityLog[];
   sparks?: DropSpark[];
+  neededItems?: DropItem[];
   sparkCount?: number;
   sparkedByViewer?: boolean;
   createdAt: string;
@@ -158,6 +174,7 @@ export interface CreateDropDto {
   overview?: string;
   idempotencyKey?: string;
   coverPhotoBase64?: string;
+  neededItems?: string[];
 }
 
 export interface UpdateDropDto {
@@ -171,6 +188,7 @@ export interface UpdateDropDto {
   category?: DropCategory;
   minimumAge?: number | null;
   overview?: string;
+  neededItems?: (string | { id: string; name: string })[];
 }
 
 export interface DropPhoto {

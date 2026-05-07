@@ -77,4 +77,9 @@ export class CreateDropDto {
   @IsOptional()
   @IsString()
   coverPhotoBase64?: string;
+
+  @ApiPropertyOptional({ type: [String], example: ['Pork', 'Drinks'] })
+  @IsOptional()
+  @IsString({ each: true })
+  neededItems?: string[];
 }

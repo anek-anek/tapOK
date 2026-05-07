@@ -30,6 +30,7 @@ import { DigitalTicket, DigitalTicketSkeleton } from '@/components/drops/Digital
 import { PhotoRoll, PhotoRollSkeleton } from '@/components/drops/PhotoRoll';
 import { CrewRoster, CrewRosterSkeleton } from '@/components/drops/CrewRoster';
 import { ActivityLedger, ActivityLedgerSkeleton } from '@/components/drops/ActivityLedger';
+import { NeededItems } from '@/components/drops/NeededItems';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
@@ -939,6 +940,19 @@ function DropDetailContent({ id }: { id: string }) {
                 isCrewMember={(crewStatus?.status as string) === 'in'}
                 isLoadingStatus={isLoadingCrewStatus}
               />
+
+              {/* Needed Items — visible to organiser always, crew only when items exist */}
+              {(isOrganiser || (crewStatus?.status === 'in' && (drop.neededItems?.length ?? 0) > 0)) && (
+                <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
+                  <NeededItems
+                    drop={drop}
+                    isOrganiser={isOrganiser}
+                    isCrewMember={crewStatus?.status === 'in'}
+                    currentUser={dbUser ?? undefined}
+                    activeCrew={crew?.filter(m => m.status === 'in') ?? []}
+                  />
+                </div>
+              )}
 
               {/* Crew — visible to members or the organiser (tap in/out lives in this card) */}
               {(isOrganiser || (crewStatus?.status as string) === 'in') && (

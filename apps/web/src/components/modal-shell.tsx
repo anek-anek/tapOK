@@ -29,21 +29,9 @@ export function ModalShell({
     };
     document.addEventListener('keydown', onKey);
 
-    // Lock scroll - more aggressive for cross-browser support
+    // Lock scroll
     const originalBodyOverflow = document.body.style.overflow;
-    const originalPaddingRight = document.body.style.paddingRight;
-
-    // Calculate scrollbar width to prevent layout shift
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    const originalHtmlScrollbarGutter = document.documentElement.style.scrollbarGutter;
-    
     document.body.style.overflow = 'hidden';
-    document.documentElement.style.scrollbarGutter = 'initial';
-    
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-    }
 
     return () => {
       document.removeEventListener('keydown', onKey);
@@ -51,8 +39,6 @@ export function ModalShell({
       const otherModals = document.querySelectorAll('.fixed.inset-0.z-50');
       if (otherModals.length <= 1) {
         document.body.style.overflow = originalBodyOverflow;
-        document.documentElement.style.scrollbarGutter = originalHtmlScrollbarGutter;
-        document.body.style.paddingRight = originalPaddingRight;
       }
     };
   }, [triggerClose]);

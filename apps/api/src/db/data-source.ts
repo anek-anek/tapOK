@@ -1,6 +1,13 @@
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
-import { resolve } from 'path';
+import { resolve, join } from 'path';
+import { Drop } from '../app/drops/entities/drop.entity';
+import { DropActivityLog } from '../app/drops/entities/drop-activity-log.entity';
+import { DropCrew } from '../app/drops/entities/drop-crew.entity';
+import { DropPhoto } from '../app/drops/entities/drop-photo.entity';
+import { DropSpark } from '../app/drops/entities/drop-spark.entity';
+import { DropItem } from '../app/drops/entities/drop-item.entity';
+import { User } from '../app/users/entities/user.entity';
 
 dotenv.config({ path: resolve(__dirname, '../../.env') });
 
@@ -13,6 +20,14 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE || 'tapok',
   ssl: (process.env.DB_HOST ?? 'localhost') !== 'localhost' ? { rejectUnauthorized: false } : false,
   synchronize: false,
-  entities: [resolve(__dirname, '../app/**/*.entity{.ts,.js}')],
-  migrations: [resolve(__dirname, './migrations/*{.ts,.js}')],
+  entities: [
+    User,
+    Drop,
+    DropActivityLog,
+    DropCrew,
+    DropPhoto,
+    DropSpark,
+    DropItem,
+  ],
+  migrations: [join(__dirname, 'migrations', '*{.ts,.js}')],
 });

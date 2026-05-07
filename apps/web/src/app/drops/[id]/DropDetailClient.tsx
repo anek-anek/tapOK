@@ -32,6 +32,7 @@ import { PhotoRoll } from '@/components/drops/PhotoRoll';
 import { CrewRoster, CrewRosterSkeleton } from '@/components/drops/CrewRoster';
 import { DropMemberProfileModal, type DropMemberProfileSubject } from '@/components/drops/DropMemberProfileModal';
 import { ActivityLedger, ActivityLedgerSkeleton } from '@/components/drops/ActivityLedger';
+import { NeededItems } from '@/components/drops/NeededItems';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
@@ -832,6 +833,19 @@ export default function DropDetailClient({ id }: { id: string }) {
               </div>
             )}
 
+            {/* Needed Items Card */}
+            {(isOrganiser || crewStatus?.status === 'in') && (
+              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
+                <NeededItems
+                  drop={drop}
+                  isOrganiser={isOrganiser}
+                  isCrewMember={crewStatus?.status === 'in'}
+                  currentUser={dbUser}
+                  activeCrew={crew?.filter(m => m.status === 'in') ?? []}
+                />
+              </div>
+            )}
+
             {/* Photo Roll */}
             <PhotoRoll
               drop={drop}
@@ -859,11 +873,11 @@ export default function DropDetailClient({ id }: { id: string }) {
                 myPresence={
                   crewStatus?.status === 'in' && !isCompleted
                     ? {
-                        isPresent: Boolean(crewStatus.isPresent),
-                        onTapIn: () => handleUpdatePresence(true),
-                        onTapOut: () => handleUpdatePresence(false),
-                        isPending: isUpdatingPresence,
-                      }
+                      isPresent: Boolean(crewStatus.isPresent),
+                      onTapIn: () => handleUpdatePresence(true),
+                      onTapOut: () => handleUpdatePresence(false),
+                      isPending: isUpdatingPresence,
+                    }
                     : undefined
                 }
                 onOpenMemberProfile={(member) => {
@@ -888,9 +902,9 @@ export default function DropDetailClient({ id }: { id: string }) {
 
           {/* Right: Digital Ticket Sidebar (Desktop Only) */}
           <aside className="order-1 hidden lg:block lg:order-2 lg:self-start">
-            <DigitalTicket 
-              drop={drop} 
-              isMember={isOrganiser || crewStatus?.status === 'in'} 
+            <DigitalTicket
+              drop={drop}
+              isMember={isOrganiser || crewStatus?.status === 'in'}
             />
           </aside>
         </div>

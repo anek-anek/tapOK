@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThanOrEqual, Repository } from 'typeorm';
+import { In, LessThanOrEqual, Repository, IsNull } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DropCategory, DropCrewMemberRole, DropCrewStatus, DropStatus } from '../../common';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropCrew } from './entities/drop-crew.entity';
-
 import { DropPhoto } from './entities/drop-photo.entity';
 import { DropSpark } from './entities/drop-spark.entity';
+import { DropItem } from './entities/drop-item.entity';
 
 const PUBLIC_DISCOVER_DROP_SELECT: (keyof Drop)[] = [
   'id',
@@ -43,12 +43,15 @@ export class DropsRepository {
     private readonly photoRepo: Repository<DropPhoto>,
     @InjectRepository(DropSpark)
     private readonly sparkRepo: Repository<DropSpark>,
+    @InjectRepository(DropItem)
+    private readonly itemRepo: Repository<DropItem>,
   ) {}
 
   findById(id: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
       where: { id },
-      relations: { organiser: true, sparks: true },
+      relations: { organiser: true, sparks: true, neededItems: { assignedUser: true } },
+      order: { neededItems: { createdAt: 'ASC' } },
     });
   }
 
@@ -526,5 +529,39 @@ export class DropsRepository {
 
   async delete(id: string): Promise<void> {
     await this.dropRepo.delete(id);
+  }
+
+  async findItemsByDropId(dropId: string): Promise<DropItem[]> {
+    return this.itemRepo.find({
+      where: { dropId },
+      relations: { assignedUser: true },
+      order: { name: 'ASC' },
+    });
+  }
+
+  async findItemById(id: string): Promise<DropItem | null> {
+    return this.itemRepo.findOne({
+      where: { id },
+      relations: { assignedUser: true, drop: true },
+    });
+  }
+
+  async addItem(data: Partial<DropItem>): Promise<DropItem> {
+    const item = this.itemRepo.create(data);
+    return this.itemRepo.save(item);
+  }
+
+  async updateItem(id: string, data: Partial<Pick<DropItem, 'name' | 'assignedUserId'>>): Promise<void> {
+    await this.itemRepo.update(id, data as any);
+  }
+
+  async deleteItem(id: string): Promise<void> {
+    await this.itemRepo.delete(id);
+  }
+
+  async findUnassignedItems(dropId: string): Promise<DropItem[]> {
+    return this.itemRepo.find({
+      where: { dropId, assignedUserId: IsNull() },
+    });
   }
 }

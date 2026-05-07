@@ -143,4 +143,28 @@ export const dropsService = {
   unspark(id: string): Promise<void> {
     return api.delete(`/drops/${id}/spark`).then(() => undefined);
   },
+  
+  addItem(dropId: string, name: string): Promise<any> {
+    return api.post(`/drops/${dropId}/items`, { name }).then((r) => r.data);
+  },
+
+  removeItem(dropId: string, itemId: string): Promise<void> {
+    return api.delete(`/drops/${dropId}/items/${itemId}`).then(() => undefined);
+  },
+
+  assignItem(dropId: string, itemId: string, assignedUserId: string): Promise<void> {
+    return api.post(`/drops/${dropId}/items/${itemId}/assign`, { assignedUserId }).then(() => undefined);
+  },
+
+  unassignItem(dropId: string, itemId: string): Promise<void> {
+    return api.post(`/drops/${dropId}/items/${itemId}/unassign`).then(() => undefined);
+  },
+
+  randomAssignItems(dropId: string): Promise<void> {
+    return api.post(`/drops/${dropId}/items/random-assign`).then(() => undefined);
+  },
+
+  pickItem(dropId: string, itemId: string): Promise<void> {
+    return api.post(`/drops/${dropId}/items/${itemId}/pick`).then(() => undefined);
+  },
 };

@@ -44,6 +44,7 @@ import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropPhoto } from './entities/drop-photo.entity';
+import { DropItem } from './entities/drop-item.entity';
 
 interface RequestWithUser extends Request {
   user: BetterAuthUser;
@@ -441,5 +442,77 @@ export class DropsController {
     @Req() request: RequestWithUser,
   ): Promise<void> {
     return this.dropsService.unsparkDrop(id, request.user.id);
+  }
+
+  @Post(':id/items')
+  @ApiOperation({ summary: 'Add a needed item to the drop (chief only)' })
+  @ApiResponse({ status: 201, type: DropItem })
+  addItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('name') name: string,
+    @Req() request: RequestWithUser,
+  ): Promise<DropItem> {
+    if (!name) throw new BadRequestException('Item name is required');
+    return this.dropsService.addItem(id, name, request.user.id);
+  }
+
+  @Delete(':id/items/:itemId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove a needed item from the drop (chief only)' })
+  @ApiResponse({ status: 204, description: 'Item removed successfully.' })
+  removeItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.removeItem(id, itemId, request.user.id);
+  }
+
+  @Post(':id/items/:itemId/assign')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Assign a needed item to a crew member (organiser only)' })
+  @ApiResponse({ status: 200, description: 'Item assigned successfully.' })
+  assignItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Body('assignedUserId', ParseUUIDPipe) assignedUserId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.assignItem(id, itemId, assignedUserId, request.user.id);
+  }
+
+  @Post(':id/items/:itemId/unassign')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Unassign a needed item (organiser only)' })
+  @ApiResponse({ status: 200, description: 'Item unassigned successfully.' })
+  unassignItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.unassignItem(id, itemId, request.user.id);
+  }
+
+  @Post(':id/items/random-assign')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Randomly assign unassigned items to active crew members (organiser only)' })
+  @ApiResponse({ status: 200, description: 'Items assigned randomly.' })
+  randomAssignItems(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.randomAssignItems(id, request.user.id);
+  }
+
+  @Post(':id/items/:itemId/pick')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Self-pick a needed item (active crew members only)' })
+  @ApiResponse({ status: 200, description: 'Item picked successfully.' })
+  pickItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.pickItem(id, itemId, request.user.id);
   }
 }
