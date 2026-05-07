@@ -559,10 +559,6 @@ export class DropsRepository {
     await this.itemRepo.delete(id);
   }
 
-  async findItemsByDropId(dropId: string): Promise<DropItem[]> {
-    return this.itemRepo.find({ where: { dropId } });
-  }
-
   async findUnassignedItems(dropId: string): Promise<DropItem[]> {
     return this.itemRepo.find({
       where: { dropId, assignedUserId: IsNull() },
