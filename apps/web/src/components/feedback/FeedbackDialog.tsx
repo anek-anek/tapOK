@@ -142,12 +142,12 @@ export function FeedbackDialog({ onClose }: FeedbackDialogProps) {
             </div>
 
             {/* Footer Actions */}
-            <div className="flex flex-col gap-3 border-t-[3px] border-tok-black bg-white p-6 sm:flex-row">
+            <div className="flex gap-3 border-t-[3px] border-tok-black bg-white p-6 pr-7">
               <button
                 type="button"
                 onClick={close}
                 disabled={createMutation.isPending}
-                className="flex h-14 flex-1 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white font-passion text-sm font-bold uppercase tracking-[2px] text-tok-black transition-all hover:-translate-y-0.5 hover:bg-tok-black/5 active:translate-y-0 disabled:opacity-50"
+                className="flex h-14 flex-1 items-center justify-center rounded-sm border-[3px] border-tok-black bg-white font-passion text-sm font-bold uppercase tracking-[2px] text-tok-black shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -160,7 +160,6 @@ export function FeedbackDialog({ onClose }: FeedbackDialogProps) {
                   <Loader2 size={20} className="animate-spin" />
                 ) : (
                   <>
-                    <Plus size={16} strokeWidth={2.5} />
                     Transmit Signal
                   </>
                 )}
