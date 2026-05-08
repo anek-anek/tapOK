@@ -104,18 +104,22 @@ export class DropsRepository {
   findFeed(userId: string): Promise<Drop[]> {
     return this.dropRepo.createQueryBuilder('drop')
       .leftJoinAndSelect('drop.organiser', 'organiser')
-      .leftJoin('drop.crew', 'crew_me', 'crew_me.userId = :userId', { userId })
-      .addSelect(['crew_me.id', 'crew_me.status', 'crew_me.isPresent'])
       .leftJoinAndSelect('drop.crew', 'crew_all', 'crew_all.status = :inStatus', { inStatus: DropCrewStatus.IN })
       .leftJoinAndSelect('crew_all.user', 'crew_user')
       .loadRelationCountAndMap('drop.crewCount', 'drop.crew', 'crew', qb =>
         qb.where('crew.status = :s', { s: DropCrewStatus.IN }))
       .loadRelationCountAndMap('drop.sparkCount', 'drop.sparks')
       .where('drop.organiserId = :userId', { userId })
-      .orWhere('crew_me.userId = :userId AND crew_me.status = :accepted', {
-        userId,
-        accepted: DropCrewStatus.IN,
-      })
+      .orWhere(qb => {
+        const sub = qb.subQuery()
+          .select('1')
+          .from('drop_crew', 'cm')
+          .where('cm."dropId" = drop.id')
+          .andWhere('cm."userId" = :userId')
+          .andWhere('cm.status = :accepted', { accepted: DropCrewStatus.IN })
+          .getQuery();
+        return 'EXISTS ' + sub;
+      }, { userId, accepted: DropCrewStatus.IN })
       .orderBy('drop.scheduledAt', 'DESC')
       .getMany();
   }

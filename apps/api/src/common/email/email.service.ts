@@ -174,6 +174,26 @@ export class EmailService {
     }
   }
 
+  async sendDropEditedEmail(email: string, title: string, body: string, dropUrl?: string) {
+    if (!this.isEnabled()) return;
+    const html = this.getNeubrutalistTemplate(
+      'Drop Updated.',
+      body,
+      'View Drop',
+      dropUrl ?? '#',
+    );
+    try {
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: email,
+        subject: title,
+        html,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send drop edited email to ${email}`, error);
+    }
+  }
+
   async sendDropStartingSoonEmail(
     email: string,
     title: string,

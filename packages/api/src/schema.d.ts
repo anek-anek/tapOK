@@ -143,6 +143,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all drops (admin only) */
+        get: operations["DropsController_findAll"];
+        put?: never;
+        /** Create a new drop */
+        post: operations["DropsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drops/cron/transition": {
         parameters: {
             query?: never;
@@ -171,23 +189,6 @@ export interface paths {
         get: operations["DropsController_discover"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/drops": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create a new drop */
-        post: operations["DropsController_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -256,7 +257,7 @@ export interface paths {
         get: operations["DropsController_findOne"];
         put?: never;
         post?: never;
-        /** Delete a drop (organiser only) */
+        /** Delete a drop (organiser or admin only) */
         delete: operations["DropsController_delete"];
         options?: never;
         head?: never;
@@ -414,8 +415,25 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Remove an active crew member (organiser only) */
+        /** Remove an active crew member (organiser or co-chief only) */
         patch: operations["DropsController_removeCrewMember"];
+        trace?: never;
+    };
+    "/drops/{id}/crew/{userId}/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a crew member role (organiser only) */
+        patch: operations["DropsController_updateCrewRole"];
         trace?: never;
     };
     "/drops/{id}/cover-photo": {
@@ -541,6 +559,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drops/{id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a needed item to the drop (chief only) */
+        post: operations["DropsController_addItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a needed item from the drop (chief only) */
+        delete: operations["DropsController_removeItem"];
+        options?: never;
+        head?: never;
+        /** Rename a needed item (chief only) */
+        patch: operations["DropsController_renameItem"];
+        trace?: never;
+    };
+    "/drops/{id}/items/{itemId}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assign a needed item to a crew member (organiser only) */
+        post: operations["DropsController_assignItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/items/{itemId}/unassign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unassign a needed item (organiser or assigned crew member) */
+        post: operations["DropsController_unassignItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/items/random-assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Randomly assign unassigned items to active crew members (organiser only) */
+        post: operations["DropsController_randomAssignItems"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/items/{itemId}/pick": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Self-pick a needed item (active crew members only) */
+        post: operations["DropsController_pickItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/items/{itemId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Confirm gear arrival (chief only) */
+        patch: operations["DropsController_confirmItem"];
+        trace?: never;
+    };
     "/auth/email/reset-password": {
         parameters: {
             query?: never;
@@ -573,6 +711,74 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get paginated notifications for the current user */
+        get: operations["NotificationsController_findAll"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get unread notification count */
+        get: operations["NotificationsController_getUnreadCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark all notifications as read */
+        patch: operations["NotificationsController_markAllRead"];
+        trace?: never;
+    };
+    "/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark a notification as read */
+        patch: operations["NotificationsController_markRead"];
         trace?: never;
     };
 }
@@ -770,12 +976,86 @@ export interface components {
             storagePath: string;
             uploadToken: string;
         };
+        DropSpark: {
+            id: string;
+            dropId: string;
+            userId: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        Drop: {
+            id: string;
+            name: string;
+            /** Format: date-time */
+            scheduledAt: string;
+            location: string;
+            expectedHeadcount?: number | null;
+            overview?: Record<string, never> | null;
+            coverPhoto?: Record<string, never> | null;
+            /** @enum {string} */
+            status: "active" | "ongoing" | "completed";
+            /** @enum {string} */
+            category?: "hangout" | "party";
+            minimumAge?: number | null;
+            joinCode: string;
+            shareUrl: string;
+            /** @default true */
+            isPublic: boolean;
+            /** @default false */
+            isLocked: boolean;
+            idempotencyKey?: Record<string, never> | null;
+            organiserId: string;
+            organiser: components["schemas"]["User"];
+            sparks: components["schemas"]["DropSpark"][];
+            neededItems: components["schemas"]["DropItem"][];
+            sparkCount?: number;
+            sparkedByViewer?: boolean;
+            startingSoonNotifiedAt?: Record<string, never> | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        DropItem: {
+            id: string;
+            name: string;
+            dropId: string;
+            drop: components["schemas"]["Drop"];
+            assignedUserId?: Record<string, never> | null;
+            assignedUser?: components["schemas"]["User"] | null;
+            /** @default false */
+            isConfirmed: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         DropOrganiserPublicDto: {
             id: string;
             firstName: string;
             lastName: string;
             avatar?: Record<string, never> | null;
             userHandle?: Record<string, never> | null;
+        };
+        CrewMemberUserDto: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            avatar?: string;
+        };
+        CrewMemberDto: {
+            id: string;
+            dropId: string;
+            userId: string;
+            /** @enum {string} */
+            memberRole: "chief" | "crew" | "co_chief";
+            /** @enum {string} */
+            status: "in" | "pending" | "rejected" | "removed" | "invited";
+            /** @default false */
+            isPresent: boolean;
+            /** Format: date-time */
+            joinedAt: string;
+            user: components["schemas"]["CrewMemberUserDto"];
         };
         DropDiscoverSummaryDto: {
             id: string;
@@ -796,6 +1076,8 @@ export interface components {
             isLocked: boolean;
             organiserId: string;
             organiser: components["schemas"]["DropOrganiserPublicDto"];
+            /** @description Included when the request is authenticated: the current user's crew status for this drop. */
+            viewerCrew?: components["schemas"]["CrewMemberDto"];
             /** @description Total spark count (no user identifiers). */
             sparkCount: number;
             /** @description Included when the request is authenticated: whether this user has sparked the drop. */
@@ -843,44 +1125,13 @@ export interface components {
             idempotencyKey?: string;
             /** @description Optional JPG/PNG cover as data URL; max 5MB decoded size. */
             coverPhotoBase64?: string;
-        };
-        DropSpark: {
-            id: string;
-            dropId: string;
-            userId: string;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        Drop: {
-            id: string;
-            name: string;
-            /** Format: date-time */
-            scheduledAt: string;
-            location: string;
-            expectedHeadcount?: number | null;
-            overview?: Record<string, never> | null;
-            coverPhoto?: Record<string, never> | null;
-            /** @enum {string} */
-            status: "active" | "ongoing" | "completed";
-            /** @enum {string} */
-            category?: "hangout" | "party";
-            minimumAge?: number | null;
-            joinCode: string;
-            shareUrl: string;
-            /** @default true */
-            isPublic: boolean;
-            /** @default false */
-            isLocked: boolean;
-            idempotencyKey?: Record<string, never> | null;
-            organiserId: string;
-            organiser: components["schemas"]["User"];
-            sparks: components["schemas"]["DropSpark"][];
-            sparkCount?: number;
-            sparkedByViewer?: boolean;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
+            /**
+             * @example [
+             *       "Pork",
+             *       "Drinks"
+             *     ]
+             */
+            neededItems?: string[];
         };
         DropActivityLog: {
             id: string;
@@ -891,12 +1142,6 @@ export interface components {
             changedFields?: Record<string, never>;
             /** Format: date-time */
             createdAt: string;
-        };
-        CrewMemberUserDto: {
-            id: string;
-            firstName: string;
-            lastName: string;
-            avatar?: string;
         };
         DropActivityLogPublicDto: {
             id: string;
@@ -959,20 +1204,19 @@ export interface components {
             category?: "hangout" | "party";
             /** @description Minimum attendee age for party drops; null clears the restriction. */
             minimumAge?: number | null;
-        };
-        CrewMemberDto: {
-            id: string;
-            dropId: string;
-            userId: string;
-            /** @enum {string} */
-            memberRole: "chief" | "crew" | "co_chief";
-            /** @enum {string} */
-            status: "in" | "pending" | "rejected" | "removed" | "invited";
-            /** @default false */
-            isPresent: boolean;
-            /** Format: date-time */
-            joinedAt: string;
-            user: components["schemas"]["CrewMemberUserDto"];
+            /**
+             * @example [
+             *       "New Item",
+             *       {
+             *         "id": "uuid",
+             *         "name": "Existing Item"
+             *       }
+             *     ]
+             */
+            neededItems?: (string | {
+                id?: string;
+                name?: string;
+            })[];
         };
         DropPhoto: {
             id: string;
@@ -1021,6 +1265,27 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             user: components["schemas"]["CrewMemberUserDto"];
+        };
+        NotificationDto: {
+            id: string;
+            userId: string;
+            /** @enum {string} */
+            type: "join_requested" | "join_approved" | "join_rejected" | "member_joined" | "member_left" | "member_removed" | "invited_to_drop" | "drop_edited" | "drop_starting_soon" | "drop_started" | "drop_completed";
+            title: string;
+            body: string;
+            metadata?: Record<string, never> | null;
+            isRead: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        NotificationsPageDto: {
+            data: components["schemas"]["NotificationDto"][];
+            total: number;
+            page: number;
+            totalPages: number;
+        };
+        UnreadCountDto: {
+            count: number;
         };
     };
     responses: never;
@@ -1328,6 +1593,48 @@ export interface operations {
             };
         };
     };
+    DropsController_findAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Drop"][];
+                };
+            };
+        };
+    };
+    DropsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDropDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Drop"];
+                };
+            };
+        };
+    };
     DropsController_runCronTransition: {
         parameters: {
             query?: never;
@@ -1366,29 +1673,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DiscoverDropsResponseDto"];
-                };
-            };
-        };
-    };
-    DropsController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateDropDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Drop"];
                 };
             };
         };
@@ -1505,7 +1789,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Only the organiser can delete this drop. */
+            /** @description Only the organiser or an admin can delete this drop. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -1924,7 +2208,42 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Only the organiser can remove crew members. */
+            /** @description Only the organiser or co-chiefs can remove crew members. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Drop or crew member not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_updateCrewRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Role updated successfully. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Only the organiser can change member roles. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2217,6 +2536,173 @@ export interface operations {
             };
         };
     };
+    DropsController_addItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DropItem"];
+                };
+            };
+        };
+    };
+    DropsController_removeItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Item removed successfully. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_renameItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Item renamed successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_assignItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Item assigned successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_unassignItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Item unassigned successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_randomAssignItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Items assigned randomly. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_pickItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Item picked successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_confirmItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Gear confirmed successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AuthEmailController_sendResetEmail: {
         parameters: {
             query?: never;
@@ -2239,6 +2725,83 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    NotificationsController_findAll: {
+        parameters: {
+            query: {
+                page: number;
+                limit: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationsPageDto"];
+                };
+            };
+        };
+    };
+    NotificationsController_getUnreadCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadCountDto"];
+                };
+            };
+        };
+    };
+    NotificationsController_markAllRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    NotificationsController_markRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;

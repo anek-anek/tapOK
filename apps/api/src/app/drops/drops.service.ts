@@ -533,6 +533,15 @@ export class DropsService {
       changedFields: action === 'updated' ? changedFields : undefined,
     });
 
+    const scheduledAtChanged =
+      dto.scheduledAt !== undefined &&
+      new Date(dto.scheduledAt).getTime() !== drop.scheduledAt.getTime();
+    const locationChanged = dto.location !== undefined && dto.location !== drop.location;
+
+    if (scheduledAtChanged || locationChanged) {
+      void this.sendDropEditedNotifications(id, drop.name, userId, scheduledAtChanged, locationChanged);
+    }
+
     return this.dropsRepository.findById(id) as Promise<Drop>;
   }
 
@@ -1553,6 +1562,42 @@ export class DropsService {
           { dropId: drop.id, dropName: drop.name },
         );
       } catch { /* non-fatal */ }
+    })();
+  }
+
+  private sendDropEditedNotifications(
+    dropId: string,
+    dropName: string,
+    actorId: string,
+    scheduledAtChanged: boolean,
+    locationChanged: boolean,
+  ): void {
+    void (async () => {
+      try {
+        const changed: string[] = [];
+        if (scheduledAtChanged) changed.push('date & time');
+        if (locationChanged) changed.push('location');
+        const changeList = changed.join(' and ');
+
+        const dropUrl = this.buildDropUrl(dropId);
+        const userIds = await this.dropsRepository.findInCrewUserIds(dropId);
+        for (const userId of userIds.filter((uid) => uid !== actorId)) {
+          try {
+            const user = await this.usersService.findOne(userId).catch(() => null);
+            if (!user) continue;
+            void this.notificationsService.create(
+              userId,
+              NotificationType.DROP_EDITED,
+              `${dropName} has been updated`,
+              `The ${changeList} for "${dropName}" has been updated. Check the drop for details.`,
+              { dropId, dropName },
+              { email: user.email, dropUrl },
+            );
+          } catch { /* non-fatal per-user */ }
+        }
+      } catch (err) {
+        this.logger.warn(`Failed to send drop edited notifications for drop ${dropId}: ${err}`);
+      }
     })();
   }
 

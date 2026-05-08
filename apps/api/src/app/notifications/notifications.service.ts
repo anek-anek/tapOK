@@ -10,6 +10,7 @@ const EMAIL_TRIGGER_TYPES = new Set<NotificationType>([
   NotificationType.JOIN_REQUESTED,
   NotificationType.JOIN_APPROVED,
   NotificationType.JOIN_REJECTED,
+  NotificationType.DROP_EDITED,
   NotificationType.DROP_STARTING_SOON,
 ]);
 
@@ -96,6 +97,9 @@ export class NotificationsService {
         break;
       case NotificationType.JOIN_REJECTED:
         await this.emailService.sendJoinRejectedEmail(email, title, body);
+        break;
+      case NotificationType.DROP_EDITED:
+        await this.emailService.sendDropEditedEmail(email, title, body, dropUrl);
         break;
       case NotificationType.DROP_STARTING_SOON:
         await this.emailService.sendDropStartingSoonEmail(email, title, body, dropUrl, scheduledAt);
