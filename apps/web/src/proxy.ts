@@ -3,17 +3,6 @@ import { getRolesRequiredForPath } from '@/lib/auth/route-permissions';
 import { isProtectedRoute } from '@/lib/constants/routes';
 import type { UserRole } from '@/components/providers/auth-provider';
 
-function resolveApiUrl(): string {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!envUrl) return 'http://localhost:3000';
-  const urls = envUrl.split(',').map((url) => url.trim()).filter(Boolean);
-  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-    const prodUrl = urls.find((url) => !url.includes('localhost'));
-    if (prodUrl) return prodUrl;
-  }
-  return urls[0] || 'http://localhost:3000';
-}
-
 async function readSessionDataCookie(
   raw: string,
   secret: string,
