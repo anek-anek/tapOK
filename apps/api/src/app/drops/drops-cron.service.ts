@@ -89,7 +89,7 @@ export class DropsCronService {
     );
     this.logger.log(`Transitioned ${ids.length} drop(s) ACTIVE → ONGOING`);
 
-    void this.sendBulkDropNotifications(ids, NotificationType.DROP_STARTED, 'Drop has started!', (dropId) => `The drop has started. Tap in!`);
+    void this.sendBulkDropNotifications(ids, NotificationType.DROP_STARTED, 'Drop has started!', () => `The drop has started. Tap in!`);
 
     return ids.length;
   }
@@ -111,7 +111,7 @@ export class DropsCronService {
     );
     this.logger.log(`Transitioned ${ids.length} drop(s) ONGOING → COMPLETED (Curation Pending)`);
 
-    void this.sendBulkDropNotifications(ids, NotificationType.DROP_COMPLETED, 'Drop completed', (_dropId) => `The drop has wrapped up. Check the photo roll!`);
+    void this.sendBulkDropNotifications(ids, NotificationType.DROP_COMPLETED, 'Drop completed', () => `The drop has wrapped up. Check the photo roll!`);
 
     return ids.length;
   }

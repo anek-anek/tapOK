@@ -80,6 +80,10 @@ export class NotificationsService {
     await this.repo.update({ userId, isRead: false }, { isRead: true });
   }
 
+  async deleteAll(userId: string): Promise<void> {
+    await this.repo.delete({ userId });
+  }
+
   private async sendEmail(
     type: NotificationType,
     email: string,

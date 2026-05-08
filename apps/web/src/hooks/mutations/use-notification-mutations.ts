@@ -30,3 +30,17 @@ export function useMarkAllNotificationsRead() {
     },
   });
 }
+
+export function useClearAllNotifications() {
+  const queryClient = useQueryClient();
+  const { dbUser } = useAuth();
+
+  return useMutation({
+    mutationFn: () => notificationsService.clearAll(),
+    onSuccess: () => {
+      if (!dbUser) return;
+      void queryClient.invalidateQueries({ queryKey: notificationKeys.all(dbUser.id) });
+      void queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount(dbUser.id) });
+    },
+  });
+}

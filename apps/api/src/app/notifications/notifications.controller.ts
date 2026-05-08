@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -11,7 +12,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '../../common';
 import type { BetterAuthUser } from '../../common/better-auth/better-auth.service';
 import { NotificationsService } from './notifications.service';
-import { NotificationDto, NotificationsPageDto, UnreadCountDto } from './dto/notification.dto';
+import { NotificationsPageDto, UnreadCountDto } from './dto/notification.dto';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -67,5 +68,12 @@ export class NotificationsController {
     @Param('id') id: string,
   ): Promise<void> {
     await this.notificationsService.markRead(user.id, id);
+  }
+
+  @Delete()
+  @ApiOperation({ summary: 'Delete all notifications for the current user' })
+  @ApiResponse({ status: 200 })
+  async deleteAll(@AuthUser() user: BetterAuthUser): Promise<void> {
+    await this.notificationsService.deleteAll(user.id);
   }
 }

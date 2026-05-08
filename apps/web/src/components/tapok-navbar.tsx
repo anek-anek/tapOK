@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, User as IconUser, Menu, X } from 'lucide-react';
+import { LogOut, User as IconUser } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { signOut } from '@/lib/auth-client';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -28,15 +28,12 @@ export function TapokNavbar() {
   const { dbUser, isReady } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [visible, setVisible] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
-
-  useEffect(() => { setMounted(true); }, []);
 
   const initials = getInitials(dbUser?.firstName, dbUser?.lastName);
 
@@ -214,11 +211,37 @@ export function TapokNavbar() {
                 </div>
               )}
             </div>
+            {isReady && dbUser && !mobileMenuOpen && (
+              <div className="md:hidden">
+                <NotificationBell />
+              </div>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-black md:hidden"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              className={`relative inline-flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-lg border-2 border-tok-black shadow-[3px_3px_0px_0px_#262624] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#262624] active:translate-y-0 active:shadow-none md:hidden ${mobileMenuOpen ? 'bg-tok-teal' : 'bg-white'}`}
             >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              <motion.span
+                className="block h-[2.5px] w-[18px] origin-center rounded-full"
+                animate={mobileMenuOpen
+                  ? { rotate: 45, y: 7.5, backgroundColor: '#ffffff' }
+                  : { rotate: 0, y: 0, backgroundColor: '#262624' }}
+                transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
+              />
+              <motion.span
+                className="block h-[2.5px] w-[18px] rounded-full"
+                animate={mobileMenuOpen
+                  ? { opacity: 0, scaleX: 0, backgroundColor: '#ffffff' }
+                  : { opacity: 1, scaleX: 1, backgroundColor: '#262624' }}
+                transition={{ duration: 0.15 }}
+              />
+              <motion.span
+                className="block h-[2.5px] w-[18px] origin-center rounded-full"
+                animate={mobileMenuOpen
+                  ? { rotate: -45, y: -7.5, backgroundColor: '#ffffff' }
+                  : { rotate: 0, y: 0, backgroundColor: '#262624' }}
+                transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
+              />
             </button>
           </div>
         </div>

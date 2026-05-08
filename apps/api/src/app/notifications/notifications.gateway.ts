@@ -49,7 +49,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       }
 
       socket.data.userId = session.user.id;
-      socket.join(`user:${session.user.id}`);
+      await socket.join(`user:${session.user.id}`);
       this.logger.debug(`Socket connected: userId=${session.user.id}`);
     } catch (err) {
       this.logger.warn(`Socket auth failed: ${err}`);

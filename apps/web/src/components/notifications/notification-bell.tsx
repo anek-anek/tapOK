@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell as IconBell, CheckCheck } from 'lucide-react';
+import { Bell as IconBell, CheckCheck, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications, useUnreadNotificationCount } from '@/hooks/queries/use-notifications';
-import { useMarkNotificationRead, useMarkAllNotificationsRead } from '@/hooks/mutations/use-notification-mutations';
+import { useMarkNotificationRead, useMarkAllNotificationsRead, useClearAllNotifications } from '@/hooks/mutations/use-notification-mutations';
 import { useNotificationsContext } from '@/components/providers/notifications-provider';
 import type { Notification } from '@/services/notifications.service';
 
@@ -20,6 +20,7 @@ export function NotificationBell() {
   const { unreadCount, setUnreadCount } = useNotificationsContext();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
+  const clearAll = useClearAllNotifications();
 
   // Sync unread count from server on mount / query refresh
   useEffect(() => {
@@ -53,6 +54,11 @@ export function NotificationBell() {
     setUnreadCount(0);
   }
 
+  function handleClearAll() {
+    clearAll.mutate();
+    setUnreadCount(0);
+  }
+
   const displayCount = Math.max(unreadCount, countData?.count ?? 0);
   const notifications = notificationsPage?.data ?? [];
 
@@ -77,22 +83,33 @@ export function NotificationBell() {
             initial={{ opacity: 0, y: 8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
-            className="absolute right-0 top-[calc(100%+12px)] z-30 w-[340px] overflow-hidden border-2 border-tok-black bg-tok-cream shadow-[6px_6px_0px_0px_#262624]"
+            className="absolute right-0 top-[calc(100%+12px)] z-30 w-[340px] max-w-[calc(100vw-1rem)] overflow-hidden border-2 border-tok-black bg-white shadow-[6px_6px_0px_0px_#262624]"
           >
             <div className="flex items-center justify-between border-b-2 border-tok-black bg-tok-teal/5 px-4 py-3">
               <p className="font-passion text-sm uppercase tracking-[2px] text-tok-black">Notifications</p>
-              {displayCount > 0 && (
-                <button
-                  onClick={handleMarkAllRead}
-                  className="flex items-center gap-1 font-inter text-[10px] font-bold uppercase tracking-wide text-tok-black/50 hover:text-tok-black"
-                >
-                  <CheckCheck size={12} />
-                  Mark all read
-                </button>
-              )}
+              <div className="flex items-center gap-3">
+                {displayCount > 0 && (
+                  <button
+                    onClick={handleMarkAllRead}
+                    className="flex items-center gap-1 font-inter text-[10px] font-bold uppercase tracking-wide text-tok-black/50 hover:text-tok-black"
+                  >
+                    <CheckCheck size={12} />
+                    Mark all read
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button
+                    onClick={handleClearAll}
+                    className="flex items-center gap-1 font-inter text-[10px] font-bold uppercase tracking-wide text-tok-black/50 hover:text-tok-black"
+                  >
+                    <Trash2 size={12} />
+                    Clear all
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="max-h-[360px] overflow-y-auto">
+            <div className="max-h-[50vh] overflow-y-auto sm:max-h-[360px]">
               {notifications.length === 0 ? (
                 <div className="px-4 py-8 text-center font-inter text-xs font-medium text-tok-black/40">
                   No notifications yet
@@ -102,7 +119,7 @@ export function NotificationBell() {
                   <button
                     key={n.id}
                     onClick={() => handleNotificationClick(n)}
-                    className={`flex w-full items-start gap-3 border-b border-tok-black/10 px-4 py-3 text-left transition-colors hover:bg-tok-teal/5 ${!n.isRead ? 'bg-tok-teal/[0.03]' : ''}`}
+                    className={`flex w-full items-start gap-3 border-b border-tok-black/10 px-4 py-3 text-left transition-colors ${!n.isRead ? 'bg-tok-teal/10 hover:bg-tok-teal/15' : 'hover:bg-tok-black/5'}`}
                   >
                     {!n.isRead && (
                       <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-tok-teal" />
@@ -110,7 +127,7 @@ export function NotificationBell() {
                     {n.isRead && <span className="mt-1.5 h-2 w-2 shrink-0" />}
                     <div className="min-w-0 flex-1">
                       <p className="font-inter text-xs font-semibold leading-snug text-tok-black">{n.title}</p>
-                      <p className="mt-0.5 font-inter text-[11px] leading-snug text-tok-black/60">{n.body}</p>
+                      <p className="mt-0.5 font-inter text-[11px] leading-snug text-tok-black/70">{n.body}</p>
                       <p className="mt-1 font-inter text-[10px] text-tok-black/30">
                         {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                       </p>
