@@ -22,9 +22,9 @@ const DROP_LOG_ACTION_PHRASES: Record<string, string> = {
   invited_member: 'summoned a new crew',
   item_added: 'stashed new gear',
   item_removed: 'tossed some gear',
-  item_assigned: 'assigned gear',
+  item_assigned: 'assigned gear to a crew',
   items_randomly_assigned: 'distributed gear randomly',
-  item_picked: 'geared up',
+  item_picked: 'picked up gear',
 };
 
 export function phraseForDropLogAction(action: string, changedFields?: Record<string, any>): string {
