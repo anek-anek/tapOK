@@ -14,6 +14,7 @@ import {
   useUnassignItem,
   useRandomAssignItems,
   usePickItem,
+  useConfirmItem,
 } from '@/hooks/mutations/use-drop-mutations';
 import type { Drop, CrewMember } from '@/types/drop';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,7 @@ export function NeededItems({
   const unassignItem = useUnassignItem(drop.id);
   const randomAssign = useRandomAssignItems(drop.id);
   const pickItem = usePickItem(drop.id);
+  const confirmItem = useConfirmItem(drop.id);
 
   const handleUnassignItem = async (itemId: string) => {
     try {
@@ -89,6 +91,15 @@ export function NeededItems({
     }
   };
 
+  const handleConfirmItem = async (itemId: string) => {
+    try {
+      await confirmItem.mutateAsync(itemId);
+      toast.success('GEAR CONFIRMED ON-SITE');
+    } catch {
+      toast.error('FAILED TO CONFIRM GEAR');
+    }
+  };
+
   const items = drop.neededItems || [];
   const unassignedCount = items.filter(i => !i.assignedUserId).length;
   const assignedCount = items.length - unassignedCount;
@@ -105,9 +116,17 @@ export function NeededItems({
               {items.length} items
             </span>
             <span className="font-passion text-[10px] text-tok-black/20">•</span>
-            <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-teal">
-              {assignedCount} covered
+            <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-emerald-500">
+              {items.filter(i => i.isConfirmed).length} brought
             </span>
+            {items.filter(i => !!i.assignedUserId && !i.isConfirmed).length > 0 && (
+              <>
+                <span className="font-passion text-[10px] text-tok-black/20">•</span>
+                <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-teal">
+                  {items.filter(i => !!i.assignedUserId && !i.isConfirmed).length} covered
+                </span>
+              </>
+            )}
             {unassignedCount > 0 && (
               <>
                 <span className="font-passion text-[10px] text-tok-black/20">•</span>
@@ -144,7 +163,7 @@ export function NeededItems({
               {/* Left accent stripe */}
               <div className={cn(
                 "w-1.5 self-stretch shrink-0 transition-colors",
-                isAssigned ? "bg-tok-teal" : "bg-amber-400"
+                item.isConfirmed ? "bg-emerald-500" : isAssigned ? "bg-tok-teal" : "bg-amber-400"
               )} />
 
               {/* Main content */}
@@ -155,23 +174,29 @@ export function NeededItems({
                 <div className="flex items-center gap-1.5 h-4">
                   {item.assignedUser ? (
                     <>
-                      <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full border border-tok-black bg-tok-teal font-passion text-[6px] font-bold text-tok-cream">
+                      <div className={cn(
+                        "flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full border border-tok-black font-passion text-[6px] font-bold text-tok-cream",
+                        item.isConfirmed ? "bg-emerald-500" : "bg-tok-teal"
+                      )}>
                         {item.assignedUser.avatar ? (
                           <Image src={item.assignedUser.avatar} alt="" width={16} height={16} className="h-full w-full object-cover" />
                         ) : (
                           getInitials(item.assignedUser.firstName, item.assignedUser.lastName)
                         )}
                       </div>
-                      <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/40">
-                        {isAssignedToMe ? 'You' : item.assignedUser.firstName}
+                      <span className={cn(
+                        "font-passion text-[9px] font-bold uppercase tracking-wider",
+                        item.isConfirmed ? "text-emerald-600" : "text-tok-black/40"
+                      )}>
+                        {isAssignedToMe ? 'You' : item.assignedUser.firstName} {item.isConfirmed && 'Brought'}
                       </span>
-                      <IconCheck size={9} strokeWidth={3} className="text-tok-teal shrink-0" />
+                      <IconCheck size={9} strokeWidth={3} className={cn(item.isConfirmed ? "text-emerald-500" : "text-tok-teal", "shrink-0")} />
                     </>
                   ) : (
                     <>
                       <IconMinus size={9} strokeWidth={3} className="text-amber-400 shrink-0" />
                       <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-amber-500">
-                        Unassigned
+                        Needs Gear
                       </span>
                     </>
                   )}
@@ -186,7 +211,7 @@ export function NeededItems({
                       ? void handleUnassignItem(item.id)
                       : void handlePickItem(item.id)
                     }
-                    disabled={pickItem.isPending || unassignItem.isPending}
+                    disabled={pickItem.isPending || unassignItem.isPending || item.isConfirmed}
                     className={cn(
                       "flex h-8 items-center gap-1.5 rounded-sm border-2 border-tok-black px-2.5 font-passion text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50",
                       isAssignedToMe
@@ -198,11 +223,22 @@ export function NeededItems({
                       ? <IconX size={12} strokeWidth={3} />
                       : <IconHandClick size={12} strokeWidth={2.5} />
                     }
-                    <span>{isAssignedToMe ? 'Release' : 'Bring Gear'}</span>
+                    <span>{isAssignedToMe ? (item.isConfirmed ? 'Locked' : 'Release') : 'Bring Gear'}</span>
                   </button>
                 )}
 
-                {isOrganiser && (
+                {isOrganiser && isAssigned && !item.isConfirmed && (
+                  <button
+                    onClick={() => void handleConfirmItem(item.id)}
+                    disabled={confirmItem.isPending}
+                    className="flex h-8 items-center gap-1.5 rounded-sm border-2 border-tok-black bg-emerald-500 px-2.5 font-passion text-[10px] font-bold uppercase tracking-wider text-white shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
+                  >
+                    <IconCheck size={12} strokeWidth={3} />
+                    <span>Confirm Arrival</span>
+                  </button>
+                )}
+
+                {isOrganiser && !item.isConfirmed && (
                   <Popover>
                     <PopoverTrigger className="flex h-8 items-center gap-1 rounded-sm border-2 border-tok-black bg-white px-2 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none">
                       <IconUsersGroup size={13} strokeWidth={2.5} />

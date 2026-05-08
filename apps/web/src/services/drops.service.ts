@@ -171,4 +171,8 @@ export const dropsService = {
   pickItem(dropId: string, itemId: string): Promise<void> {
     return api.post(`/drops/${dropId}/items/${itemId}/pick`).then(() => undefined);
   },
+  
+  confirmItem(dropId: string, itemId: string): Promise<void> {
+    return api.patch(`/drops/${dropId}/items/${itemId}/confirm`).then(() => undefined);
+  },
 };

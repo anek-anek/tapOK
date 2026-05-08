@@ -85,6 +85,7 @@ export interface DropItem {
     lastName: string;
     avatar?: string;
   } | null;
+  isConfirmed: boolean;
   createdAt: string;
   updatedAt: string;
 }

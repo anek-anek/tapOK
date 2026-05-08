@@ -529,4 +529,16 @@ export class DropsController {
   ): Promise<void> {
     return this.dropsService.pickItem(id, itemId, request.user.id);
   }
+
+  @Patch(':id/items/:itemId/confirm')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirm gear arrival (chief only)' })
+  @ApiResponse({ status: 200, description: 'Gear confirmed successfully.' })
+  confirmItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.confirmItem(id, itemId, request.user.id);
+  }
 }

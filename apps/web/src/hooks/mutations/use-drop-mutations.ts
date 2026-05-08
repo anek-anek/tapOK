@@ -340,3 +340,22 @@ export function usePickItem(dropId: string): UseMutationResult<void, Error, Pick
     },
   });
 }
+
+export function useConfirmItem(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (itemId: string) => dropsService.confirmItem(dropId, itemId),
+    onSuccess: (_, itemId) => {
+      queryClient.setQueryData<Drop>(dropKeys.detail(dropId), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          neededItems: old.neededItems?.map((item) =>
+            item.id === itemId ? { ...item, isConfirmed: true } : item
+          ),
+        };
+      });
+    },
+  });
+}
