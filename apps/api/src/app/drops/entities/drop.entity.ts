@@ -83,7 +83,7 @@ export class Drop {
   organiserId: string;
 
   @ApiProperty({ type: () => User })
-  @ManyToOne(() => User, { eager: false })
+  @ManyToOne(() => User, { eager: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organiserId' })
   organiser: User;
 

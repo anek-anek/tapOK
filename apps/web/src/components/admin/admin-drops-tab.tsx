@@ -1,0 +1,95 @@
+'use client';
+
+import { useState } from 'react';
+import { useAllDrops } from '@/hooks/queries/use-drops';
+import { dropsService } from '@/services/drops.service';
+import { Button } from '@/components/ui/button';
+import { Trash2, Calendar } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import Image from 'next/image';
+import { format } from 'date-fns';
+import { AdminConfirmModal } from './admin-confirm-modal';
+import { AdminDropSummaryModal } from './admin-summary-modals';
+import type { Drop } from '@/types/drop';
+
+export function AdminDropsTab() {
+  const { data: drops, isLoading } = useAllDrops();
+  const queryClient = useQueryClient();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmModalId, setConfirmModalId] = useState<string | null>(null);
+  const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await dropsService.delete(id);
+      await queryClient.invalidateQueries({ queryKey: ['drops'] });
+    } catch (err) {
+      console.error('Failed to delete drop:', err);
+      alert('Failed to delete drop.');
+    } finally {
+      setDeletingId(null);
+      setConfirmModalId(null);
+    }
+  };
+
+  if (isLoading) return <div className="p-8 text-center font-passion uppercase tracking-widest text-tok-black/40">Loading drops...</div>;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <AdminConfirmModal
+        isOpen={!!confirmModalId}
+        onClose={() => setConfirmModalId(null)}
+        onConfirm={() => confirmModalId && handleDelete(confirmModalId)}
+        title="Delete Drop?"
+        description="Are you sure you want to delete this drop? This will also delete all associated data (photos, logs, crew). This action is permanent."
+        confirmText="Delete Drop"
+        isLoading={!!deletingId}
+      />
+      <AdminDropSummaryModal
+        isOpen={!!selectedDrop}
+        onClose={() => setSelectedDrop(null)}
+        drop={selectedDrop}
+      />
+      {drops?.map((drop) => (
+        <div key={drop.id} className="group relative flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border-2 border-tok-black bg-white p-4 shadow-[4px_4px_0px_#1C1C1A] gap-4 transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none cursor-pointer" onClick={() => setSelectedDrop(drop)}>
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black bg-tok-black/5 overflow-hidden relative">
+              {drop.coverPhoto ? (
+                <Image src={drop.coverPhoto} alt={drop.name} fill className="object-cover" />
+              ) : (
+                <Calendar className="text-tok-black/20" size={20} />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="font-passion text-lg uppercase tracking-tight text-tok-black truncate">
+                {drop.name}
+              </p>
+              <p className="font-inter text-xs font-bold text-tok-black/40 lowercase truncate">
+                {format(new Date(drop.scheduledAt), 'MMM d, yyyy')} • Chief: {drop.organiser?.firstName} {drop.organiser?.lastName}
+              </p>
+            </div>
+          </div>
+          <div className="flex sm:justify-end">
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirmModalId(drop.id);
+              }}
+              disabled={deletingId === drop.id}
+              className="rounded-sm border-2 border-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none w-full sm:w-10 h-10"
+            >
+              <Trash2 size={18} className="sm:mx-0" />
+              <span className="sm:hidden ml-2 font-passion uppercase text-xs tracking-widest">Delete Drop</span>
+            </Button>
+          </div>
+        </div>
+      ))}
+      {drops?.length === 0 && (
+        <div className="py-12 text-center text-tok-black/40 font-passion uppercase tracking-widest">No drops found.</div>
+      )}
+    </div>
+  );
+}

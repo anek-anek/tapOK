@@ -21,6 +21,10 @@ export const dropsService = {
     return api.get<Drop[]>('/drops/mine').then((r) => r.data);
   },
 
+  getAll(page = 1, limit = 100): Promise<Drop[]> {
+    return api.get<Drop[]>('/drops', { params: { page, limit } }).then((r) => r.data);
+  },
+
   getOne(id: string): Promise<Drop> {
     return api.get<Drop>(`/drops/${id}`).then((r) => r.data);
   },
