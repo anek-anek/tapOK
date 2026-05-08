@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { DropCategory } from '../../../common';
+import { ExistingNeededItemDto } from './needed-item.dto';
 
 export class CreateDropItemDto {
   @ApiProperty()
@@ -97,22 +98,11 @@ export class CreateDropDto {
     items: {
       oneOf: [
         { type: 'string' },
-        { $ref: '#/components/schemas/CreateDropItemDto' },
+        { $ref: '#/components/schemas/ExistingNeededItemDto' },
       ],
     },
-    example: ['Pork', { name: 'Drinks', isAssignable: false }],
+    example: ['New Item', { id: 'uuid', name: 'Existing Item' }],
   })
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => Object, {
-    keepDiscriminatorProperty: true,
-    discriminator: {
-      property: '__type',
-      subTypes: [
-        { value: String, name: 'string' },
-        { value: CreateDropItemDto, name: 'object' },
-      ],
-    },
-  })
-  neededItems?: (string | CreateDropItemDto)[];
+  neededItems?: (string | ExistingNeededItemDto)[];
 }

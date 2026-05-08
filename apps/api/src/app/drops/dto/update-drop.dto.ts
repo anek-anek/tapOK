@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { DropCategory, DropStatus } from '../../../common';
+import { ExistingNeededItemDto } from './needed-item.dto';
 
 export class UpdateDropItemDto {
   @ApiPropertyOptional()
@@ -98,22 +99,11 @@ export class UpdateDropDto {
     items: {
       oneOf: [
         { type: 'string' },
-        { $ref: '#/components/schemas/UpdateDropItemDto' },
+        { $ref: '#/components/schemas/ExistingNeededItemDto' },
       ],
     },
-    example: ['New Item', { id: 'uuid', name: 'Existing Item', isAssignable: false }],
+    example: ['New Item', { id: 'uuid', name: 'Existing Item' }],
   })
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => Object, {
-    keepDiscriminatorProperty: true,
-    discriminator: {
-      property: '__type',
-      subTypes: [
-        { value: String, name: 'string' },
-        { value: UpdateDropItemDto, name: 'object' },
-      ],
-    },
-  })
-  neededItems?: (string | UpdateDropItemDto)[];
+  neededItems?: (string | ExistingNeededItemDto)[];
 }

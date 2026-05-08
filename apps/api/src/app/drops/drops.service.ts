@@ -311,6 +311,7 @@ export class DropsService {
         for (const item of dto.neededItems) {
           const name = typeof item === 'string' ? item : item.name;
           const isAssignable = typeof item === 'string' ? true : (item.isAssignable ?? true);
+          
           await this.dropsRepository.addItem({
             dropId: drop.id,
             name,
