@@ -175,10 +175,12 @@ function DateTimePicker({
   value,
   onChange,
   id,
+  hasError,
 }: {
   value: string;
   onChange: (val: string) => void;
   id?: string;
+  hasError?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -265,7 +267,12 @@ function DateTimePicker({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger
             id={`${id}-date`}
-            className="flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none focus-visible:outline-none"
+            className={cn(
+              "flex h-12 w-full items-center justify-between rounded-sm border-[3px] bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black transition-all hover:-translate-y-0.5 active:translate-y-0 active:shadow-none focus-visible:outline-none",
+              hasError
+                ? "border-red-500 hover:shadow-[3px_3px_0px_#ef4444]"
+                : "border-tok-black hover:shadow-[3px_3px_0px_#1C1C1A]"
+            )}
           >
             {selectedDate ? format(selectedDate, 'MMM d, yyyy') : <span className="text-tok-black/15">Pick date</span>}
             <IconChevronDown size={16} className="text-tok-black/40" strokeWidth={2.5} />
@@ -300,13 +307,21 @@ function DateTimePicker({
             onChange={handleTimeInput}
             onBlur={handleTimeBlur}
             placeholder="h:mm"
-            className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+            aria-invalid={hasError}
+            autoComplete="off"
+            className={cn(
+              "h-12 rounded-sm border-[3px] bg-white px-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0",
+              hasError ? "border-red-500" : "border-tok-black"
+            )}
           />
         </Field>
 
         {/* AM/PM toggle */}
         <Field className="w-20 shrink-0">
-          <div className="flex h-12 min-w-0 items-stretch overflow-hidden rounded-sm border-[3px] border-tok-black bg-white">
+          <div className={cn(
+            "flex h-12 min-w-0 items-stretch overflow-hidden rounded-sm border-[3px] bg-white",
+            hasError ? "border-red-500" : "border-tok-black"
+          )}>
             {(['AM', 'PM'] as const).map((p) => (
               <button
                 key={p}
@@ -389,6 +404,7 @@ function GearItemsField({ control }: { control: Control<FormValues> }) {
                         ref={editInputRef}
                         autoFocus
                         value={editDraft}
+                        autoComplete="off"
                         onChange={(e) => setEditDraft(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') { e.preventDefault(); commitEdit(index); }
@@ -435,6 +451,7 @@ function GearItemsField({ control }: { control: Control<FormValues> }) {
             <div className="relative">
               <Input
                 placeholder="Add gear"
+                autoComplete="off"
                 className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 pr-12 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -891,7 +908,12 @@ export function DropModal({
                               type="text"
                               placeholder="e.g. Rooftop Drinks"
                               autoFocus
-                              className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                              aria-invalid={!!errors.name}
+                              autoComplete="off"
+                              className={cn(
+                                "h-12 rounded-sm border-[3px] bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0",
+                                errors.name ? "border-red-500" : "border-tok-black"
+                              )}
                             />
                           )}
                         />
@@ -917,6 +939,7 @@ export function DropModal({
                               {...field}
                               id="drop-modal-overview"
                               rows={2}
+                              autoComplete="off"
                               placeholder="e.g. Bring your own drinks and some snacks to share!"
                               className="w-full resize-none rounded-sm border-[3px] border-tok-black bg-white px-4 py-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                             />
@@ -929,9 +952,14 @@ export function DropModal({
                           name="scheduledAt"
                           control={control}
                           render={({ field }) => (
-                            <DateTimePicker id="drop-modal" value={field.value} onChange={field.onChange} />
+                            <DateTimePicker id="drop-modal" value={field.value} onChange={field.onChange} hasError={!!errors.scheduledAt} />
                           )}
                         />
+                        {errors.scheduledAt && (
+                          <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-500">
+                            {errors.scheduledAt.message}
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-1.5">
@@ -950,7 +978,11 @@ export function DropModal({
                               id="drop-modal-location"
                               type="text"
                               placeholder="e.g. Sunset Beach"
-                              className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                              aria-invalid={!!errors.location}
+                              className={cn(
+                                "h-12 rounded-sm border-[3px] bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0",
+                                errors.location ? "border-red-500" : "border-tok-black"
+                              )}
                             />
                           )}
                         />
@@ -1019,6 +1051,7 @@ export function DropModal({
                               id="drop-modal-headcount"
                               type="number"
                               min={1}
+                              autoComplete="off"
                               placeholder="e.g. 20"
                               onWheel={(e) => e.currentTarget.blur()}
                               className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -1137,6 +1170,7 @@ export function DropModal({
                                         min={1}
                                         max={99}
                                         value={field.value ?? 20}
+                                        autoComplete="off"
                                         onChange={(e) => {
                                           const n = Number.parseInt(e.target.value, 10);
                                           if (!Number.isFinite(n)) return;
