@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -70,7 +70,7 @@ const dropFormSchema = z.object({
 });
 
 const createSchema = dropFormSchema.extend({
-  category: z.enum(['hangout', 'party'], { required_error: 'Category is required' }),
+  category: z.enum(['hangout', 'party'], { error: 'Category is required' }),
 });
 const editSchema = dropFormSchema.partial({
   name: true,
@@ -327,11 +327,9 @@ function DateTimePicker({
   );
 }
 
-type DropFormControl = ReturnType<typeof useForm<z.infer<typeof dropFormSchema>>>['control'];
-
 type GearItem = string | { id: string; name: string };
 
-function GearItemsField({ control }: { control: DropFormControl }) {
+function GearItemsField({ control }: { control: Control<FormValues> }) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState('');
   const editInputRef = useRef<HTMLInputElement>(null);
