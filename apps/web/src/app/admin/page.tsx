@@ -6,13 +6,14 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
 import { AdminUsersTab } from '@/components/admin/admin-users-tab';
 import { AdminDropsTab } from '@/components/admin/admin-drops-tab';
+import { AdminFeedbackTab } from '@/components/admin/admin-feedback-tab';
 import { cn } from '@/lib/utils';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Signal } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { dbUser, isReady, loading } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'users' | 'drops'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'drops' | 'signals'>('users');
 
   useEffect(() => {
     if (isReady && (!dbUser || dbUser.role !== 'admin')) {
@@ -50,11 +51,11 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tab Strip */}
-        <div className="mb-8 flex flex-col sm:flex-row gap-3">
+        <div className="mb-8 flex flex-wrap gap-3">
           <button
             onClick={() => setActiveTab('users')}
             className={cn(
-              'flex h-12 flex-1 items-center justify-center rounded-sm border-[3px] border-tok-black font-passion text-sm font-bold uppercase tracking-[2px] transition-all shadow-[4px_4px_0px_#1C1C1A]',
+              'flex h-12 flex-1 min-w-[120px] items-center justify-center rounded-sm border-[3px] border-tok-black font-passion text-sm font-bold uppercase tracking-[2px] transition-all shadow-[4px_4px_0px_#1C1C1A]',
               activeTab === 'users'
                 ? 'bg-tok-black text-tok-cream translate-x-0.5 translate-y-0.5 shadow-none'
                 : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]'
@@ -65,7 +66,7 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab('drops')}
             className={cn(
-              'flex h-12 flex-1 items-center justify-center rounded-sm border-[3px] border-tok-black font-passion text-sm font-bold uppercase tracking-[2px] transition-all shadow-[4px_4px_0px_#1C1C1A]',
+              'flex h-12 flex-1 min-w-[120px] items-center justify-center rounded-sm border-[3px] border-tok-black font-passion text-sm font-bold uppercase tracking-[2px] transition-all shadow-[4px_4px_0px_#1C1C1A]',
               activeTab === 'drops'
                 ? 'bg-tok-black text-tok-cream translate-x-0.5 translate-y-0.5 shadow-none'
                 : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]'
@@ -73,10 +74,23 @@ export default function AdminDashboard() {
           >
             Drops
           </button>
+          <button
+            onClick={() => setActiveTab('signals')}
+            className={cn(
+              'flex h-12 flex-1 min-w-[120px] items-center justify-center gap-2 rounded-sm border-[3px] border-tok-black font-passion text-sm font-bold uppercase tracking-[2px] transition-all shadow-[4px_4px_0px_#1C1C1A]',
+              activeTab === 'signals'
+                ? 'bg-tok-black text-tok-cream translate-x-0.5 translate-y-0.5 shadow-none'
+                : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]'
+            )}
+          >
+            Signals
+          </button>
         </div>
 
         {/* Content */}
-        {activeTab === 'users' ? <AdminUsersTab /> : <AdminDropsTab />}
+        {activeTab === 'users' && <AdminUsersTab />}
+        {activeTab === 'drops' && <AdminDropsTab />}
+        {activeTab === 'signals' && <AdminFeedbackTab />}
       </main>
     </div>
   );

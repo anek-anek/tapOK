@@ -15,6 +15,7 @@ import { UsersModule } from './app/users/users.module';
 import { DropsModule } from './app/drops/drops.module';
 import { EmailModule } from './common/email/email.module';
 import { AuthEmailModule } from './app/auth-email/auth-email.module';
+import { FeedbackModule } from './app/feedback/feedback.module';
 
 @Module({
   controllers: [AppController],
@@ -50,6 +51,7 @@ import { AuthEmailModule } from './app/auth-email/auth-email.module';
     HealthModule,
     UsersModule,
     DropsModule,
+    FeedbackModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
