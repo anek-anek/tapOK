@@ -49,9 +49,9 @@ export function NeededItems({
   const handleUnassignItem = async (itemId: string) => {
     try {
       await unassignItem.mutateAsync(itemId);
-      toast.success('ITEM UNASSIGNED');
+      toast.success('GEAR UNASSIGNED');
     } catch {
-      toast.error('FAILED TO UNASSIGN ITEM');
+      toast.error('FAILED TO UNASSIGN GEAR');
     }
   };
 
@@ -62,18 +62,18 @@ export function NeededItems({
         assignedUserId: member.userId,
         assignedUser: { ...member.user },
       });
-      toast.success('ITEM ASSIGNED');
+      toast.success('GEAR ASSIGNED');
     } catch {
-      toast.error('FAILED TO ASSIGN ITEM');
+      toast.error('FAILED TO ASSIGN GEAR');
     }
   };
 
   const handleRandomAssign = async () => {
     try {
       await randomAssign.mutateAsync();
-      toast.success('ITEMS RANDOMLY ASSIGNED');
+      toast.success('GEAR DISTRIBUTED');
     } catch {
-      toast.error('FAILED TO ASSIGN ITEMS');
+      toast.error('FAILED TO DISTRIBUTE GEAR');
     }
   };
 
@@ -81,9 +81,9 @@ export function NeededItems({
     if (!currentUser) return;
     try {
       await pickItem.mutateAsync({ itemId, user: currentUser });
-      toast.success('ITEM PICKED!');
+      toast.success('GEARED UP!');
     } catch {
-      toast.error('FAILED TO PICK ITEM');
+      toast.error('FAILED TO CLAIM GEAR');
     }
   };
 
@@ -95,7 +95,7 @@ export function NeededItems({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
-            Needed Items.
+            Needed Gear.
           </h3>
           <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/40">
             {items.length} items total • {unassignedCount} unassigned
@@ -168,7 +168,7 @@ export function NeededItems({
                   )}
                 >
                   <IconHandClick size={14} strokeWidth={2.5} />
-                  <span>{item.assignedUserId === currentUser?.id ? 'Unpick' : 'Pick This'}</span>
+                  <span>{item.assignedUserId === currentUser?.id ? 'Release Gear' : 'Claim Gear'}</span>
                 </button>
               )}
 

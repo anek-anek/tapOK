@@ -95,7 +95,7 @@ export function ActivityLedger({ dropId, page, setPage }: ActivityLedgerProps) {
                   {log.user.firstName} {log.user.lastName}
                 </span>
                 {' '}
-                <span className="font-medium">{phraseForDropLogAction(log.action)}</span>
+                <span className="font-medium">{phraseForDropLogAction(log.action, log.changedFields)}</span>
               </p>
               <p className="mt-2 font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/30">
                 {formatLogTime(log.createdAt)}

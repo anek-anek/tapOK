@@ -1006,7 +1006,7 @@ export function DropModal({
                     <div className="flex flex-col gap-4">
                       <div className="space-y-1.5">
                         <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
-                          Needed Items <span className="normal-case font-normal opacity-40">— What should people bring?</span>
+                          Needed Gear <span className="normal-case font-normal opacity-40">— What should people bring?</span>
                         </Label>
                         <Controller
                           name="neededItems"
@@ -1044,7 +1044,7 @@ export function DropModal({
                                 </div>
                                 <div className="relative">
                                   <Input
-                                    placeholder="Add an item (e.g. Pork, Drinks...)"
+                                    placeholder="Add gear"
                                     className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 pr-12 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') {

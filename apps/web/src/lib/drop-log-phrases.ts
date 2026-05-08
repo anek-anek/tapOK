@@ -9,18 +9,34 @@ const DROP_LOG_ACTION_PHRASES: Record<string, string> = {
   join_request_approved: 'cleared a join request',
   join_request_rejected: 'denied a join request',
   left: 'abandoned ship',
-  updated: 'modified the plan',
+  updated: 'modified the drop',
   member_removed: 'ejected a crew',
   marked_in: 'tapped IN',
   marked_out: 'tapped OUT',
   marked_ongoing: 'pushed the drop LIVE',
-  marked_completed: 'closed the mission',
+  marked_completed: 'closed the drop',
   photo_added: 'posted a new shot to the roll',
   photo_removed: 'removed a shot from the roll',
   photo_featured: 'spotlighted a moment',
   photo_unfeatured: 'cleared the spotlight',
+  invited_member: 'summoned a new crew',
+  item_added: 'stashed new gear',
+  item_removed: 'tossed some gear',
+  item_assigned: 'assigned gear',
+  items_randomly_assigned: 'distributed gear randomly',
+  item_picked: 'geared up',
 };
 
-export function phraseForDropLogAction(action: string): string {
-  return DROP_LOG_ACTION_PHRASES[action] ?? action.replace(/_/g, ' ');
+export function phraseForDropLogAction(action: string, changedFields?: Record<string, any>): string {
+  let phrase = DROP_LOG_ACTION_PHRASES[action] ?? action.replace(/_/g, ' ');
+
+  if (action === 'item_assigned' && changedFields?.assignedUserId === null) {
+    phrase = 'unassigned gear';
+  }
+
+  if (changedFields?.itemName) {
+    return `${phrase}: ${changedFields.itemName}`;
+  }
+
+  return phrase;
 }

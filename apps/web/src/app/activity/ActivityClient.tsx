@@ -87,7 +87,7 @@ function describeAction(log: DropActivityLog, isYou: boolean): React.ReactNode {
 
   return (
     <>
-      {bold(name)} {phraseForDropLogAction(log.action)}
+      {bold(name)} {phraseForDropLogAction(log.action, log.changedFields)}
     </>
   );
 }
