@@ -15,6 +15,7 @@ import { UsersModule } from './app/users/users.module';
 import { DropsModule } from './app/drops/drops.module';
 import { EmailModule } from './common/email/email.module';
 import { AuthEmailModule } from './app/auth-email/auth-email.module';
+import { NotificationsModule } from './app/notifications/notifications.module';
 import { FeedbackModule } from './app/feedback/feedback.module';
 
 @Module({
@@ -51,6 +52,7 @@ import { FeedbackModule } from './app/feedback/feedback.module';
     HealthModule,
     UsersModule,
     DropsModule,
+    NotificationsModule,
     FeedbackModule,
   ],
   providers: [

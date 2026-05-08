@@ -431,6 +431,71 @@
         ]
       }
     },
+    "/drops": {
+      "get": {
+        "operationId": "DropsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Drop"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all drops (admin only)",
+        "tags": [
+          "drops"
+        ]
+      },
+      "post": {
+        "operationId": "DropsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDropDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Drop"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new drop",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
     "/drops/cron/transition": {
       "post": {
         "operationId": "DropsController_runCronTransition",
@@ -498,43 +563,6 @@
           }
         ],
         "summary": "Get drops for the discover page (public-safe fields only)",
-        "tags": [
-          "drops"
-        ]
-      }
-    },
-    "/drops": {
-      "post": {
-        "operationId": "DropsController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateDropDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Drop"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a new drop",
         "tags": [
           "drops"
         ]
@@ -747,7 +775,7 @@
             "description": "Drop deleted successfully."
           },
           "403": {
-            "description": "Only the organiser can delete this drop."
+            "description": "Only the organiser or an admin can delete this drop."
           },
           "404": {
             "description": "Drop not found."
@@ -758,7 +786,7 @@
             "bearer": []
           }
         ],
-        "summary": "Delete a drop (organiser only)",
+        "summary": "Delete a drop (organiser or admin only)",
         "tags": [
           "drops"
         ]
@@ -1177,7 +1205,7 @@
             "description": "User is not an active crew member."
           },
           "403": {
-            "description": "Only the organiser can remove crew members."
+            "description": "Only the organiser or co-chiefs can remove crew members."
           },
           "404": {
             "description": "Drop or crew member not found."
@@ -1188,7 +1216,50 @@
             "bearer": []
           }
         ],
-        "summary": "Remove an active crew member (organiser only)",
+        "summary": "Remove an active crew member (organiser or co-chief only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/crew/{userId}/role": {
+      "patch": {
+        "operationId": "DropsController_updateCrewRole",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Role updated successfully."
+          },
+          "403": {
+            "description": "Only the organiser can change member roles."
+          },
+          "404": {
+            "description": "Drop or crew member not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a crew member role (organiser only)",
         "tags": [
           "drops"
         ]
@@ -1630,6 +1701,291 @@
         ]
       }
     },
+    "/drops/{id}/items": {
+      "post": {
+        "operationId": "DropsController_addItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DropItem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a needed item to the drop (chief only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/items/{itemId}": {
+      "patch": {
+        "operationId": "DropsController_renameItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item renamed successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename a needed item (chief only)",
+        "tags": [
+          "drops"
+        ]
+      },
+      "delete": {
+        "operationId": "DropsController_removeItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Item removed successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a needed item from the drop (chief only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/items/{itemId}/assign": {
+      "post": {
+        "operationId": "DropsController_assignItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item assigned successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign a needed item to a crew member (organiser only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/items/{itemId}/unassign": {
+      "post": {
+        "operationId": "DropsController_unassignItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item unassigned successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unassign a needed item (organiser or assigned crew member)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/items/random-assign": {
+      "post": {
+        "operationId": "DropsController_randomAssignItems",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Items assigned randomly."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Randomly assign unassigned items to active crew members (organiser only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/items/{itemId}/pick": {
+      "post": {
+        "operationId": "DropsController_pickItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item picked successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Self-pick a needed item (active crew members only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/items/{itemId}/confirm": {
+      "patch": {
+        "operationId": "DropsController_confirmItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gear confirmed successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirm gear arrival (chief only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
     "/auth/email/reset-password": {
       "post": {
         "operationId": "AuthEmailController_sendResetEmail",
@@ -1657,6 +2013,119 @@
         "summary": "Resend email verification",
         "tags": [
           "Auth Email"
+        ]
+      }
+    },
+    "/notifications": {
+      "get": {
+        "operationId": "NotificationsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationsPageDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get paginated notifications for the current user",
+        "tags": [
+          "Notifications"
+        ]
+      },
+      "delete": {
+        "operationId": "NotificationsController_deleteAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete all notifications for the current user",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/notifications/unread-count": {
+      "get": {
+        "operationId": "NotificationsController_getUnreadCount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get unread notification count",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/notifications/read-all": {
+      "patch": {
+        "operationId": "NotificationsController_markAllRead",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Mark all notifications as read",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/notifications/{id}/read": {
+      "patch": {
+        "operationId": "NotificationsController_markRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Mark a notification as read",
+        "tags": [
+          "Notifications"
         ]
       }
     }
@@ -2171,6 +2640,201 @@
           "uploadToken"
         ]
       },
+      "DropSpark": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "dropId",
+          "userId",
+          "createdAt"
+        ]
+      },
+      "Drop": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scheduledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "expectedHeadcount": {
+            "type": "number",
+            "nullable": true
+          },
+          "overview": {
+            "type": "object",
+            "nullable": true
+          },
+          "coverPhoto": {
+            "type": "object",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ongoing",
+              "completed"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "hangout",
+              "party"
+            ]
+          },
+          "minimumAge": {
+            "type": "number",
+            "nullable": true
+          },
+          "joinCode": {
+            "type": "string"
+          },
+          "shareUrl": {
+            "type": "string"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "default": true
+          },
+          "isLocked": {
+            "type": "boolean",
+            "default": false
+          },
+          "idempotencyKey": {
+            "type": "object",
+            "nullable": true
+          },
+          "organiserId": {
+            "type": "string"
+          },
+          "organiser": {
+            "$ref": "#/components/schemas/User"
+          },
+          "sparks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DropSpark"
+            }
+          },
+          "neededItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DropItem"
+            }
+          },
+          "sparkCount": {
+            "type": "number"
+          },
+          "sparkedByViewer": {
+            "type": "boolean"
+          },
+          "startingSoonNotifiedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "scheduledAt",
+          "location",
+          "status",
+          "joinCode",
+          "shareUrl",
+          "isPublic",
+          "isLocked",
+          "organiserId",
+          "organiser",
+          "sparks",
+          "neededItems",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "DropItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "drop": {
+            "$ref": "#/components/schemas/Drop"
+          },
+          "assignedUserId": {
+            "type": "object",
+            "nullable": true
+          },
+          "assignedUser": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              }
+            ]
+          },
+          "isConfirmed": {
+            "type": "boolean",
+            "default": false
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "dropId",
+          "drop",
+          "isConfirmed",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "DropOrganiserPublicDto": {
         "type": "object",
         "properties": {
@@ -2196,6 +2860,81 @@
           "id",
           "firstName",
           "lastName"
+        ]
+      },
+      "CrewMemberUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "CrewMemberDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "memberRole": {
+            "type": "string",
+            "enum": [
+              "chief",
+              "crew",
+              "co_chief"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in",
+              "pending",
+              "rejected",
+              "removed",
+              "invited"
+            ]
+          },
+          "isPresent": {
+            "type": "boolean",
+            "default": false
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/CrewMemberUserDto"
+          }
+        },
+        "required": [
+          "id",
+          "dropId",
+          "userId",
+          "memberRole",
+          "status",
+          "isPresent",
+          "joinedAt",
+          "user"
         ]
       },
       "DropDiscoverSummaryDto": {
@@ -2258,6 +2997,14 @@
           },
           "organiser": {
             "$ref": "#/components/schemas/DropOrganiserPublicDto"
+          },
+          "viewerCrew": {
+            "description": "Included when the request is authenticated: the current user's crew status for this drop.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CrewMemberDto"
+              }
+            ]
           },
           "sparkCount": {
             "type": "number",
@@ -2396,145 +3143,22 @@
           "coverPhotoBase64": {
             "type": "string",
             "description": "Optional JPG/PNG cover as data URL; max 5MB decoded size."
+          },
+          "neededItems": {
+            "example": [
+              "Pork",
+              "Drinks"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "name",
           "scheduledAt",
           "location"
-        ]
-      },
-      "DropSpark": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "dropId": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "string"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "dropId",
-          "userId",
-          "createdAt"
-        ]
-      },
-      "Drop": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "scheduledAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "location": {
-            "type": "string"
-          },
-          "expectedHeadcount": {
-            "type": "number",
-            "nullable": true
-          },
-          "overview": {
-            "type": "object",
-            "nullable": true
-          },
-          "coverPhoto": {
-            "type": "object",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "active",
-              "ongoing",
-              "completed"
-            ]
-          },
-          "category": {
-            "type": "string",
-            "enum": [
-              "hangout",
-              "party"
-            ]
-          },
-          "minimumAge": {
-            "type": "number",
-            "nullable": true
-          },
-          "joinCode": {
-            "type": "string"
-          },
-          "shareUrl": {
-            "type": "string"
-          },
-          "isPublic": {
-            "type": "boolean",
-            "default": true
-          },
-          "isLocked": {
-            "type": "boolean",
-            "default": false
-          },
-          "idempotencyKey": {
-            "type": "object",
-            "nullable": true
-          },
-          "organiserId": {
-            "type": "string"
-          },
-          "organiser": {
-            "$ref": "#/components/schemas/User"
-          },
-          "sparks": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DropSpark"
-            }
-          },
-          "sparkCount": {
-            "type": "number"
-          },
-          "sparkedByViewer": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "scheduledAt",
-          "location",
-          "status",
-          "joinCode",
-          "shareUrl",
-          "isPublic",
-          "isLocked",
-          "organiserId",
-          "organiser",
-          "sparks",
-          "createdAt",
-          "updatedAt"
         ]
       },
       "DropActivityLog": {
@@ -2570,28 +3194,6 @@
           "user",
           "action",
           "createdAt"
-        ]
-      },
-      "CrewMemberUserDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "avatar": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "firstName",
-          "lastName"
         ]
       },
       "DropActivityLogPublicDto": {
@@ -2764,61 +3366,36 @@
             "type": "number",
             "nullable": true,
             "description": "Minimum attendee age for party drops; null clears the restriction."
+          },
+          "neededItems": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            },
+            "example": [
+              "New Item",
+              {
+                "id": "uuid",
+                "name": "Existing Item"
+              }
+            ]
           }
         }
-      },
-      "CrewMemberDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "dropId": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "string"
-          },
-          "memberRole": {
-            "type": "string",
-            "enum": [
-              "chief",
-              "crew",
-              "co_chief"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "in",
-              "pending",
-              "rejected",
-              "removed",
-              "invited"
-            ]
-          },
-          "isPresent": {
-            "type": "boolean",
-            "default": false
-          },
-          "joinedAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "user": {
-            "$ref": "#/components/schemas/CrewMemberUserDto"
-          }
-        },
-        "required": [
-          "id",
-          "dropId",
-          "userId",
-          "memberRole",
-          "status",
-          "isPresent",
-          "joinedAt",
-          "user"
-        ]
       },
       "DropPhoto": {
         "type": "object",
@@ -2979,6 +3556,96 @@
           "createdAt",
           "updatedAt",
           "user"
+        ]
+      },
+      "NotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "join_requested",
+              "join_approved",
+              "join_rejected",
+              "member_joined",
+              "member_left",
+              "member_removed",
+              "invited_to_drop",
+              "drop_edited",
+              "drop_starting_soon",
+              "drop_started",
+              "drop_completed"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "type",
+          "title",
+          "body",
+          "isRead",
+          "createdAt"
+        ]
+      },
+      "NotificationsPageDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "totalPages"
+        ]
+      },
+      "UnreadCountDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "count"
         ]
       }
     }

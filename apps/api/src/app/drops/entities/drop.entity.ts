@@ -107,6 +107,10 @@ export class Drop {
   @ApiProperty({ required: false })
   sparkedByViewer?: boolean;
 
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
+  startingSoonNotifiedAt?: Date | null;
+
   @ApiProperty()
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
