@@ -44,6 +44,7 @@ export function TapokNavbar() {
     { href: '/drops', label: 'Drops', active: pathname === '/drops' || pathname.startsWith('/drops/') },
     { href: '/activity', label: 'Activity', active: pathname === '/activity' },
     { href: '/discover', label: 'Discover', active: pathname === '/discover' },
+    { href: '/signal', label: 'Signal', active: pathname === '/signal' || pathname.startsWith('/signal/') },
   ];
 
   if (dbUser?.role === 'admin') {

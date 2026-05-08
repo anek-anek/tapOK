@@ -8,7 +8,7 @@ import { Trash2, User as UserIcon } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import { userKeys } from '@/hooks/queries/use-users';
-import { AdminConfirmModal } from './admin-confirm-modal';
+import { ConfirmModal } from '../shared/ConfirmModal';
 import { AdminUserSummaryModal } from './admin-summary-modals';
 import type { User } from '@/types/user';
 
@@ -39,7 +39,7 @@ export function AdminUsersTab() {
 
   return (
     <div className="flex flex-col gap-3">
-      <AdminConfirmModal
+      <ConfirmModal
         isOpen={!!confirmModalId}
         onClose={() => setConfirmModalId(null)}
         onConfirm={() => confirmModalId && handleDelete(confirmModalId)}
