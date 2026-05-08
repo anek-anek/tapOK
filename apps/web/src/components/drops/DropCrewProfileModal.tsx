@@ -5,15 +5,15 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { X as IconX, UserCheck as IconUserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { CrewMember, DropOrganiser } from '@/types/drop';
+import type { CrewMember, DropChief } from '@/types/drop';
 
 /** Chief (drop host) vs crew roster row — roster or sidebar entry point. */
-export type DropMemberProfileSubject =
-  | { kind: 'organiser'; profile: DropOrganiser }
+export type DropCrewProfileSubject =
+  | { kind: 'organiser'; profile: DropChief }
   | { kind: 'crew'; member: CrewMember };
 
-export interface DropMemberProfileModalProps {
-  subject: DropMemberProfileSubject;
+export interface DropCrewProfileModalProps {
+  subject: DropCrewProfileSubject;
   onClose: () => void;
 }
 
@@ -43,7 +43,7 @@ function getHighResAvatarUrl(avatarUrl?: string): string | undefined {
   return upgraded;
 }
 
-export function DropMemberProfileModal({ subject, onClose }: DropMemberProfileModalProps) {
+export function DropCrewProfileModal({ subject, onClose }: DropCrewProfileModalProps) {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -151,7 +151,7 @@ export function DropMemberProfileModal({ subject, onClose }: DropMemberProfileMo
       )}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="drop-member-profile-title"
+      aria-labelledby="drop-crew-profile-title"
     >
       <motion.div
         initial={{ opacity: 0 }}
@@ -186,7 +186,7 @@ export function DropMemberProfileModal({ subject, onClose }: DropMemberProfileMo
           <div className="flex min-w-0 flex-1 items-center gap-2.5 md:gap-3">
             <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-white shadow-[2px_2px_0px_#1C1C1A] md:h-3 md:w-3" aria-hidden />
             <p
-              id="drop-member-profile-title"
+              id="drop-crew-profile-title"
               className="min-w-0 truncate font-passion text-xs font-bold uppercase tracking-[2px] text-white sm:text-sm md:text-[0.9375rem] md:tracking-[2.5px]"
             >
               {headerTitle(subject.kind)}

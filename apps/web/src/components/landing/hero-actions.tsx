@@ -28,7 +28,7 @@ export function HeroActions() {
         (e.currentTarget as HTMLElement).style.backgroundColor = '';
       }}
     >
-      EXPLORE EVENTS
+      EXPLORE DROPS
     </Link>
   );
 }

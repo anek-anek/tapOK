@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { useDrop, useMyCrewStatus, useDropCrew } from '@/hooks/queries/use-drops';
 import { useAuth } from '@/components/providers/auth-provider';
-import { TapokNavbar } from '@/components/tapok-navbar';
 import { DropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
 import { DeleteDropModal } from '@/components/drops/DeleteDropModal';
@@ -35,7 +34,7 @@ import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
 import { SparkButton, SparkButtonSkeleton } from '@/components/drops/spark-button';
-import { DropMemberProfileModal, type DropMemberProfileSubject } from '@/components/drops/DropMemberProfileModal';
+import { DropCrewProfileModal, type DropCrewProfileSubject } from '@/components/drops/DropCrewProfileModal';
 import { toast } from 'react-hot-toast';
 import type { DropStatus } from '@/types/drop';
 import { coverPhotoSrcForNextImage } from '@/lib/config';
@@ -192,7 +191,7 @@ function RemoveMemberConfirmModal({
         <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[8px_8px_0px_#1C1C1A]">
           <div className="mb-2 flex items-start justify-between gap-3">
             <p className="font-passion text-[11px] font-bold uppercase tracking-[2.5px] text-red-500">
-              Expel Member
+              Eject Crew
             </p>
             <button
               type="button"
@@ -225,7 +224,7 @@ function RemoveMemberConfirmModal({
               disabled={isPending}
               className="flex-1 rounded-[4px] border-[3px] border-tok-black bg-red-500 py-3.5 font-passion text-xs font-bold uppercase tracking-[2px] text-white transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-60"
             >
-              {isPending ? 'Removing…' : 'Remove Member'}
+              {isPending ? 'Removing…' : 'Remove Crew'}
             </button>
           </div>
         </div>
@@ -305,7 +304,6 @@ function PageSkeleton() {
           backgroundSize: '24px 24px',
         }}
       />
-      <TapokNavbar />
       <main className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10 pb-24">
         <div className="mb-8 flex items-center gap-2">
           <Skeleton className="h-3.5 w-3.5 shrink-0 rounded-sm bg-tok-black/15" />
@@ -390,6 +388,13 @@ export default function DropDetailPage({ params }: { params: Promise<{ id: strin
 function DropDetailContent({ id }: { id: string }) {
   const router = useRouter();
   const { dbUser, loading: authLoading, isReady } = useAuth();
+
+  useEffect(() => {
+    if (isReady && !dbUser) {
+      router.replace(`/login?redirectTo=${encodeURIComponent(`/drops/${id}`)}`);
+    }
+  }, [isReady, dbUser, router, id]);
+
   const { data: drop, isError } = useDrop(id);
   const {
     data: crewStatus,
@@ -401,7 +406,7 @@ function DropDetailContent({ id }: { id: string }) {
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [memberProfileSubject, setMemberProfileSubject] = useState<DropMemberProfileSubject | null>(null);
+  const [memberProfileSubject, setMemberProfileSubject] = useState<DropCrewProfileSubject | null>(null);
   const [removeModalOpen, setRemoveModalOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{ userId: string; name: string } | null>(null);
   const [logPage, setLogPage] = useState(1);
@@ -471,7 +476,7 @@ function DropDetailContent({ id }: { id: string }) {
       onSuccess: () => {
         setRemoveModalOpen(false);
         setMemberToRemove(null);
-        toast.success('MEMBER REMOVED FROM CREW');
+        toast.success('CREW EJECTED FROM DROP');
       },
       onError: (err: unknown) => {
         const msg = err instanceof Error ? err.message : 'FAILED TO REMOVE MEMBER';
@@ -507,30 +512,7 @@ function DropDetailContent({ id }: { id: string }) {
   if (!isReady || (authLoading && !dbUser)) return <PageSkeleton />;
 
   if (!dbUser) {
-    return (
-      <div className="min-h-screen bg-tok-cream text-tok-black">
-        <TapokNavbar />
-        <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-10">
-          <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-8 shadow-[8px_8px_0px_#1C1C1A] sm:p-12">
-            <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
-              Members only
-            </p>
-            <h2 className="mt-4 font-passion text-[clamp(28px,4vw,48px)] font-bold uppercase tracking-tight text-tok-black">
-              Sign in to view this drop.
-            </h2>
-            <p className="mt-4 max-w-xl font-inter text-base leading-relaxed text-tok-black/60">
-              Mission details and crew tools require a TapOK account. Sign in with the same account you used to create or join this drop.
-            </p>
-            <Link
-              href={`/login?redirectTo=${encodeURIComponent(`/drops/${id}`)}`}
-              className="mt-8 inline-flex items-center gap-2.5 rounded-[4px] border-[3px] border-tok-black bg-tok-teal px-6 py-3.5 font-passion text-sm font-bold uppercase tracking-[2px] text-white transition-all hover:-translate-y-1 hover:shadow-[5px_5px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
-            >
-              Sign in
-            </Link>
-          </div>
-        </main>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   if (!drop && !isError) return <PageSkeleton />;
@@ -538,7 +520,6 @@ function DropDetailContent({ id }: { id: string }) {
   if (isError && !drop) {
     return (
       <div className="min-h-screen bg-tok-cream text-tok-black">
-        <TapokNavbar />
         <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-10">
           <div className="rounded-[4px] border-[3px] border-tok-black bg-white p-8 shadow-[8px_8px_0px_#1C1C1A] sm:p-12">
             <p className="font-passion text-[11px] font-bold uppercase tracking-[3px] text-tok-teal">
@@ -580,8 +561,6 @@ function DropDetailContent({ id }: { id: string }) {
       <div className="pointer-events-none fixed inset-0 opacity-[0.03]"
         style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #000 1px, transparent 0)', backgroundSize: '24px 24px' }}
       />
-
-      <TapokNavbar />
 
       <AnimatePresence mode="wait">
         <motion.main
@@ -1120,7 +1099,7 @@ function DropDetailContent({ id }: { id: string }) {
           />
         )}
         {memberProfileSubject && (
-          <DropMemberProfileModal
+          <DropCrewProfileModal
             subject={memberProfileSubject}
             onClose={() => setMemberProfileSubject(null)}
           />

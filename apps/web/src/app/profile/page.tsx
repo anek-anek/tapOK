@@ -2,10 +2,10 @@
 
 import { Mail, Phone, Calendar as IconCalendar, Pencil, X, Check, User, ChevronDown, Camera, ShieldCheck, LockKeyhole, AlertCircle } from 'lucide-react';
 import { useMemo, useRef, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { TapokNavbar } from '@/components/tapok-navbar';
 import { useCurrentUser, useFrequentCrew } from '@/hooks/queries/use-users';
 import { useUpdateUser } from '@/hooks/mutations/use-user-mutations';
 import { useMyDrops } from '@/hooks/queries/use-drops';
@@ -85,6 +85,7 @@ function tenDigitsToE164(ten: string): string {
 
 export default function ProfilePage() {
   const mounted = useMounted();
+  const router = useRouter();
   const { dbUser, loading: authLoading, isReady, refreshUser } = useAuth();
   const searchParams = useSearchParams();
   const { data: profile, isLoading } = useCurrentUser(['stats', 'avatar']);
@@ -110,6 +111,12 @@ export default function ProfilePage() {
 
   const [highlightVerify, setHighlightVerify] = useState(false);
   const verifySectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isReady && !dbUser) {
+      router.replace('/login?redirectTo=/profile');
+    }
+  }, [isReady, dbUser, router]);
 
   useEffect(() => {
     if (searchParams.get('verify') === 'true') {
@@ -250,7 +257,6 @@ export default function ProfilePage() {
   if (!mounted || !isReady || authLoading || (isLoading && !dbUser)) {
     return (
       <div className="min-h-screen bg-tok-cream">
-        <TapokNavbar />
         <main className="mx-auto max-w-2xl px-3 py-12 sm:px-6">
           {/* Header Skeleton */}
           <div className="mb-10 flex items-end justify-between border-b-4 border-tok-black/10 pb-4 animate-pulse">
@@ -307,26 +313,7 @@ export default function ProfilePage() {
   }
 
   if (isReady && !dbUser) {
-    return (
-      <div className="min-h-screen bg-tok-cream">
-        <TapokNavbar />
-        <div className="flex min-h-[calc(100vh-88px)] flex-col items-center justify-center p-6 text-center">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center border-4 border-tok-black bg-white shadow-[8px_8px_0px_#1C1C1A]">
-            <LockKeyhole size={32} className="text-tok-teal" />
-          </div>
-          <h2 className="font-passion text-3xl font-black uppercase tracking-tight text-tok-black">Identity Required</h2>
-          <p className="mt-4 max-w-xs font-inter text-sm font-medium text-tok-black/60">
-            Sign in to view and manage your profile details, missions, and crew connections.
-          </p>
-          <Link
-            href="/login?redirectTo=/profile"
-            className="mt-8 flex h-12 items-center justify-center rounded-sm border-[3px] border-tok-black bg-tok-teal px-8 font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]"
-          >
-            Log in to continue
-          </Link>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (!displayUser) return null;
@@ -348,8 +335,6 @@ export default function ProfilePage() {
           backgroundSize: '24px 24px',
         }}
       />
-
-      <TapokNavbar />
 
       <main className="relative mx-auto max-w-2xl px-3 py-12 sm:px-6">
         {/* Page Header — stack on narrow viewports so title never overlaps actions */}

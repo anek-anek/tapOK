@@ -113,7 +113,7 @@ export function TapokNavbar() {
       <header
         className={`fixed inset-x-0 top-0 z-50 bg-tok-cream transition-transform duration-300 ease-in-out ${visible ? 'translate-y-0' : '-translate-y-full'}`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-8 border-b border-black/5">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-8">
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}

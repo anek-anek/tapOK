@@ -141,7 +141,7 @@ export function CrewAvatarIconsOnly({
     <div
       className={cn('flex items-center', className)}
       role="group"
-      aria-label={`${crew.length} ${crew.length === 1 ? 'member' : 'members'} tapped in`}
+      aria-label={`${crew.length} ${crew.length === 1 ? 'crew' : 'crews'} tapped in`}
     >
       <div className="flex items-center">
         {visible.map((member, i) => {

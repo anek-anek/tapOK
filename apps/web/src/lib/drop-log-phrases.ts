@@ -10,7 +10,7 @@ const DROP_LOG_ACTION_PHRASES: Record<string, string> = {
   join_request_rejected: 'denied a join request',
   left: 'abandoned ship',
   updated: 'modified the plan',
-  member_removed: 'ejected a crew member',
+  member_removed: 'ejected a crew',
   marked_in: 'tapped IN',
   marked_out: 'tapped OUT',
   marked_ongoing: 'pushed the drop LIVE',

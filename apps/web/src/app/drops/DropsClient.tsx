@@ -8,7 +8,6 @@ import {
   LogIn,
   Plus,
 } from 'lucide-react';
-import { TapokNavbar } from '@/components/tapok-navbar';
 import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
 import { DropModal } from '@/components/drop-modal';
 import { DropShareModal } from '@/components/drops/DropShareModal';
@@ -215,7 +214,6 @@ function PageSkeleton() {
   return (
     <div className="relative min-h-screen bg-tok-cream text-tok-black">
       <DropsDotGrid />
-      <TapokNavbar />
       <PageBackdropWatermark label="DROPS" />
       <main className="relative z-1 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">
         <DropsBoardSkeleton />
@@ -252,6 +250,12 @@ export default function DropsClient() {
     }
   }, [pathname]);
 
+  useEffect(() => {
+    if (isReady && !dbUser) {
+      router.replace('/login?redirectTo=/drops');
+    }
+  }, [isReady, dbUser, router]);
+
   const { activeDrops, completedDrops, focusDrop, upcomingCount, pastCount } = useMemo(() => {
     const drops = data ?? [];
     const current = drops
@@ -286,36 +290,12 @@ export default function DropsClient() {
   }
 
   if (!dbUser) {
-    return (
-      <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
-        <DropsDotGrid />
-        <TapokNavbar />
-        <PageBackdropWatermark label="DROPS" />
-        <main className="relative z-1 mx-auto flex min-h-[calc(100vh-88px)] max-w-5xl items-center px-4 py-8 sm:px-6 lg:px-10">
-          <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]">
-            <div>
-              <p className="font-passion text-[10px] font-bold uppercase tracking-[2.5px] text-tok-teal">
-                Drops
-              </p>
-              <h1 className="mt-3 font-passion text-[clamp(32px,4.2vw,60px)] font-bold uppercase tracking-[-0.04em] text-tok-black">
-                One Drop. One Crew.
-              </h1>
-              <p className="mt-4 max-w-2xl text-[15px] leading-7 text-tok-black/64">
-                TapOk is where a plan becomes real. Sign in to create a Drop,
-                join a Crew, and keep the log in one place.
-              </p>
-            </div>
-            <GateCard />
-          </div>
-        </main>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (
     <div className="relative min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
       <DropsDotGrid />
-      <TapokNavbar />
       <PageBackdropWatermark label="DROPS" />
 
       <main className="relative z-1 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 pb-24">

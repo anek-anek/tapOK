@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { TapokNavbar } from '@/components/tapok-navbar';
 import { CurrentYear } from '@/components/CurrentYear';
 import { ShieldCheck, Headphones, Smartphone } from 'lucide-react';
 import { HeroActions } from '@/components/landing/hero-actions';
@@ -60,8 +59,6 @@ function BurstDecoration({ flipped = false }: { flipped?: boolean }) {
 export default function LandingClient() {
   return (
     <div className="min-h-screen bg-tok-cream text-tok-black font-inter">
-      <TapokNavbar />
-
       <main>
         {/* ── HERO ── */}
         <section className="relative overflow-hidden bg-tok-cream">

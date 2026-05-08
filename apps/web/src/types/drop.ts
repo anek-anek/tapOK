@@ -1,7 +1,7 @@
 export type DropStatus = 'active' | 'ongoing' | 'completed';
 export type DropCategory = 'hangout' | 'party';
 
-export interface DropOrganiser {
+export interface DropChief {
   id: string;
   firstName: string;
   lastName: string;
@@ -15,7 +15,7 @@ export interface DropOrganiser {
   createdAt?: string;
 }
 
-export interface DropDiscoverOrganiser {
+export interface DropDiscoverChief {
   id: string;
   firstName: string;
   lastName: string;
@@ -37,7 +37,7 @@ export interface DropDiscoverSummary {
   isLocked: boolean;
   isPublic: boolean;
   organiserId: string;
-  organiser: DropDiscoverOrganiser;
+  organiser: DropDiscoverChief;
   sparkCount: number;
   sparkedByViewer?: boolean;
   createdAt: string;
@@ -105,7 +105,7 @@ export interface Drop {
   overview?: string | null;
   coverPhoto?: string | null;
   organiserId: string;
-  organiser: DropOrganiser;
+  organiser: DropChief;
   crew?: CrewMember[];
   activityLogs?: DropActivityLog[];
   sparks?: DropSpark[];

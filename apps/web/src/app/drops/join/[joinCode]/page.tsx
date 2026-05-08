@@ -21,7 +21,6 @@ import { useDropByJoinCode, useMyCrewStatus } from '@/hooks/queries/use-drops';
 import { useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
 import { useAuth } from '@/components/providers/auth-provider';
 import { track } from '@/lib/analytics';
-import { TapokNavbar } from '@/components/tapok-navbar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMounted } from '@/hooks/use-mounted';
 import type { DropCrew, DropCrewStatus } from '@/types/drop';
@@ -346,7 +345,6 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   function PageSkeleton() {
     return (
       <div className="flex min-h-screen flex-col bg-tok-cream">
-        <TapokNavbar />
         <div className="flex-1">
           <JoinDropSkeleton />
         </div>
@@ -361,7 +359,6 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   if (!dbUser) {
     return (
       <div className="flex min-h-screen flex-col bg-tok-cream">
-        <TapokNavbar />
         <div className="flex flex-1 items-center justify-center px-4">
           <div className="w-full max-w-sm rounded-2xl border-[3px] border-tok-black bg-white p-8 text-center shadow-[12px_12px_0px_#1C1C1A]">
             <p className="font-passion text-[11px] font-bold uppercase tracking-[2px] text-tok-teal">Crew invite</p>
@@ -394,7 +391,6 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
   if (isDropError || !drop) {
     return (
       <div className="flex min-h-screen flex-col bg-tok-cream">
-        <TapokNavbar />
         <div className="flex flex-1 items-center justify-center px-4">
           <div className="w-full max-w-sm rounded-2xl border-[3px] border-tok-black bg-white p-8 text-center shadow-[12px_12px_0px_#1C1C1A]">
             <p className="font-passion text-lg font-bold uppercase tracking-tight text-tok-black">Drop Disconnected</p>
@@ -413,8 +409,6 @@ export default function JoinDropPage({ params }: { params: Promise<{ joinCode: s
 
   return (
     <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal/15">
-      <TapokNavbar />
-
       <main className="mx-auto max-w-md px-4 py-12 sm:py-20">
         <div className="relative">
           {/* Large background watermark text */}

@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { LogIn, ArrowRight, Activity as ActivityIcon } from 'lucide-react';
+import { ArrowRight, Activity as ActivityIcon } from 'lucide-react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMounted } from '@/hooks/use-mounted';
-import { TapokNavbar } from '@/components/tapok-navbar';
+import { useRouter } from 'next/navigation';
 import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
 import { ActivePanel } from './_components/active-panel';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -375,43 +376,11 @@ function Feed({
   );
 }
 
-function GateCard() {
-  return (
-    <div className="bg-tok-white border-4 border-tok-black/80 p-6 sm:p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[16px_16px_0px_0px_rgba(0,0,0,0.8)] rounded-2xl animate-fade-up">
-      <div className="inline-flex items-center gap-2 px-3 py-1 bg-tok-teal border-2 border-tok-black rounded-sm mb-6">
-        <span className="font-passion text-[12px] font-bold uppercase tracking-widest text-tok-cream">
-          Restricted Access
-        </span>
-      </div>
-      <h2 className="font-passion text-[clamp(40px,10vw,80px)] font-black uppercase leading-[0.85] tracking-tighter text-tok-black">
-        Identify <br /> <span className="text-tok-teal">Yourself</span>
-      </h2>
-      <p className="mt-6 sm:mt-8 text-[16px] sm:text-[18px] font-medium text-tok-black/60 leading-relaxed max-w-md">
-        The drop log and live activity are for signed-in crew. Sign in to see what&apos;s moving across your drops.
-      </p>
-      <div className="mt-10 flex flex-wrap gap-4">
-        <Link
-          href="/login"
-          className="inline-flex items-center gap-3 px-8 py-4 bg-tok-teal text-tok-cream border-2 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all font-passion text-[16px] font-black uppercase tracking-widest"
-        >
-          <LogIn size={20} />
-          Log in
-        </Link>
-        <Link
-          href="/register"
-          className="inline-flex items-center gap-3 px-8 py-4 bg-tok-cream text-tok-black border-2 border-tok-black/80 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all font-passion text-[16px] font-black uppercase tracking-widest"
-        >
-          Join Crew
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function ActivityClient() {
   const mounted = useMounted();
+  const router = useRouter();
   const { dbUser, loading, isReady } = useAuth();
   const {
     data: activityLogs = [],
@@ -423,10 +392,15 @@ export default function ActivityClient() {
   // Show skeleton if we're fetching the first batch of data or if the query hasn't run yet
   const isHardLoading = !activityFetched || (activityLoading && !activityLogs.length);
 
+  useEffect(() => {
+    if (isReady && !dbUser) {
+      router.replace('/login?redirectTo=/activity');
+    }
+  }, [isReady, dbUser, router]);
+
   if (!mounted || !isReady || loading) {
     return (
       <div className="min-h-screen bg-tok-cream text-tok-black">
-        <TapokNavbar />
         <main className="relative mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10 pb-24">
           <ActivityHeroSkeleton />
           <div className="grid gap-12 lg:grid-cols-[1fr_340px]">
@@ -446,16 +420,7 @@ export default function ActivityClient() {
   }
 
   if (isReady && !dbUser) {
-    return (
-      <div className="min-h-screen bg-tok-cream text-tok-black selection:bg-tok-teal selection:text-tok-cream">
-        <TapokNavbar />
-        <main className="mx-auto flex min-h-[calc(100vh-88px)] max-w-7xl items-center px-6 py-12 lg:px-10">
-          <div className="w-full max-w-2xl">
-            <GateCard />
-          </div>
-        </main>
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -470,7 +435,6 @@ export default function ActivityClient() {
       />
 
 
-      <TapokNavbar />
       <PageBackdropWatermark label="ACTIVITY" />
 
       <main className="relative z-1 mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-16 lg:px-10 pb-24">

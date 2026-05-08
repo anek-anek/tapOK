@@ -5,21 +5,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function Loading() {
   return (
     <div className="min-h-screen bg-tok-cream">
-      <div className="h-[60px] border-b border-tok-black/5 bg-tok-cream">
-        <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-8">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-9 w-9 rounded-lg bg-tok-black/10" />
-            <Skeleton className="h-5 w-16 rounded-sm bg-tok-black/10" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-8 w-16 rounded-md bg-tok-black/10" />
-            <Skeleton className="h-8 w-16 rounded-md bg-tok-black/10" />
-          </div>
-        </div>
-      </div>
-      
       {/* Top Progress Bar */}
-      <div className="fixed top-[80px] sm:top-[88px] left-0 right-0 z-50 h-1.5 overflow-hidden bg-tok-cream border-y-2 border-tok-black/5">
+      <div className="fixed top-[60px] left-0 right-0 z-50 h-1.5 overflow-hidden bg-tok-cream border-y-2 border-tok-black/5">
         <div className="h-full w-full bg-tok-teal animate-progress" />
       </div>
 
@@ -29,7 +16,7 @@ export default function Loading() {
             <Skeleton className="h-4 w-24 rounded-sm bg-tok-black/10" />
             <Skeleton className="h-16 w-3/4 max-w-[400px] rounded-sm bg-tok-black/5" />
           </div>
-          
+
           <div className="space-y-6">
             <Skeleton className="h-[200px] w-full rounded-xl border-[3px] border-tok-black/10 bg-tok-teal/5 shadow-[8px_8px_0px_rgba(0,0,0,0.05)]" />
             <div className="grid gap-4 sm:grid-cols-2">

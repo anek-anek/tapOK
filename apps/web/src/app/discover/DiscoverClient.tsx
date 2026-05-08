@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useMounted } from '@/hooks/use-mounted';
-import { TapokNavbar } from '@/components/tapok-navbar';
 import { PageBackdropWatermark } from '@/components/page-backdrop-watermark';
 import {
   useInfiniteDiscoverDrops,
@@ -94,7 +93,6 @@ function SectionHeading({
 function PageSkeleton() {
   return (
     <div className="relative min-h-screen bg-tok-cream text-tok-black">
-      <TapokNavbar />
       <PageBackdropWatermark label="DISCOVER" />
       <main className="relative z-1 mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-16 lg:px-10 pb-24">
         {/* Header Skeleton */}
@@ -238,7 +236,6 @@ export default function DiscoverClient() {
         }}
       />
 
-      <TapokNavbar />
       <PageBackdropWatermark label="DISCOVER" />
 
       <main className="relative z-1 mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-16 lg:px-10 pb-24">

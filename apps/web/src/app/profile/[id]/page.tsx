@@ -4,7 +4,6 @@ import { use } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Calendar, User as UserIcon } from 'lucide-react';
-import { TapokNavbar } from '@/components/tapok-navbar';
 import { useUser } from '@/hooks/queries/use-users';
 import { useMounted } from '@/hooks/use-mounted';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,7 +20,6 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   if (!mounted || isLoading) {
     return (
       <div className="min-h-screen bg-[#F7E9B2]">
-        <TapokNavbar />
         <main className="relative mx-auto max-w-2xl px-6 py-16">
           <Skeleton className="mb-2 h-3 w-16 rounded-full bg-[#2a2118]/10" />
           <div className="mb-10 flex items-start justify-between">
@@ -57,9 +55,6 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
         }}
       />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(circle_at_top_left,rgba(0,102,102,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(42,33,24,0.08),transparent_28%)]" />
-
-      <TapokNavbar />
-
       <main className="relative mx-auto max-w-2xl px-6 py-16">
         <p className="mb-2 font-inter text-xs tracking-widest text-[#2a2118]/40 uppercase">Profile</p>
 
@@ -100,7 +95,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
               <p className="font-inter text-sm text-[#2a2118] uppercase">{user.role}</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4 px-6 py-4">
             <Calendar size={16} className="shrink-0 text-[#2a2118]/40" />
             <div>

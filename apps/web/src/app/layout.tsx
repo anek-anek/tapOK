@@ -25,6 +25,7 @@ const inter = Inter({
 
 import { getBaseUrl } from '@/lib/config';
 import { getServerUser } from '@/lib/auth/get-server-user';
+import { NavbarLayout } from '@/components/navbar-layout';
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
@@ -75,6 +76,7 @@ export default async function RootLayout({
         <QueryProvider>
           <AuthProvider initialDbUser={initialDbUser}>
             <WarmupProvider />
+            <NavbarLayout />
             {children}
             <LegalConsentModal />
             <ToastProvider />
