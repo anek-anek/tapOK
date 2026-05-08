@@ -1362,6 +1362,29 @@ export class DropsService {
     return item;
   }
 
+  async renameItem(dropId: string, itemId: string, name: string, requesterId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the organiser can rename items');
+    }
+
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    await this.dropsRepository.updateItem(itemId, { name });
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'item_renamed',
+      changedFields: { itemId, itemName: name, previousName: item.name },
+    });
+  }
+
   async removeItem(dropId: string, itemId: string, requesterId: string): Promise<void> {
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
@@ -1417,13 +1440,16 @@ export class DropsService {
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
-    if (drop.organiserId !== requesterId) {
-      throw new ForbiddenException('Only the organiser can unassign items');
-    }
-
     const item = await this.dropsRepository.findItemById(itemId);
     if (!item || item.dropId !== dropId) {
       throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    const isOrganiser = drop.organiserId === requesterId;
+    const isSelfUnassign = item.assignedUserId === requesterId;
+
+    if (!isOrganiser && !isSelfUnassign) {
+      throw new ForbiddenException('Only the organiser or the assigned crew member can unassign this item');
     }
 
     await this.dropsRepository.updateItem(itemId, { assignedUserId: null as any });
@@ -1431,7 +1457,7 @@ export class DropsService {
     await this.recordDropActivity({
       dropId,
       userId: requesterId,
-      action: 'item_assigned',
+      action: isSelfUnassign && !isOrganiser ? 'item_unpicked' : 'item_assigned',
       changedFields: { itemId, itemName: item.name, assignedUserId: null },
     });
   }

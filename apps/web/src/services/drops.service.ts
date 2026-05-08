@@ -148,6 +148,10 @@ export const dropsService = {
     return api.post(`/drops/${dropId}/items`, { name }).then((r) => r.data);
   },
 
+  renameItem(dropId: string, itemId: string, name: string): Promise<void> {
+    return api.patch(`/drops/${dropId}/items/${itemId}`, { name }).then(() => undefined);
+  },
+
   removeItem(dropId: string, itemId: string): Promise<void> {
     return api.delete(`/drops/${dropId}/items/${itemId}`).then(() => undefined);
   },

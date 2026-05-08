@@ -17,6 +17,8 @@ import {
   Plus as IconPlus,
   ImagePlus as IconImagePlus,
   Trash2 as IconTrash,
+  Pencil as IconPencil,
+  Check as IconCheck,
 } from 'lucide-react';
 import {
   useCreateDrop,
@@ -67,7 +69,9 @@ const dropFormSchema = z.object({
   ])).optional(),
 });
 
-const createSchema = dropFormSchema;
+const createSchema = dropFormSchema.extend({
+  category: z.enum(['hangout', 'party'], { required_error: 'Category is required' }),
+});
 const editSchema = dropFormSchema.partial({
   name: true,
   scheduledAt: true,
@@ -323,6 +327,147 @@ function DateTimePicker({
   );
 }
 
+type DropFormControl = ReturnType<typeof useForm<z.infer<typeof dropFormSchema>>>['control'];
+
+type GearItem = string | { id: string; name: string };
+
+function GearItemsField({ control }: { control: DropFormControl }) {
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <Controller
+      name="neededItems"
+      control={control}
+      render={({ field }) => {
+        const items: GearItem[] = field.value || [];
+
+        const addItem = (name: string) => {
+          if (!name.trim()) return;
+          field.onChange([...items, name.trim()]);
+        };
+
+        const removeItem = (index: number) => {
+          field.onChange(items.filter((_, i) => i !== index));
+          if (editingIndex === index) setEditingIndex(null);
+        };
+
+        const startEdit = (index: number) => {
+          const item = items[index]!;
+          setEditDraft(typeof item === 'string' ? item : item.name);
+          setEditingIndex(index);
+          setTimeout(() => editInputRef.current?.select(), 0);
+        };
+
+        const commitEdit = (index: number) => {
+          const trimmed = editDraft.trim();
+          if (trimmed) {
+            const updated = items.map((item, i) => {
+              if (i !== index) return item;
+              return typeof item === 'string' ? trimmed : { ...item, name: trimmed };
+            });
+            field.onChange(updated);
+          }
+          setEditingIndex(null);
+        };
+
+        const cancelEdit = () => setEditingIndex(null);
+
+        return (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-3 my-4">
+              {items.map((item, index) => {
+                const name = typeof item === 'string' ? item : item.name;
+                const isEditing = editingIndex === index;
+
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between gap-3 rounded-sm border-[3px] border-tok-black bg-white px-4 py-2 shadow-[4px_4px_0px_#1C1C1A]"
+                  >
+                    {isEditing ? (
+                      <input
+                        ref={editInputRef}
+                        autoFocus
+                        value={editDraft}
+                        onChange={(e) => setEditDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') { e.preventDefault(); commitEdit(index); }
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
+                        onBlur={() => commitEdit(index)}
+                        className="flex-1 min-w-0 font-passion text-sm font-bold uppercase tracking-wide text-tok-black bg-transparent border-b-2 border-tok-black outline-none"
+                      />
+                    ) : (
+                      <span className="flex-1 font-passion text-sm font-bold uppercase tracking-wide text-tok-black">
+                        {name}
+                      </span>
+                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isEditing ? (
+                        <button
+                          type="button"
+                          onMouseDown={(e) => { e.preventDefault(); commitEdit(index); }}
+                          className="text-tok-teal transition-colors"
+                        >
+                          <IconCheck size={16} strokeWidth={2.5} />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => startEdit(index)}
+                          className="text-tok-black/40 transition-colors hover:text-tok-black"
+                        >
+                          <IconPencil size={15} strokeWidth={2.5} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeItem(index)}
+                        className="text-tok-black/40 transition-colors hover:text-red-500"
+                      >
+                        <IconTrash size={16} strokeWidth={2.5} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="relative">
+              <Input
+                placeholder="Add gear"
+                className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 pr-12 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addItem(e.currentTarget.value);
+                    e.currentTarget.value = '';
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                  addItem(input.value);
+                  input.value = '';
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm bg-tok-black p-1 text-white"
+              >
+                <IconPlus size={16} />
+              </button>
+            </div>
+            <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/30">
+              Press Enter to add multiple items.
+            </p>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
 export function DropModal({
   drop,
   onClose,
@@ -342,6 +487,7 @@ export function DropModal({
   const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
   const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+  const [coverRemoved, setCoverRemoved] = useState(false);
   const [coverPreview, setCoverPreview] = useState<string | null>(drop?.coverPhoto ?? null);
   const [coverError, setCoverError] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -367,6 +513,7 @@ export function DropModal({
     if (isEdit && drop?.coverPhoto && !pendingCoverFile) {
       try {
         await deleteCoverPhoto.mutateAsync();
+        setCoverRemoved(true);
       } catch {
         toast.error('FAILED TO DELETE COVER PHOTO');
         return;
@@ -394,7 +541,7 @@ export function DropModal({
     watch,
     setValue,
     trigger,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(isEdit ? editSchema : createSchema) as any,
@@ -439,6 +586,7 @@ export function DropModal({
 
   const [isSubmittingInternal, setIsSubmittingInternal] = useState(false);
   const isBusy = createDrop.isPending || updateDrop.isPending || uploadCoverPhoto.isPending || deleteCoverPhoto.isPending || isSubmitting || isSubmittingInternal;
+  const hasChanges = isDirty || !!pendingCoverFile || coverRemoved;
   isBusyRef.current = isBusy;
   const onSubmit = handleSubmit(async (values) => {
     if (isSubmittingInternal) return;
@@ -827,22 +975,31 @@ export function DropModal({
                           name="category"
                           control={control}
                           render={({ field }) => (
-                            <div className="flex gap-2">
-                              {(['hangout', 'party'] as const).map((cat) => (
-                                <button
-                                  key={cat}
-                                  type="button"
-                                  onClick={() => field.onChange(field.value === cat ? undefined : cat)}
-                                  className={cn(
-                                    'h-11 flex-1 rounded-sm border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[1.5px] transition-all',
-                                    field.value === cat
-                                      ? 'bg-tok-teal text-tok-cream shadow-none translate-y-0'
-                                      : 'bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
-                                  )}
-                                >
-                                  {cat}
-                                </button>
-                              ))}
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex gap-2">
+                                {(['hangout', 'party'] as const).map((cat) => (
+                                  <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => field.onChange(isEdit && field.value === cat ? undefined : cat)}
+                                    className={cn(
+                                      'h-11 flex-1 rounded-sm border-[3px] font-passion text-xs font-bold uppercase tracking-[1.5px] transition-all',
+                                      field.value === cat
+                                        ? 'border-tok-teal bg-tok-teal text-tok-cream shadow-none translate-y-0'
+                                        : errors.category
+                                          ? 'border-red-500 bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#ef4444]'
+                                          : 'border-tok-black bg-white text-tok-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A]'
+                                    )}
+                                  >
+                                    {cat}
+                                  </button>
+                                ))}
+                              </div>
+                              {errors.category && (
+                                <p className="font-passion text-[9px] font-bold uppercase tracking-wider text-red-500">
+                                  {errors.category.message}
+                                </p>
+                              )}
                             </div>
                           )}
                         />
@@ -1008,71 +1165,7 @@ export function DropModal({
                         <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
                           Needed Gear <span className="normal-case font-normal opacity-40">— What should people bring?</span>
                         </Label>
-                        <Controller
-                          name="neededItems"
-                          control={control}
-                          render={({ field }) => {
-                            const items = field.value || [];
-                            const addItem = (name: string) => {
-                              if (!name.trim()) return;
-                              field.onChange([...items, name.trim()]);
-                            };
-                            const removeItem = (index: number) => {
-                              field.onChange(items.filter((_, i) => i !== index));
-                            };
-
-                            return (
-                              <div className="space-y-6">
-                                <div className="flex flex-col gap-3 my-4">
-                                  {items.map((item, index) => (
-                                    <div
-                                      key={index}
-                                      className="flex items-center justify-between gap-3 rounded-sm border-[3px] border-tok-black bg-white px-4 py-2 shadow-[4px_4px_0px_#1C1C1A]"
-                                    >
-                                      <span className="font-passion text-sm font-bold uppercase tracking-wide text-tok-black">
-                                        {typeof item === 'string' ? item : item.name}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={() => removeItem(index)}
-                                        className="text-tok-black/40 transition-colors hover:text-red-500"
-                                      >
-                                        <IconTrash size={16} strokeWidth={2.5} />
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="relative">
-                                  <Input
-                                    placeholder="Add gear"
-                                    className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 pr-12 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        addItem(e.currentTarget.value);
-                                        e.currentTarget.value = '';
-                                      }
-                                    }}
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                                      addItem(input.value);
-                                      input.value = '';
-                                    }}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm bg-tok-black p-1 text-white"
-                                  >
-                                    <IconPlus size={16} />
-                                  </button>
-                                </div>
-                                <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/30">
-                                  Press Enter to add multiple items.
-                                </p>
-                              </div>
-                            );
-                          }}
-                        />
+                        <GearItemsField control={control} />
                       </div>
                     </div>
                   )}
@@ -1113,7 +1206,7 @@ export function DropModal({
                     ) : (
                       <button
                         type="submit"
-                        disabled={isBusy}
+                        disabled={isBusy || (isEdit && !hasChanges)}
                         className="flex h-12 flex-1 items-center justify-center gap-2.5 rounded-sm border-[3px] border-tok-black bg-tok-teal font-passion text-sm font-bold uppercase tracking-[2px] text-tok-cream transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50"
                       >
                         {isBusy ? (

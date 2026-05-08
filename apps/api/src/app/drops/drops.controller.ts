@@ -456,6 +456,20 @@ export class DropsController {
     return this.dropsService.addItem(id, name, request.user.id);
   }
 
+  @Patch(':id/items/:itemId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Rename a needed item (chief only)' })
+  @ApiResponse({ status: 200, description: 'Item renamed successfully.' })
+  renameItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Body('name') name: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    if (!name) throw new BadRequestException('Item name is required');
+    return this.dropsService.renameItem(id, itemId, name, request.user.id);
+  }
+
   @Delete(':id/items/:itemId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove a needed item from the drop (chief only)' })
@@ -483,7 +497,7 @@ export class DropsController {
 
   @Post(':id/items/:itemId/unassign')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Unassign a needed item (organiser only)' })
+  @ApiOperation({ summary: 'Unassign a needed item (organiser or assigned crew member)' })
   @ApiResponse({ status: 200, description: 'Item unassigned successfully.' })
   unassignItem(
     @Param('id', ParseUUIDPipe) id: string,

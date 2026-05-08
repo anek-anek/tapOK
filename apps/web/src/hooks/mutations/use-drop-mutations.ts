@@ -232,6 +232,25 @@ export function useAddItem(dropId: string): UseMutationResult<any, Error, string
   });
 }
 
+export function useRenameItem(dropId: string): UseMutationResult<void, Error, { itemId: string; name: string }> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ itemId, name }) => dropsService.renameItem(dropId, itemId, name),
+    onSuccess: (_, { itemId, name }) => {
+      queryClient.setQueryData<Drop>(dropKeys.detail(dropId), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          neededItems: old.neededItems?.map((item) =>
+            item.id === itemId ? { ...item, name } : item
+          ),
+        };
+      });
+    },
+  });
+}
+
 export function useRemoveItem(dropId: string): UseMutationResult<void, Error, string> {
   const queryClient = useQueryClient();
 

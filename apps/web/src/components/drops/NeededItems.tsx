@@ -4,14 +4,16 @@ import {
   Check as IconCheck,
   Users as IconUsersGroup,
   Hand as IconHandClick,
-  MoreVertical as IconDotsVertical
+  X as IconX,
+  ChevronDown as IconChevronDown,
+  Minus as IconMinus,
 } from 'lucide-react';
 import Image from 'next/image';
 import {
   useAssignItem,
   useUnassignItem,
   useRandomAssignItems,
-  usePickItem
+  usePickItem,
 } from '@/hooks/mutations/use-drop-mutations';
 import type { Drop, CrewMember } from '@/types/drop';
 import { cn } from '@/lib/utils';
@@ -30,7 +32,7 @@ interface NeededItemsProps {
   activeCrew: CrewMember[];
 }
 
-function getLogInitials(first: string, last: string) {
+function getInitials(first: string, last: string) {
   return `${first?.[0] || ''}${last?.[0] || ''}`.toUpperCase();
 }
 
@@ -83,12 +85,13 @@ export function NeededItems({
       await pickItem.mutateAsync({ itemId, user: currentUser });
       toast.success('GEARED UP!');
     } catch {
-      toast.error('FAILED TO CLAIM GEAR');
+      toast.error('FAILED TO BRING GEAR');
     }
   };
 
   const items = drop.neededItems || [];
   const unassignedCount = items.filter(i => !i.assignedUserId).length;
+  const assignedCount = items.length - unassignedCount;
 
   return (
     <div className="flex flex-col gap-6">
@@ -97,9 +100,23 @@ export function NeededItems({
           <h3 className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
             Needed Gear.
           </h3>
-          <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/40">
-            {items.length} items total • {unassignedCount} unassigned
-          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/40">
+              {items.length} items
+            </span>
+            <span className="font-passion text-[10px] text-tok-black/20">•</span>
+            <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-teal">
+              {assignedCount} covered
+            </span>
+            {unassignedCount > 0 && (
+              <>
+                <span className="font-passion text-[10px] text-tok-black/20">•</span>
+                <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-amber-500">
+                  {unassignedCount} needed
+                </span>
+              </>
+            )}
+          </div>
         </div>
 
         {isOrganiser && unassignedCount > 0 && activeCrew.length > 0 && (
@@ -114,123 +131,138 @@ export function NeededItems({
         )}
       </div>
 
-      <div className="flex flex-col gap-3">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="group relative flex items-center justify-between gap-4 rounded-sm border-[3px] border-tok-black bg-white p-3 shadow-[5px_5px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_#1C1C1A]"
-          >
-            <div className="flex flex-1 items-center gap-3 min-w-0">
+      <div className="flex flex-col gap-2.5">
+        {items.map((item) => {
+          const isAssignedToMe = item.assignedUserId === currentUser?.id;
+          const isAssigned = !!item.assignedUserId;
+
+          return (
+            <div
+              key={item.id}
+              className="group relative flex items-center gap-0 rounded-sm border-[3px] border-tok-black overflow-hidden bg-white shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A]"
+            >
+              {/* Left accent stripe */}
               <div className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-2 border-tok-black transition-colors",
-                item.assignedUserId ? "bg-tok-teal text-tok-cream" : "bg-tok-cream/50 text-tok-black/20"
-              )}>
-                {item.assignedUserId ? <IconCheck size={18} strokeWidth={3} /> : <div className="h-2 w-2 rounded-full bg-tok-black/10" />}
-              </div>
-              <div className="min-w-0">
-                <p className="font-passion text-sm font-bold uppercase tracking-wide text-tok-black truncate">
+                "w-1.5 self-stretch shrink-0 transition-colors",
+                isAssigned ? "bg-tok-teal" : "bg-amber-400"
+              )} />
+
+              {/* Main content */}
+              <div className="flex flex-1 min-w-0 px-3 py-2.5 flex-col justify-center gap-0.5">
+                <p className="font-passion text-sm font-bold uppercase tracking-wide text-tok-black leading-tight wrap-break-word">
                   {item.name}
                 </p>
-                {item.assignedUser ? (
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className="h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full border border-tok-black bg-tok-teal font-passion text-[6px] font-bold text-tok-cream">
-                      {item.assignedUser.avatar ? (
-                        <Image src={item.assignedUser.avatar} alt="" width={16} height={16} className="h-full w-full object-cover" />
-                      ) : (
-                        getLogInitials(item.assignedUser.firstName, item.assignedUser.lastName)
-                      )}
-                    </div>
-                    <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/40">
-                      Assigned to {item.assignedUser.firstName}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-amber-500">
-                    Unassigned
-                  </span>
+                <div className="flex items-center gap-1.5 h-4">
+                  {item.assignedUser ? (
+                    <>
+                      <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full border border-tok-black bg-tok-teal font-passion text-[6px] font-bold text-tok-cream">
+                        {item.assignedUser.avatar ? (
+                          <Image src={item.assignedUser.avatar} alt="" width={16} height={16} className="h-full w-full object-cover" />
+                        ) : (
+                          getInitials(item.assignedUser.firstName, item.assignedUser.lastName)
+                        )}
+                      </div>
+                      <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/40">
+                        {isAssignedToMe ? 'You' : item.assignedUser.firstName}
+                      </span>
+                      <IconCheck size={9} strokeWidth={3} className="text-tok-teal shrink-0" />
+                    </>
+                  ) : (
+                    <>
+                      <IconMinus size={9} strokeWidth={3} className="text-amber-400 shrink-0" />
+                      <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-amber-500">
+                        Unassigned
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-1.5 pr-2.5">
+                {isCrewMember && (isAssignedToMe || !isAssigned) && (
+                  <button
+                    onClick={() => isAssignedToMe
+                      ? void handleUnassignItem(item.id)
+                      : void handlePickItem(item.id)
+                    }
+                    disabled={pickItem.isPending || unassignItem.isPending}
+                    className={cn(
+                      "flex h-8 items-center gap-1.5 rounded-sm border-2 border-tok-black px-2.5 font-passion text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50",
+                      isAssignedToMe
+                        ? "bg-white text-tok-black hover:bg-red-50"
+                        : "bg-tok-teal text-tok-cream"
+                    )}
+                  >
+                    {isAssignedToMe
+                      ? <IconX size={12} strokeWidth={3} />
+                      : <IconHandClick size={12} strokeWidth={2.5} />
+                    }
+                    <span>{isAssignedToMe ? 'Release' : 'Bring Gear'}</span>
+                  </button>
+                )}
+
+                {isOrganiser && (
+                  <Popover>
+                    <PopoverTrigger className="flex h-8 items-center gap-1 rounded-sm border-2 border-tok-black bg-white px-2 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none">
+                      <IconUsersGroup size={13} strokeWidth={2.5} />
+                      <IconChevronDown size={10} strokeWidth={3} className="text-tok-black/40" />
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-56 rounded-sm border-[3px] border-tok-black bg-tok-cream p-1 shadow-[4px_4px_0px_#1C1C1A]">
+                      <div className="px-2 py-1.5">
+                        <p className="font-passion text-[8px] font-bold uppercase tracking-[2px] text-tok-black/30">
+                          Assign to Crew
+                        </p>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {activeCrew.length === 0 ? (
+                          <div className="px-2 py-2">
+                            <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/40">
+                              No active crew
+                            </p>
+                          </div>
+                        ) : (
+                          activeCrew.map((member) => {
+                            const isMemberAssigned = item.assignedUserId === member.userId;
+                            return (
+                              <button
+                                key={member.userId}
+                                onClick={() => isMemberAssigned
+                                  ? void handleUnassignItem(item.id)
+                                  : void handleAssignItem(item.id, member)
+                                }
+                                disabled={assignItem.isPending || unassignItem.isPending}
+                                className={cn(
+                                  "flex w-full items-center gap-2 rounded-none px-2 py-2 text-left font-passion text-[11px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50",
+                                  isMemberAssigned
+                                    ? "bg-tok-teal text-tok-cream hover:bg-red-500"
+                                    : "text-tok-black hover:bg-tok-teal hover:text-tok-cream"
+                                )}
+                              >
+                                <div className={cn(
+                                  "flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border font-passion text-[8px] font-bold",
+                                  isMemberAssigned ? "border-tok-cream bg-tok-cream text-tok-teal" : "border-tok-black bg-tok-teal text-tok-cream"
+                                )}>
+                                  {member.user?.avatar ? (
+                                    <Image src={member.user.avatar} alt="" width={20} height={20} className="h-full w-full object-cover" />
+                                  ) : (
+                                    getInitials(member.user?.firstName || '?', member.user?.lastName || '')
+                                  )}
+                                </div>
+                                <span className="truncate flex-1">{member.user?.firstName} {member.user?.lastName}</span>
+                                {isMemberAssigned && <IconCheck size={12} strokeWidth={3} />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 )}
               </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              {isCrewMember && (item.assignedUserId === currentUser?.id || !item.assignedUserId) && (
-                <button
-                  onClick={() => item.assignedUserId === currentUser?.id
-                    ? void handleUnassignItem(item.id)
-                    : void handlePickItem(item.id)
-                  }
-                  disabled={pickItem.isPending || unassignItem.isPending}
-                  className={cn(
-                    "flex h-8 items-center gap-2 rounded-sm border-2 border-tok-black px-3 font-passion text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none disabled:opacity-50",
-                    item.assignedUserId === currentUser?.id
-                      ? "bg-white text-tok-black"
-                      : "bg-tok-teal text-tok-cream"
-                  )}
-                >
-                  <IconHandClick size={14} strokeWidth={2.5} />
-                  <span>{item.assignedUserId === currentUser?.id ? 'Release Gear' : 'Claim Gear'}</span>
-                </button>
-              )}
-
-              {isOrganiser && (
-                <Popover>
-                  <PopoverTrigger className="flex h-8 w-8 items-center justify-center rounded-sm border-2 border-tok-black bg-white text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none">
-                    <IconDotsVertical size={16} strokeWidth={2.5} />
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-56 rounded-sm border-[3px] border-tok-black bg-tok-cream p-1 shadow-[4px_4px_0px_#1C1C1A]">
-                    <div className="px-2 py-1.5">
-                      <p className="font-passion text-[8px] font-bold uppercase tracking-[2px] text-tok-black/30">
-                        Assign to Crew
-                      </p>
-                    </div>
-                    <div className="max-h-48 overflow-y-auto">
-                      {activeCrew.length === 0 ? (
-                        <div className="px-2 py-2">
-                          <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/40">
-                            No active crew
-                          </p>
-                        </div>
-                      ) : (
-                        activeCrew.map((member) => {
-                          const isAssigned = item.assignedUserId === member.userId;
-                          return (
-                            <button
-                              key={member.userId}
-                              onClick={() => isAssigned
-                                ? void handleUnassignItem(item.id)
-                                : void handleAssignItem(item.id, member)
-                              }
-                              disabled={assignItem.isPending || unassignItem.isPending}
-                              className={cn(
-                                "flex w-full items-center gap-2 rounded-none px-2 py-2 text-left font-passion text-[11px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50",
-                                isAssigned
-                                  ? "bg-tok-teal text-tok-cream hover:bg-red-500"
-                                  : "text-tok-black hover:bg-tok-teal hover:text-tok-cream"
-                              )}
-                            >
-                              <div className={cn(
-                                "h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border font-passion text-[8px] font-bold",
-                                isAssigned ? "border-tok-cream bg-tok-cream text-tok-teal" : "border-tok-black bg-tok-teal text-tok-cream"
-                              )}>
-                                {member.user?.avatar ? (
-                                  <Image src={member.user.avatar} alt="" width={20} height={20} className="h-full w-full object-cover" />
-                                ) : (
-                                  getLogInitials(member.user?.firstName || '?', member.user?.lastName || '')
-                                )}
-                              </div>
-                              <span className="truncate flex-1">{member.user?.firstName} {member.user?.lastName}</span>
-                              {isAssigned && <IconCheck size={12} strokeWidth={3} />}
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
