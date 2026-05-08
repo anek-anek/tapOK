@@ -60,11 +60,11 @@ export function DigitalTicket({ drop, isMember, className = '', footer }: Digita
                 <p className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
                   ACCESS CODE
                 </p>
-                <div className="mt-2 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                  <p className="min-w-0 max-w-full font-passion text-2xl font-bold tracking-[0.12em] text-tok-black break-all sm:text-3xl sm:tracking-[0.2em]">
+                <div className="mt-2 flex min-w-0 items-center justify-between gap-3">
+                  <p className="min-w-0 font-passion text-2xl font-bold tracking-[0.12em] text-tok-black break-all sm:text-3xl sm:tracking-[0.2em]">
                     {drop.joinCode}
                   </p>
-                  <CopyButton text={drop.joinCode} className="w-full justify-center sm:w-auto sm:justify-start" />
+                  <CopyButton text={drop.joinCode} />
                 </div>
               </div>
 
@@ -73,11 +73,11 @@ export function DigitalTicket({ drop, isMember, className = '', footer }: Digita
                 <p className="font-passion text-[10px] font-bold uppercase tracking-[2px] text-tok-black/40">
                   SHARE URL
                 </p>
-                <div className="mt-2 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
-                  <span className="min-w-0 w-full break-all font-mono text-[10px] font-medium leading-snug text-tok-black/60 sm:flex-1 sm:break-normal sm:truncate">
+                <div className="mt-2 flex min-w-0 items-center gap-3">
+                  <span className="min-w-0 flex-1 break-all font-mono text-[10px] font-medium leading-snug text-tok-black/60 sm:break-normal truncate">
                     {shareUrl}
                   </span>
-                  <CopyButton text={shareUrl} className="w-full shrink-0 justify-center sm:w-auto sm:justify-start" />
+                  <CopyButton text={shareUrl} />
                 </div>
               </div>
             </div>
@@ -196,7 +196,6 @@ function CopyButton({ text, className }: { text: string; className?: string }) {
       )}
     >
       {copied ? <IconCheckCheck size={14} strokeWidth={2.5} /> : <IconCopy size={14} strokeWidth={2.5} />}
-      {copied ? 'Copied' : 'Copy'}
     </button>
   );
 }

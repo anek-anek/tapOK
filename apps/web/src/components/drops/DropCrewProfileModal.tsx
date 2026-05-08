@@ -15,6 +15,9 @@ export type DropCrewProfileSubject =
 export interface DropCrewProfileModalProps {
   subject: DropCrewProfileSubject;
   onClose: () => void;
+  isOriginalChief?: boolean;
+  onUpdateRole?: (role: 'crew' | 'co_chief') => void;
+  isUpdatingRole?: boolean;
 }
 
 function headerTitle(kind: 'organiser' | 'crew'): string {
@@ -43,7 +46,13 @@ function getHighResAvatarUrl(avatarUrl?: string): string | undefined {
   return upgraded;
 }
 
-export function DropCrewProfileModal({ subject, onClose }: DropCrewProfileModalProps) {
+export function DropCrewProfileModal({
+  subject,
+  onClose,
+  isOriginalChief,
+  onUpdateRole,
+  isUpdatingRole,
+}: DropCrewProfileModalProps) {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -97,18 +106,20 @@ export function DropCrewProfileModal({ subject, onClose }: DropCrewProfileModalP
     subject.kind === 'organiser'
       ? { first: subject.profile.firstName, last: subject.profile.lastName, avatar: subject.profile.avatar }
       : {
-          first: subject.member.user.firstName,
-          last: subject.member.user.lastName,
-          avatar: subject.member.user.avatar,
-        };
+        first: subject.member.user.firstName,
+        last: subject.member.user.lastName,
+        avatar: subject.member.user.avatar,
+      };
 
   const profileAvatarSrc = useMemo(() => getHighResAvatarUrl(displayName.avatar), [displayName.avatar]);
 
   const crewRoleSubtitle =
     subject.kind === 'crew'
-      ? subject.member.memberRole === 'chief' || subject.member.memberRole === 'co_chief'
+      ? subject.member.memberRole === 'chief'
         ? 'Drop chief · This drop'
-        : 'Crew · This drop'
+        : subject.member.memberRole === 'co_chief'
+          ? 'Co-chief · This drop'
+          : 'Crew · This drop'
       : null;
 
   const crewJoinedHead =

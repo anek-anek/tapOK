@@ -77,6 +77,10 @@ export const dropsService = {
     return api.patch(`/drops/${dropId}/crew/${userId}/remove`).then(() => undefined);
   },
 
+  updateCrewRole(dropId: string, userId: string, role: string): Promise<void> {
+    return api.patch(`/drops/${dropId}/crew/${userId}/role`, { role }).then(() => undefined);
+  },
+
   updatePresence(dropId: string, isPresent: boolean): Promise<void> {
     return api.patch(`/drops/${dropId}/crew/me/presence`, { isPresent }).then(() => undefined);
   },

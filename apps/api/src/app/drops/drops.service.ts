@@ -436,7 +436,10 @@ export class DropsService {
     }
 
     if (drop.organiserId !== userId) {
-      throw new ForbiddenException('Only the organiser can edit this drop');
+      const requesterCrew = await this.dropsRepository.findCrewMember(id, userId);
+      if (requesterCrew?.memberRole !== DropCrewMemberRole.CO_CHIEF) {
+        throw new ForbiddenException('Only the organiser or co-chiefs can edit this drop');
+      }
     }
 
     const changedFields: Record<string, unknown> = {};
@@ -564,7 +567,10 @@ export class DropsService {
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
     if (drop.organiserId !== requesterId) {
-      throw new ForbiddenException('Only the organiser can invite people');
+      const requesterCrew = await this.dropsRepository.findCrewMember(dropId, requesterId);
+      if (requesterCrew?.memberRole !== DropCrewMemberRole.CO_CHIEF) {
+        throw new ForbiddenException('Only the organiser or co-chiefs can invite people');
+      }
     }
 
     const organiser = await this.usersService.findOne(requesterId);
@@ -710,7 +716,10 @@ export class DropsService {
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
     if (drop.organiserId !== organiser.id) {
-      throw new ForbiddenException('Only the organiser can reject join requests');
+      const requesterCrew = await this.dropsRepository.findCrewMember(dropId, organiser.id);
+      if (requesterCrew?.memberRole !== DropCrewMemberRole.CO_CHIEF) {
+        throw new ForbiddenException('Only the organiser or co-chiefs can reject join requests');
+      }
     }
 
     this.assertUserIsVerified(organiser, 'reject join requests');
@@ -740,7 +749,10 @@ export class DropsService {
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
     if (drop.organiserId !== organiser.id) {
-      throw new ForbiddenException('Only the organiser can approve join requests');
+      const requesterCrew = await this.dropsRepository.findCrewMember(dropId, organiser.id);
+      if (requesterCrew?.memberRole !== DropCrewMemberRole.CO_CHIEF) {
+        throw new ForbiddenException('Only the organiser or co-chiefs can approve join requests');
+      }
     }
 
     this.assertUserIsVerified(organiser, 'approve join requests');
@@ -770,11 +782,18 @@ export class DropsService {
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
     if (drop.organiserId !== organiser.id) {
-      throw new ForbiddenException('Only the organiser can remove crew members');
+      const requesterCrew = await this.dropsRepository.findCrewMember(dropId, organiser.id);
+      if (requesterCrew?.memberRole !== DropCrewMemberRole.CO_CHIEF) {
+        throw new ForbiddenException('Only the organiser or co-chiefs can remove crew members');
+      }
     }
 
     const member = await this.dropsRepository.findCrewMember(dropId, targetUserId);
     if (!member) throw new NotFoundException('User is not a crew member of this drop');
+
+    if (member.memberRole === DropCrewMemberRole.CHIEF) {
+      throw new ForbiddenException('Cannot remove the organiser');
+    }
 
     if (member.status !== DropCrewStatus.IN) {
       throw new BadRequestException('Only active crew members (status "in") can be removed');
@@ -787,6 +806,41 @@ export class DropsService {
       userId: organiser.id,
       action: 'member_removed',
       changedFields: { removedUserId: targetUserId },
+    });
+  }
+
+  async updateCrewRole(
+    dropId: string,
+    targetUserId: string,
+    requesterId: string,
+    newRole: DropCrewMemberRole,
+  ): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    // Only the original organiser can manage co-chief roles
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the organiser can change member roles');
+    }
+
+    const member = await this.dropsRepository.findCrewMember(dropId, targetUserId);
+    if (!member) throw new NotFoundException('User is not a member of this drop');
+
+    if (member.memberRole === DropCrewMemberRole.CHIEF) {
+      throw new ForbiddenException('Cannot change the role of the organiser');
+    }
+
+    if (newRole === DropCrewMemberRole.CHIEF) {
+      throw new BadRequestException('Cannot assign the Chief role');
+    }
+
+    await this.dropsRepository.updateCrewRole(dropId, targetUserId, newRole);
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'member_role_updated',
+      changedFields: { targetUserId, newRole },
     });
   }
 
@@ -1368,13 +1422,20 @@ export class DropsService {
     return joinCode;
   }
 
-  async addItem(dropId: string, name: string, requesterId: string): Promise<DropItem> {
+  private async assertCanManageDrop(dropId: string, userId: string, message: string): Promise<Drop> {
     const drop = await this.dropsRepository.findById(dropId);
     if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
 
-    if (drop.organiserId !== requesterId) {
-      throw new ForbiddenException('Only the organiser can add items');
-    }
+    if (drop.organiserId === userId) return drop;
+
+    const crew = await this.dropsRepository.findCrewMember(dropId, userId);
+    if (crew?.memberRole === DropCrewMemberRole.CO_CHIEF) return drop;
+
+    throw new ForbiddenException(message);
+  }
+
+  async addItem(dropId: string, name: string, requesterId: string): Promise<DropItem> {
+    await this.assertCanManageDrop(dropId, requesterId, 'Only the organiser or co-chiefs can add items');
 
     const item = await this.dropsRepository.addItem({ dropId, name });
 
@@ -1389,12 +1450,7 @@ export class DropsService {
   }
 
   async renameItem(dropId: string, itemId: string, name: string, requesterId: string): Promise<void> {
-    const drop = await this.dropsRepository.findById(dropId);
-    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
-
-    if (drop.organiserId !== requesterId) {
-      throw new ForbiddenException('Only the organiser can rename items');
-    }
+    await this.assertCanManageDrop(dropId, requesterId, 'Only the organiser or co-chiefs can rename items');
 
     const item = await this.dropsRepository.findItemById(itemId);
     if (!item || item.dropId !== dropId) {
@@ -1412,12 +1468,7 @@ export class DropsService {
   }
 
   async removeItem(dropId: string, itemId: string, requesterId: string): Promise<void> {
-    const drop = await this.dropsRepository.findById(dropId);
-    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
-
-    if (drop.organiserId !== requesterId) {
-      throw new ForbiddenException('Only the organiser can remove items');
-    }
+    await this.assertCanManageDrop(dropId, requesterId, 'Only the organiser or co-chiefs can remove items');
 
     const item = await this.dropsRepository.findItemById(itemId);
     if (!item || item.dropId !== dropId) {
@@ -1435,12 +1486,7 @@ export class DropsService {
   }
 
   async assignItem(dropId: string, itemId: string, assignedUserId: string, requesterId: string): Promise<void> {
-    const drop = await this.dropsRepository.findById(dropId);
-    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
-
-    if (drop.organiserId !== requesterId) {
-      throw new ForbiddenException('Only the organiser can assign items');
-    }
+    await this.assertCanManageDrop(dropId, requesterId, 'Only the organiser or co-chiefs can assign items');
 
     const item = await this.dropsRepository.findItemById(itemId);
     if (!item || item.dropId !== dropId) {
@@ -1471,14 +1517,16 @@ export class DropsService {
       throw new NotFoundException(`Item ${itemId} not found in this drop`);
     }
 
+    const requesterCrew = await this.dropsRepository.findCrewMember(dropId, requesterId);
     const isOrganiser = drop.organiserId === requesterId;
+    const isCoChief = requesterCrew?.memberRole === DropCrewMemberRole.CO_CHIEF;
     const isSelfUnassign = item.assignedUserId === requesterId;
 
-    if (!isOrganiser && !isSelfUnassign) {
-      throw new ForbiddenException('Only the organiser or the assigned crew member can unassign this item');
+    if (!isOrganiser && !isCoChief && !isSelfUnassign) {
+      throw new ForbiddenException('Only the organiser, co-chiefs or the assigned crew member can unassign this item');
     }
 
-    if (item.isConfirmed && !isOrganiser) {
+    if (item.isConfirmed && !isOrganiser && !isCoChief) {
       throw new BadRequestException('Confirmed gear cannot be unassigned by crew. Ask the Chief to release it.');
     }
 
@@ -1487,18 +1535,13 @@ export class DropsService {
     await this.recordDropActivity({
       dropId,
       userId: requesterId,
-      action: isSelfUnassign && !isOrganiser ? 'item_unpicked' : 'item_assigned',
+      action: isSelfUnassign && !isOrganiser && !isCoChief ? 'item_unpicked' : 'item_assigned',
       changedFields: { itemId, itemName: item.name, assignedUserId: null },
     });
   }
 
   async randomAssignItems(dropId: string, requesterId: string): Promise<void> {
-    const drop = await this.dropsRepository.findById(dropId);
-    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
-
-    if (drop.organiserId !== requesterId) {
-      throw new ForbiddenException('Only the organiser can trigger random assignment');
-    }
+    await this.assertCanManageDrop(dropId, requesterId, 'Only the organiser or co-chiefs can trigger random assignment');
 
     const unassignedItems = await this.dropsRepository.findUnassignedItems(dropId);
     if (!unassignedItems.length) return;
@@ -1557,12 +1600,7 @@ export class DropsService {
   }
 
   async confirmItem(dropId: string, itemId: string, requesterId: string): Promise<void> {
-    const drop = await this.dropsRepository.findById(dropId);
-    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
-
-    if (drop.organiserId !== requesterId) {
-      throw new ForbiddenException('Only the chief can confirm gear arrival');
-    }
+    await this.assertCanManageDrop(dropId, requesterId, 'Only the organiser or co-chiefs can confirm gear arrival');
 
     const item = await this.dropsRepository.findItemById(itemId);
     if (!item || item.dropId !== dropId) {

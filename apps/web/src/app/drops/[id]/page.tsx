@@ -32,7 +32,7 @@ import { ActivityLedger, ActivityLedgerSkeleton } from '@/components/drops/Activ
 import { NeededItems } from '@/components/drops/NeededItems';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
+import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop, useUpdateCrewRole } from '@/hooks/mutations/use-drop-mutations';
 import { SparkButton, SparkButtonSkeleton } from '@/components/drops/spark-button';
 import { DropCrewProfileModal, type DropCrewProfileSubject } from '@/components/drops/DropCrewProfileModal';
 import { toast } from 'react-hot-toast';
@@ -414,11 +414,14 @@ function DropDetailContent({ id }: { id: string }) {
   const { mutate: updatePresence, isPending: isUpdatingPresence } = useUpdatePresence(id);
   const { mutate: joinDrop, isPending: isJoining } = useJoinDrop(id);
   const isOrganiserCheck = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
-  const canViewActivityLogs = isOrganiserCheck || crewStatus?.status === 'in';
-  const { data: crew } = useDropCrew(id, { enabled: isOrganiserCheck || crewStatus?.status === 'in' });
+  const isCoChiefCheck = crewStatus?.memberRole === 'co_chief';
+  const canManage = isOrganiserCheck || isCoChiefCheck;
+  const canViewActivityLogs = canManage || crewStatus?.status === 'in';
+  const { data: crew } = useDropCrew(id, { enabled: canViewActivityLogs });
   const { mutate: approveJoinRequest, isPending: isApproving, variables: approvingUserId } = useApproveJoinRequest(id);
   const { mutate: rejectJoinRequest, isPending: isRejecting, variables: rejectingUserId } = useRejectJoinRequest(id);
   const { mutate: removeCrewMember, isPending: isRemoving, variables: removingUserId } = useRemoveCrewMember(id);
+  const { mutate: updateCrewRole, isPending: isUpdatingRole } = useUpdateCrewRole(id);
 
   const handleLeave = () => {
     leaveDrop(undefined, {
@@ -553,7 +556,7 @@ function DropDetailContent({ id }: { id: string }) {
     drop.isPublic &&
     crewQueryStatus === 'success' &&
     crewStatus?.status !== 'in';
-  const hasDigitalTicketAccess = isOrganiser || crewStatus?.status === 'in';
+  const hasDigitalTicketAccess = canManage || crewStatus?.status === 'in';
 
   return (
     <div className="min-h-screen bg-tok-cream font-inter text-[#1C1C1A] selection:bg-tok-teal/15">
@@ -855,7 +858,7 @@ function DropDetailContent({ id }: { id: string }) {
                 </div>
               )}
 
-              {isOrganiser && !isCompleted && pendingMembers.length > 0 && (
+              {canManage && !isCompleted && pendingMembers.length > 0 && (
                 <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-amber-400 p-1 shadow-[6px_6px_0px_#1C1C1A]">
                   <div className="bg-amber-400 px-6 py-4">
                     <div className="flex items-center justify-between">
@@ -915,7 +918,7 @@ function DropDetailContent({ id }: { id: string }) {
               <PhotoRoll
                 drop={drop}
                 userId={dbUser?.id}
-                isOrganiser={isOrganiser}
+                isOrganiser={canManage}
                 isCrewMember={(crewStatus?.status as string) === 'in'}
                 isLoadingStatus={isLoadingCrewStatus}
               />
@@ -925,7 +928,7 @@ function DropDetailContent({ id }: { id: string }) {
                 <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
                   <NeededItems
                     drop={drop}
-                    isOrganiser={isOrganiser}
+                    isOrganiser={canManage}
                     isCrewMember={crewStatus?.status === 'in'}
                     currentUser={dbUser ?? undefined}
                     activeCrew={crew?.filter(m => m.status === 'in') ?? []}
@@ -934,13 +937,15 @@ function DropDetailContent({ id }: { id: string }) {
               )}
 
               {/* Crew — visible to members or the organiser (tap in/out lives in this card) */}
-              {(isOrganiser || (crewStatus?.status as string) === 'in') && (
+              {(canManage || (crewStatus?.status as string) === 'in') && (
                 <CrewRoster
                   dropId={id}
                   organiserId={drop.organiserId}
                   organiser={drop.organiser}
                   dropCreatedAt={drop.createdAt}
-                  isOrganiser={isOrganiser}
+                  isOrganiser={canManage}
+                  isOriginalChief={isOrganiser}
+                  currentUserId={dbUser?.id}
                   isCompleted={isCompleted}
                   onRemoveMember={(userId, name) => {
                     setMemberToRemove({ userId, name });
@@ -948,14 +953,30 @@ function DropDetailContent({ id }: { id: string }) {
                   }}
                   isRemoving={isRemoving}
                   removingUserId={removingUserId ?? null}
+                  isUpdatingRole={isUpdatingRole}
+                  updatingUserId={memberProfileSubject?.kind === 'crew' ? memberProfileSubject.member.userId : null}
+                  onUpdateRole={(userId, newRole) => {
+                    updateCrewRole(
+                      { userId, role: newRole },
+                      {
+                        onSuccess: () => {
+                          toast.success(`CREW ROLE UPDATED TO ${newRole.toUpperCase().replace('_', '-')}`);
+                        },
+                        onError: (err: unknown) => {
+                          const msg = err instanceof Error ? err.message : 'FAILED TO UPDATE ROLE';
+                          toast.error(msg.toUpperCase());
+                        },
+                      }
+                    );
+                  }}
                   myPresence={
                     crewStatus?.status === 'in' && !isCompleted
                       ? {
-                          isPresent: Boolean(crewStatus.isPresent),
-                          onTapIn: () => handleUpdatePresence(true),
-                          onTapOut: () => handleUpdatePresence(false),
-                          isPending: isUpdatingPresence,
-                        }
+                        isPresent: Boolean(crewStatus.isPresent),
+                        onTapIn: () => handleUpdatePresence(true),
+                        onTapOut: () => handleUpdatePresence(false),
+                        isPending: isUpdatingPresence,
+                      }
                       : undefined
                   }
                   onOpenMemberProfile={(member) => {
@@ -1102,6 +1123,24 @@ function DropDetailContent({ id }: { id: string }) {
           <DropCrewProfileModal
             subject={memberProfileSubject}
             onClose={() => setMemberProfileSubject(null)}
+            isOriginalChief={isOrganiser}
+            isUpdatingRole={isUpdatingRole}
+            onUpdateRole={(newRole) => {
+              if (memberProfileSubject.kind !== 'crew') return;
+              updateCrewRole(
+                { userId: memberProfileSubject.member.userId, role: newRole },
+                {
+                  onSuccess: () => {
+                    toast.success(`MEMBER ROLE UPDATED TO ${newRole.toUpperCase().replace('_', '-')}`);
+                    setMemberProfileSubject(null);
+                  },
+                  onError: (err: unknown) => {
+                    const msg = err instanceof Error ? err.message : 'FAILED TO UPDATE ROLE';
+                    toast.error(msg.toUpperCase());
+                  },
+                }
+              );
+            }}
           />
         )}
         {removeModalOpen && memberToRemove && (

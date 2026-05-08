@@ -194,6 +194,10 @@ export class DropsRepository {
     await this.crewRepo.update({ dropId, userId }, { isPresent });
   }
 
+  async updateCrewRole(dropId: string, userId: string, memberRole: DropCrewMemberRole): Promise<void> {
+    await this.crewRepo.update({ dropId, userId }, { memberRole });
+  }
+
   findActiveDueForOngoing(now: Date): Promise<Drop[]> {
     return this.dropRepo.find({
       where: { status: DropStatus.ACTIVE, scheduledAt: LessThanOrEqual(now) },
