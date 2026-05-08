@@ -342,6 +342,17 @@ export class DropsRepository {
       .getRawMany<{ dropId: string }>();
     return rows.map(r => r.dropId);
   }
+  
+  async findCrewStatusForUser(dropIds: string[], userId: string): Promise<DropCrew[]> {
+    if (dropIds.length === 0) return [];
+    return this.crewRepo.find({
+      where: {
+        userId,
+        dropId: In(dropIds),
+      },
+      relations: { user: true },
+    });
+  }
 
   async findRecentJoinedChiefIds(userId: string, limit: number = 3): Promise<string[]> {
     const rows = await this.crewRepo.createQueryBuilder('crew')

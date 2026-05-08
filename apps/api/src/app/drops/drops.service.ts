@@ -68,6 +68,7 @@ export class DropsService {
   private async mapRowToDiscoverSummary(
     row: Drop & { sparkCount?: number },
     viewerSparkedDropIds?: Set<string>,
+    viewerCrew?: DropCrew | null,
   ): Promise<DropDiscoverSummaryDto> {
     const organiser = row.organiser;
     const summary: DropDiscoverSummaryDto = {
@@ -97,6 +98,23 @@ export class DropsService {
     };
     if (viewerSparkedDropIds !== undefined) {
       summary.sparkedByViewer = viewerSparkedDropIds.has(row.id);
+    }
+    if (viewerCrew) {
+      summary.viewerCrew = {
+        id: viewerCrew.id,
+        dropId: viewerCrew.dropId,
+        userId: viewerCrew.userId,
+        memberRole: viewerCrew.memberRole,
+        status: viewerCrew.status,
+        isPresent: viewerCrew.isPresent,
+        joinedAt: viewerCrew.joinedAt,
+        user: {
+          id: viewerCrew.user.id,
+          firstName: viewerCrew.user.firstName,
+          lastName: viewerCrew.user.lastName,
+          avatar: (await this.resolveAvatarReference(viewerCrew.user.avatar)) ?? undefined,
+        },
+      };
     }
     return this.resolveCoverPhotoForSummary(summary);
   }
@@ -854,8 +872,10 @@ export class DropsService {
       ? await this.dropsRepository.findUpcomingDropsByChiefs(chiefIds, undefined, joinedIds, 4)
       : [];
 
-    // 3. Batch Spark Check - optimized performance for all visible drops
+    // 3. Batch Spark & Crew Check - optimized performance for all visible drops
     let sparks: Set<string> | undefined;
+    const userCrewMap = new Map<string, DropCrew>();
+
     if (user) {
       const allVisibleIds = new Set<string>();
       if (featuredRow) allVisibleIds.add(featuredRow.id);
@@ -863,12 +883,18 @@ export class DropsService {
       recentChiefsRows.forEach(r => allVisibleIds.add(r.id));
       
       if (allVisibleIds.size > 0) {
-        const sparked = await this.dropsRepository.findDropIdsSparkedByUser(user.id, [...allVisibleIds]);
+        const dropIdList = [...allVisibleIds];
+        const [sparked, crewStatuses] = await Promise.all([
+          this.dropsRepository.findDropIdsSparkedByUser(user.id, dropIdList),
+          this.dropsRepository.findCrewStatusForUser(dropIdList, user.id),
+        ]);
         sparks = new Set(sparked);
+        crewStatuses.forEach(c => userCrewMap.set(c.dropId, c));
       }
     }
 
-    const map = (row: Drop & { sparkCount?: number }) => this.mapRowToDiscoverSummary(row, sparks);
+    const map = (row: Drop & { sparkCount?: number }) => 
+      this.mapRowToDiscoverSummary(row, sparks, userCrewMap.get(row.id));
 
     return {
       featured: featuredRow ? await map(featuredRow as Drop & { sparkCount?: number }) : null,

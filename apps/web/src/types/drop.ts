@@ -40,6 +40,7 @@ export interface DropDiscoverSummary {
   organiser: DropDiscoverChief;
   sparkCount: number;
   sparkedByViewer?: boolean;
+  viewerCrew?: CrewMember;
   createdAt: string;
   updatedAt: string;
 }

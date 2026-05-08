@@ -676,9 +676,10 @@ export function ListDropCard({
           {/* Crew Section */}
           {(() => {
             const isChief = viewerId && drop.organiserId === viewerId;
-            const viewerCrewEntry = !isChief && viewerId && crew
-              ? crew.find((m) => m.userId === viewerId)
-              : null;
+            const viewerCrewEntry = !isChief && viewerId && (
+              crew ? crew.find((m) => m.userId === viewerId)
+                : ('viewerCrew' in drop ? (drop.viewerCrew as any) : null)
+            );
             const viewerStatus: 'in' | 'pending' | 'out' =
               isChief ? 'in'
                 : viewerCrewEntry?.status === 'in' && viewerCrewEntry.isPresent ? 'in'

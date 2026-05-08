@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DropCategory, DropStatus } from '../../../common';
 import { DropOrganiserPublicDto } from './drop-organiser-public.dto';
+import { CrewMemberDto } from './crew-member.dto';
 
 /** Public-safe drop payload for `/drops/discover` — no join codes, share URLs, or spark identity rows. */
 export class DropDiscoverSummaryDto {
@@ -49,6 +50,12 @@ export class DropDiscoverSummaryDto {
 
   @ApiProperty({ type: DropOrganiserPublicDto })
   organiser: DropOrganiserPublicDto;
+
+  @ApiPropertyOptional({
+    type: CrewMemberDto,
+    description: 'Included when the request is authenticated: the current user\'s crew status for this drop.',
+  })
+  viewerCrew?: CrewMemberDto;
 
   @ApiProperty({ description: 'Total spark count (no user identifiers).' })
   sparkCount: number;
