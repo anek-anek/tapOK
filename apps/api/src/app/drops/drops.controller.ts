@@ -27,7 +27,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { CronGuard, DropCategory, Public } from '../../common';
+import { CronGuard, DropCategory, DropCrewMemberRole, Public } from '../../common';
 import type { BetterAuthUser } from '../../common/better-auth/better-auth.service';
 import { DropsService } from './drops.service';
 import { DropsCronService } from './drops-cron.service';
@@ -293,10 +293,10 @@ export class DropsController {
 
   @Patch(':id/crew/:userId/remove')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Remove an active crew member (organiser only)' })
+  @ApiOperation({ summary: 'Remove an active crew member (organiser or co-chief only)' })
   @ApiResponse({ status: 204, description: 'Crew member removed.' })
   @ApiResponse({ status: 400, description: 'User is not an active crew member.' })
-  @ApiResponse({ status: 403, description: 'Only the organiser can remove crew members.' })
+  @ApiResponse({ status: 403, description: 'Only the organiser or co-chiefs can remove crew members.' })
   @ApiResponse({ status: 404, description: 'Drop or crew member not found.' })
   removeCrewMember(
     @Param('id', ParseUUIDPipe) id: string,
@@ -304,6 +304,22 @@ export class DropsController {
     @Req() request: RequestWithUser,
   ): Promise<void> {
     return this.dropsService.removeCrewMember(id, userId, request.user.id);
+  }
+
+  @Patch(':id/crew/:userId/role')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Update a crew member role (organiser only)' })
+  @ApiResponse({ status: 204, description: 'Role updated successfully.' })
+  @ApiResponse({ status: 403, description: 'Only the organiser can change member roles.' })
+  @ApiResponse({ status: 404, description: 'Drop or crew member not found.' })
+  updateCrewRole(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body('role') role: DropCrewMemberRole,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    if (!role) throw new BadRequestException('Role is required');
+    return this.dropsService.updateCrewRole(id, userId, request.user.id, role);
   }
 
   @Post(':id/cover-photo')

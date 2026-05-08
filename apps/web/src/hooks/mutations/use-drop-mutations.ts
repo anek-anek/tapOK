@@ -92,6 +92,18 @@ export function useRemoveCrewMember(dropId: string): UseMutationResult<void, Err
   });
 }
 
+export function useUpdateCrewRole(dropId: string): UseMutationResult<void, Error, { userId: string; role: string }> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, role }) => dropsService.updateCrewRole(dropId, userId, role),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.crew(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
 export function useUpdatePresence(dropId: string): UseMutationResult<void, Error, boolean> {
   const queryClient = useQueryClient();
 

@@ -34,7 +34,7 @@ import { ActivityLedger, ActivityLedgerSkeleton } from '@/components/drops/Activ
 import { NeededItems } from '@/components/drops/NeededItems';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop } from '@/hooks/mutations/use-drop-mutations';
+import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop, useUpdateCrewRole } from '@/hooks/mutations/use-drop-mutations';
 import { SparkButton } from '@/components/drops/spark-button';
 import { toast } from 'react-hot-toast';
 import type { DropStatus } from '@/types/drop';
@@ -440,10 +440,13 @@ export default function DropDetailClient({ id }: { id: string }) {
   const { mutate: leaveDrop, isPending: isLeaving } = useLeaveDrop(id);
   const { mutate: updatePresence, isPending: isUpdatingPresence } = useUpdatePresence(id);
   const { mutate: joinDrop, isPending: isJoining } = useJoinDrop(id);
+  const { mutate: updateCrewRole, isPending: isUpdatingRole } = useUpdateCrewRole(id);
 
   const isOrganiserCheck = Boolean(dbUser && drop && dbUser.id === drop.organiserId);
-  const canViewActivityLogs = isOrganiserCheck || crewStatus?.status === 'in';
-  const { data: crew } = useDropCrew(id, { enabled: isOrganiserCheck || crewStatus?.status === 'in' });
+  const isCoChiefCheck = crewStatus?.memberRole === 'co_chief';
+  const canManageCheck = isOrganiserCheck || isCoChiefCheck;
+  const canViewActivityLogs = canManageCheck || crewStatus?.status === 'in';
+  const { data: crew } = useDropCrew(id, { enabled: canViewActivityLogs });
   useDropActivityLogs(id, logPage, {
     enabled: canViewActivityLogs,
   });
@@ -573,8 +576,9 @@ export default function DropDetailClient({ id }: { id: string }) {
   }
 
   const isOrganiser = isOrganiserCheck;
+  const canManage = canManageCheck;
   const isCompleted = drop.status === 'completed';
-  const canEdit = isOrganiser && !isCompleted;
+  const canEdit = canManage && !isCompleted;
   return (
     <div className="min-h-screen bg-tok-cream font-inter text-[#1C1C1A] selection:bg-tok-teal/15">
       {/* Visual background flourishes */}
@@ -720,14 +724,16 @@ export default function DropDetailClient({ id }: { id: string }) {
                     <IconEdit size={16} strokeWidth={2.5} />
                     <span className="pt-0.5 text-nowrap">Edit</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteModalOpen(true)}
-                    className="group relative flex h-12 w-12 items-center justify-center rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-red-500 transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none"
-                    title="Delete Drop"
-                  >
-                    <IconTrash size={16} strokeWidth={2.5} />
-                  </button>
+                  {isOrganiser && (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteModalOpen(true)}
+                      className="group relative flex h-12 w-12 items-center justify-center rounded-[4px] border-[3px] border-tok-black bg-white px-3 font-passion text-xs font-bold uppercase tracking-[2px] text-red-500 transition-transform active:translate-y-0 active:translate-x-0 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_#1C1C1A] sm:flex-none"
+                      title="Delete Drop"
+                    >
+                      <IconTrash size={16} strokeWidth={2.5} />
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -755,7 +761,7 @@ export default function DropDetailClient({ id }: { id: string }) {
             )}
 
             {/* Pending Approvals */}
-            {isOrganiser && !isCompleted && pendingMembers.length > 0 && (
+            {canManage && !isCompleted && pendingMembers.length > 0 && (
               <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-amber-400 p-1 shadow-[6px_6px_0px_#1C1C1A]">
                 <div className="bg-amber-400 px-6 py-4">
                   <div className="flex items-center justify-between">
@@ -812,11 +818,11 @@ export default function DropDetailClient({ id }: { id: string }) {
             )}
 
             {/* Needed Gear Card */}
-            {(isOrganiser || crewStatus?.status === 'in') && (
+            {(canManage || crewStatus?.status === 'in') && (
               <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
                 <NeededItems
                   drop={drop}
-                  isOrganiser={isOrganiser}
+                  isOrganiser={canManage}
                   isCrewMember={crewStatus?.status === 'in'}
                   currentUser={dbUser}
                   activeCrew={crew?.filter(m => m.status === 'in') ?? []}
@@ -828,19 +834,19 @@ export default function DropDetailClient({ id }: { id: string }) {
             <PhotoRoll
               drop={drop}
               userId={dbUser?.id}
-              isOrganiser={isOrganiser}
+              isOrganiser={canManage}
               isCrewMember={crewStatus?.status === 'in'}
               activeCrewCount={crew?.filter((member) => member.status === 'in').length}
             />
 
             {/* Crew Roster */}
-            {(isOrganiser || crewStatus?.status === 'in') && (
+            {(canManage || crewStatus?.status === 'in') && (
               <CrewRoster
                 dropId={id}
                 organiserId={drop.organiserId}
                 organiser={drop.organiser}
                 dropCreatedAt={drop.createdAt}
-                isOrganiser={isOrganiser}
+                isOrganiser={canManage}
                 isCompleted={isCompleted}
                 onRemoveMember={(userId, name) => {
                   setMemberToRemove({ userId, name });
@@ -882,7 +888,7 @@ export default function DropDetailClient({ id }: { id: string }) {
           <aside className="order-1 hidden lg:block lg:order-2 lg:self-start">
             <DigitalTicket
               drop={drop}
-              isMember={isOrganiser || crewStatus?.status === 'in'}
+              isMember={canManage || crewStatus?.status === 'in'}
             />
           </aside>
         </div>
@@ -934,6 +940,24 @@ export default function DropDetailClient({ id }: { id: string }) {
         <DropCrewProfileModal
           subject={memberProfileSubject}
           onClose={() => setMemberProfileSubject(null)}
+          isOriginalChief={isOrganiser}
+          isUpdatingRole={isUpdatingRole}
+          onUpdateRole={(newRole) => {
+            if (memberProfileSubject.kind !== 'crew') return;
+            updateCrewRole(
+              { userId: memberProfileSubject.member.userId, role: newRole },
+              {
+                onSuccess: () => {
+                  toast.success(`MEMBER ROLE UPDATED TO ${newRole.toUpperCase().replace('_', '-')}`);
+                  setMemberProfileSubject(null);
+                },
+                onError: (err: unknown) => {
+                  const msg = err instanceof Error ? err.message : 'FAILED TO UPDATE ROLE';
+                  toast.error(msg.toUpperCase());
+                },
+              }
+            );
+          }}
         />
       )}
     </div>
