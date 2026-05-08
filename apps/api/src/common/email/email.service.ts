@@ -114,6 +114,92 @@ export class EmailService {
     }
   }
 
+  async sendJoinRequestEmail(email: string, title: string, body: string, dropUrl?: string) {
+    if (!this.isEnabled()) return;
+    const html = this.getNeubrutalistTemplate(
+      'New Join Request.',
+      body,
+      'View Drop',
+      dropUrl ?? '#',
+    );
+    try {
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: email,
+        subject: title,
+        html,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send join request email to ${email}`, error);
+    }
+  }
+
+  async sendJoinApprovedEmail(email: string, title: string, body: string, dropUrl?: string) {
+    if (!this.isEnabled()) return;
+    const html = this.getNeubrutalistTemplate(
+      "You're In!",
+      body,
+      'View Drop',
+      dropUrl ?? '#',
+    );
+    try {
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: email,
+        subject: title,
+        html,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send join approved email to ${email}`, error);
+    }
+  }
+
+  async sendJoinRejectedEmail(email: string, title: string, body: string) {
+    if (!this.isEnabled()) return;
+    const html = this.getNeubrutalistTemplate(
+      'Request Not Approved.',
+      body,
+      'Discover Drops',
+      '#',
+    );
+    try {
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: email,
+        subject: title,
+        html,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send join rejected email to ${email}`, error);
+    }
+  }
+
+  async sendDropStartingSoonEmail(
+    email: string,
+    title: string,
+    body: string,
+    dropUrl?: string,
+    _scheduledAt?: Date,
+  ) {
+    if (!this.isEnabled()) return;
+    const html = this.getNeubrutalistTemplate(
+      'Starting Soon!',
+      body,
+      'View Drop',
+      dropUrl ?? '#',
+    );
+    try {
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: email,
+        subject: title,
+        html,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send drop starting soon email to ${email}`, error);
+    }
+  }
+
   async sendVerificationEmail(email: string, link: string) {
     if (!this.isEnabled()) {
       this.logger.error(`Cannot send verification to ${email}: Resend not initialized`);

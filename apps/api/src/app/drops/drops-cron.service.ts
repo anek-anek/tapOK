@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { DropStatus, MediaAssetsService } from '../../common';
+import { DropStatus, MediaAssetsService, NotificationType } from '../../common';
 import { DropsRepository } from './drops.repository';
 import {
   STALE_AVATAR_UPLOAD_TTL_MINUTES,
   STALE_PHOTO_UPLOAD_TTL_MINUTES,
 } from './drop-photo.constants';
 import { UsersRepository } from '../users/users.repository';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const DROP_DURATION_MS = 4 * 60 * 60 * 1000;
 
@@ -18,6 +19,7 @@ export class DropsCronService {
     private readonly dropsRepository: DropsRepository,
     private readonly mediaAssets: MediaAssetsService,
     private readonly usersRepository: UsersRepository,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   @Cron('* * * * *')
@@ -30,6 +32,46 @@ export class DropsCronService {
     await this.cleanupStalePendingAvatarUploads(now);
     await this.repairDeadCoverPhotos();
     return { toOngoing, toCompleted };
+  }
+
+  @Cron('*/15 * * * *')
+  async notifyDropsStartingSoon(): Promise<void> {
+    const now = new Date();
+    const from = new Date(now.getTime() + 45 * 60 * 1000);
+    const to = new Date(now.getTime() + 75 * 60 * 1000);
+
+    const drops = await this.dropsRepository.findDropsDueForStartingSoon(from, to);
+    if (drops.length === 0) return;
+
+    const webUrl = (process.env.WEB_URL ?? 'http://localhost:4200').split(',')[0]?.trim() ?? 'http://localhost:4200';
+
+    for (const drop of drops) {
+      try {
+        const userIds = await this.dropsRepository.findInCrewUserIds(drop.id);
+        const dropUrl = `${webUrl}/drops/${drop.id}`;
+
+        for (const userId of userIds) {
+          try {
+            const user = await this.usersRepository.findById(userId);
+            if (!user) continue;
+            await this.notificationsService.create(
+              userId,
+              NotificationType.DROP_STARTING_SOON,
+              `${drop.name} starts in 1 hour`,
+              `"${drop.name}" is starting soon. Get ready!`,
+              { dropId: drop.id, dropName: drop.name },
+              { email: user.email, dropUrl, scheduledAt: drop.scheduledAt },
+            );
+          } catch { /* non-fatal per-user */ }
+        }
+
+        await this.dropsRepository.update(drop.id, { startingSoonNotifiedAt: now });
+      } catch (err) {
+        this.logger.warn(`Failed to send starting soon notifications for drop ${drop.id}: ${err}`);
+      }
+    }
+
+    this.logger.log(`Sent starting-soon notifications for ${drops.length} drop(s)`);
   }
 
   private async transitionActiveToOngoing(now: Date): Promise<number> {
@@ -46,6 +88,9 @@ export class DropsCronService {
       `Drop activity (cron): ${JSON.stringify({ action: 'marked_ongoing', count: ids.length })}`,
     );
     this.logger.log(`Transitioned ${ids.length} drop(s) ACTIVE → ONGOING`);
+
+    void this.sendBulkDropNotifications(ids, NotificationType.DROP_STARTED, 'Drop has started!', (dropId) => `The drop has started. Tap in!`);
+
     return ids.length;
   }
 
@@ -65,7 +110,32 @@ export class DropsCronService {
       `Drop activity (cron): ${JSON.stringify({ action: 'marked_completed', count: ids.length })}`,
     );
     this.logger.log(`Transitioned ${ids.length} drop(s) ONGOING → COMPLETED (Curation Pending)`);
+
+    void this.sendBulkDropNotifications(ids, NotificationType.DROP_COMPLETED, 'Drop completed', (_dropId) => `The drop has wrapped up. Check the photo roll!`);
+
     return ids.length;
+  }
+
+  private async sendBulkDropNotifications(
+    dropIds: string[],
+    type: NotificationType,
+    title: string,
+    bodyFn: (dropId: string) => string,
+  ): Promise<void> {
+    try {
+      const crewRows = await this.dropsRepository.findInCrewUserIdsForDrops(dropIds);
+      for (const { dropId, userId } of crewRows) {
+        void this.notificationsService.create(
+          userId,
+          type,
+          title,
+          bodyFn(dropId),
+          { dropId },
+        ).catch(() => undefined);
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to send bulk drop notifications (type=${type}): ${err}`);
+    }
   }
 
   private async cleanupExpiredDropsPhotos(now: Date): Promise<void> {

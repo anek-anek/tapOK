@@ -37,6 +37,8 @@ import { CreatePhotoUploadDto } from './dto/create-photo-upload.dto';
 import { PhotoUploadSessionDto } from './dto/photo-upload-session.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
 import { DROP_PHOTO_MAX_PER_USER, getDropPhotoMaxPerDrop } from './drop-photo.constants';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../../common';
 
 const PUBLIC_ACTIVITY_CHANGED_FIELDS = new Set([
   'name',
@@ -65,6 +67,7 @@ export class DropsService {
     private readonly dropsCronService: DropsCronService,
     private readonly mediaAssets: MediaAssetsService,
     private readonly dataSource: DataSource,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async findAll(page: number = 1, limit: number = 100): Promise<Drop[]> {
@@ -604,6 +607,8 @@ export class DropsService {
       action: 'invited_member',
       changedFields: { invitedUserId: userId },
     });
+
+    this.sendInvitedNotification(drop, userId);
   }
 
   async joinDrop(dropId: string, userId: string): Promise<DropCrew> {
@@ -664,6 +669,12 @@ export class DropsService {
         action: drop.isLocked ? 'join_requested' : 'joined',
       });
 
+      if (drop.isLocked) {
+        this.sendJoinRequestedNotifications(drop, user);
+      } else {
+        this.sendMemberJoinedNotifications(drop, user);
+      }
+
       return crewMember;
     } finally {
       this._createInFlight.delete(joinKey);
@@ -690,6 +701,8 @@ export class DropsService {
       userId: user.id,
       action: 'left',
     });
+
+    this.sendMemberLeftNotifications(drop, user);
   }
 
   async getDropCrew(dropId: string, userId: string): Promise<DropCrew[]> {
@@ -749,6 +762,9 @@ export class DropsService {
       action: 'join_request_rejected',
       changedFields: { rejectedUserId: targetUserId },
     });
+
+    const targetUser = await this.usersService.findOne(targetUserId).catch(() => null);
+    if (targetUser) this.sendJoinRejectedNotification(drop, targetUser);
   }
 
   async approvePendingMember(dropId: string, targetUserId: string, userId: string): Promise<void> {
@@ -782,6 +798,9 @@ export class DropsService {
       action: 'join_request_approved',
       changedFields: { approvedUserId: targetUserId },
     });
+
+    const targetUser = await this.usersService.findOne(targetUserId).catch(() => null);
+    if (targetUser) this.sendJoinApprovedNotification(drop, targetUser);
   }
 
   async removeCrewMember(dropId: string, targetUserId: string, userId: string): Promise<void> {
@@ -817,6 +836,9 @@ export class DropsService {
       action: 'member_removed',
       changedFields: { removedUserId: targetUserId },
     });
+
+    const targetUser = await this.usersService.findOne(targetUserId).catch(() => null);
+    if (targetUser) this.sendMemberRemovedNotification(drop, targetUser);
   }
 
   async updateCrewRole(
@@ -1420,6 +1442,118 @@ export class DropsService {
         `You must be at least ${min} years old to join this drop.`,
       );
     }
+  }
+
+  private buildDropUrl(dropId: string): string {
+    const webUrlEnv = this.configService.get<string>('WEB_URL', 'http://localhost:4200');
+    const baseUrl = webUrlEnv.split(',')[0]?.trim() || 'http://localhost:4200';
+    return `${baseUrl}/drops/${dropId}`;
+  }
+
+  private sendJoinRequestedNotifications(drop: Drop, actor: User): void {
+    void (async () => {
+      try {
+        const dropUrl = this.buildDropUrl(drop.id);
+        const actorName = `${actor.firstName} ${actor.lastName}`;
+        const managerIds = await this.dropsRepository.findManagerUserIds(drop.id);
+        for (const id of managerIds.filter((mid) => mid !== actor.id)) {
+          const manager = await this.usersService.findOne(id).catch(() => null);
+          if (!manager) continue;
+          void this.notificationsService.create(
+            id,
+            NotificationType.JOIN_REQUESTED,
+            `Someone wants to join ${drop.name}`,
+            `${actorName} wants to join "${drop.name}".`,
+            { dropId: drop.id, actorId: actor.id, actorName, dropName: drop.name },
+            { email: manager.email, dropUrl },
+          );
+        }
+      } catch { /* non-fatal */ }
+    })();
+  }
+
+  private sendMemberJoinedNotifications(drop: Drop, actor: User): void {
+    void (async () => {
+      try {
+        const actorName = `${actor.firstName} ${actor.lastName}`;
+        const managerIds = await this.dropsRepository.findManagerUserIds(drop.id);
+        for (const id of managerIds.filter((mid) => mid !== actor.id)) {
+          void this.notificationsService.create(
+            id,
+            NotificationType.MEMBER_JOINED,
+            `${actor.firstName} joined ${drop.name}`,
+            `${actorName} has joined "${drop.name}".`,
+            { dropId: drop.id, actorId: actor.id, actorName, dropName: drop.name },
+          );
+        }
+      } catch { /* non-fatal */ }
+    })();
+  }
+
+  private sendMemberLeftNotifications(drop: Drop, actor: User): void {
+    void (async () => {
+      try {
+        const actorName = `${actor.firstName} ${actor.lastName}`;
+        const managerIds = await this.dropsRepository.findManagerUserIds(drop.id);
+        for (const id of managerIds.filter((mid) => mid !== actor.id)) {
+          void this.notificationsService.create(
+            id,
+            NotificationType.MEMBER_LEFT,
+            `${actor.firstName} left ${drop.name}`,
+            `${actorName} has left "${drop.name}".`,
+            { dropId: drop.id, actorId: actor.id, actorName, dropName: drop.name },
+          );
+        }
+      } catch { /* non-fatal */ }
+    })();
+  }
+
+  private sendJoinApprovedNotification(drop: Drop, targetUser: User): void {
+    void this.notificationsService.create(
+      targetUser.id,
+      NotificationType.JOIN_APPROVED,
+      `You're in! Join request approved`,
+      `Your request to join "${drop.name}" has been approved.`,
+      { dropId: drop.id, dropName: drop.name },
+      { email: targetUser.email, dropUrl: this.buildDropUrl(drop.id) },
+    ).catch(() => undefined);
+  }
+
+  private sendJoinRejectedNotification(drop: Drop, targetUser: User): void {
+    void this.notificationsService.create(
+      targetUser.id,
+      NotificationType.JOIN_REJECTED,
+      `Join request not approved`,
+      `Your request to join "${drop.name}" was not approved.`,
+      { dropId: drop.id, dropName: drop.name },
+      { email: targetUser.email },
+    ).catch(() => undefined);
+  }
+
+  private sendMemberRemovedNotification(drop: Drop, targetUser: User): void {
+    void this.notificationsService.create(
+      targetUser.id,
+      NotificationType.MEMBER_REMOVED,
+      `Removed from ${drop.name}`,
+      `You have been removed from "${drop.name}".`,
+      { dropId: drop.id, dropName: drop.name },
+    ).catch(() => undefined);
+  }
+
+  private sendInvitedNotification(drop: Drop, targetUserId: string): void {
+    void (async () => {
+      try {
+        const targetUser = await this.usersService.findOne(targetUserId).catch(() => null);
+        if (!targetUser) return;
+        void this.notificationsService.create(
+          targetUserId,
+          NotificationType.INVITED_TO_DROP,
+          `You're invited to ${drop.name}`,
+          `You've been invited to join "${drop.name}".`,
+          { dropId: drop.id, dropName: drop.name },
+        );
+      } catch { /* non-fatal */ }
+    })();
   }
 
   private async generateUniqueJoinCode(): Promise<string> {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThanOrEqual, Repository, IsNull } from 'typeorm';
+import { Between, In, LessThanOrEqual, Repository, IsNull } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DropCategory, DropCrewMemberRole, DropCrewStatus, DropStatus } from '../../common';
 import { Drop } from './entities/drop.entity';
@@ -138,7 +138,7 @@ export class DropsRepository {
 
   async update(
     id: string,
-    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic' | 'category' | 'overview' | 'coverPhoto' | 'minimumAge'>> & {
+    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic' | 'category' | 'overview' | 'coverPhoto' | 'minimumAge' | 'startingSoonNotifiedAt'>> & {
       expectedHeadcount?: number | null;
     },
   ): Promise<void> {
@@ -590,6 +590,45 @@ export class DropsRepository {
   async findUnassignedItems(dropId: string): Promise<DropItem[]> {
     return this.itemRepo.find({
       where: { dropId, assignedUserId: IsNull() },
+    });
+  }
+
+  async findManagerUserIds(dropId: string): Promise<string[]> {
+    const rows = await this.crewRepo.find({
+      where: [
+        { dropId, memberRole: DropCrewMemberRole.CHIEF },
+        { dropId, memberRole: DropCrewMemberRole.CO_CHIEF, status: DropCrewStatus.IN },
+      ],
+      select: { userId: true },
+    });
+    return rows.map((r) => r.userId);
+  }
+
+  async findInCrewUserIds(dropId: string): Promise<string[]> {
+    const rows = await this.crewRepo.find({
+      where: { dropId, status: DropCrewStatus.IN },
+      select: { userId: true },
+    });
+    return rows.map((r) => r.userId);
+  }
+
+  async findInCrewUserIdsForDrops(dropIds: string[]): Promise<{ dropId: string; userId: string }[]> {
+    if (dropIds.length === 0) return [];
+    const rows = await this.crewRepo.find({
+      where: { dropId: In(dropIds), status: DropCrewStatus.IN },
+      select: { dropId: true, userId: true },
+    });
+    return rows as { dropId: string; userId: string }[];
+  }
+
+  async findDropsDueForStartingSoon(from: Date, to: Date): Promise<Drop[]> {
+    return this.dropRepo.find({
+      where: {
+        status: DropStatus.ACTIVE,
+        scheduledAt: Between(from, to),
+        startingSoonNotifiedAt: IsNull(),
+      },
+      select: ['id', 'name', 'scheduledAt', 'organiserId'],
     });
   }
 }

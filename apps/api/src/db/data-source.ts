@@ -8,6 +8,7 @@ import { DropPhoto } from '../app/drops/entities/drop-photo.entity';
 import { DropSpark } from '../app/drops/entities/drop-spark.entity';
 import { DropItem } from '../app/drops/entities/drop-item.entity';
 import { User } from '../app/users/entities/user.entity';
+import { Notification } from '../app/notifications/entities/notification.entity';
 
 dotenv.config({ path: resolve(__dirname, '../../.env') });
 
@@ -28,6 +29,7 @@ export const AppDataSource = new DataSource({
     DropPhoto,
     DropSpark,
     DropItem,
+    Notification,
   ],
   migrations: [join(__dirname, 'migrations', '*{.ts,.js}')],
 });

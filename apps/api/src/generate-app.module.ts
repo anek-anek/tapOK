@@ -13,10 +13,13 @@ import { DropsController } from './app/drops/drops.controller';
 import { DropsService } from './app/drops/drops.service';
 import { DropsCronService } from './app/drops/drops-cron.service';
 import { DropsRepository } from './app/drops/drops.repository';
+import { NotificationsController } from './app/notifications/notifications.controller';
+import { NotificationsService } from './app/notifications/notifications.service';
 import { SupabaseStorageService } from './common';
 import { Drop } from './app/drops/entities/drop.entity';
 import { DropActivityLog } from './app/drops/entities/drop-activity-log.entity';
 import { DropCrew } from './app/drops/entities/drop-crew.entity';
+import { Notification } from './app/notifications/entities/notification.entity';
 import { THROTTLE_DEFAULT, THROTTLE_STRICT } from './common';
 
 function stub<T>(token: T): { provide: T; useValue: object } {
@@ -37,7 +40,7 @@ function stub<T>(token: T): { provide: T; useValue: object } {
       { name: 'strict', ...THROTTLE_STRICT },
     ]),
   ],
-  controllers: [UsersController, DropsController, AuthEmailController],
+  controllers: [UsersController, DropsController, AuthEmailController, NotificationsController],
   providers: [
     stub(UsersService),
     stub(AuthEmailService),
@@ -47,10 +50,12 @@ function stub<T>(token: T): { provide: T; useValue: object } {
     stub(DropsService),
     stub(DropsCronService),
     stub(DropsRepository),
+    stub(NotificationsService),
     stub(SupabaseStorageService),
     stub(getRepositoryToken(Drop)),
     stub(getRepositoryToken(DropActivityLog)),
     stub(getRepositoryToken(DropCrew)),
+    stub(getRepositoryToken(Notification)),
     stub(getDataSourceToken()),
   ],
 })

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { LogOut, User as IconUser, Menu, X } from 'lucide-react';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 import { signOut } from '@/lib/auth-client';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -178,7 +179,9 @@ export function TapokNavbar() {
                   </Link>
                 </>
               ) : (
-                <div className="relative z-10">
+                <div className="flex items-center gap-3">
+                  <NotificationBell />
+                  <div className="relative z-10 flex items-center">
                   <button
                     onClick={() => setOpen((v) => !v)}
                     className="font-passion inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-tok-black bg-white text-[11px] uppercase tracking-[1.5px] text-tok-black shadow-[3px_3px_0px_0px_#262624] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#262624] focus-visible:outline-hidden active:translate-y-0 active:shadow-none"
@@ -206,6 +209,7 @@ export function TapokNavbar() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+                  </div>
                 </div>
               )}
             </div>
