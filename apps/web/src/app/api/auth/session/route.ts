@@ -13,11 +13,18 @@ export async function POST(req: NextRequest) {
     // The explicit `origin` header is required so BetterAuth's CSRF check passes
     // on this server-to-server call (no browser origin header is sent otherwise).
     const origin = req.headers.get('origin') ?? getBaseUrl();
+    const cookie = req.headers.get('cookie') ?? '';
+    const filteredCookies = cookie
+      .split(';')
+      .map((c) => c.trim())
+      .filter((c) => c.startsWith('better-auth') || c.startsWith('__Secure-better-auth'))
+      .join('; ');
+
     const res = await fetch(`${API_URL}/users/sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        cookie: req.headers.get('cookie') ?? '',
+        cookie: filteredCookies,
         origin,
       },
       body: JSON.stringify(payload),
