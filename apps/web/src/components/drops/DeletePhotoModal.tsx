@@ -98,7 +98,7 @@ export function DeletePhotoModal({ dropId, photo, onClose }: DeletePhotoModalPro
           </div>
 
           {/* Actions */}
-          <div className="flex flex-col gap-4 border-t-[3px] border-tok-black bg-white p-6 sm:flex-row">
+          <div className="flex gap-4 border-t-[3px] border-tok-black bg-white p-6">
             <button
               onClick={close}
               disabled={isDeleting}
