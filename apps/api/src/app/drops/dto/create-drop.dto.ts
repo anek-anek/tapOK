@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsDateString,
@@ -98,7 +98,7 @@ export class CreateDropDto {
     items: {
       oneOf: [
         { type: 'string' },
-        { $ref: '#/components/schemas/ExistingNeededItemDto' },
+        { $ref: getSchemaPath(ExistingNeededItemDto) },
       ],
     },
     example: ['New Item', { id: 'uuid', name: 'Existing Item' }],
