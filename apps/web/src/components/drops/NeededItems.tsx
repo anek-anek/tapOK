@@ -103,6 +103,7 @@ export function NeededItems({
   const items = drop.neededItems || [];
   const unassignedCount = items.filter(i => !i.assignedUserId).length;
   const assignedCount = items.length - unassignedCount;
+  const hasAssignables = items.some(i => i.isAssignable);
 
   return (
     <div className="flex flex-col gap-6">
@@ -111,31 +112,41 @@ export function NeededItems({
           <h3 className="font-passion text-xl font-bold uppercase tracking-tight text-tok-black">
             Needed Gear.
           </h3>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/40">
-              {items.length} items
-            </span>
-            <span className="font-passion text-[10px] text-tok-black/20">•</span>
-            <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-emerald-500">
-              {items.filter(i => i.isConfirmed).length} brought
-            </span>
-            {items.filter(i => !!i.assignedUserId && !i.isConfirmed).length > 0 && (
-              <>
-                <span className="font-passion text-[10px] text-tok-black/20">•</span>
-                <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-teal">
-                  {items.filter(i => !!i.assignedUserId && !i.isConfirmed).length} covered
-                </span>
-              </>
-            )}
-            {unassignedCount > 0 && (
-              <>
-                <span className="font-passion text-[10px] text-tok-black/20">•</span>
-                <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-amber-500">
-                  {unassignedCount} needed
-                </span>
-              </>
-            )}
-          </div>
+          {hasAssignables && (
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/40">
+                {items.length} items
+              </span>
+              <span className="font-passion text-[10px] text-tok-black/20">•</span>
+              <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-emerald-500">
+                {items.filter(i => i.isConfirmed).length} brought
+              </span>
+              {items.filter(i => i.isAssignable && !!i.assignedUserId && !i.isConfirmed).length > 0 && (
+                <>
+                  <span className="font-passion text-[10px] text-tok-black/20">•</span>
+                  <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-teal">
+                    {items.filter(i => i.isAssignable && !!i.assignedUserId && !i.isConfirmed).length} covered
+                  </span>
+                </>
+              )}
+              {items.filter(i => i.isAssignable && !i.assignedUserId).length > 0 && (
+                <>
+                  <span className="font-passion text-[10px] text-tok-black/20">•</span>
+                  <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-amber-500">
+                    {items.filter(i => i.isAssignable && !i.assignedUserId).length} needed
+                  </span>
+                </>
+              )}
+              {items.filter(i => !i.isAssignable).length > 0 && (
+                <>
+                  <span className="font-passion text-[10px] text-tok-black/20">•</span>
+                  <span className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/40">
+                    {items.filter(i => !i.isAssignable).length} list
+                  </span>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {isOrganiser && unassignedCount > 0 && activeCrew.length > 0 && (
@@ -171,41 +182,50 @@ export function NeededItems({
                 <p className="font-passion text-sm font-bold uppercase tracking-wide text-tok-black leading-tight wrap-break-word">
                   {item.name}
                 </p>
-                <div className="flex items-center gap-1.5 h-4">
-                  {item.assignedUser ? (
-                    <>
-                      <div className={cn(
-                        "flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full border border-tok-black font-passion text-[6px] font-bold text-tok-cream",
-                        item.isConfirmed ? "bg-emerald-500" : "bg-tok-teal"
-                      )}>
-                        {item.assignedUser.avatar ? (
-                          <Image src={item.assignedUser.avatar} alt="" width={16} height={16} className="h-full w-full object-cover" />
-                        ) : (
-                          getInitials(item.assignedUser.firstName, item.assignedUser.lastName)
-                        )}
-                      </div>
-                      <span className={cn(
-                        "font-passion text-[9px] font-bold uppercase tracking-wider",
-                        item.isConfirmed ? "text-emerald-600" : "text-tok-black/40"
-                      )}>
-                        {isAssignedToMe ? 'You' : item.assignedUser.firstName} {item.isConfirmed && 'Brought'}
-                      </span>
-                      <IconCheck size={9} strokeWidth={3} className={cn(item.isConfirmed ? "text-emerald-500" : "text-tok-teal", "shrink-0")} />
-                    </>
-                  ) : (
-                    <>
-                      <IconMinus size={9} strokeWidth={3} className="text-amber-400 shrink-0" />
-                      <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-amber-500">
-                        Needs Gear
-                      </span>
-                    </>
-                  )}
-                </div>
+                {(item.isAssignable || hasAssignables) && (
+                  <div className="flex items-center gap-1.5 h-4 mt-0.5">
+                    {!item.isAssignable ? (
+                      <>
+                        <IconMinus size={9} strokeWidth={3} className="text-tok-black/20 shrink-0" />
+                        <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-tok-black/30">
+                          Informational List
+                        </span>
+                      </>
+                    ) : item.assignedUser ? (
+                      <>
+                        <div className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full border border-tok-black font-passion text-[6px] font-bold text-tok-cream",
+                          item.isConfirmed ? "bg-emerald-500" : "bg-tok-teal"
+                        )}>
+                          {item.assignedUser.avatar ? (
+                            <Image src={item.assignedUser.avatar} alt="" width={16} height={16} className="h-full w-full object-cover" />
+                          ) : (
+                            getInitials(item.assignedUser.firstName, item.assignedUser.lastName)
+                          )}
+                        </div>
+                        <span className={cn(
+                          "font-passion text-[9px] font-bold uppercase tracking-wider",
+                          item.isConfirmed ? "text-emerald-600" : "text-tok-black/40"
+                        )}>
+                          {isAssignedToMe ? 'You' : item.assignedUser.firstName} {item.isConfirmed && 'Brought'}
+                        </span>
+                        <IconCheck size={9} strokeWidth={3} className={cn(item.isConfirmed ? "text-emerald-500" : "text-tok-teal", "shrink-0")} />
+                      </>
+                    ) : (
+                      <>
+                        <IconMinus size={9} strokeWidth={3} className="text-amber-400 shrink-0" />
+                        <span className="font-passion text-[9px] font-bold uppercase tracking-wider text-amber-500">
+                          Needs Gear
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Actions */}
               <div className="flex items-center gap-1.5 pr-2.5">
-                {isCrewMember && (isAssignedToMe || !isAssigned) && (
+                {isCrewMember && item.isAssignable && (isAssignedToMe || !isAssigned) && (
                   <button
                     onClick={() => isAssignedToMe
                       ? void handleUnassignItem(item.id)
@@ -238,7 +258,7 @@ export function NeededItems({
                   </button>
                 )}
 
-                {isOrganiser && !item.isConfirmed && (
+                {isOrganiser && item.isAssignable && !item.isConfirmed && (
                   <Popover>
                     <PopoverTrigger className="flex h-8 items-center gap-1 rounded-sm border-2 border-tok-black bg-white px-2 font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black shadow-[2px_2px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1C1C1A] active:translate-y-0 active:shadow-none">
                       <IconUsersGroup size={13} strokeWidth={2.5} />

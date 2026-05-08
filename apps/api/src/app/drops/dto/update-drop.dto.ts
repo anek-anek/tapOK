@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsDateString,
@@ -10,8 +10,27 @@ import {
   Min,
   Max,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { DropCategory, DropStatus } from '../../../common';
+
+export class UpdateDropItemDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isAssignable?: boolean;
+}
 
 export class UpdateDropDto {
   @ApiPropertyOptional({ example: 'Golden Hour Shoot' })
@@ -76,9 +95,25 @@ export class UpdateDropDto {
 
   @ApiPropertyOptional({
     type: 'array',
-    items: { oneOf: [{ type: 'string' }, { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' } } }] },
-    example: ['New Item', { id: 'uuid', name: 'Existing Item' }],
+    items: {
+      oneOf: [
+        { type: 'string' },
+        { $ref: '#/components/schemas/UpdateDropItemDto' },
+      ],
+    },
+    example: ['New Item', { id: 'uuid', name: 'Existing Item', isAssignable: false }],
   })
   @IsOptional()
-  neededItems?: (string | { id: string; name: string })[];
+  @ValidateNested({ each: true })
+  @Type(() => Object, {
+    keepDiscriminatorProperty: true,
+    discriminator: {
+      property: '__type',
+      subTypes: [
+        { value: String, name: 'string' },
+        { value: UpdateDropItemDto, name: 'object' },
+      ],
+    },
+  })
+  neededItems?: (string | UpdateDropItemDto)[];
 }

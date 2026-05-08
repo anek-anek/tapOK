@@ -87,6 +87,7 @@ export interface DropItem {
     avatar?: string;
   } | null;
   isConfirmed: boolean;
+  isAssignable: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -176,7 +177,7 @@ export interface CreateDropDto {
   overview?: string;
   idempotencyKey?: string;
   coverPhotoBase64?: string;
-  neededItems?: string[];
+  neededItems?: (string | { name: string; isAssignable: boolean })[];
 }
 
 export interface UpdateDropDto {
@@ -190,7 +191,7 @@ export interface UpdateDropDto {
   category?: DropCategory;
   minimumAge?: number | null;
   overview?: string;
-  neededItems?: (string | { id: string; name: string })[];
+  neededItems?: (string | { id?: string; name: string; isAssignable?: boolean })[];
 }
 
 export interface DropPhoto {

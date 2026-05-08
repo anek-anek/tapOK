@@ -10,8 +10,22 @@ import {
   Max,
   IsEnum,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { DropCategory } from '../../../common';
+
+export class CreateDropItemDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isAssignable?: boolean;
+}
 
 export class CreateDropDto {
   @ApiProperty({ example: 'Beach Sunset Shoot' })
@@ -78,8 +92,27 @@ export class CreateDropDto {
   @IsString()
   coverPhotoBase64?: string;
 
-  @ApiPropertyOptional({ type: [String], example: ['Pork', 'Drinks'] })
+  @ApiPropertyOptional({
+    type: 'array',
+    items: {
+      oneOf: [
+        { type: 'string' },
+        { $ref: '#/components/schemas/CreateDropItemDto' },
+      ],
+    },
+    example: ['Pork', { name: 'Drinks', isAssignable: false }],
+  })
   @IsOptional()
-  @IsString({ each: true })
-  neededItems?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => Object, {
+    keepDiscriminatorProperty: true,
+    discriminator: {
+      property: '__type',
+      subTypes: [
+        { value: String, name: 'string' },
+        { value: CreateDropItemDto, name: 'object' },
+      ],
+    },
+  })
+  neededItems?: (string | CreateDropItemDto)[];
 }

@@ -43,6 +43,10 @@ export class DropItem {
   @Column({ default: false })
   isConfirmed: boolean;
 
+  @ApiProperty({ default: true })
+  @Column({ default: true })
+  isAssignable: boolean;
+
   @ApiProperty()
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
