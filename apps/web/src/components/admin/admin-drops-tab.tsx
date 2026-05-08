@@ -8,36 +8,40 @@ import { Trash2, Calendar } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { AdminConfirmModal } from './admin-confirm-modal';
 import { AdminDropSummaryModal } from './admin-summary-modals';
+import { ConfirmModal } from '../shared/ConfirmModal';
 import type { Drop } from '@/types/drop';
 
 export function AdminDropsTab() {
-  const { data: drops, isLoading } = useAllDrops();
+  const { data: drops, isLoading } = useDrops();
   const queryClient = useQueryClient();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmModalId, setConfirmModalId] = useState<string | null>(null);
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
 
   const handleDelete = async (id: string) => {
-    setDeletingId(id);
     try {
-      await dropsService.delete(id);
-      await queryClient.invalidateQueries({ queryKey: ['drops'] });
-    } catch (err) {
-      console.error('Failed to delete drop:', err);
-      alert('Failed to delete drop.');
-    } finally {
-      setDeletingId(null);
+      await api.delete(`/drops/${id}`);
+      queryClient.invalidateQueries({ queryKey: ['drops'] });
       setConfirmModalId(null);
+    } catch (error) {
+      console.error('Failed to delete drop:', error);
     }
   };
 
-  if (isLoading) return <div className="p-8 text-center font-passion uppercase tracking-widest text-tok-black/40">Loading drops...</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-16 w-full animate-pulse rounded-sm border-[3px] border-tok-black/10 bg-white/50" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
-      <AdminConfirmModal
+      <ConfirmModal
         isOpen={!!confirmModalId}
         onClose={() => setConfirmModalId(null)}
         onConfirm={() => confirmModalId && handleDelete(confirmModalId)}
