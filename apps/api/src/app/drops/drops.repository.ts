@@ -64,6 +64,17 @@ export class DropsRepository {
     });
   }
 
+  findDeleteTargetById(id: string): Promise<Pick<Drop, 'id' | 'organiserId' | 'coverPhoto'> | null> {
+    return this.dropRepo.findOne({
+      where: { id },
+      select: {
+        id: true,
+        organiserId: true,
+        coverPhoto: true,
+      },
+    });
+  }
+
   findDropsWithCoverPhoto(): Promise<Drop[]> {
     return this.dropRepo
       .createQueryBuilder('drop')
@@ -493,6 +504,10 @@ export class DropsRepository {
     await this.photoRepo.delete(id);
   }
 
+  async deletePhotosByDropId(dropId: string): Promise<void> {
+    await this.photoRepo.delete({ dropId });
+  }
+
   async deleteNonFeaturedPhotosForDrops(dropIds: string[]): Promise<void> {
     if (dropIds.length === 0) return;
     await this.photoRepo.delete({ dropId: In(dropIds), isFeatured: false });
@@ -557,6 +572,22 @@ export class DropsRepository {
 
   async delete(id: string): Promise<void> {
     await this.dropRepo.delete(id);
+  }
+
+  async deleteLogsByDropId(dropId: string): Promise<void> {
+    await this.logRepo.delete({ dropId });
+  }
+
+  async deleteCrewByDropId(dropId: string): Promise<void> {
+    await this.crewRepo.delete({ dropId });
+  }
+
+  async deleteSparksByDropId(dropId: string): Promise<void> {
+    await this.sparkRepo.delete({ dropId });
+  }
+
+  async deleteItemsByDropId(dropId: string): Promise<void> {
+    await this.itemRepo.delete({ dropId });
   }
 
   async findItemsByDropId(dropId: string): Promise<DropItem[]> {
