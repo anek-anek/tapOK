@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { format } from 'date-fns';
 import { AdminDropSummaryModal } from './admin-summary-modals';
 import { ConfirmModal } from '../shared/ConfirmModal';
-import { api } from '@/lib/api';
+import { api } from '@/services/api';
 import type { Drop } from '@/types/drop';
 
 export function AdminDropsTab() {

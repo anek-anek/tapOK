@@ -17,7 +17,7 @@ export class FeedbackVote {
   @Column()
   userId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
 
   @Column({ type: 'int' })

@@ -42,7 +42,7 @@ export class Feedback {
   @Column()
   creatorId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   creator: User;
 
   @OneToMany(() => FeedbackVote, (vote) => vote.feedback)

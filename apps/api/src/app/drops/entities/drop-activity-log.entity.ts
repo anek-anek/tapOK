@@ -32,7 +32,7 @@ export class DropActivityLog {
   userId: string;
 
   @ApiProperty({ type: () => User })
-  @ManyToOne(() => User, { eager: false })
+  @ManyToOne(() => User, { eager: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 
