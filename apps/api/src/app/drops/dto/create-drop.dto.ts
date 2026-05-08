@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsDateString,
@@ -10,8 +10,23 @@ import {
   Max,
   IsEnum,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { DropCategory } from '../../../common';
+import { ExistingNeededItemDto } from './needed-item.dto';
+
+export class CreateDropItemDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isAssignable?: boolean;
+}
 
 export class CreateDropDto {
   @ApiProperty({ example: 'Beach Sunset Shoot' })
@@ -78,8 +93,16 @@ export class CreateDropDto {
   @IsString()
   coverPhotoBase64?: string;
 
-  @ApiPropertyOptional({ type: [String], example: ['Pork', 'Drinks'] })
+  @ApiPropertyOptional({
+    type: 'array',
+    items: {
+      oneOf: [
+        { type: 'string' },
+        { $ref: getSchemaPath(ExistingNeededItemDto) },
+      ],
+    },
+    example: ['New Item', { id: 'uuid', name: 'Existing Item' }],
+  })
   @IsOptional()
-  @IsString({ each: true })
-  neededItems?: string[];
+  neededItems?: (string | ExistingNeededItemDto)[];
 }

@@ -22,6 +22,7 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiExtraModels,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -41,6 +42,7 @@ import { CreatePhotoUploadDto } from './dto/create-photo-upload.dto';
 import { PhotoUploadSessionDto } from './dto/photo-upload-session.dto';
 import { DiscoverDropsResponseDto } from './dto/discover-drops-response.dto';
 import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
+import { ExistingNeededItemDto } from './dto/needed-item.dto';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropPhoto } from './entities/drop-photo.entity';
@@ -53,6 +55,7 @@ interface RequestWithUser extends Request {
 
 @ApiTags('drops')
 @ApiBearerAuth()
+@ApiExtraModels(ExistingNeededItemDto)
 @Controller('drops')
 export class DropsController {
   constructor(

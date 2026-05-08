@@ -72,10 +72,10 @@ export class MediaAssetsService {
       const publicPrefix = '/storage/v1/object/public/drops/';
       const signedPrefix = '/storage/v1/object/sign/drops/';
       if (pathname.startsWith(publicPrefix)) {
-        return `drops/${pathname.slice(publicPrefix.length)}`;
+        return pathname.slice(publicPrefix.length);
       }
       if (pathname.startsWith(signedPrefix)) {
-        return `drops/${pathname.slice(signedPrefix.length)}`;
+        return pathname.slice(signedPrefix.length);
       }
     } catch {
       return null;

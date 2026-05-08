@@ -20,16 +20,23 @@ export class DropsCronService {
     private readonly usersRepository: UsersRepository,
   ) {}
 
-  @Cron('* * * * *')
+  @Cron('*/5 * * * *')
   async transitionDropStatuses(): Promise<{ toOngoing: number; toCompleted: number }> {
     const now = new Date();
     const toOngoing = await this.transitionActiveToOngoing(now);
     const toCompleted = await this.transitionOngoingToCompleted(now);
+    return { toOngoing, toCompleted };
+  }
+
+  @Cron('0 2 * * *')
+  async runDailyMaintenance(): Promise<void> {
+    const now = new Date();
+    this.logger.log('Starting daily storage maintenance...');
     await this.cleanupExpiredDropsPhotos(now);
     await this.cleanupStalePendingPhotoUploads(now);
     await this.cleanupStalePendingAvatarUploads(now);
     await this.repairDeadCoverPhotos();
-    return { toOngoing, toCompleted };
+    this.logger.log('Daily storage maintenance completed.');
   }
 
   private async transitionActiveToOngoing(now: Date): Promise<number> {
