@@ -19,6 +19,7 @@ import {
   Trash2 as IconTrash,
   Pencil as IconPencil,
   Check as IconCheck,
+  Hand as IconHand,
 } from 'lucide-react';
 import {
   useCreateDrop,
@@ -65,7 +66,11 @@ const dropFormSchema = z.object({
   overview: z.string().optional(),
   neededItems: z.array(z.union([
     z.string(),
-    z.object({ id: z.string(), name: z.string() })
+    z.object({ 
+      id: z.string().optional(), 
+      name: z.string(), 
+      isAssignable: z.boolean().default(true) 
+    })
   ])).optional(),
 });
 
@@ -89,7 +94,7 @@ type FormValues = {
   category?: 'hangout' | 'party';
   minimumAge?: number | null;
   overview?: string;
-  neededItems?: (string | { id: string; name: string })[];
+  neededItems?: (string | { id?: string; name: string; isAssignable?: boolean })[];
 };
 
 const COMPLETE_TIME_PATTERN = /^\d{1,2}:\d{2}$/;
@@ -175,10 +180,12 @@ function DateTimePicker({
   value,
   onChange,
   id,
+  hasError,
 }: {
   value: string;
   onChange: (val: string) => void;
   id?: string;
+  hasError?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -265,7 +272,12 @@ function DateTimePicker({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger
             id={`${id}-date`}
-            className="flex h-12 w-full items-center justify-between rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none focus-visible:outline-none"
+            className={cn(
+              "flex h-12 w-full items-center justify-between rounded-sm border-[3px] bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black transition-all hover:-translate-y-0.5 active:translate-y-0 active:shadow-none focus-visible:outline-none",
+              hasError
+                ? "border-red-500 hover:shadow-[3px_3px_0px_#ef4444]"
+                : "border-tok-black hover:shadow-[3px_3px_0px_#1C1C1A]"
+            )}
           >
             {selectedDate ? format(selectedDate, 'MMM d, yyyy') : <span className="text-tok-black/15">Pick date</span>}
             <IconChevronDown size={16} className="text-tok-black/40" strokeWidth={2.5} />
@@ -300,13 +312,21 @@ function DateTimePicker({
             onChange={handleTimeInput}
             onBlur={handleTimeBlur}
             placeholder="h:mm"
-            className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+            aria-invalid={hasError}
+            autoComplete="off"
+            className={cn(
+              "h-12 rounded-sm border-[3px] bg-white px-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0",
+              hasError ? "border-red-500" : "border-tok-black"
+            )}
           />
         </Field>
 
         {/* AM/PM toggle */}
         <Field className="w-20 shrink-0">
-          <div className="flex h-12 min-w-0 items-stretch overflow-hidden rounded-sm border-[3px] border-tok-black bg-white">
+          <div className={cn(
+            "flex h-12 min-w-0 items-stretch overflow-hidden rounded-sm border-[3px] bg-white",
+            hasError ? "border-red-500" : "border-tok-black"
+          )}>
             {(['AM', 'PM'] as const).map((p) => (
               <button
                 key={p}
@@ -327,7 +347,7 @@ function DateTimePicker({
   );
 }
 
-type GearItem = string | { id: string; name: string };
+type GearItem = string | { id?: string; name: string; isAssignable?: boolean };
 
 function GearItemsField({ control }: { control: Control<FormValues> }) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -382,51 +402,86 @@ function GearItemsField({ control }: { control: Control<FormValues> }) {
                 return (
                   <div
                     key={index}
-                    className="flex items-center justify-between gap-3 rounded-sm border-[3px] border-tok-black bg-white px-4 py-2 shadow-[4px_4px_0px_#1C1C1A]"
+                    className="flex flex-col gap-2 rounded-sm border-[3px] border-tok-black bg-white px-4 py-3 shadow-[4px_4px_0px_#1C1C1A]"
                   >
-                    {isEditing ? (
-                      <input
-                        ref={editInputRef}
-                        autoFocus
-                        value={editDraft}
-                        onChange={(e) => setEditDraft(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') { e.preventDefault(); commitEdit(index); }
-                          if (e.key === 'Escape') cancelEdit();
-                        }}
-                        onBlur={() => commitEdit(index)}
-                        className="flex-1 min-w-0 font-passion text-sm font-bold uppercase tracking-wide text-tok-black bg-transparent border-b-2 border-tok-black outline-none"
-                      />
-                    ) : (
-                      <span className="flex-1 font-passion text-sm font-bold uppercase tracking-wide text-tok-black">
-                        {name}
-                      </span>
-                    )}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center justify-between gap-3">
                       {isEditing ? (
-                        <button
-                          type="button"
-                          onMouseDown={(e) => { e.preventDefault(); commitEdit(index); }}
-                          className="text-tok-teal transition-colors"
-                        >
-                          <IconCheck size={16} strokeWidth={2.5} />
-                        </button>
+                        <input
+                          ref={editInputRef}
+                          autoFocus
+                          value={editDraft}
+                          autoComplete="off"
+                          onChange={(e) => setEditDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); commitEdit(index); }
+                            if (e.key === 'Escape') cancelEdit();
+                          }}
+                          onBlur={() => commitEdit(index)}
+                          className="flex-1 min-w-0 font-passion text-sm font-bold uppercase tracking-wide text-tok-black bg-transparent border-b-2 border-tok-black outline-none"
+                        />
                       ) : (
+                        <span className="flex-1 min-w-0 font-passion text-sm font-bold uppercase tracking-wide text-tok-black truncate">
+                          {name}
+                        </span>
+                      )}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isEditing ? (
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); commitEdit(index); }}
+                            className="text-tok-teal transition-colors"
+                          >
+                            <IconCheck size={16} strokeWidth={2.5} />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => startEdit(index)}
+                            className="text-tok-black/40 transition-colors hover:text-tok-black"
+                          >
+                            <IconPencil size={15} strokeWidth={2.5} />
+                          </button>
+                        )}
                         <button
                           type="button"
-                          onClick={() => startEdit(index)}
-                          className="text-tok-black/40 transition-colors hover:text-tok-black"
+                          onClick={() => removeItem(index)}
+                          className="text-tok-black/40 transition-colors hover:text-red-500"
                         >
-                          <IconPencil size={15} strokeWidth={2.5} />
+                          <IconTrash size={16} strokeWidth={2.5} />
                         </button>
-                      )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => removeItem(index)}
-                        className="text-tok-black/40 transition-colors hover:text-red-500"
+                        onClick={() => {
+                          const isAssignable = typeof item === 'string' ? true : (item.isAssignable ?? true);
+                          const updated = items.map((it, i) => {
+                            if (i !== index) return it;
+                            if (typeof it === 'string') return { name: it, isAssignable: !isAssignable };
+                            return { ...it, isAssignable: !isAssignable };
+                          });
+                          field.onChange(updated);
+                        }}
+                        className={cn(
+                          "flex items-center gap-1.5 rounded-sm border-2 border-tok-black px-2 py-0.5 transition-all",
+                          (typeof item === 'string' ? true : (item.isAssignable ?? true))
+                            ? "bg-tok-teal text-tok-cream shadow-[2px_2px_0px_#1C1C1A]"
+                            : "bg-white text-tok-black/40 border-tok-black/20"
+                        )}
                       >
-                        <IconTrash size={16} strokeWidth={2.5} />
+                        <IconHand size={10} strokeWidth={3} />
+                        <span className="font-passion text-[9px] font-bold uppercase tracking-wider">
+                          {(typeof item === 'string' ? true : (item.isAssignable ?? true)) ? 'Pickable' : 'List Only'}
+                        </span>
                       </button>
+                      
+                      {!(typeof item === 'string' ? true : (item.isAssignable ?? true)) && (
+                        <span className="font-passion text-[8px] font-bold uppercase tracking-tight text-tok-black/30">
+                          Just a reminder for the drop
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
@@ -435,6 +490,7 @@ function GearItemsField({ control }: { control: Control<FormValues> }) {
             <div className="relative">
               <Input
                 placeholder="Add gear"
+                autoComplete="off"
                 className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 pr-12 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -682,7 +738,10 @@ export function DropModal({
           overview: values.overview,
           idempotencyKey: idempotencyKeyRef.current,
           ...(coverPhotoBase64 ? { coverPhotoBase64 } : {}),
-          neededItems: values.neededItems?.filter((item): item is string => typeof item === 'string') ?? [],
+          neededItems: values.neededItems?.map((item) => {
+            if (typeof item === 'string') return { name: item, isAssignable: true };
+            return { name: item.name, isAssignable: item.isAssignable ?? true };
+          }) ?? [],
         };
 
         let result: Drop;
@@ -891,7 +950,12 @@ export function DropModal({
                               type="text"
                               placeholder="e.g. Rooftop Drinks"
                               autoFocus
-                              className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                              aria-invalid={!!errors.name}
+                              autoComplete="off"
+                              className={cn(
+                                "h-12 rounded-sm border-[3px] bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0",
+                                errors.name ? "border-red-500" : "border-tok-black"
+                              )}
                             />
                           )}
                         />
@@ -917,6 +981,7 @@ export function DropModal({
                               {...field}
                               id="drop-modal-overview"
                               rows={2}
+                              autoComplete="off"
                               placeholder="e.g. Bring your own drinks and some snacks to share!"
                               className="w-full resize-none rounded-sm border-[3px] border-tok-black bg-white px-4 py-3 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                             />
@@ -929,9 +994,14 @@ export function DropModal({
                           name="scheduledAt"
                           control={control}
                           render={({ field }) => (
-                            <DateTimePicker id="drop-modal" value={field.value} onChange={field.onChange} />
+                            <DateTimePicker id="drop-modal" value={field.value} onChange={field.onChange} hasError={!!errors.scheduledAt} />
                           )}
                         />
+                        {errors.scheduledAt && (
+                          <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-red-500">
+                            {errors.scheduledAt.message}
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-1.5">
@@ -950,7 +1020,11 @@ export function DropModal({
                               id="drop-modal-location"
                               type="text"
                               placeholder="e.g. Sunset Beach"
-                              className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
+                              aria-invalid={!!errors.location}
+                              className={cn(
+                                "h-12 rounded-sm border-[3px] bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0",
+                                errors.location ? "border-red-500" : "border-tok-black"
+                              )}
                             />
                           )}
                         />
@@ -1019,6 +1093,7 @@ export function DropModal({
                               id="drop-modal-headcount"
                               type="number"
                               min={1}
+                              autoComplete="off"
                               placeholder="e.g. 20"
                               onWheel={(e) => e.currentTarget.blur()}
                               className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -1137,6 +1212,7 @@ export function DropModal({
                                         min={1}
                                         max={99}
                                         value={field.value ?? 20}
+                                        autoComplete="off"
                                         onChange={(e) => {
                                           const n = Number.parseInt(e.target.value, 10);
                                           if (!Number.isFinite(n)) return;

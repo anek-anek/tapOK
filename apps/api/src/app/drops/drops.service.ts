@@ -311,10 +311,14 @@ export class DropsService {
       });
 
       if (dto.neededItems?.length) {
-        for (const itemName of dto.neededItems) {
+        for (const item of dto.neededItems) {
+          const name = typeof item === 'string' ? item : item.name;
+          const isAssignable = typeof item === 'string' ? true : (item.isAssignable ?? true);
+          
           await this.dropsRepository.addItem({
             dropId: drop.id,
-            name: itemName,
+            name,
+            isAssignable,
           });
         }
       }
@@ -504,17 +508,32 @@ export class DropsService {
         await this.dropsRepository.deleteItem(item.id);
       }
 
-      // Add new items (strings) and update existing names if needed
+      // Add new items (strings or objects without ID) and update existing items
       for (const item of incomingItems) {
         if (typeof item === 'string') {
           await this.dropsRepository.addItem({
             dropId: id,
             name: item,
+            isAssignable: true,
+          });
+        } else if (!item.id) {
+          await this.dropsRepository.addItem({
+            dropId: id,
+            name: item.name,
+            isAssignable: item.isAssignable ?? true,
           });
         } else {
           const existing = currentItems.find((ci) => ci.id === item.id);
-          if (existing && existing.name !== item.name) {
-            await this.dropsRepository.updateItem(item.id, { name: item.name });
+          if (existing) {
+            const hasNameChanged = item.name !== undefined && existing.name !== item.name;
+            const hasAssignableChanged = item.isAssignable !== undefined && existing.isAssignable !== item.isAssignable;
+            
+            if (hasNameChanged || hasAssignableChanged) {
+              await this.dropsRepository.updateItem(item.id, {
+                ...(hasNameChanged && { name: item.name }),
+                ...(hasAssignableChanged && { isAssignable: item.isAssignable }),
+              });
+            }
           }
         }
       }

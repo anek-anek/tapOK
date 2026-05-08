@@ -3,16 +3,28 @@ import { getServerApiUrl } from '@/lib/config';
 
 const API_URL = getServerApiUrl().replace(/\/$/, '');
 
-// Proxy all /api/auth/* requests to the NestJS API and relay Set-Cookie headers
-// back to the browser on tapok.app. This makes BetterAuth session cookies
-// same-origin, eliminating all cross-origin cookie problems.
 async function handler(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   const url = `${API_URL}/api/auth/${path.join('/')}${req.nextUrl.search}`;
 
   const headers = new Headers();
   req.headers.forEach((value, key) => {
-    if (!['host', 'connection', 'transfer-encoding', 'accept-encoding'].includes(key.toLowerCase())) {
+    const k = key.toLowerCase();
+    if (['host', 'connection', 'transfer-encoding', 'accept-encoding'].includes(k)) {
+      return;
+    }
+
+    if (k === 'cookie') {
+      const filteredCookies = value
+        .split(';')
+        .map((c) => c.trim())
+        .filter((c) => c.startsWith('better-auth') || c.startsWith('__Secure-better-auth'))
+        .join('; ');
+
+      if (filteredCookies) {
+        headers.set(key, filteredCookies);
+      }
+    } else {
       headers.set(key, value);
     }
   });
@@ -28,15 +40,20 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ path: s
       redirect: 'manual',
     });
   } catch (err) {
-    console.error('[auth-proxy] fetch failed', { url, error: err });
+    const cookieHeader = req.headers.get('cookie') || '';
+    console.error('[auth-proxy] fetch failed', {
+      url,
+      error: err,
+      cookieHeaderLength: cookieHeader.length,
+      filteredCookieLength: headers.get('cookie')?.length || 0,
+      headerNames: Array.from(req.headers.keys()),
+    });
     return new NextResponse(`Auth proxy error: ${String(err)}`, { status: 502 });
   }
 
   const resHeaders = new Headers();
   apiRes.headers.forEach((value, key) => {
     if (['content-encoding', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) return;
-    // Use append for Set-Cookie so multiple cookies are all forwarded (set() would
-    // overwrite and only the last cookie would reach the browser).
     if (key.toLowerCase() === 'set-cookie') {
       resHeaders.append(key, value);
     } else {

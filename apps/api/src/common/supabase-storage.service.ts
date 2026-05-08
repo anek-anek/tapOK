@@ -6,9 +6,10 @@ import { StorageClient } from '@supabase/storage-js';
 export class SupabaseStorageService {
   public readonly storage: StorageClient;
   private readonly bucket = 'drops';
+
+  private static readonly SIGNED_READ_URL_TTL_SECONDS = 60 * 60 * 24 * 7; // 1 week
+  private static readonly SIGNED_READ_URL_CACHE_SKEW_MS = 60 * 60 * 1000; // 1 hour
   private readonly signedReadUrlCache = new Map<string, { url: string; expiresAt: number }>();
-  private static readonly SIGNED_READ_URL_TTL_SECONDS = 60 * 60;
-  private static readonly SIGNED_READ_URL_CACHE_SKEW_MS = 5 * 60 * 1000;
 
   constructor(private readonly config: ConfigService) {
     const url = config.getOrThrow<string>('SUPABASE_URL');
@@ -31,8 +32,7 @@ export class SupabaseStorageService {
 
     if (error) throw new InternalServerErrorException(`Storage upload failed: ${error.message}`);
 
-    const { data } = bucket.getPublicUrl(path);
-    return `${data.publicUrl}?t=${Date.now()}`;
+    return this.resolvePhotoReadUrl(path);
   }
 
   async uploadPhoto(dropId: string, photoId: string, buffer: Buffer, mimeType: string): Promise<string> {
@@ -47,8 +47,7 @@ export class SupabaseStorageService {
 
     if (error) throw new InternalServerErrorException(`Storage upload failed: ${error.message}`);
 
-    const { data } = bucket.getPublicUrl(path);
-    return `${data.publicUrl}?t=${Date.now()}`;
+    return this.resolvePhotoReadUrl(path);
   }
 
   async deleteDropCover(dropId: string): Promise<void> {
@@ -98,6 +97,7 @@ export class SupabaseStorageService {
     const { data, error } = await this.storage
       .from(this.bucket)
       .createSignedUrl(storagePath, SupabaseStorageService.SIGNED_READ_URL_TTL_SECONDS);
+
     if (error || !data?.signedUrl) {
       throw new InternalServerErrorException(
         `Storage signed read URL creation failed: ${error?.message ?? 'missing signed URL'}`,
@@ -111,30 +111,24 @@ export class SupabaseStorageService {
         SupabaseStorageService.SIGNED_READ_URL_TTL_SECONDS * 1000 -
         SupabaseStorageService.SIGNED_READ_URL_CACHE_SKEW_MS,
     });
+
     return data.signedUrl;
   }
 
-  async tryResolvePhotoReadUrl(storagePath: string): Promise<string | null> {
-    const now = Date.now();
-    const cached = this.signedReadUrlCache.get(storagePath);
-    if (cached && cached.expiresAt > now) {
-      return cached.url;
-    }
-
-    const { data, error } = await this.storage
-      .from(this.bucket)
-      .createSignedUrl(storagePath, SupabaseStorageService.SIGNED_READ_URL_TTL_SECONDS);
-    if (error || !data?.signedUrl) {
+  async tryResolveReadUrl(storagePath: string): Promise<string | null> {
+    try {
+      return await this.resolvePhotoReadUrl(storagePath);
+    } catch {
       return null;
     }
+  }
 
-    this.signedReadUrlCache.set(storagePath, {
-      url: data.signedUrl,
-      expiresAt:
-        now +
-        SupabaseStorageService.SIGNED_READ_URL_TTL_SECONDS * 1000 -
-        SupabaseStorageService.SIGNED_READ_URL_CACHE_SKEW_MS,
-    });
-    return data.signedUrl;
+  async tryResolvePhotoReadUrl(storagePath: string): Promise<string | null> {
+    if (!storagePath) return null;
+    try {
+      return await this.resolvePhotoReadUrl(storagePath);
+    } catch {
+      return null;
+    }
   }
 }
