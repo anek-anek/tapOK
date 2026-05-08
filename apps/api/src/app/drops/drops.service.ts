@@ -1452,6 +1452,10 @@ export class DropsService {
       throw new ForbiddenException('Only the organiser or the assigned crew member can unassign this item');
     }
 
+    if (item.isConfirmed && !isOrganiser) {
+      throw new BadRequestException('Confirmed gear cannot be unassigned by crew. Ask the Chief to release it.');
+    }
+
     await this.dropsRepository.updateItem(itemId, { assignedUserId: null as any });
 
     await this.recordDropActivity({
@@ -1523,6 +1527,33 @@ export class DropsService {
       userId,
       action: 'item_picked',
       changedFields: { itemId, itemName: item.name },
+    });
+  }
+
+  async confirmItem(dropId: string, itemId: string, requesterId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the chief can confirm gear arrival');
+    }
+
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    if (!item.assignedUserId) {
+      throw new BadRequestException('Cannot confirm unassigned gear');
+    }
+
+    await this.dropsRepository.confirmItem(itemId, true);
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'item_confirmed',
+      changedFields: { itemId, itemName: item.name, assignedUserId: item.assignedUserId },
     });
   }
 }

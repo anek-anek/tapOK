@@ -551,8 +551,12 @@ export class DropsRepository {
     return this.itemRepo.save(item);
   }
 
-  async updateItem(id: string, data: Partial<Pick<DropItem, 'name' | 'assignedUserId'>>): Promise<void> {
+  async updateItem(id: string, data: Partial<Pick<DropItem, 'name' | 'assignedUserId' | 'isConfirmed'>>): Promise<void> {
     await this.itemRepo.update(id, data as any);
+  }
+
+  async confirmItem(id: string, isConfirmed: boolean): Promise<void> {
+    await this.itemRepo.update(id, { isConfirmed });
   }
 
   async deleteItem(id: string): Promise<void> {

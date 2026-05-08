@@ -27,6 +27,7 @@ const DROP_LOG_ACTION_PHRASES: Record<string, string> = {
   items_randomly_assigned: 'distributed gear randomly',
   item_picked: 'picked up gear',
   item_unpicked: 'released gear',
+  item_confirmed: 'confirmed gear arrival',
 };
 
 export function phraseForDropLogAction(action: string, changedFields?: Record<string, any>): string {

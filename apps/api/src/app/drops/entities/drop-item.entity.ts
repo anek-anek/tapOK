@@ -39,6 +39,10 @@ export class DropItem {
   @JoinColumn({ name: 'assignedUserId' })
   assignedUser?: User | null;
 
+  @ApiProperty({ default: false })
+  @Column({ default: false })
+  isConfirmed: boolean;
+
   @ApiProperty()
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
