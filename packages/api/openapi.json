@@ -2053,6 +2053,19 @@
         "tags": [
           "Notifications"
         ]
+      },
+      "delete": {
+        "operationId": "NotificationsController_deleteAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete all notifications for the current user",
+        "tags": [
+          "Notifications"
+        ]
       }
     },
     "/notifications/unread-count": {

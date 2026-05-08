@@ -724,7 +724,8 @@ export interface paths {
         get: operations["NotificationsController_findAll"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete all notifications for the current user */
+        delete: operations["NotificationsController_deleteAll"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2756,6 +2757,23 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["NotificationsPageDto"];
                 };
+            };
+        };
+    };
+    NotificationsController_deleteAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
