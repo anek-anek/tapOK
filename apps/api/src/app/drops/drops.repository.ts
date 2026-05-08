@@ -47,6 +47,15 @@ export class DropsRepository {
     private readonly itemRepo: Repository<DropItem>,
   ) {}
 
+  findAll(page: number = 1, limit: number = 100): Promise<Drop[]> {
+    return this.dropRepo.find({
+      relations: { organiser: true },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   findById(id: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
       where: { id },

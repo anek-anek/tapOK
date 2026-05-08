@@ -10,6 +10,7 @@ export * from './enums/drop-status.enum';
 export * from './enums/gender.enum';
 export * from './enums/drop-crew-member-role.enum';
 export * from './enums/user-role.enum';
+export * from './guards/better-auth.guard';
 export * from './guards/cron.guard';
 export * from './guards/roles.guard';
 export * from './media-assets.service';

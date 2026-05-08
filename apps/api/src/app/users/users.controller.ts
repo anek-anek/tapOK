@@ -190,6 +190,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @UseGuards(BetterAuthGuard, RolesGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a user' })
   @ApiResponse({ status: 204 })
@@ -197,8 +198,8 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found.' })
   remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() request: RequestWithUser,
+    @AuthUser() requester: BetterAuthUser,
   ): Promise<void> {
-    return this.usersService.remove(id, request.user.id);
+    return this.usersService.remove(id, requester);
   }
 }

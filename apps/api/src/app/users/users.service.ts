@@ -14,7 +14,7 @@ import { SyncUserDto } from './dto/sync-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { FrequentCrewDto } from './dto/frequent-crew.dto';
-import { AuthProvider, MediaAssetsService } from '../../common';
+import { AuthProvider, MediaAssetsService, UserRole } from '../../common';
 import type { BetterAuthUser } from '../../common/better-auth/better-auth.service';
 import { CreateAvatarUploadDto } from './dto/create-avatar-upload.dto';
 import { AvatarUploadSessionDto } from './dto/avatar-upload-session.dto';
@@ -258,8 +258,13 @@ export class UsersService {
     return { ...saved, avatar: await this.resolveAvatarReference(saved.avatar) };
   }
 
-  async remove(id: string, requesterId: string): Promise<void> {
-    await this.assertOwnership(id, requesterId);
+  async remove(id: string, requester: BetterAuthUser): Promise<void> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) throw new NotFoundException(`User ${id} not found`);
+
+    if ((requester.role as string) !== UserRole.ADMIN && user.id !== requester.id) {
+      throw new ForbiddenException('Access denied');
+    }
     await this.usersRepository.remove(id);
   }
 

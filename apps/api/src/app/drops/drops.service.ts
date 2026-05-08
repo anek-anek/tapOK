@@ -24,7 +24,9 @@ import {
   DropCrewStatus,
   DropStatus,
   MediaAssetsService,
+  UserRole,
 } from '../../common';
+import type { BetterAuthUser } from '../../common/better-auth/better-auth.service';
 import { CreateDropDto } from './dto/create-drop.dto';
 import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
 import { DiscoverDropsResponseDto } from './dto/discover-drops-response.dto';
@@ -64,6 +66,14 @@ export class DropsService {
     private readonly mediaAssets: MediaAssetsService,
     private readonly dataSource: DataSource,
   ) {}
+
+  async findAll(page: number = 1, limit: number = 100): Promise<Drop[]> {
+    const drops = await this.dropsRepository.findAll(page, limit);
+    return Promise.all(drops.map(async (drop) => {
+      const withCover = await this.resolveDropCoverPhoto(drop);
+      return this.resolveDropOrganiserAvatar(withCover);
+    }));
+  }
 
   private async mapRowToDiscoverSummary(
     row: Drop & { sparkCount?: number },
@@ -523,12 +533,12 @@ export class DropsService {
     return this.dropsRepository.findById(id) as Promise<Drop>;
   }
 
-  async delete(id: string, userId: string): Promise<void> {
+  async delete(id: string, requester: BetterAuthUser): Promise<void> {
     const drop = await this.dropsRepository.findById(id);
     if (!drop) throw new NotFoundException(`Drop ${id} not found`);
 
-    if (drop.organiserId !== userId) {
-      throw new ForbiddenException('Only the organiser can delete this drop');
+    if ((requester.role as string) !== UserRole.ADMIN && drop.organiserId !== requester.id) {
+      throw new ForbiddenException('Only the organiser or an admin can delete this drop');
     }
 
     // Clean up cover photo if exists

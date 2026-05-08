@@ -45,6 +45,10 @@ export function TapokNavbar() {
     { href: '/discover', label: 'Discover', active: pathname === '/discover' },
   ];
 
+  if (dbUser?.role === 'admin') {
+    navItems.push({ href: '/admin', label: 'Admin', active: pathname === '/admin' });
+  }
+
   // Prevent scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {

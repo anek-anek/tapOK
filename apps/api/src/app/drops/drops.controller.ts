@@ -27,7 +27,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { CronGuard, DropCategory, DropCrewMemberRole, Public } from '../../common';
+import { AuthUser, CronGuard, DropCategory, DropCrewMemberRole, Public, Roles, RolesGuard, UserRole } from '../../common';
 import type { BetterAuthUser } from '../../common/better-auth/better-auth.service';
 import { DropsService } from './drops.service';
 import { DropsCronService } from './drops-cron.service';
@@ -45,6 +45,7 @@ import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropPhoto } from './entities/drop-photo.entity';
 import { DropItem } from './entities/drop-item.entity';
+import { BetterAuthGuard } from 'src/common/guards/better-auth.guard';
 
 interface RequestWithUser extends Request {
   user: BetterAuthUser;
@@ -58,6 +59,18 @@ export class DropsController {
     private readonly dropsService: DropsService,
     private readonly dropsCronService: DropsCronService,
   ) {}
+
+  @Get()
+  @UseGuards(BetterAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'List all drops (admin only)' })
+  @ApiResponse({ status: 200, type: [Drop] })
+  findAll(
+    @Query('page', new ParseIntPipe({ optional: true })) page = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit = 100,
+  ): Promise<Drop[]> {
+    return this.dropsService.findAll(page, limit);
+  }
 
   @Post('cron/transition')
   @Public()
@@ -193,16 +206,17 @@ export class DropsController {
   }
 
   @Delete(':id')
+  @UseGuards(BetterAuthGuard, RolesGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete a drop (organiser only)' })
+  @ApiOperation({ summary: 'Delete a drop (organiser or admin only)' })
   @ApiResponse({ status: 204, description: 'Drop deleted successfully.' })
-  @ApiResponse({ status: 403, description: 'Only the organiser can delete this drop.' })
+  @ApiResponse({ status: 403, description: 'Only the organiser or an admin can delete this drop.' })
   @ApiResponse({ status: 404, description: 'Drop not found.' })
   delete(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() request: RequestWithUser,
+    @AuthUser() requester: BetterAuthUser,
   ): Promise<void> {
-    return this.dropsService.delete(id, request.user.id);
+    return this.dropsService.delete(id, requester);
   }
 
   @Post(':id/invite/:userId')

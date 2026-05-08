@@ -70,6 +70,16 @@ export function useMyDrops(options?: { enabled?: boolean }) {
   });
 }
 
+export function useAllDrops(options?: { page?: number; limit?: number; enabled?: boolean }) {
+  const page = options?.page ?? 1;
+  const limit = options?.limit ?? 100;
+  return useQuery({
+    queryKey: ['drops', 'all', page, limit],
+    queryFn: () => dropsService.getAll(page, limit),
+    enabled: options?.enabled ?? true,
+  });
+}
+
 
 function useAuthReadyForProtectedDropRoutes() {
   const { dbUser, loading } = useAuth();

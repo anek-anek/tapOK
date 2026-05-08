@@ -35,7 +35,7 @@ export class DropItem {
   assignedUserId?: string | null;
 
   @ApiProperty({ type: () => User, required: false, nullable: true })
-  @ManyToOne(() => User, { eager: false, nullable: true })
+  @ManyToOne(() => User, { eager: false, nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'assignedUserId' })
   assignedUser?: User | null;
 
