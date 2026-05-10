@@ -50,7 +50,7 @@ function SectionHeading({
 export function SignalTowerClient() {
     const [activeTab, setActiveTab] = useState<FeedbackType | undefined>(undefined);
     const [showDialog, setShowDialog] = useState(false);
-    const { data: feedbackItems, isLoading, isError } = useFeedback(activeTab);
+    const { data: feedbackItems, isLoading, isFetching, isError } = useFeedback(activeTab);
 
     const TABS = [
         { id: undefined, label: 'ALL' },
@@ -126,6 +126,18 @@ export function SignalTowerClient() {
 
                     {/* Grid */}
                     <div className="mt-8 relative min-h-[400px]">
+                        {/* Center Loader Overlay */}
+                        {isFetching && (
+                            <div className="absolute inset-0 z-50 flex items-center justify-center bg-tok-cream/10 backdrop-blur-[1px]">
+                                <div className="flex flex-col items-center gap-3 rounded-2xl border-[3px] border-tok-black bg-white p-8 shadow-[8px_8px_0px_#1C1C1A] animate-in fade-in zoom-in duration-300">
+                                    <Loader2 size={32} className="animate-spin text-tok-teal" />
+                                    <p className="font-passion text-sm font-bold uppercase tracking-[2px] text-tok-black">
+                                        Syncing Tower...
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {isLoading ? (
                             <div className="flex flex-col gap-4">
                                 {[1, 2, 3].map(i => (
