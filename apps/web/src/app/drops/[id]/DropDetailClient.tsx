@@ -819,15 +819,17 @@ export default function DropDetailClient({ id }: { id: string }) {
 
             {/* Needed Gear Card */}
             {(canManage || crewStatus?.status === 'in') && (
-              <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
-                <NeededItems
-                  drop={drop}
-                  isOrganiser={canManage}
-                  isCrewMember={crewStatus?.status === 'in'}
-                  currentUser={dbUser}
-                  activeCrew={crew?.filter(m => m.status === 'in') ?? []}
-                />
-              </div>
+              <>
+                <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
+                  <NeededItems
+                    drop={drop}
+                    isOrganiser={canManage}
+                    isCrewMember={crewStatus?.status === 'in'}
+                    currentUser={dbUser}
+                    activeCrew={crew?.filter(m => m.status === 'in') ?? []}
+                  />
+                </div>
+              </>
             )}
 
             {/* Photo Roll */}

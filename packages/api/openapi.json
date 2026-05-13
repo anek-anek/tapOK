@@ -948,6 +948,129 @@
         ]
       }
     },
+    "/drops/{id}/amot/proof": {
+      "patch": {
+        "operationId": "DropsController_submitAmotProof",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitAmotProofDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit proof of amot payment for the whole mission",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/amot/confirm/{userId}": {
+      "patch": {
+        "operationId": "DropsController_confirmAmotPayment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmAmotPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirm global amot payment for a member (chief only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/amot/proof/{userId}": {
+      "delete": {
+        "operationId": "DropsController_rejectAmotProof",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject and delete amot payment proof for a member (chief only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
     "/drops/{id}/invite/{userId}": {
       "post": {
         "operationId": "DropsController_inviteToDrop",
@@ -1986,6 +2109,481 @@
         ]
       }
     },
+    "/drops/{id}/items/{itemId}/amot": {
+      "post": {
+        "operationId": "DropsController_declareAmot",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeclareAmotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Amot cost declared."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Declare amot cost on a gear item (carrier only)",
+        "tags": [
+          "drops"
+        ]
+      },
+      "delete": {
+        "operationId": "DropsController_clearAmot",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Amot cost cleared."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Clear amot cost on a gear item (carrier or chief)",
+        "tags": [
+          "drops"
+        ]
+      },
+      "get": {
+        "operationId": "DropsController_getAmotDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmotSummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get full amot participant breakdown for a gear item",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/items/{itemId}/amot/me": {
+      "patch": {
+        "operationId": "DropsController_toggleAmotOptOut",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleAmotOptOutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Opt-out toggled."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Toggle opt-out from a gear amot (crew member)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/items/{itemId}/amot/{userId}/opt-out": {
+      "patch": {
+        "operationId": "DropsController_toggleMemberAmotOptOut",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleAmotOptOutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Member opt-out toggled."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Toggle opt-out from a gear amot for a specific member (chief only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/items/{itemId}/amot/{userId}/paid": {
+      "patch": {
+        "operationId": "DropsController_toggleAmotPaid",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleAmotPaidDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Paid status toggled."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Toggle paid status for a member on a gear amot (chief or carrier)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/expense-logs": {
+      "post": {
+        "operationId": "DropsController_submitExpenseLog",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseLogDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseLogPublicDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit a freeform expense log for this drop (crew or chief)",
+        "tags": [
+          "drops"
+        ]
+      },
+      "get": {
+        "operationId": "DropsController_getExpenseLogs",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseLogPublicDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all expense logs for this drop",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/expense-logs/{logId}/approve": {
+      "patch": {
+        "operationId": "DropsController_approveExpenseLog",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "logId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Expense log approved."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve an expense log (chief only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/expense-logs/{logId}/reject": {
+      "patch": {
+        "operationId": "DropsController_rejectExpenseLog",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "logId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Expense log rejected."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject an expense log (chief only)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
+    "/drops/{id}/expense-logs/{logId}": {
+      "delete": {
+        "operationId": "DropsController_deleteExpenseLog",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "logId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Expense log deleted."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an expense log (submitter or chief)",
+        "tags": [
+          "drops"
+        ]
+      }
+    },
     "/auth/email/reset-password": {
       "post": {
         "operationId": "AuthEmailController_sendResetEmail",
@@ -2640,6 +3238,27 @@
           "uploadToken"
         ]
       },
+      "ExistingNeededItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Existing Item"
+          },
+          "isAssignable": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "DropSpark": {
         "type": "object",
         "properties": {
@@ -2729,6 +3348,14 @@
             "type": "object",
             "nullable": true
           },
+          "baseCost": {
+            "type": "number",
+            "nullable": true
+          },
+          "chiefContribution": {
+            "type": "number",
+            "nullable": true
+          },
           "organiserId": {
             "type": "string"
           },
@@ -2816,6 +3443,23 @@
             "type": "boolean",
             "default": false
           },
+          "isAssignable": {
+            "type": "boolean",
+            "default": true
+          },
+          "amotCost": {
+            "type": "number",
+            "nullable": true
+          },
+          "amotDeclaredById": {
+            "type": "object",
+            "nullable": true
+          },
+          "sourceExpenseLogId": {
+            "type": "object",
+            "nullable": true,
+            "description": "ID of the expense log that was promoted into this item"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -2831,6 +3475,7 @@
           "dropId",
           "drop",
           "isConfirmed",
+          "isAssignable",
           "createdAt",
           "updatedAt"
         ]
@@ -3145,14 +3790,24 @@
             "description": "Optional JPG/PNG cover as data URL; max 5MB decoded size."
           },
           "neededItems": {
-            "example": [
-              "Pork",
-              "Drinks"
-            ],
             "type": "array",
             "items": {
-              "type": "string"
-            }
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/components/schemas/ExistingNeededItemDto"
+                }
+              ]
+            },
+            "example": [
+              "New Item",
+              {
+                "id": "uuid",
+                "name": "Existing Item"
+              }
+            ]
           }
         },
         "required": [
@@ -3313,6 +3968,30 @@
           "isPresent"
         ]
       },
+      "SubmitAmotProofDto": {
+        "type": "object",
+        "properties": {
+          "proofBase64": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "proofBase64"
+        ]
+      },
+      "ConfirmAmotPaymentDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "example": 500,
+            "description": "The exact amount paid by the crew member to verify against the ledger"
+          }
+        },
+        "required": [
+          "amount"
+        ]
+      },
       "UpdateDropDto": {
         "type": "object",
         "properties": {
@@ -3375,15 +4054,7 @@
                   "type": "string"
                 },
                 {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/ExistingNeededItemDto"
                 }
               ]
             },
@@ -3394,6 +4065,14 @@
                 "name": "Existing Item"
               }
             ]
+          },
+          "baseCost": {
+            "type": "number",
+            "example": 1000
+          },
+          "chiefContribution": {
+            "type": "number",
+            "example": 200
           }
         }
       },
@@ -3556,6 +4235,198 @@
           "createdAt",
           "updatedAt",
           "user"
+        ]
+      },
+      "DeclareAmotDto": {
+        "type": "object",
+        "properties": {
+          "cost": {
+            "type": "number",
+            "example": 500
+          }
+        },
+        "required": [
+          "cost"
+        ]
+      },
+      "ToggleAmotOptOutDto": {
+        "type": "object",
+        "properties": {
+          "isOptedOut": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isOptedOut"
+        ]
+      },
+      "AmotParticipantDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "object",
+            "nullable": true
+          },
+          "isOptedOut": {
+            "type": "boolean"
+          },
+          "isPaid": {
+            "type": "boolean"
+          },
+          "isCarrier": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "userId",
+          "firstName",
+          "lastName",
+          "isOptedOut",
+          "isPaid",
+          "isCarrier"
+        ]
+      },
+      "AmotSummaryDto": {
+        "type": "object",
+        "properties": {
+          "amotCost": {
+            "type": "number",
+            "nullable": true
+          },
+          "amotDeclaredById": {
+            "type": "object",
+            "nullable": true
+          },
+          "perPersonShare": {
+            "type": "number"
+          },
+          "participantCount": {
+            "type": "number"
+          },
+          "myStatus": {
+            "type": "string",
+            "enum": [
+              "carrier",
+              "opted_in",
+              "opted_out",
+              "not_applicable"
+            ]
+          },
+          "myOwed": {
+            "type": "number"
+          },
+          "carrierOwed": {
+            "type": "number"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AmotParticipantDto"
+            }
+          }
+        },
+        "required": [
+          "amotCost",
+          "perPersonShare",
+          "participantCount",
+          "myStatus",
+          "myOwed",
+          "carrierOwed",
+          "participants"
+        ]
+      },
+      "ToggleAmotPaidDto": {
+        "type": "object",
+        "properties": {
+          "isPaid": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isPaid"
+        ]
+      },
+      "CreateExpenseLogDto": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Short description of the expense"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Amount spent"
+          }
+        },
+        "required": [
+          "description",
+          "amount"
+        ]
+      },
+      "ExpenseLogPublicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dropId": {
+            "type": "string"
+          },
+          "submittedById": {
+            "type": "string"
+          },
+          "submittedBy": {
+            "type": "object"
+          },
+          "description": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "reviewedById": {
+            "type": "object"
+          },
+          "linkedItemId": {
+            "type": "object",
+            "nullable": true,
+            "description": "ID of the DropItem created when this log was approved"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "dropId",
+          "submittedById",
+          "description",
+          "amount",
+          "status",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "NotificationDto": {

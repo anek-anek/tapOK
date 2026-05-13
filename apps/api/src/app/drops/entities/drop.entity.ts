@@ -78,6 +78,14 @@ export class Drop {
   @Column({ type: 'text', nullable: true, unique: true })
   idempotencyKey?: string | null;
   
+  @ApiProperty({ required: false, nullable: true, type: Number })
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
+  baseCost: number;
+
+  @ApiProperty({ required: false, nullable: true, type: Number })
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
+  chiefContribution: number;
+
   @ApiProperty()
   @Column()
   organiserId: string;

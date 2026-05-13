@@ -36,6 +36,8 @@ import { DropPhotoPublicDto } from './dto/drop-photo-public.dto';
 import { CreatePhotoUploadDto } from './dto/create-photo-upload.dto';
 import { PhotoUploadSessionDto } from './dto/photo-upload-session.dto';
 import { UpdateDropDto } from './dto/update-drop.dto';
+import { ExpenseLogPublicDto } from './dto/expense-log.dto';
+import { ExpenseLogStatus } from './entities/drop-expense-log.entity';
 import { DROP_PHOTO_MAX_PER_USER, getDropPhotoMaxPerDrop } from './drop-photo.constants';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../../common';
@@ -52,6 +54,13 @@ const PUBLIC_ACTIVITY_CHANGED_FIELDS = new Set([
   'minimumAge',
   'overview',
   'coverPhoto',
+  'itemName',
+  'targetName',
+  'amotCost',
+  'amount',
+  'totalPaid',
+  'totalOwed',
+  'isFullyPaid',
 ]);
 
 @Injectable()
@@ -169,14 +178,21 @@ export class DropsService {
     };
   }
 
+  private async resolveCrewMemberUrls(member: DropCrew): Promise<DropCrew> {
+    const amotProofUrl = member.amotProofPath ? await this.resolveAvatarReference(member.amotProofPath) : null;
+    if (!member.user) return { ...member, amotProofPath: amotProofUrl ?? member.amotProofPath };
+    const resolvedAvatar = await this.resolveAvatarReference(member.user.avatar ?? null);
+    return {
+      ...member,
+      user: { ...member.user, avatar: resolvedAvatar ?? undefined },
+      amotProofPath: amotProofUrl ?? member.amotProofPath,
+    };
+  }
+
   private async resolveDropCrewAvatars(drop: Drop): Promise<Drop> {
     if (!drop.crew?.length) return drop;
     const resolvedCrew = await Promise.all(
-      drop.crew.map(async (member) => {
-        if (!member.user) return member;
-        const resolvedAvatar = await this.resolveAvatarReference(member.user.avatar ?? null);
-        return { ...member, user: { ...member.user, avatar: resolvedAvatar ?? undefined } };
-      }),
+      drop.crew.map((member) => this.resolveCrewMemberUrls(member)),
     );
     return { ...drop, crew: resolvedCrew };
   }
@@ -202,7 +218,7 @@ export class DropsService {
 
   private toSafeChangedFields(
     changedFields?: Record<string, unknown>,
-  ): Record<string, true> | undefined {
+  ): Record<string, any> | undefined {
     if (!changedFields) return undefined;
 
     const safeKeys = Object.keys(changedFields).filter((key) =>
@@ -211,7 +227,7 @@ export class DropsService {
 
     if (safeKeys.length === 0) return undefined;
 
-    return Object.fromEntries(safeKeys.map((key) => [key, true])) as Record<string, true>;
+    return Object.fromEntries(safeKeys.map((key) => [key, changedFields[key]]));
   }
 
   private async assertCanViewDropActivity(dropId: string, userId: string): Promise<void> {
@@ -370,8 +386,8 @@ export class DropsService {
 
     if (!drop.isPublic && userId) {
       if (drop.organiserId !== userId) {
-        const activeCrew = await this.dropsRepository.findActiveInCrewMember(id, userId);
-        if (!activeCrew) {
+        const crewMember = await this.dropsRepository.findCrewMember(id, userId);
+        if (!crewMember) {
           throw new NotFoundException(`Drop ${id} not found`);
         }
       }
@@ -382,10 +398,10 @@ export class DropsService {
     if (drop.organiser) {
       const [{ dropCount, crewReached }] = await this.dataSource.query<[{ dropCount: string, crewReached: string }]>(
         `
-        SELECT 
+        SELECT
           (SELECT COUNT(*) FROM drops WHERE "organiserId" = $1) as "dropCount",
-          (SELECT COUNT(DISTINCT c."userId") 
-           FROM drop_crew c 
+          (SELECT COUNT(DISTINCT c."userId")
+           FROM drop_crew c
            WHERE c."dropId" IN (SELECT id FROM drops WHERE "organiserId" = $1)
            AND c.status = 'in') as "crewReached"
         `,
@@ -396,8 +412,31 @@ export class DropsService {
       (drop.organiser as any).crewReached = parseInt(crewReached, 10);
     }
 
+    if (drop.neededItems?.length && userId) {
+      const inCrew = await this.dropsRepository.findActiveInCrewWithUsers(id);
+      const itemIds = drop.neededItems.map((i) => i.id);
+      const amotRows = await this.dropsRepository.findAmotsByItemIds(itemIds);
+      const amotByItem = new Map<string, typeof amotRows>();
+      for (const row of amotRows) {
+        const list = amotByItem.get(row.itemId) ?? [];
+        list.push(row);
+        amotByItem.set(row.itemId, list);
+      }
+      for (const item of drop.neededItems) {
+        if (item.amotCost != null) {
+          (item as any).amotSummary = this.computeAmotSummary(
+            item,
+            inCrew,
+            amotByItem.get(item.id) ?? [],
+            userId,
+          );
+        }
+      }
+    }
+
     const dropWithCover = await this.resolveDropCoverPhoto(drop);
-    return this.resolveDropOrganiserAvatar(dropWithCover);
+    const dropWithOrganiserAvatar = await this.resolveDropOrganiserAvatar(dropWithCover);
+    return this.resolveDropCrewAvatars(dropWithOrganiserAvatar);
   }
 
   async findMyDrops(userId: string): Promise<Drop[]> {
@@ -430,16 +469,6 @@ export class DropsService {
     const drop = await this.dropsRepository.findByJoinCode(joinCode);
     if (!drop) throw new NotFoundException(`Drop with join code ${joinCode} not found`);
 
-    if (!drop.isPublic) {
-      if (!userId) throw new NotFoundException(`Drop with join code ${joinCode} not found`);
-      if (drop.organiserId !== userId) {
-        const activeCrew = await this.dropsRepository.findActiveInCrewMember(drop.id, userId);
-        if (!activeCrew) {
-          throw new NotFoundException(`Drop with join code ${joinCode} not found`);
-        }
-      }
-    }
-
     drop.crew = await this.dropsRepository.findActiveInCrewWithUsers(drop.id);
     return this.resolveDropCoverPhoto(drop);
   }
@@ -470,6 +499,9 @@ export class DropsService {
     if (dto.category !== undefined) changedFields['category'] = dto.category;
     if (dto.overview !== undefined) changedFields['overview'] = dto.overview;
 
+    if (dto.baseCost !== undefined && dto.baseCost !== drop.baseCost) changedFields['baseCost'] = dto.baseCost;
+    if (dto.chiefContribution !== undefined && dto.chiefContribution !== drop.chiefContribution) changedFields['chiefContribution'] = dto.chiefContribution;
+
     const nextCategory = dto.category !== undefined ? dto.category : drop.category;
     let nextMinimumAge: number | null | undefined = undefined;
     if (dto.category !== undefined && dto.category !== DropCategory.PARTY) {
@@ -492,6 +524,8 @@ export class DropsService {
       ...(dto.category !== undefined && { category: dto.category }),
       ...(dto.overview !== undefined && { overview: dto.overview }),
       ...(nextMinimumAge !== undefined && { minimumAge: nextMinimumAge }),
+      ...(dto.baseCost !== undefined && { baseCost: dto.baseCost }),
+      ...(dto.chiefContribution !== undefined && { chiefContribution: dto.chiefContribution }),
     });
 
     if (dto.neededItems !== undefined) {
@@ -599,6 +633,20 @@ export class DropsService {
       this.logger.warn(`Failed to delete drop photos from storage during drop deletion (dropId=${id}): ${detail}`);
     }
 
+    // Clean up amot proofs if any
+    try {
+      const crew = await this.dropsRepository.findActiveInCrewWithUsers(id);
+      const proofs = crew
+        .map((m) => m.amotProofPath)
+        .filter((path): path is string => Boolean(path));
+
+      if (proofs.length > 0) {
+        await this.mediaAssets.deleteManyByPath(proofs);
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to delete amot proofs from storage during drop deletion (dropId=${id}): ${String(err)}`);
+    }
+
     await this.dropsRepository.delete(id);
     this.logDropAction('drop_deleted', id, drop.organiserId);
   }
@@ -668,10 +716,6 @@ export class DropsService {
         existing.status !== DropCrewStatus.REMOVED
       ) {
         throw new ConflictException('You have already joined this drop');
-      }
-
-      if (!drop.isPublic && (!existing || existing.status !== DropCrewStatus.INVITED)) {
-        throw new ForbiddenException('This drop is private and you have not been invited');
       }
 
       if (drop.isLocked) {
@@ -748,15 +792,7 @@ export class DropsService {
     }
 
     const members = await this.dropsRepository.findCrewMembers(dropId);
-    return Promise.all(
-      members.map(async (member) => ({
-        ...member,
-        user: {
-          ...member.user,
-          avatar: (await this.resolveAvatarReference(member.user.avatar)) ?? undefined,
-        },
-      })),
-    );
+    return Promise.all(members.map((member) => this.resolveCrewMemberUrls(member)));
   }
 
   async rejectPendingMember(dropId: string, targetUserId: string, userId: string): Promise<void> {
@@ -911,7 +947,7 @@ export class DropsService {
     const crewMember = await this.dropsRepository.findCrewMember(dropId, user.id);
     if (!crewMember) throw new NotFoundException('You are not a crew member of this drop');
 
-    return crewMember;
+    return this.resolveCrewMemberUrls(crewMember);
   }
 
   async updatePresence(dropId: string, userId: string, isPresent: boolean): Promise<void> {
@@ -939,9 +975,10 @@ export class DropsService {
     userId: string,
     page: number,
     limit: number,
+    actions?: string[],
   ): Promise<ActivityLogsPageDto> {
     await this.assertCanViewDropActivity(dropId, userId);
-    const logsPage = await this.dropsRepository.findPaginatedActivityLogs(dropId, page, limit);
+    const logsPage = await this.dropsRepository.findPaginatedActivityLogs(dropId, page, limit, actions);
 
     return {
       ...logsPage,
@@ -1827,5 +1864,489 @@ export class DropsService {
       action: 'item_confirmed',
       changedFields: { itemId, itemName: item.name, assignedUserId: item.assignedUserId },
     });
+  }
+
+  async declareAmot(dropId: string, itemId: string, cost: number, requesterId: string): Promise<void> {
+    if (!Number.isFinite(cost) || cost <= 0 || cost > 999999.99) {
+      throw new BadRequestException('Amot cost must be a positive number up to 999,999.99');
+    }
+
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    const drop = await this.dropsRepository.findById(dropId);
+    const isOrganiser = drop?.organiserId === requesterId;
+
+    if (item.assignedUserId !== requesterId && !isOrganiser) {
+      throw new ForbiddenException('Only the person bringing this gear or the chief can declare its amot cost');
+    }
+
+    await this.dropsRepository.updateItemAmot(itemId, {
+      amotCost: cost,
+      amotDeclaredById: requesterId,
+    });
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'amot_declared',
+      changedFields: { itemId, itemName: item.name, amotCost: cost },
+    });
+  }
+
+  async clearAmot(dropId: string, itemId: string, requesterId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    const isCarrier = item.assignedUserId === requesterId;
+    const isOrganiser = drop.organiserId === requesterId;
+    const crew = await this.dropsRepository.findCrewMember(dropId, requesterId);
+    const isCoChief = crew?.memberRole === DropCrewMemberRole.CO_CHIEF;
+
+    if (!isCarrier && !isOrganiser && !isCoChief) {
+      throw new ForbiddenException('Only the carrier or chief can clear the amot cost');
+    }
+
+    await this.dropsRepository.clearItemAmot(itemId);
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'amot_cleared',
+      changedFields: { itemId, itemName: item.name },
+    });
+  }
+
+  async toggleAmotOptOut(dropId: string, itemId: string, isOptedOut: boolean, requesterId: string): Promise<void> {
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    if (item.amotCost == null) {
+      throw new BadRequestException('This item has no amot cost declared');
+    }
+
+    if (item.assignedUserId === requesterId) {
+      throw new ForbiddenException('The carrier cannot opt out of their own amot');
+    }
+
+    const activeCrew = await this.dropsRepository.findActiveInCrewMember(dropId, requesterId);
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!activeCrew && drop?.organiserId !== requesterId) {
+      throw new ForbiddenException('Only active crew members can toggle amot opt-out');
+    }
+
+    await this.dropsRepository.upsertAmotOptOut(itemId, requesterId, isOptedOut);
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: isOptedOut ? 'amot_opted_out' : 'amot_opted_in',
+      changedFields: { itemId, itemName: item.name },
+    });
+  }
+
+  async toggleMemberAmotOptOut(dropId: string, itemId: string, targetUserId: string, isOptedOut: boolean, requesterId: string): Promise<void> {
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    if (item.amotCost == null) {
+      throw new BadRequestException('This item has no amot cost declared');
+    }
+
+    const drop = await this.dropsRepository.findById(dropId);
+    if (drop?.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the chief can rule out crew members from amot');
+    }
+
+    await this.dropsRepository.upsertAmotOptOut(itemId, targetUserId, isOptedOut);
+
+    const targetUser = await this.usersService.findOne(targetUserId);
+    const targetName = targetUser ? `${targetUser.firstName} ${targetUser.lastName}` : 'Unknown';
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: isOptedOut ? 'amot_rule_out' : 'amot_rule_in',
+      changedFields: { itemId, itemName: item.name, targetUserId, targetName },
+    });
+  }
+
+  async toggleAmotPaid(dropId: string, itemId: string, targetUserId: string, isPaid: boolean, requesterId: string): Promise<void> {
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    const isChief = drop.organiserId === requesterId;
+    const isCarrier = item.assignedUserId === requesterId;
+
+    if (!isChief && !isCarrier) {
+      throw new ForbiddenException('Only the chief or the gear carrier can mark as paid');
+    }
+
+    await this.dropsRepository.upsertAmotPaid(itemId, targetUserId, isPaid);
+
+    const targetUser = await this.usersService.findOne(targetUserId);
+    const targetName = targetUser ? `${targetUser.firstName} ${targetUser.lastName}` : 'Unknown';
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: isPaid ? 'amot_marked_paid' : 'amot_marked_unpaid',
+      changedFields: { itemId, itemName: item.name, targetUserId, targetName },
+    });
+  }
+
+  async submitAmotProof(dropId: string, userId: string, proofBase64: string): Promise<string> {
+    const crew = await this.dropsRepository.findCrewMember(dropId, userId);
+    if (!crew || crew.status !== DropCrewStatus.IN) {
+      throw new ForbiddenException('Only active crew members can submit amot proof');
+    }
+
+    const buffer = Buffer.from(proofBase64.replace(/^data:image\/\w+;base64,/, ''), 'base64');
+    const mimeType = proofBase64.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
+    
+    const path = this.mediaAssets.buildAmotProofPath(dropId, userId, mimeType);
+    const readUrl = await this.mediaAssets.uploadImage(path, buffer, mimeType);
+
+    await this.dropsRepository.updateCrewMember(dropId, userId, { amotProofPath: path });
+
+    await this.recordDropActivity({
+      dropId,
+      userId,
+      action: 'amot_proof_submitted',
+      changedFields: { userId },
+    });
+
+    return readUrl;
+  }
+
+  async confirmAmotPayment(dropId: string, userId: string, requesterId: string, amount: number): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the chief can confirm amot payments');
+    }
+
+    const crew = await this.dropsRepository.findCrewMember(dropId, userId);
+    if (!crew) throw new NotFoundException('Crew member not found');
+
+    const amotItems = drop.neededItems?.filter((i: any) => i.amotCost != null) || [];
+    const inCrew = await this.dropsRepository.findActiveInCrewWithUsers(dropId);
+    const expenseLogs = await this.dropsRepository.findExpenseLogsByDrop(dropId);
+
+    const gearTotal = amotItems.reduce((acc, i) => acc + Number(i.amotCost || 0), 0);
+    const approvedExpenses = expenseLogs
+      .filter((l) => l.status === ExpenseLogStatus.APPROVED)
+      .reduce((acc, l) => acc + Number(l.amount || 0), 0);
+    const baseCost = Number(drop.baseCost || 0);
+    const chiefContribution = Number(drop.chiefContribution || 0);
+    const totalMissionCost = baseCost + gearTotal + approvedExpenses - chiefContribution;
+    const crewCount = inCrew.length || 1;
+    const totalOwed = totalMissionCost / crewCount;
+
+    const currentPaid = Number(crew.amotPaidAmount || 0);
+    const totalPaid = currentPaid + amount;
+    const isFullyPaid = totalPaid >= totalOwed;
+
+    const proofPath = crew.amotProofPath;
+
+    await this.dropsRepository.updateCrewMember(dropId, userId, {
+      amotPaidAt: isFullyPaid ? new Date() : null,
+      amotPaidAmount: totalPaid,
+      amotProofPath: null,
+    });
+
+    // Cleanup proof image
+    if (proofPath) {
+      try {
+        await this.mediaAssets.deleteByPath(proofPath);
+      } catch (err) {
+        this.logger.warn(`Failed to cleanup amot proof for user ${userId}: ${String(err)}`);
+      }
+    }
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'amot_confirmed_paid',
+      changedFields: {
+        targetUserId: userId,
+        targetName: `${crew.user.firstName} ${crew.user.lastName}`,
+        amount,
+        totalPaid,
+        totalOwed,
+        isFullyPaid,
+      },
+    });
+  }
+
+  async rejectAmotProof(dropId: string, userId: string, requesterId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the chief can reject amot proofs');
+    }
+
+    const crew = await this.dropsRepository.findCrewMember(dropId, userId);
+    if (!crew) throw new NotFoundException('Crew member not found');
+
+    const proofPath = crew.amotProofPath;
+
+    await this.dropsRepository.updateCrewMember(dropId, userId, {
+      amotProofPath: null,
+    });
+
+    if (proofPath) {
+      try {
+        await this.mediaAssets.deleteByPath(proofPath);
+      } catch (err) {
+        this.logger.warn(`Failed to cleanup rejected amot proof for user ${userId}: ${String(err)}`);
+      }
+    }
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'amot_proof_rejected',
+      changedFields: { targetUserId: userId, targetName: `${crew.user.firstName} ${crew.user.lastName}` },
+    });
+  }
+
+
+  async submitExpenseLog(dropId: string, description: string, amount: number, requesterId: string): Promise<ExpenseLogPublicDto> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    const crew = await this.dropsRepository.findCrewMember(dropId, requesterId);
+    const isOrganiser = drop.organiserId === requesterId;
+    if (!crew && !isOrganiser) {
+      throw new ForbiddenException('Only crew members can submit expense logs');
+    }
+
+    const log = await this.dropsRepository.createExpenseLog(dropId, requesterId, description, amount);
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: 'expense_log_submitted',
+      changedFields: { description, amount },
+    });
+
+    return this.mapExpenseLog(log);
+  }
+
+  async getExpenseLogs(dropId: string, requesterId: string): Promise<ExpenseLogPublicDto[]> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    const crew = await this.dropsRepository.findCrewMember(dropId, requesterId);
+    const isOrganiser = drop.organiserId === requesterId;
+    if (!crew && !isOrganiser) {
+      throw new ForbiddenException('Only crew members can view expense logs');
+    }
+
+    const logs = await this.dropsRepository.findExpenseLogsByDrop(dropId);
+    return logs.map((l) => this.mapExpenseLog(l));
+  }
+
+  async reviewExpenseLog(dropId: string, logId: string, approve: boolean, requesterId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    if (drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only the chief can approve or reject expense logs');
+    }
+
+    const log = await this.dropsRepository.findExpenseLogById(logId);
+    if (!log || log.dropId !== dropId) {
+      throw new NotFoundException(`Expense log ${logId} not found`);
+    }
+
+    if (log.status !== ExpenseLogStatus.PENDING) {
+      throw new BadRequestException('This expense log has already been reviewed');
+    }
+
+    const status = approve ? ExpenseLogStatus.APPROVED : ExpenseLogStatus.REJECTED;
+    await this.dropsRepository.updateExpenseLog(logId, { status, reviewedById: requesterId });
+
+    if (approve) {
+      // Promote the expense log into a DropItem so it gains full gear parity
+      // (amot cost-split, assign, confirm, rename, remove). isAssignable is false
+      // because expense items are not crew-pickable gear.
+      const newItem = await this.dropsRepository.addItem({
+        dropId,
+        name: log.description,
+        isAssignable: false,
+        amotCost: Number(log.amount),
+        sourceExpenseLogId: log.id,
+      });
+
+      // Back-link the expense log to the spawned item for traceability
+      await this.dropsRepository.updateExpenseLog(logId, { linkedItemId: newItem.id });
+
+      await this.recordDropActivity({
+        dropId,
+        userId: requesterId,
+        action: 'expense_promoted_to_item',
+        changedFields: {
+          logId,
+          itemId: newItem.id,
+          description: log.description,
+          amount: log.amount,
+        },
+      });
+    }
+
+    await this.recordDropActivity({
+      dropId,
+      userId: requesterId,
+      action: approve ? 'expense_log_approved' : 'expense_log_rejected',
+      changedFields: { logId, description: log.description, amount: log.amount },
+    });
+  }
+
+  async deleteExpenseLog(dropId: string, logId: string, requesterId: string): Promise<void> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    const log = await this.dropsRepository.findExpenseLogById(logId);
+    if (!log || log.dropId !== dropId) {
+      throw new NotFoundException(`Expense log ${logId} not found`);
+    }
+
+    const isOrganiser = drop.organiserId === requesterId;
+    const isSubmitter = log.submittedById === requesterId;
+    if (!isOrganiser && !isSubmitter) {
+      throw new ForbiddenException('Only the submitter or chief can delete an expense log');
+    }
+
+    await this.dropsRepository.deleteExpenseLog(logId);
+  }
+
+  private mapExpenseLog(log: any): ExpenseLogPublicDto {
+    return {
+      id: log.id,
+      dropId: log.dropId,
+      submittedById: log.submittedById,
+      submittedBy: log.submittedBy ? {
+        id: log.submittedBy.id,
+        firstName: log.submittedBy.firstName,
+        lastName: log.submittedBy.lastName,
+        avatar: log.submittedBy.avatar ?? null,
+      } : undefined,
+      description: log.description,
+      amount: Number(log.amount),
+      status: log.status,
+      reviewedById: log.reviewedById ?? null,
+      linkedItemId: log.linkedItemId ?? null,
+      createdAt: log.createdAt,
+      updatedAt: log.updatedAt,
+    };
+  }
+
+  async getAmotDetail(dropId: string, itemId: string, requesterId: string): Promise<object> {
+    const drop = await this.dropsRepository.findById(dropId);
+    if (!drop) throw new NotFoundException(`Drop ${dropId} not found`);
+
+    const item = await this.dropsRepository.findItemById(itemId);
+    if (!item || item.dropId !== dropId) {
+      throw new NotFoundException(`Item ${itemId} not found in this drop`);
+    }
+
+    const activeCrew = await this.dropsRepository.findActiveInCrewMember(dropId, requesterId);
+    if (!activeCrew && drop.organiserId !== requesterId) {
+      throw new ForbiddenException('Only crew members can view amot details');
+    }
+
+    const inCrew = await this.dropsRepository.findActiveInCrewWithUsers(dropId);
+    const amotRows = await this.dropsRepository.findAmotsByItemId(itemId);
+    const summary = this.computeAmotSummary(item, inCrew, amotRows, requesterId);
+
+    return {
+      itemId: item.id,
+      itemName: item.name,
+      ...summary,
+    };
+  }
+
+  private computeAmotSummary(
+    item: DropItem,
+    inCrew: any[],
+    amotRows: { itemId: string; userId: string; isOptedOut: boolean; isPaid: boolean; user?: { id: string; firstName: string; lastName: string; avatar?: string | null } }[],
+    viewerId: string,
+  ) {
+    const inCrewIds = new Set(inCrew.map(m => m.userId));
+    const optedOutIds = new Set(amotRows.filter((r) => r.isOptedOut).map((r) => r.userId));
+    const paidIds = new Set(amotRows.filter((r) => r.isPaid).map((r) => r.userId));
+    const carrierId = item.assignedUserId ?? null;
+
+    // Crew user map for names
+    const crewUserMap = new Map(inCrew.map(m => [m.userId, m.user]));
+    const amotUserMap = new Map(amotRows.map((r) => [r.userId, r.user]));
+
+    const participants = [...inCrewIds].filter(
+      (uid) => !optedOutIds.has(uid),
+    );
+
+    const cost = Number(item.amotCost ?? 0);
+    const participantCount = participants.length;
+    const perPersonShare = participantCount > 0
+      ? Math.round((cost / participantCount) * 100) / 100
+      : 0;
+      
+    const othersCount = participants.filter(uid => uid !== carrierId).length;
+    const carrierOwed = Math.round(perPersonShare * othersCount * 100) / 100;
+
+    let myStatus: 'carrier' | 'opted_in' | 'opted_out' | 'not_applicable';
+    let myOwed = 0;
+
+    if (!inCrewIds.has(viewerId)) {
+      myStatus = 'not_applicable';
+    } else if (optedOutIds.has(viewerId)) {
+      myStatus = 'opted_out';
+      if (carrierId === viewerId) myStatus = 'carrier';
+    } else {
+      myStatus = carrierId === viewerId ? 'carrier' : 'opted_in';
+      myOwed = myStatus === 'carrier' ? 0 : perPersonShare;
+    }
+
+    return {
+      amotCost: cost,
+      amotDeclaredById: item.amotDeclaredById,
+      perPersonShare,
+      participantCount,
+      myStatus,
+      myOwed,
+      carrierOwed,
+      participants: participants.map((uid) => {
+        const u = amotUserMap.get(uid) || crewUserMap.get(uid);
+        return {
+          userId: uid,
+          firstName: u?.firstName || 'Unknown',
+          lastName: u?.lastName || '',
+          avatar: u?.avatar || null,
+          isOptedOut: optedOutIds.has(uid),
+          isPaid: paidIds.has(uid),
+          isCarrier: uid === carrierId,
+        };
+      }),
+    };
   }
 }

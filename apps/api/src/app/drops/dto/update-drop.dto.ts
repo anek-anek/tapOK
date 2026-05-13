@@ -106,4 +106,14 @@ export class UpdateDropDto {
   })
   @IsOptional()
   neededItems?: (string | ExistingNeededItemDto)[];
+
+  @ApiPropertyOptional({ type: Number, example: 1000 })
+  @IsOptional()
+  @Min(0)
+  baseCost?: number;
+
+  @ApiPropertyOptional({ type: Number, example: 200 })
+  @IsOptional()
+  @Min(0)
+  chiefContribution?: number;
 }

@@ -317,6 +317,57 @@ export interface paths {
         patch: operations["DropsController_updatePresence"];
         trace?: never;
     };
+    "/drops/{id}/amot/proof": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Submit proof of amot payment for the whole mission */
+        patch: operations["DropsController_submitAmotProof"];
+        trace?: never;
+    };
+    "/drops/{id}/amot/confirm/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Confirm global amot payment for a member (chief only) */
+        patch: operations["DropsController_confirmAmotPayment"];
+        trace?: never;
+    };
+    "/drops/{id}/amot/proof/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Reject and delete amot payment proof for a member (chief only) */
+        delete: operations["DropsController_rejectAmotProof"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drops/{id}/invite/{userId}": {
         parameters: {
             query?: never;
@@ -679,6 +730,145 @@ export interface paths {
         patch: operations["DropsController_confirmItem"];
         trace?: never;
     };
+    "/drops/{id}/items/{itemId}/amot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get full amot participant breakdown for a gear item */
+        get: operations["DropsController_getAmotDetail"];
+        put?: never;
+        /** Declare amot cost on a gear item (carrier only) */
+        post: operations["DropsController_declareAmot"];
+        /** Clear amot cost on a gear item (carrier or chief) */
+        delete: operations["DropsController_clearAmot"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/items/{itemId}/amot/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Toggle opt-out from a gear amot (crew member) */
+        patch: operations["DropsController_toggleAmotOptOut"];
+        trace?: never;
+    };
+    "/drops/{id}/items/{itemId}/amot/{userId}/opt-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Toggle opt-out from a gear amot for a specific member (chief only) */
+        patch: operations["DropsController_toggleMemberAmotOptOut"];
+        trace?: never;
+    };
+    "/drops/{id}/items/{itemId}/amot/{userId}/paid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Toggle paid status for a member on a gear amot (chief or carrier) */
+        patch: operations["DropsController_toggleAmotPaid"];
+        trace?: never;
+    };
+    "/drops/{id}/expense-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all expense logs for this drop */
+        get: operations["DropsController_getExpenseLogs"];
+        put?: never;
+        /** Submit a freeform expense log for this drop (crew or chief) */
+        post: operations["DropsController_submitExpenseLog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drops/{id}/expense-logs/{logId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Approve an expense log (chief only) */
+        patch: operations["DropsController_approveExpenseLog"];
+        trace?: never;
+    };
+    "/drops/{id}/expense-logs/{logId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Reject an expense log (chief only) */
+        patch: operations["DropsController_rejectExpenseLog"];
+        trace?: never;
+    };
+    "/drops/{id}/expense-logs/{logId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an expense log (submitter or chief) */
+        delete: operations["DropsController_deleteExpenseLog"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/email/reset-password": {
         parameters: {
             query?: never;
@@ -977,6 +1167,14 @@ export interface components {
             storagePath: string;
             uploadToken: string;
         };
+        ExistingNeededItemDto: {
+            /** @example uuid-string */
+            id: string;
+            /** @example Existing Item */
+            name: string;
+            /** @default true */
+            isAssignable: boolean;
+        };
         DropSpark: {
             id: string;
             dropId: string;
@@ -1005,6 +1203,8 @@ export interface components {
             /** @default false */
             isLocked: boolean;
             idempotencyKey?: Record<string, never> | null;
+            baseCost?: number | null;
+            chiefContribution?: number | null;
             organiserId: string;
             organiser: components["schemas"]["User"];
             sparks: components["schemas"]["DropSpark"][];
@@ -1026,6 +1226,12 @@ export interface components {
             assignedUser?: components["schemas"]["User"] | null;
             /** @default false */
             isConfirmed: boolean;
+            /** @default true */
+            isAssignable: boolean;
+            amotCost?: number | null;
+            amotDeclaredById?: Record<string, never> | null;
+            /** @description ID of the expense log that was promoted into this item */
+            sourceExpenseLogId?: Record<string, never> | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -1128,11 +1334,14 @@ export interface components {
             coverPhotoBase64?: string;
             /**
              * @example [
-             *       "Pork",
-             *       "Drinks"
+             *       "New Item",
+             *       {
+             *         "id": "uuid",
+             *         "name": "Existing Item"
+             *       }
              *     ]
              */
-            neededItems?: string[];
+            neededItems?: (string | components["schemas"]["ExistingNeededItemDto"])[];
         };
         DropActivityLog: {
             id: string;
@@ -1178,6 +1387,16 @@ export interface components {
             /** @description Whether the crew member is marking themselves as present */
             isPresent: boolean;
         };
+        SubmitAmotProofDto: {
+            proofBase64: string;
+        };
+        ConfirmAmotPaymentDto: {
+            /**
+             * @description The exact amount paid by the crew member to verify against the ledger
+             * @example 500
+             */
+            amount: number;
+        };
         UpdateDropDto: {
             /** @example Golden Hour Shoot */
             name?: string;
@@ -1214,10 +1433,11 @@ export interface components {
              *       }
              *     ]
              */
-            neededItems?: (string | {
-                id?: string;
-                name?: string;
-            })[];
+            neededItems?: (string | components["schemas"]["ExistingNeededItemDto"])[];
+            /** @example 1000 */
+            baseCost?: number;
+            /** @example 200 */
+            chiefContribution?: number;
         };
         DropPhoto: {
             id: string;
@@ -1266,6 +1486,59 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             user: components["schemas"]["CrewMemberUserDto"];
+        };
+        DeclareAmotDto: {
+            /** @example 500 */
+            cost: number;
+        };
+        ToggleAmotOptOutDto: {
+            isOptedOut: boolean;
+        };
+        AmotParticipantDto: {
+            userId: string;
+            firstName: string;
+            lastName: string;
+            avatar?: Record<string, never> | null;
+            isOptedOut: boolean;
+            isPaid: boolean;
+            isCarrier: boolean;
+        };
+        AmotSummaryDto: {
+            amotCost: number | null;
+            amotDeclaredById?: Record<string, never> | null;
+            perPersonShare: number;
+            participantCount: number;
+            /** @enum {string} */
+            myStatus: "carrier" | "opted_in" | "opted_out" | "not_applicable";
+            myOwed: number;
+            carrierOwed: number;
+            participants: components["schemas"]["AmotParticipantDto"][];
+        };
+        ToggleAmotPaidDto: {
+            isPaid: boolean;
+        };
+        CreateExpenseLogDto: {
+            /** @description Short description of the expense */
+            description: string;
+            /** @description Amount spent */
+            amount: number;
+        };
+        ExpenseLogPublicDto: {
+            id: string;
+            dropId: string;
+            submittedById: string;
+            submittedBy?: Record<string, never>;
+            description: string;
+            amount: number;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+            reviewedById?: Record<string, never>;
+            /** @description ID of the DropItem created when this log was approved */
+            linkedItemId?: Record<string, never> | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         NotificationDto: {
             id: string;
@@ -1973,6 +2246,73 @@ export interface operations {
             };
             /** @description Not a crew member of this drop. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_submitAmotProof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitAmotProofDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_confirmAmotPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmAmotPaymentDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_rejectAmotProof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2697,6 +3037,260 @@ export interface operations {
         responses: {
             /** @description Gear confirmed successfully. */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_getAmotDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AmotSummaryDto"];
+                };
+            };
+        };
+    };
+    DropsController_declareAmot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclareAmotDto"];
+            };
+        };
+        responses: {
+            /** @description Amot cost declared. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_clearAmot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Amot cost cleared. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_toggleAmotOptOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ToggleAmotOptOutDto"];
+            };
+        };
+        responses: {
+            /** @description Opt-out toggled. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_toggleMemberAmotOptOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ToggleAmotOptOutDto"];
+            };
+        };
+        responses: {
+            /** @description Member opt-out toggled. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_toggleAmotPaid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                itemId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ToggleAmotPaidDto"];
+            };
+        };
+        responses: {
+            /** @description Paid status toggled. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_getExpenseLogs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseLogPublicDto"][];
+                };
+            };
+        };
+    };
+    DropsController_submitExpenseLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateExpenseLogDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseLogPublicDto"];
+                };
+            };
+        };
+    };
+    DropsController_approveExpenseLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                logId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Expense log approved. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_rejectExpenseLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                logId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Expense log rejected. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DropsController_deleteExpenseLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                logId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Expense log deleted. */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };

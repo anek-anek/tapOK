@@ -65,7 +65,7 @@ export function DeleteDropModal({ drop, onClose }: DeleteDropModalProps) {
                 </p>
                 <p className="text-[14px] leading-relaxed text-tok-black/70">
                   You are about to delete <span className="font-bold text-tok-black">&quot;{drop.name}&quot;</span>.
-                  All crew data, mission logs, and photos will be permanently erased. This action cannot be undone.
+                  All crew data, mission logs, amot records, and photos will be permanently erased. This action cannot be undone.
                 </p>
               </div>
             </div>

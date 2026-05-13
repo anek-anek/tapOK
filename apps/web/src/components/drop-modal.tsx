@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { useForm, Controller, type Control } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -17,9 +17,7 @@ import {
   Plus as IconPlus,
   ImagePlus as IconImagePlus,
   Trash2 as IconTrash,
-  Pencil as IconPencil,
   Check as IconCheck,
-  Hand as IconHand,
 } from 'lucide-react';
 import {
   useCreateDrop,
@@ -347,180 +345,6 @@ function DateTimePicker({
   );
 }
 
-type GearItem = string | { id?: string; name: string; isAssignable?: boolean };
-
-function GearItemsField({ control }: { control: Control<FormValues> }) {
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editDraft, setEditDraft] = useState('');
-  const editInputRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <Controller
-      name="neededItems"
-      control={control}
-      render={({ field }) => {
-        const items: GearItem[] = field.value || [];
-
-        const addItem = (name: string) => {
-          if (!name.trim()) return;
-          field.onChange([...items, name.trim()]);
-        };
-
-        const removeItem = (index: number) => {
-          field.onChange(items.filter((_, i) => i !== index));
-          if (editingIndex === index) setEditingIndex(null);
-        };
-
-        const startEdit = (index: number) => {
-          const item = items[index]!;
-          setEditDraft(typeof item === 'string' ? item : item.name);
-          setEditingIndex(index);
-          setTimeout(() => editInputRef.current?.select(), 0);
-        };
-
-        const commitEdit = (index: number) => {
-          const trimmed = editDraft.trim();
-          if (trimmed) {
-            const updated = items.map((item, i) => {
-              if (i !== index) return item;
-              return typeof item === 'string' ? trimmed : { ...item, name: trimmed };
-            });
-            field.onChange(updated);
-          }
-          setEditingIndex(null);
-        };
-
-        const cancelEdit = () => setEditingIndex(null);
-
-        return (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-3 my-4">
-              {items.map((item, index) => {
-                const name = typeof item === 'string' ? item : item.name;
-                const isEditing = editingIndex === index;
-
-                return (
-                  <div
-                    key={index}
-                    className="flex flex-col gap-2 rounded-sm border-[3px] border-tok-black bg-white px-4 py-3 shadow-[4px_4px_0px_#1C1C1A]"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      {isEditing ? (
-                        <input
-                          ref={editInputRef}
-                          autoFocus
-                          value={editDraft}
-                          autoComplete="off"
-                          onChange={(e) => setEditDraft(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') { e.preventDefault(); commitEdit(index); }
-                            if (e.key === 'Escape') cancelEdit();
-                          }}
-                          onBlur={() => commitEdit(index)}
-                          className="flex-1 min-w-0 font-passion text-sm font-bold uppercase tracking-wide text-tok-black bg-transparent border-b-2 border-tok-black outline-none"
-                        />
-                      ) : (
-                        <span className="flex-1 min-w-0 font-passion text-sm font-bold uppercase tracking-wide text-tok-black truncate">
-                          {name}
-                        </span>
-                      )}
-                      <div className="flex items-center gap-2 shrink-0">
-                        {isEditing ? (
-                          <button
-                            type="button"
-                            onMouseDown={(e) => { e.preventDefault(); commitEdit(index); }}
-                            className="text-tok-teal transition-colors"
-                          >
-                            <IconCheck size={16} strokeWidth={2.5} />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => startEdit(index)}
-                            className="text-tok-black/40 transition-colors hover:text-tok-black"
-                          >
-                            <IconPencil size={15} strokeWidth={2.5} />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeItem(index)}
-                          className="text-tok-black/40 transition-colors hover:text-red-500"
-                        >
-                          <IconTrash size={16} strokeWidth={2.5} />
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const isAssignable = typeof item === 'string' ? true : (item.isAssignable ?? true);
-                          const updated = items.map((it, i) => {
-                            if (i !== index) return it;
-                            if (typeof it === 'string') return { name: it, isAssignable: !isAssignable };
-                            return { ...it, isAssignable: !isAssignable };
-                          });
-                          field.onChange(updated);
-                        }}
-                        className={cn(
-                          "flex items-center gap-1.5 rounded-sm border-2 border-tok-black px-2 py-0.5 transition-all",
-                          (typeof item === 'string' ? true : (item.isAssignable ?? true))
-                            ? "bg-tok-teal text-tok-cream shadow-[2px_2px_0px_#1C1C1A]"
-                            : "bg-white text-tok-black/40 border-tok-black/20"
-                        )}
-                      >
-                        <IconHand size={10} strokeWidth={3} />
-                        <span className="font-passion text-[9px] font-bold uppercase tracking-wider">
-                          {(typeof item === 'string' ? true : (item.isAssignable ?? true)) ? 'Pickable' : 'List Only'}
-                        </span>
-                      </button>
-                      
-                      {!(typeof item === 'string' ? true : (item.isAssignable ?? true)) && (
-                        <span className="font-passion text-[8px] font-bold uppercase tracking-tight text-tok-black/30">
-                          Just a reminder for the drop
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="relative">
-              <Input
-                placeholder="Add gear"
-                autoComplete="off"
-                className="h-12 rounded-sm border-[3px] border-tok-black bg-white px-4 pr-12 font-passion text-base font-bold tracking-wide text-tok-black placeholder:text-tok-black/15 focus-visible:ring-0 focus-visible:ring-offset-0"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addItem(e.currentTarget.value);
-                    e.currentTarget.value = '';
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={(e) => {
-                  const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                  addItem(input.value);
-                  input.value = '';
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm bg-tok-black p-1 text-white"
-              >
-                <IconPlus size={16} />
-              </button>
-            </div>
-            <p className="font-passion text-[10px] font-bold uppercase tracking-wider text-tok-black/30">
-              Press Enter to add multiple items.
-            </p>
-          </div>
-        );
-      }}
-    />
-  );
-}
 
 export function DropModal({
   drop,
@@ -545,7 +369,7 @@ export function DropModal({
   const [coverPreview, setCoverPreview] = useState<string | null>(drop?.coverPhoto ?? null);
   const [coverError, setCoverError] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2>(1);
 
   const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -787,8 +611,8 @@ export function DropModal({
     <ModalShell onClose={wrappedClose}>
       {(close) => {
         return (
-          <div className="flex h-[640px] w-[95vw] max-w-[900px] min-w-0 flex-col overflow-hidden rounded-sm border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
-            <div className="flex-1 grid min-w-0 grid-cols-1 overflow-hidden sm:grid-cols-[minmax(160px,220px)_minmax(0,1fr)]">
+          <div className="flex h-[min(640px,90vh)] w-[95vw] max-w-[900px] min-w-0 flex-col overflow-hidden rounded-sm border-[3px] border-tok-black bg-tok-cream shadow-[10px_10px_0px_#1C1C1A]">
+            <div className="flex-1 grid min-w-0 grid-cols-1 overflow-hidden sm:grid-cols-[minmax(140px,200px)_minmax(0,1fr)]">
               {/* Left panel — Header on mobile, sidebar on desktop */}
               <aside className="group relative flex min-w-0 flex-col justify-between overflow-hidden bg-tok-teal px-6 py-6 min-h-[140px] sm:min-h-0 sm:py-8 sm:flex">
                 {/* Cover photo background */}
@@ -892,7 +716,7 @@ export function DropModal({
               {/* Form panel */}
               <form
                 onSubmit={(e) => {
-                  if (step < 3) {
+                  if (step < 2) {
                     e.preventDefault();
                     return;
                   }
@@ -919,7 +743,7 @@ export function DropModal({
 
                   {/* Step Indicators */}
                   <div className="mb-8 flex items-center gap-2">
-                    {[1, 2, 3].map((s) => (
+                    {[1, 2].map((s) => (
                       <div
                         key={s}
                         className={cn(
@@ -1233,22 +1057,12 @@ export function DropModal({
                     </div>
                   )}
 
-                  {step === 3 && (
-                    <div className="flex flex-col gap-4">
-                      <div className="space-y-1.5">
-                        <Label className="font-passion text-[10px] font-bold uppercase tracking-[1.5px] sm:tracking-[2.5px] text-tok-black/40">
-                          Needed Gear <span className="normal-case font-normal opacity-40">— What should people bring?</span>
-                        </Label>
-                        <GearItemsField control={control} />
-                      </div>
-                    </div>
-                  )}
                   {/* Step Buttons integrated into form */}
                   <div className="mt-auto pt-8 flex items-center gap-3">
                     {step > 1 ? (
                       <button
                         type="button"
-                        onClick={() => setStep((s) => (s - 1) as any)}
+                        onClick={() => setStep(1)}
                         className="h-12 flex-1 rounded-sm border-[3px] border-tok-black bg-white font-passion text-xs font-bold uppercase tracking-[1.5px] text-tok-black transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
                       >
                         Back
@@ -1264,7 +1078,7 @@ export function DropModal({
                       </button>
                     )}
 
-                    {step < 3 ? (
+                    {step < 2 ? (
                       <button
                         type="button"
                         onClick={async (e) => {
