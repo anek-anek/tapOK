@@ -833,7 +833,7 @@ function AddItemModal({
   isOrganiser: boolean;
   onClose: () => void;
 }) {
-  const [mode, setMode] = useState<ItemMode>('gear');
+  const [mode, setMode] = useState<ItemMode>(isOrganiser ? 'gear' : 'list-only');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -843,7 +843,7 @@ function AddItemModal({
 
   useEffect(() => {
     if (isOpen) {
-      setMode('gear');
+      setMode(isOrganiser ? 'gear' : 'list-only');
       setName('');
       setDescription('');
       setAmount('');
@@ -880,10 +880,10 @@ function AddItemModal({
     }
   };
 
-  const modes: { id: ItemMode; label: string; show: boolean }[] = [
-    { id: 'gear', label: 'Gear', show: true },
-    { id: 'list-only', label: 'List Only', show: true },
-    { id: 'expense', label: 'Expense', show: true },
+  const modes: { id: ItemMode; label: string }[] = [
+    ...(isOrganiser ? [{ id: 'gear' as ItemMode, label: 'Gear' }] : []),
+    { id: 'list-only', label: 'List Only' },
+    { id: 'expense', label: 'Expense' },
   ];
 
   const accentColor =
