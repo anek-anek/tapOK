@@ -565,7 +565,7 @@ export class DropsService {
   }
 
   async delete(id: string, requester: BetterAuthUser): Promise<void> {
-    const drop = await this.dropsRepository.findById(id);
+    const drop = await this.dropsRepository.findDeleteTargetById(id);
     if (!drop) throw new NotFoundException(`Drop ${id} not found`);
 
     if ((requester.role as string) !== UserRole.ADMIN && drop.organiserId !== requester.id) {
@@ -599,6 +599,11 @@ export class DropsService {
       this.logger.warn(`Failed to delete drop photos from storage during drop deletion (dropId=${id}): ${detail}`);
     }
 
+    await this.dropsRepository.deletePhotosByDropId(id);
+    await this.dropsRepository.deleteSparksByDropId(id);
+    await this.dropsRepository.deleteCrewByDropId(id);
+    await this.dropsRepository.deleteItemsByDropId(id);
+    await this.dropsRepository.deleteLogsByDropId(id);
     await this.dropsRepository.delete(id);
     this.logDropAction('drop_deleted', id, drop.organiserId);
   }
