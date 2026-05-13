@@ -20,6 +20,11 @@ export class MediaAssetsService {
     return `users/${userId}/avatar_${Date.now()}.${ext}`;
   }
 
+  buildAmotProofPath(dropId: string, userId: string, mimeType: string): string {
+    const ext = mimeType === 'image/png' ? 'png' : 'jpg';
+    return `drops/${dropId}/amot-proofs/${userId}_${Date.now()}.${ext}`;
+  }
+
   async uploadImage(path: string, buffer: Buffer, mimeType: string): Promise<string> {
     const { error } = await this.storage.storage.from('drops').upload(path, buffer, {
       contentType: mimeType,

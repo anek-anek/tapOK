@@ -1,9 +1,11 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, X, Check, Hand, Info } from 'lucide-react';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Portal } from './Portal';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -13,10 +15,9 @@ interface ConfirmModalProps {
   description: string;
   confirmText?: string;
   isDestructive?: boolean;
+  variant?: 'destructive' | 'success' | 'info';
   isLoading?: boolean;
 }
-
-import { Portal } from './Portal';
 
 export function ConfirmModal({
   isOpen,
@@ -26,6 +27,7 @@ export function ConfirmModal({
   description,
   confirmText = 'Confirm',
   isDestructive = true,
+  variant = 'destructive',
   isLoading = false,
 }: ConfirmModalProps) {
   useEffect(() => {
@@ -38,6 +40,37 @@ export function ConfirmModal({
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'success':
+        return {
+          icon: <Hand size={24} />,
+          bg: 'bg-tok-teal/10',
+          border: 'border-tok-teal',
+          text: 'text-tok-teal',
+          button: 'bg-tok-teal text-tok-cream'
+        };
+      case 'info':
+        return {
+          icon: <Info size={24} />,
+          bg: 'bg-amber-100',
+          border: 'border-amber-500',
+          text: 'text-amber-600',
+          button: 'bg-amber-400 text-tok-black'
+        };
+      default: // destructive
+        return {
+          icon: <AlertTriangle size={24} />,
+          bg: 'bg-red-100',
+          border: 'border-red-500',
+          text: 'text-red-600',
+          button: 'bg-tok-black text-tok-cream'
+        };
+    }
+  };
+
+  const styles = getVariantStyles();
 
   return (
     <Portal>
@@ -59,8 +92,12 @@ export function ConfirmModal({
             >
               <div className="p-6">
                 <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-sm border-2 border-tok-black bg-red-100 text-red-600">
-                    <AlertTriangle size={24} />
+                  <div className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-sm border-2 border-tok-black",
+                    styles.bg,
+                    styles.text
+                  )}>
+                    {styles.icon}
                   </div>
                   <button
                     onClick={onClose}
@@ -89,10 +126,12 @@ export function ConfirmModal({
                     Cancel
                   </Button>
                   <Button
-                    variant={isDestructive ? 'destructive' : 'default'}
                     onClick={onConfirm}
                     disabled={isLoading}
-                    className="flex-1 rounded-sm border-[3px] border-tok-black bg-tok-black font-passion text-xs font-bold uppercase tracking-[2px] text-tok-cream shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none"
+                    className={cn(
+                      "flex-1 rounded-sm border-[3px] border-tok-black font-passion text-xs font-bold uppercase tracking-[2px] shadow-[4px_4px_0px_#1C1C1A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1C1C1A] active:translate-y-0 active:shadow-none",
+                      styles.button
+                    )}
                   >
                     {isLoading ? 'Processing...' : confirmText}
                   </Button>

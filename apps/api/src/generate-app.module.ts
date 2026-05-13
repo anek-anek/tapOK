@@ -19,6 +19,9 @@ import { SupabaseStorageService } from './common';
 import { Drop } from './app/drops/entities/drop.entity';
 import { DropActivityLog } from './app/drops/entities/drop-activity-log.entity';
 import { DropCrew } from './app/drops/entities/drop-crew.entity';
+import { DropItem } from './app/drops/entities/drop-item.entity';
+import { DropItemAmot } from './app/drops/entities/drop-item-amot.entity';
+import { DropExpenseLog } from './app/drops/entities/drop-expense-log.entity';
 import { Notification } from './app/notifications/entities/notification.entity';
 import { THROTTLE_DEFAULT, THROTTLE_STRICT } from './common';
 
@@ -55,6 +58,9 @@ function stub<T>(token: T): { provide: T; useValue: object } {
     stub(getRepositoryToken(Drop)),
     stub(getRepositoryToken(DropActivityLog)),
     stub(getRepositoryToken(DropCrew)),
+    stub(getRepositoryToken(DropItem)),
+    stub(getRepositoryToken(DropItemAmot)),
+    stub(getRepositoryToken(DropExpenseLog)),
     stub(getRepositoryToken(Notification)),
     stub(getDataSourceToken()),
   ],

@@ -29,7 +29,7 @@ import { DigitalTicket, DigitalTicketSkeleton } from '@/components/drops/Digital
 import { PhotoRoll, PhotoRollSkeleton } from '@/components/drops/PhotoRoll';
 import { CrewRoster, CrewRosterSkeleton } from '@/components/drops/CrewRoster';
 import { ActivityLedger, ActivityLedgerSkeleton } from '@/components/drops/ActivityLedger';
-import { NeededItems } from '@/components/drops/NeededItems';
+import { DropSuppliesAccordion } from '@/components/drops/NeededItems';
 import { ModalShell } from '@/components/modal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaveDrop, useApproveJoinRequest, useRejectJoinRequest, useRemoveCrewMember, useUpdatePresence, useJoinDrop, useUpdateCrewRole } from '@/hooks/mutations/use-drop-mutations';
@@ -923,17 +923,15 @@ function DropDetailContent({ id }: { id: string }) {
                 isLoadingStatus={isLoadingCrewStatus}
               />
 
-              {/* Needed Gear — hidden when there are no items, otherwise visible to organiser and crew */}
-              {(drop.neededItems?.length ?? 0) > 0 && (isOrganiser || crewStatus?.status === 'in') && (
-                <div className="mb-10 rounded-[4px] border-[3px] border-tok-black bg-white p-6 shadow-[6px_6px_0px_#1C1C1A]">
-                  <NeededItems
-                    drop={drop}
-                    isOrganiser={canManage}
-                    isCrewMember={crewStatus?.status === 'in'}
-                    currentUser={dbUser ?? undefined}
-                    activeCrew={crew?.filter(m => m.status === 'in') ?? []}
-                  />
-                </div>
+              {/* Drop Supplies — always visible to organiser and crew, collapses when empty */}
+              {(canManage || crewStatus?.status === 'in') && (
+                <DropSuppliesAccordion
+                  drop={drop}
+                  isOrganiser={canManage}
+                  isCrewMember={crewStatus?.status === 'in'}
+                  currentUser={dbUser ?? undefined}
+                  activeCrew={crew?.filter(m => m.status === 'in') ?? []}
+                />
               )}
 
               {/* Crew — visible to members or the organiser (tap in/out lives in this card) */}

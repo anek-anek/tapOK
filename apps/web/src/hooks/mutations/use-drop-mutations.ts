@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-import type { CreateDropDto, UpdateDropDto, Drop, DropCrew } from '@/types/drop';
+import type { CreateDropDto, UpdateDropDto, Drop, DropCrew, DropExpenseLog, CreateExpenseLogDto } from '@/types/drop';
 import { dropsService } from '@/services/drops.service';
 import { dropKeys } from '@/hooks/queries/use-drops';
 
@@ -233,11 +233,11 @@ export function useDeletePhoto(dropId: string): UseMutationResult<void, Error, s
   });
 }
 
-export function useAddItem(dropId: string): UseMutationResult<any, Error, string> {
+export function useAddItem(dropId: string): UseMutationResult<any, Error, { name: string; isAssignable?: boolean }> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (name: string) => dropsService.addItem(dropId, name),
+    mutationFn: ({ name, isAssignable = true }) => dropsService.addItem(dropId, name, isAssignable),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
     },
@@ -368,6 +368,145 @@ export function useConfirmItem(dropId: string): UseMutationResult<void, Error, s
           ),
         };
       });
+    },
+  });
+}
+
+export function useDeclareAmot(dropId: string): UseMutationResult<void, Error, { itemId: string; cost: number }> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ itemId, cost }) => dropsService.declareAmot(dropId, itemId, cost),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+export function useClearAmot(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (itemId) => dropsService.clearAmot(dropId, itemId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+export function useToggleAmotOptOut(dropId: string): UseMutationResult<void, Error, { itemId: string; isOptedOut: boolean }> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ itemId, isOptedOut }) => dropsService.toggleAmotOptOut(dropId, itemId, isOptedOut),
+    onSuccess: (_, { itemId }) => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.amotDetail(dropId, itemId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+export function useToggleMemberAmotOptOut(dropId: string): UseMutationResult<void, Error, { itemId: string; userId: string; isOptedOut: boolean }> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ itemId, userId, isOptedOut }) => dropsService.toggleMemberAmotOptOut(dropId, itemId, userId, isOptedOut),
+    onSuccess: (_, { itemId }) => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.amotDetail(dropId, itemId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+export function useToggleAmotPaid(dropId: string): UseMutationResult<void, Error, { itemId: string; userId: string; isPaid: boolean }> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ itemId, userId, isPaid }) => dropsService.toggleAmotPaid(dropId, itemId, userId, isPaid),
+    onSuccess: (_, { itemId }) => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.amotDetail(dropId, itemId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+export function useSubmitAmotProof(dropId: string): UseMutationResult<string, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (proofBase64: string) => dropsService.submitAmotProof(dropId, proofBase64),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.crew(dropId) });
+    },
+  });
+}
+
+export function useConfirmAmotPayment(dropId: string): UseMutationResult<void, Error, { userId: string; amount: number }> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, amount }) => dropsService.confirmAmotPayment(dropId, userId, amount),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.crew(dropId) });
+    },
+  });
+}
+export function useRejectAmotProof(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => dropsService.rejectAmotProof(dropId, userId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.crew(dropId) });
+    },
+  });
+}
+
+export function useSubmitExpenseLog(dropId: string): UseMutationResult<DropExpenseLog, Error, CreateExpenseLogDto> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (dto: CreateExpenseLogDto) => dropsService.submitExpenseLog(dropId, dto),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.expenseLogs(dropId) });
+    },
+  });
+}
+
+export function useApproveExpenseLog(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (logId: string) => dropsService.approveExpenseLog(dropId, logId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.expenseLogs(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
+    },
+  });
+}
+
+export function useRejectExpenseLog(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (logId: string) => dropsService.rejectExpenseLog(dropId, logId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.expenseLogs(dropId) });
+    },
+  });
+}
+
+export function useDeleteExpenseLog(dropId: string): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (logId: string) => dropsService.deleteExpenseLog(dropId, logId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dropKeys.expenseLogs(dropId) });
+      void queryClient.invalidateQueries({ queryKey: dropKeys.detail(dropId) });
     },
   });
 }

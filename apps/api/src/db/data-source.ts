@@ -7,6 +7,8 @@ import { DropCrew } from '../app/drops/entities/drop-crew.entity';
 import { DropPhoto } from '../app/drops/entities/drop-photo.entity';
 import { DropSpark } from '../app/drops/entities/drop-spark.entity';
 import { DropItem } from '../app/drops/entities/drop-item.entity';
+import { DropItemAmot } from '../app/drops/entities/drop-item-amot.entity';
+import { DropExpenseLog } from '../app/drops/entities/drop-expense-log.entity';
 import { User } from '../app/users/entities/user.entity';
 import { Notification } from '../app/notifications/entities/notification.entity';
 
@@ -29,6 +31,8 @@ export const AppDataSource = new DataSource({
     DropPhoto,
     DropSpark,
     DropItem,
+    DropItemAmot,
+    DropExpenseLog,
     Notification,
   ],
   migrations: [join(__dirname, 'migrations', '*{.ts,.js}')],

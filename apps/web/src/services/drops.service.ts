@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Drop, CreateDropDto, UpdateDropDto, DropActivityLog, DropCrew, CrewMember, ActivityLogsPage, DiscoverDropsPayload } from '@/types/drop';
+import type { Drop, CreateDropDto, UpdateDropDto, DropActivityLog, DropCrew, CrewMember, ActivityLogsPage, DiscoverDropsPayload, DropExpenseLog, CreateExpenseLogDto } from '@/types/drop';
 import { uploadToSignedDropPhotoUrl } from '@/lib/supabase-storage';
 
 interface CreatePhotoUploadSessionDto {
@@ -89,8 +89,10 @@ export const dropsService = {
     return api.patch(`/drops/${dropId}/crew/me/presence`, { isPresent }).then(() => undefined);
   },
 
-  getActivityLogs(dropId: string, page: number, limit = 6): Promise<ActivityLogsPage> {
-    return api.get<ActivityLogsPage>(`/drops/${dropId}/activity`, { params: { page, limit } }).then((r) => r.data);
+  getActivityLogs(dropId: string, page: number, limit = 6, actions?: string[]): Promise<ActivityLogsPage> {
+    const params: any = { page, limit };
+    if (actions && actions.length > 0) params.actions = actions.join(',');
+    return api.get<ActivityLogsPage>(`/drops/${dropId}/activity`, { params }).then((r) => r.data);
   },
   
   getDiscoverData(page = 1, limit = 6, category?: string): Promise<DiscoverDropsPayload> {
@@ -152,8 +154,8 @@ export const dropsService = {
     return api.delete(`/drops/${id}/spark`).then(() => undefined);
   },
   
-  addItem(dropId: string, name: string): Promise<any> {
-    return api.post(`/drops/${dropId}/items`, { name }).then((r) => r.data);
+  addItem(dropId: string, name: string, isAssignable = true): Promise<any> {
+    return api.post(`/drops/${dropId}/items`, { name, isAssignable }).then((r) => r.data);
   },
 
   renameItem(dropId: string, itemId: string, name: string): Promise<void> {
@@ -182,5 +184,61 @@ export const dropsService = {
   
   confirmItem(dropId: string, itemId: string): Promise<void> {
     return api.patch(`/drops/${dropId}/items/${itemId}/confirm`).then(() => undefined);
+  },
+
+  declareAmot(dropId: string, itemId: string, cost: number): Promise<void> {
+    return api.post(`/drops/${dropId}/items/${itemId}/amot`, { cost }).then(() => undefined);
+  },
+
+  clearAmot(dropId: string, itemId: string): Promise<void> {
+    return api.delete(`/drops/${dropId}/items/${itemId}/amot`).then(() => undefined);
+  },
+
+  toggleAmotOptOut(dropId: string, itemId: string, isOptedOut: boolean): Promise<void> {
+    return api.patch(`/drops/${dropId}/items/${itemId}/amot/me`, { isOptedOut }).then(() => undefined);
+  },
+
+  toggleMemberAmotOptOut(dropId: string, itemId: string, userId: string, isOptedOut: boolean): Promise<void> {
+    return api.patch(`/drops/${dropId}/items/${itemId}/amot/${userId}/opt-out`, { isOptedOut }).then(() => undefined);
+  },
+
+  toggleAmotPaid(dropId: string, itemId: string, userId: string, isPaid: boolean): Promise<void> {
+    return api.patch(`/drops/${dropId}/items/${itemId}/amot/${userId}/paid`, { isPaid }).then(() => undefined);
+  },
+
+  submitAmotProof(dropId: string, proofBase64: string): Promise<string> {
+    return api.patch(`/drops/${dropId}/amot/proof`, { proofBase64 }).then((r) => r.data);
+  },
+
+  confirmAmotPayment(dropId: string, userId: string, amount: number): Promise<void> {
+    return api.patch(`/drops/${dropId}/amot/confirm/${userId}`, { amount }).then(() => undefined);
+  },
+  
+  rejectAmotProof(dropId: string, userId: string): Promise<void> {
+    return api.delete(`/drops/${dropId}/amot/proof/${userId}`).then(() => undefined);
+  },
+
+  getAmotDetail(dropId: string, itemId: string): Promise<import('@/types/drop').AmotSummary & { itemId: string; itemName: string }> {
+    return api.get(`/drops/${dropId}/items/${itemId}/amot`).then((r) => r.data);
+  },
+
+  submitExpenseLog(dropId: string, dto: CreateExpenseLogDto): Promise<DropExpenseLog> {
+    return api.post<DropExpenseLog>(`/drops/${dropId}/expense-logs`, dto).then((r) => r.data);
+  },
+
+  getExpenseLogs(dropId: string): Promise<DropExpenseLog[]> {
+    return api.get<DropExpenseLog[]>(`/drops/${dropId}/expense-logs`).then((r) => r.data);
+  },
+
+  approveExpenseLog(dropId: string, logId: string): Promise<void> {
+    return api.patch(`/drops/${dropId}/expense-logs/${logId}/approve`).then(() => undefined);
+  },
+
+  rejectExpenseLog(dropId: string, logId: string): Promise<void> {
+    return api.patch(`/drops/${dropId}/expense-logs/${logId}/reject`).then(() => undefined);
+  },
+
+  deleteExpenseLog(dropId: string, logId: string): Promise<void> {
+    return api.delete(`/drops/${dropId}/expense-logs/${logId}`).then(() => undefined);
   },
 };

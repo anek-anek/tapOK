@@ -14,9 +14,11 @@ import { MediaAssetsService, SupabaseStorageService } from '../../common';
 import { DropPhoto } from './entities/drop-photo.entity';
 import { DropSpark } from './entities/drop-spark.entity';
 import { DropItem } from './entities/drop-item.entity';
+import { DropItemAmot } from './entities/drop-item-amot.entity';
+import { DropExpenseLog } from './entities/drop-expense-log.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Drop, DropActivityLog, DropCrew, DropPhoto, DropSpark, DropItem]), UsersModule, NotificationsModule],
+  imports: [TypeOrmModule.forFeature([Drop, DropActivityLog, DropCrew, DropPhoto, DropSpark, DropItem, DropItemAmot, DropExpenseLog]), UsersModule, NotificationsModule],
   providers: [DropsRepository, DropsService, DropsCronService, SupabaseStorageService, MediaAssetsService],
   controllers: [DropsController],
   exports: [DropsService],

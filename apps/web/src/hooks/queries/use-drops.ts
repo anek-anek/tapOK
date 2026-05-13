@@ -24,6 +24,8 @@ export const dropKeys = {
   discoverStream: (category?: string, uid?: string) => ['drops', 'discover', 'stream', category, uid] as const,
   photos: (id: string) => ['drops', id, 'photos'] as const,
   photoDetail: (id: string, photoId: string) => ['drops', id, 'photos', photoId] as const,
+  amotDetail: (dropId: string, itemId: string) => ['drops', dropId, 'items', itemId, 'amot'] as const,
+  expenseLogs: (dropId: string) => ['drops', dropId, 'expense-logs'] as const,
 };
 
 export function useDiscoverLayout() {
@@ -103,11 +105,10 @@ export function useSuspenseDrop(id: string) {
 }
 
 export function useDropByJoinCode(joinCode: string, options?: { enabled?: boolean }) {
-  const authOk = useAuthReadyForProtectedDropRoutes();
   return useQuery({
     queryKey: dropKeys.byJoinCode(joinCode),
     queryFn: () => dropsService.getByJoinCode(joinCode),
-    enabled: (options?.enabled ?? true) && Boolean(joinCode) && authOk,
+    enabled: (options?.enabled ?? true) && Boolean(joinCode),
     refetchInterval: 300_000,
     staleTime: 300_000,
   });
@@ -149,12 +150,18 @@ export function useMyCrewStatus(dropId: string, options?: { enabled?: boolean })
   });
 }
 
-export function useDropActivityLogs(dropId: string, page: number, options?: { enabled?: boolean, limit?: number }) {
+export function useDropActivityLogs(
+  dropId: string, 
+  page: number, 
+  options?: { enabled?: boolean, limit?: number, actions?: string[] }
+) {
   const authOk = useAuthReadyForProtectedDropRoutes();
   const limit = options?.limit ?? 5;
+  const actions = options?.actions;
+
   return useQuery({
-    queryKey: dropKeys.activityLogs(dropId, page),
-    queryFn: () => dropsService.getActivityLogs(dropId, page, limit),
+    queryKey: [...dropKeys.activityLogs(dropId, page), actions],
+    queryFn: () => dropsService.getActivityLogs(dropId, page, limit, actions),
     enabled: (options?.enabled ?? true) && Boolean(dropId) && authOk,
     placeholderData: keepPreviousData,
     refetchInterval: 300_000,
@@ -174,6 +181,15 @@ export function useDropCrew(dropId: string, options?: { enabled?: boolean }): Us
     queryKey: dropKeys.crew(dropId),
     queryFn: () => dropsService.getCrew(dropId),
     enabled: (options?.enabled ?? true) && Boolean(dropId) && authOk,
+  });
+}
+
+export function useAmotDetail(dropId: string, itemId: string, options?: { enabled?: boolean }) {
+  const authOk = useAuthReadyForProtectedDropRoutes();
+  return useQuery({
+    queryKey: dropKeys.amotDetail(dropId, itemId),
+    queryFn: () => dropsService.getAmotDetail(dropId, itemId),
+    enabled: (options?.enabled ?? true) && Boolean(dropId) && Boolean(itemId) && authOk,
   });
 }
 
@@ -202,6 +218,15 @@ export function useInfinitePhotos(dropId: string, options?: { enabled?: boolean;
     staleTime: 600_000, // 10 minutes
     refetchInterval: 600_000, // 10 minutes
     refetchOnWindowFocus: false,
+  });
+}
+
+export function useExpenseLogs(dropId: string, options?: { enabled?: boolean }) {
+  const authOk = useAuthReadyForProtectedDropRoutes();
+  return useQuery({
+    queryKey: dropKeys.expenseLogs(dropId),
+    queryFn: () => dropsService.getExpenseLogs(dropId),
+    enabled: Boolean(dropId) && authOk && (options?.enabled ?? true),
   });
 }
 

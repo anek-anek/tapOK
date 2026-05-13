@@ -44,6 +44,18 @@ export class DropCrew {
   @Column({ type: 'boolean', default: false })
   isPresent: boolean;
 
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
+  amotPaidAt?: Date | null;
+
+  @ApiProperty({ default: 0 })
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
+  amotPaidAmount: number;
+
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'text', nullable: true })
+  amotProofPath?: string | null;
+
   @ApiProperty()
   @CreateDateColumn({ type: 'timestamptz' })
   joinedAt: Date;

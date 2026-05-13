@@ -75,6 +75,27 @@ export interface DropActivityLog {
   createdAt: string;
 }
 
+export interface AmotParticipant {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  avatar?: string | null;
+  isOptedOut: boolean;
+  isPaid: boolean;
+  isCarrier: boolean;
+}
+
+export interface AmotSummary {
+  amotCost: number;
+  amotDeclaredById?: string | null;
+  perPersonShare: number;
+  participantCount: number;
+  myStatus: 'carrier' | 'opted_in' | 'opted_out' | 'not_applicable';
+  myOwed: number;
+  carrierOwed: number;
+  participants: AmotParticipant[];
+}
+
 export interface DropItem {
   id: string;
   name: string;
@@ -88,6 +109,9 @@ export interface DropItem {
   } | null;
   isConfirmed: boolean;
   isAssignable: boolean;
+  amotCost?: number | null;
+  amotDeclaredById?: string | null;
+  amotSummary?: AmotSummary;
   createdAt: string;
   updatedAt: string;
 }
@@ -115,6 +139,8 @@ export interface Drop {
   neededItems?: DropItem[];
   sparkCount?: number;
   sparkedByViewer?: boolean;
+  baseCost?: number;
+  chiefContribution?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -139,6 +165,9 @@ export interface DropCrew {
   memberRole: DropCrewMemberRole;
   status: DropCrewStatus;
   isPresent: boolean;
+  amotPaidAt?: string | null;
+  amotPaidAmount: number;
+  amotProofPath?: string | null;
   joinedAt: string;
 }
 
@@ -149,6 +178,9 @@ export interface CrewMember {
   memberRole: DropCrewMemberRole;
   status: DropCrewStatus;
   isPresent: boolean;
+  amotPaidAt?: string | null;
+  amotPaidAmount: number;
+  amotProofPath?: string | null;
   joinedAt: string;
   user: {
     id: string;
@@ -192,6 +224,34 @@ export interface UpdateDropDto {
   minimumAge?: number | null;
   overview?: string;
   neededItems?: (string | { id?: string; name: string; isAssignable?: boolean })[];
+  baseCost?: number;
+  chiefContribution?: number;
+}
+
+export type ExpenseLogStatus = 'pending' | 'approved' | 'rejected';
+
+export interface DropExpenseLog {
+  id: string;
+  dropId: string;
+  submittedById: string;
+  submittedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string | null;
+  };
+  description: string;
+  amount: number;
+  status: ExpenseLogStatus;
+  reviewedById?: string | null;
+  linkedItemId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateExpenseLogDto {
+  description: string;
+  amount: number;
 }
 
 export interface DropPhoto {

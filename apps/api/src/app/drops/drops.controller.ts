@@ -43,6 +43,15 @@ import { PhotoUploadSessionDto } from './dto/photo-upload-session.dto';
 import { DiscoverDropsResponseDto } from './dto/discover-drops-response.dto';
 import { ActivityLogsPageDto } from './dto/activity-logs-page.dto';
 import { ExistingNeededItemDto } from './dto/needed-item.dto';
+import { ConfirmAmotPaymentDto } from './dto/confirm-amot-payment.dto';
+import {
+  DeclareAmotDto,
+  ToggleAmotOptOutDto,
+  ToggleAmotPaidDto,
+  SubmitAmotProofDto,
+  AmotSummaryDto,
+} from './dto/amot-summary.dto';
+import { CreateExpenseLogDto, ExpenseLogPublicDto } from './dto/expense-log.dto';
 import { Drop } from './entities/drop.entity';
 import { DropActivityLog } from './entities/drop-activity-log.entity';
 import { DropPhoto } from './entities/drop-photo.entity';
@@ -132,6 +141,7 @@ export class DropsController {
     return this.dropsService.findMyActivityLogs(request.user.id, page, limit);
   }
 
+  @Public()
   @Get('join/:joinCode')
   @ApiOperation({ summary: 'Look up a drop by join code' })
   @ApiResponse({ status: 200, type: Drop })
@@ -140,7 +150,7 @@ export class DropsController {
     @Param('joinCode') joinCode: string,
     @Req() request: RequestWithUser,
   ): Promise<Drop> {
-    return this.dropsService.findByJoinCode(joinCode, request.user.id);
+    return this.dropsService.findByJoinCode(joinCode, request.user?.id);
   }
 
   @Public()
@@ -161,11 +171,13 @@ export class DropsController {
   @ApiResponse({ status: 404, description: 'Drop not found or no access.' })
   getActivityLogs(
     @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit = 5,
-    @Req() request: RequestWithUser,
+    @Query('actions') actions?: string | string[],
   ): Promise<ActivityLogsPageDto> {
-    return this.dropsService.findDropActivityLogs(id, request.user.id, page, limit);
+    const actionArray = typeof actions === 'string' ? actions.split(',') : actions;
+    return this.dropsService.findDropActivityLogs(id, request.user.id, page, limit, actionArray);
   }
 
   @Get(':id/crew/me')
@@ -193,6 +205,40 @@ export class DropsController {
   ): Promise<void> {
     return this.dropsService.updatePresence(id, request.user.id, dto.isPresent);
   }
+
+  @Patch(':id/amot/proof')
+  @ApiOperation({ summary: 'Submit proof of amot payment for the whole mission' })
+  submitAmotProof(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SubmitAmotProofDto,
+    @Req() request: RequestWithUser,
+  ): Promise<string> {
+    return this.dropsService.submitAmotProof(id, request.user.id, dto.proofBase64);
+  }
+
+  @Patch(':id/amot/confirm/:userId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Confirm global amot payment for a member (chief only)' })
+  confirmAmotPayment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() dto: ConfirmAmotPaymentDto,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.confirmAmotPayment(id, userId, request.user.id, dto.amount);
+  }
+
+  @Delete(':id/amot/proof/:userId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Reject and delete amot payment proof for a member (chief only)' })
+  rejectAmotProof(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.rejectAmotProof(id, userId, request.user.id);
+  }
+
 
   @Patch(':id')
   @ApiOperation({ summary: 'Edit a drop (organiser only, active/ongoing status)' })
@@ -574,4 +620,142 @@ export class DropsController {
   ): Promise<void> {
     return this.dropsService.confirmItem(id, itemId, request.user.id);
   }
+
+  @Post(':id/items/:itemId/amot')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Declare amot cost on a gear item (carrier only)' })
+  @ApiResponse({ status: 204, description: 'Amot cost declared.' })
+  declareAmot(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Body() dto: DeclareAmotDto,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.declareAmot(id, itemId, dto.cost, request.user.id);
+  }
+
+  @Delete(':id/items/:itemId/amot')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Clear amot cost on a gear item (carrier or chief)' })
+  @ApiResponse({ status: 204, description: 'Amot cost cleared.' })
+  clearAmot(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.clearAmot(id, itemId, request.user.id);
+  }
+
+  @Patch(':id/items/:itemId/amot/me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Toggle opt-out from a gear amot (crew member)' })
+  @ApiResponse({ status: 204, description: 'Opt-out toggled.' })
+  toggleAmotOptOut(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Body() dto: ToggleAmotOptOutDto,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.toggleAmotOptOut(id, itemId, dto.isOptedOut, request.user.id);
+  }
+
+  @Patch(':id/items/:itemId/amot/:userId/opt-out')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Toggle opt-out from a gear amot for a specific member (chief only)' })
+  @ApiResponse({ status: 204, description: 'Member opt-out toggled.' })
+  toggleMemberAmotOptOut(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() dto: ToggleAmotOptOutDto,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.toggleMemberAmotOptOut(id, itemId, userId, dto.isOptedOut, request.user.id);
+  }
+
+  @Get(':id/items/:itemId/amot')
+  @ApiOperation({ summary: 'Get full amot participant breakdown for a gear item' })
+  @ApiResponse({ status: 200, type: AmotSummaryDto })
+  getAmotDetail(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<object> {
+    return this.dropsService.getAmotDetail(id, itemId, request.user.id);
+  }
+
+  @Patch(':id/items/:itemId/amot/:userId/paid')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Toggle paid status for a member on a gear amot (chief or carrier)' })
+  @ApiResponse({ status: 204, description: 'Paid status toggled.' })
+  toggleAmotPaid(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() dto: ToggleAmotPaidDto,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.toggleAmotPaid(id, itemId, userId, dto.isPaid, request.user.id);
+  }
+
+  // ─── Expense Logs ────────────────────────────────────────────────────────
+
+  @Post(':id/expense-logs')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Submit a freeform expense log for this drop (crew or chief)' })
+  @ApiResponse({ status: 201, type: ExpenseLogPublicDto })
+  submitExpenseLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateExpenseLogDto,
+    @Req() request: RequestWithUser,
+  ): Promise<ExpenseLogPublicDto> {
+    return this.dropsService.submitExpenseLog(id, dto.description, dto.amount, request.user.id);
+  }
+
+  @Get(':id/expense-logs')
+  @ApiOperation({ summary: 'List all expense logs for this drop' })
+  @ApiResponse({ status: 200, type: [ExpenseLogPublicDto] })
+  getExpenseLogs(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: RequestWithUser,
+  ): Promise<ExpenseLogPublicDto[]> {
+    return this.dropsService.getExpenseLogs(id, request.user.id);
+  }
+
+  @Patch(':id/expense-logs/:logId/approve')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Approve an expense log (chief only)' })
+  @ApiResponse({ status: 204, description: 'Expense log approved.' })
+  approveExpenseLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('logId', ParseUUIDPipe) logId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.reviewExpenseLog(id, logId, true, request.user.id);
+  }
+
+  @Patch(':id/expense-logs/:logId/reject')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Reject an expense log (chief only)' })
+  @ApiResponse({ status: 204, description: 'Expense log rejected.' })
+  rejectExpenseLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('logId', ParseUUIDPipe) logId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.reviewExpenseLog(id, logId, false, request.user.id);
+  }
+
+  @Delete(':id/expense-logs/:logId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete an expense log (submitter or chief)' })
+  @ApiResponse({ status: 204, description: 'Expense log deleted.' })
+  deleteExpenseLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('logId', ParseUUIDPipe) logId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
+    return this.dropsService.deleteExpenseLog(id, logId, request.user.id);
+  }
+
 }

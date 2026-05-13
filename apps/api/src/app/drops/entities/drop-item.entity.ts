@@ -4,12 +4,14 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { User } from '../../users/entities/user.entity';
 import { Drop } from './drop.entity';
+import { DropItemAmot } from './drop-item-amot.entity';
 
 @Entity('drop_items')
 export class DropItem {
@@ -46,6 +48,25 @@ export class DropItem {
   @ApiProperty({ default: true })
   @Column({ default: true })
   isAssignable: boolean;
+
+  @ApiPropertyOptional({ nullable: true, type: Number })
+  @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
+  amotCost?: number | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @Column({ nullable: true })
+  amotDeclaredById?: string | null;
+
+  @ManyToOne(() => User, { eager: false, nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'amotDeclaredById' })
+  amotDeclaredBy?: User | null;
+
+  @OneToMany(() => DropItemAmot, (a) => a.item)
+  amotEntries?: DropItemAmot[];
+
+  @ApiPropertyOptional({ nullable: true, description: 'ID of the expense log that was promoted into this item' })
+  @Column({ nullable: true, type: 'uuid' })
+  sourceExpenseLogId?: string | null;
 
   @ApiProperty()
   @CreateDateColumn({ type: 'timestamptz' })

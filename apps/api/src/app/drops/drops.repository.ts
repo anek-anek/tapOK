@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, LessThanOrEqual, Repository, IsNull } from 'typeorm';
+import { Between, In, LessThanOrEqual, Repository, IsNull, Raw } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DropCategory, DropCrewMemberRole, DropCrewStatus, DropStatus } from '../../common';
 import { Drop } from './entities/drop.entity';
@@ -9,6 +9,8 @@ import { DropCrew } from './entities/drop-crew.entity';
 import { DropPhoto } from './entities/drop-photo.entity';
 import { DropSpark } from './entities/drop-spark.entity';
 import { DropItem } from './entities/drop-item.entity';
+import { DropItemAmot } from './entities/drop-item-amot.entity';
+import { DropExpenseLog, ExpenseLogStatus } from './entities/drop-expense-log.entity';
 
 const PUBLIC_DISCOVER_DROP_SELECT: (keyof Drop)[] = [
   'id',
@@ -45,6 +47,10 @@ export class DropsRepository {
     private readonly sparkRepo: Repository<DropSpark>,
     @InjectRepository(DropItem)
     private readonly itemRepo: Repository<DropItem>,
+    @InjectRepository(DropItemAmot)
+    private readonly amotRepo: Repository<DropItemAmot>,
+    @InjectRepository(DropExpenseLog)
+    private readonly expenseLogRepo: Repository<DropExpenseLog>,
   ) {}
 
   findAll(page: number = 1, limit: number = 100): Promise<Drop[]> {
@@ -126,13 +132,15 @@ export class DropsRepository {
 
   findByJoinCode(joinCode: string): Promise<Drop | null> {
     return this.dropRepo.findOne({
-      where: { joinCode },
+      where: { joinCode: Raw((alias) => `LOWER(${alias}) = LOWER(:value)`, { value: joinCode }) },
       relations: { organiser: true },
     });
   }
 
   joinCodeExists(joinCode: string): Promise<boolean> {
-    return this.dropRepo.existsBy({ joinCode });
+    return this.dropRepo.exists({
+      where: { joinCode: Raw((alias) => `LOWER(${alias}) = LOWER(:value)`, { value: joinCode }) }
+    });
   }
 
   async create(data: Partial<Drop>): Promise<Drop> {
@@ -142,7 +150,7 @@ export class DropsRepository {
 
   async update(
     id: string,
-    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic' | 'category' | 'overview' | 'coverPhoto' | 'minimumAge' | 'startingSoonNotifiedAt'>> & {
+    data: Partial<Pick<Drop, 'name' | 'scheduledAt' | 'location' | 'status' | 'isLocked' | 'isPublic' | 'category' | 'overview' | 'coverPhoto' | 'minimumAge' | 'startingSoonNotifiedAt' | 'baseCost' | 'chiefContribution'>> & {
       expectedHeadcount?: number | null;
     },
   ): Promise<void> {
@@ -152,10 +160,6 @@ export class DropsRepository {
   async writeLog(data: Partial<DropActivityLog>): Promise<DropActivityLog> {
     const log = this.logRepo.create(data);
     return this.logRepo.save(log);
-  }
-
-  findCrewMember(dropId: string, userId: string): Promise<DropCrew | null> {
-    return this.crewRepo.findOneBy({ dropId, userId });
   }
 
   /** Crew admitted to participate (visibility for private drops, etc.). */
@@ -283,9 +287,13 @@ export class DropsRepository {
     dropId: string,
     page: number,
     limit: number,
+    actions?: string[],
   ): Promise<{ data: DropActivityLog[]; total: number; page: number; totalPages: number }> {
     const [data, total] = await this.logRepo.findAndCount({
-      where: { dropId },
+      where: {
+        dropId,
+        ...(actions && actions.length > 0 && { action: In(actions) }),
+      },
       relations: { user: true },
       select: {
         id: true,
@@ -616,6 +624,17 @@ export class DropsRepository {
     return rows.map((r) => r.userId);
   }
 
+  async findCrewMember(dropId: string, userId: string): Promise<DropCrew | null> {
+    return this.crewRepo.findOne({
+      where: { dropId, userId },
+      relations: { user: true },
+    });
+  }
+
+  async updateCrewMember(dropId: string, userId: string, data: Partial<DropCrew>): Promise<void> {
+    await this.crewRepo.update({ dropId, userId }, data as any);
+  }
+
   async findInCrewUserIdsForDrops(dropIds: string[]): Promise<{ dropId: string; userId: string }[]> {
     if (dropIds.length === 0) return [];
     const rows = await this.crewRepo.find({
@@ -623,6 +642,71 @@ export class DropsRepository {
       select: { dropId: true, userId: true },
     });
     return rows as { dropId: string; userId: string }[];
+  }
+
+  async findAmotsByItemIds(itemIds: string[]): Promise<DropItemAmot[]> {
+    if (itemIds.length === 0) return [];
+    return this.amotRepo.find({
+      where: { itemId: In(itemIds) },
+    });
+  }
+
+  async findAmotsByItemId(itemId: string): Promise<DropItemAmot[]> {
+    return this.amotRepo.find({
+      where: { itemId },
+      relations: { user: true },
+    });
+  }
+
+  async upsertAmotOptOut(itemId: string, userId: string, isOptedOut: boolean): Promise<void> {
+    await this.amotRepo.upsert(
+      { itemId, userId, isOptedOut },
+      { conflictPaths: ['itemId', 'userId'], skipUpdateIfNoValuesChanged: true },
+    );
+  }
+
+  async upsertAmotPaid(itemId: string, userId: string, isPaid: boolean): Promise<void> {
+    await this.amotRepo.upsert(
+      { itemId, userId, isPaid },
+      { conflictPaths: ['itemId', 'userId'], skipUpdateIfNoValuesChanged: true },
+    );
+  }
+
+  async updateItemAmot(id: string, data: Pick<DropItem, 'amotCost' | 'amotDeclaredById'>): Promise<void> {
+    await this.itemRepo.update(id, data as any);
+  }
+
+  async clearItemAmot(id: string): Promise<void> {
+    await this.itemRepo.update(id, { amotCost: null as any, amotDeclaredById: null as any });
+    await this.amotRepo.delete({ itemId: id });
+  }
+
+  async createExpenseLog(dropId: string, submittedById: string, description: string, amount: number): Promise<DropExpenseLog> {
+    const log = this.expenseLogRepo.create({ dropId, submittedById, description, amount, status: ExpenseLogStatus.PENDING });
+    return this.expenseLogRepo.save(log);
+  }
+
+  async findExpenseLogsByDrop(dropId: string): Promise<DropExpenseLog[]> {
+    return this.expenseLogRepo.find({
+      where: { dropId },
+      relations: { submittedBy: true, reviewedBy: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findExpenseLogById(id: string): Promise<DropExpenseLog | null> {
+    return this.expenseLogRepo.findOne({
+      where: { id },
+      relations: { submittedBy: true, reviewedBy: true },
+    });
+  }
+
+  async updateExpenseLog(id: string, data: Partial<Pick<DropExpenseLog, 'status' | 'reviewedById' | 'linkedItemId'>>): Promise<void> {
+    await this.expenseLogRepo.update(id, data as any);
+  }
+
+  async deleteExpenseLog(id: string): Promise<void> {
+    await this.expenseLogRepo.delete(id);
   }
 
   async findDropsDueForStartingSoon(from: Date, to: Date): Promise<Drop[]> {
