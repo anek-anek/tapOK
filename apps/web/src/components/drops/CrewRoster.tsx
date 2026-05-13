@@ -93,6 +93,7 @@ export function CrewRoster({
     memberRole: 'chief',
     status: 'in',
     isPresent: true,
+    amotPaidAmount: 0,
     joinedAt: dropCreatedAt,
     user: {
       id: organiser.id,
