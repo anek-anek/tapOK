@@ -224,7 +224,6 @@ export default function ProfilePage() {
     if (form.userHandle !== (profile.userHandle ?? '')) dto.userHandle = form.userHandle || undefined;
     if (form.birthday !== formatDateForInput(profile?.birthday ?? '')) dto.birthday = form.birthday || undefined;
     if (form.gender !== (profile.gender ?? '')) dto.gender = form.gender || undefined;
-    if (form.avatar !== (profile.avatar ?? '')) dto.avatar = form.avatar || undefined;
 
     try {
       if (avatarFile) {
